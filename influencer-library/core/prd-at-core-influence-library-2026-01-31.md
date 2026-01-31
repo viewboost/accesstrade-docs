@@ -1,9 +1,10 @@
 # Product Requirements Document: AT Core - Influence Library
 
-**Document Version:** 1.0
+**Document Version:** 1.1
 **Date:** 2026-01-31
 **Product Owner:** AccessTrade
 **Status:** Draft
+**Last Updated:** 2026-01-31 (Added AT Shared Pool Architecture section)
 
 ---
 
@@ -13,7 +14,7 @@
 Xây dựng **AT Influencer Service** - một nền tảng Partner API cho phép các đối tác (Techcombank, Vinfast, Ambassador...) truy cập và sử dụng Influencer Library của AccessTrade với mô hình subscription-based và quota management.
 
 ### 1.2 Problem Statement
-Hiện tại AccessTrade đã có cơ sở dữ liệu influencers từ Vendor Influence-Meter, nhưng thiếu:
+Hiện tại AccessTrade cần xây dựng **AT Shared Pool** - cơ sở dữ liệu influencers riêng của AT, được enriched từ Vendor Influencer Platform, nhưng thiếu:
 - Cơ chế cho phép partners truy cập influencer pool
 - Quota và subscription management
 - Partner authentication và authorization
@@ -48,7 +49,7 @@ Hiện tại AccessTrade đã có cơ sở dữ liệu influencers từ Vendor I
 ### 2.2 Out of Scope
 - TCB Database, API, Admin (separate PRD)
 - TCB Sync Service (separate PRD)
-- Vendor Influence-Meter modifications
+- Vendor Influencer Platform modifications
 - Mobile applications
 
 ### 2.3 Dependencies
@@ -56,8 +57,106 @@ Hiện tại AccessTrade đã có cơ sở dữ liệu influencers từ Vendor I
 |------------|------|--------|
 | `influencer-meter-adapter` | SDK | ✅ Ready |
 | `influencer-meter-service` | REST API | ✅ Ready |
-| Vendor Influence-Meter API | External | ✅ Production |
+| Vendor Influencer Platform API | External | ✅ Production |
 | PostgreSQL Database | Infrastructure | ✅ Ready |
+
+---
+
+## 2.4 AT Shared Pool Architecture
+
+### Tại sao AT cần lưu Profile riêng?
+
+AT **PHẢI** lưu profile trong **AT Shared Pool** để:
+1. **Cho phép Partners search** - Không thể search nếu không có data
+2. **Control visibility** - Quyết định influencer nào PUBLIC/PRIVATE
+3. **Giảm latency** - Trả về data từ AT DB thay vì gọi VB mỗi lần
+4. **Quản lý độc lập** - AT có thể add/remove influencer khỏi pool
+
+### Data Flow Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           VIEWBOOST (Vendor)                             │
+│                                                                          │
+│   ┌──────────────────────────────────────────────────────────────┐     │
+│   │                 Influencer Platform                      │     │
+│   │   • Crawl profiles từ TikTok, YouTube, IG, FB                │     │
+│   │   • Calculate scoring (reach, engagement, authenticity)      │     │
+│   │   • Store FULL profile data + metrics history                │     │
+│   └──────────────────────────────────────────────────────────────┘     │
+│                              │                                          │
+└──────────────────────────────┼──────────────────────────────────────────┘
+                               │ API Response
+                               ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           ACCESSTRADE                                    │
+│                                                                          │
+│   ┌──────────────────────────────────────────────────────────────┐     │
+│   │              influencer-meter-adapter (SDK)                   │     │
+│   │              + influencer-meter-service (REST)                │     │
+│   └──────────────────────────────────────────────────────────────┘     │
+│                              │                                          │
+│                              ▼                                          │
+│   ┌──────────────────────────────────────────────────────────────┐     │
+│   │                    AT SHARED POOL                              │     │
+│   │                   (PostgreSQL Database)                        │     │
+│   │                                                                │     │
+│   │   AT lưu SIMPLIFIED PROFILE:                                   │     │
+│   │   ┌────────────────────────────────────────────────────────┐  │     │
+│   │   │ • id, vbProfileId (reference to ViewBoost)             │  │     │
+│   │   │ • platform, username, displayName, avatarUrl           │  │     │
+│   │   │ • followers, engagement, score (snapshot)              │  │     │
+│   │   │ • category, tier                                       │  │     │
+│   │   │ • visibility (PUBLIC/PRIVATE)                          │  │     │
+│   │   │ • contactInfo (email, phone) - encrypted               │  │     │
+│   │   │ • syncedAt, syncStatus                                 │  │     │
+│   │   └────────────────────────────────────────────────────────┘  │     │
+│   │                                                                │     │
+│   │   AT KHÔNG lưu:                                                │     │
+│   │   • Full metrics history (ở VB)                               │     │
+│   │   • Raw crawl data (ở VB)                                     │     │
+│   │   • Scoring algorithm details (VB IP)                         │     │
+│   └──────────────────────────────────────────────────────────────┘     │
+│                              │                                          │
+│                              ▼                                          │
+│   ┌──────────────────────────────────────────────────────────────┐     │
+│   │                    AT Partner API                              │     │
+│   │   • Pool Search → Query AT Database                           │     │
+│   │   • Pool Request → Return from AT Database + deduct quota     │     │
+│   │   • Enrich → Call VB, save to AT Pool                         │     │
+│   └──────────────────────────────────────────────────────────────┘     │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      PARTNERS (TCB, Vinfast...)                          │
+│                                                                          │
+│   Partners có thể:                                                       │
+│   • Search AT Pool → Nhận preview data                                  │
+│   • Request influencers → Nhận full data + trừ quota                    │
+│   • Enrich new profile → AT crawl từ VB, lưu vào AT Pool                │
+│   • Copy data về Partner DB (TCB sở hữu 100% source của họ)             │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Data Ownership Summary
+
+| Layer | Lưu gì | Owner |
+|-------|--------|-------|
+| **ViewBoost** | Full crawl data, metrics history, scoring algorithm | ViewBoost IP |
+| **AT Shared Pool** | Simplified profiles + visibility + AT-specific fields | AccessTrade |
+| **Partner DB (TCB)** | Copy of profiles + partner-specific fields | Partner (100% owned) |
+
+### Sync Strategy
+
+| Event | Action |
+|-------|--------|
+| **AT Admin adds influencer** | Call VB Enrich → Save to AT Pool |
+| **Daily sync job** | Batch refresh từ VB → Update AT Pool |
+| **Partner requests refresh** | Call VB → Update AT Pool → Return to Partner |
+| **VB data unavailable** | Return cached data from AT Pool (stale OK) |
 
 ---
 
@@ -463,6 +562,135 @@ Query:
 
 ---
 
+### 3.11 FR-011: Pool Influencer Management (Admin) - NEW
+
+**Description:** AT Admin có thể thêm, sửa, xóa influencers trong AT Shared Pool.
+
+**Endpoint:**
+- `POST /api/v1/admin/pool/influencers` - Add to pool
+- `GET /api/v1/admin/pool/influencers` - List pool
+- `PATCH /api/v1/admin/pool/influencers/:id` - Update
+- `DELETE /api/v1/admin/pool/influencers/:id` - Remove from pool
+
+**Acceptance Criteria:**
+- [ ] Add influencer by social URL (trigger VB crawl, save to AT Pool)
+- [ ] Add influencer manually (basic info only, no VB sync)
+- [ ] Bulk import from CSV
+- [ ] Edit AT-specific fields (category, tier, visibility)
+- [ ] Remove influencer from pool (soft delete)
+- [ ] View sync status and last sync time
+- [ ] Trigger manual sync for single influencer
+- [ ] Filter pool by: visibility, category, platform, sync status
+
+**Add Influencer Flow:**
+```
+1. Admin enters social URL: https://tiktok.com/@beauty_creator
+2. AT calls VB API to enrich profile
+3. VB crawls and returns profile data
+4. AT saves simplified profile to PoolInfluencer table
+5. Admin can then set category, tier, visibility
+6. Influencer appears in partner pool search (if PUBLIC)
+```
+
+**Request (Add by URL):**
+```json
+{
+  "url": "https://tiktok.com/@beauty_creator",
+  "category": "beauty",
+  "tier": "premium",
+  "visibility": "PUBLIC"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "influencer": {
+    "id": "at_inf_123",
+    "vbProfileId": "vb_prof_456",
+    "platform": "tiktok",
+    "username": "beauty_creator",
+    "displayName": "Beauty Creator VN",
+    "followers": 250000,
+    "engagement": 4.8,
+    "score": 78,
+    "category": "beauty",
+    "tier": "premium",
+    "visibility": "PUBLIC",
+    "syncStatus": "ACTIVE",
+    "syncedAt": "2026-01-31T10:00:00Z"
+  }
+}
+```
+
+**Admin UI Pages:**
+```
+/admin/pool
+├── List view (table)
+│   ├── Avatar, Username, Platform
+│   ├── Followers, Score, Tier
+│   ├── Category, Visibility
+│   ├── Sync status, Last synced
+│   └── Actions: Edit, Sync, Remove
+│
+├── Add Influencer form
+│   ├── Social URL input
+│   ├── OR Manual entry (platform, username)
+│   ├── Category dropdown
+│   ├── Tier dropdown
+│   └── Visibility toggle
+│
+├── Bulk Import
+│   ├── CSV upload
+│   ├── Column mapping
+│   └── Import progress
+│
+└── Influencer Detail
+    ├── Profile preview
+    ├── Metrics overview
+    ├── Edit category/tier/visibility
+    ├── Sync history
+    └── Partner request history
+```
+
+---
+
+### 3.12 FR-012: Pool Sync Management (Admin) - NEW
+
+**Description:** AT Admin có thể quản lý việc sync data giữa AT Pool và ViewBoost.
+
+**Acceptance Criteria:**
+- [ ] View sync status dashboard (last run, success/fail count)
+- [ ] Trigger manual full sync (all influencers)
+- [ ] Trigger sync for specific influencers
+- [ ] Configure sync schedule (default: daily 4 AM)
+- [ ] View sync error logs
+- [ ] Pause/resume sync for specific influencers
+
+**Sync Dashboard:**
+```
+/admin/pool/sync
+├── Overview
+│   ├── Last sync: 2026-01-31 04:00
+│   ├── Total influencers: 1,500
+│   ├── Synced successfully: 1,480
+│   ├── Sync failed: 20
+│   └── Next scheduled: 2026-02-01 04:00
+│
+├── Failed Syncs
+│   ├── List of failed influencers
+│   ├── Error message for each
+│   └── Retry button
+│
+└── Sync Settings
+    ├── Schedule (cron expression)
+    ├── Batch size
+    └── Timeout settings
+```
+
+---
+
 ## 4. Non-Functional Requirements
 
 ### 4.1 NFR-001: Performance
@@ -709,6 +937,49 @@ Acceptance Criteria:
 
 ---
 
+### Epic 6: Pool Management (NEW)
+
+**E6-US01: Add Influencer to Pool**
+```
+AS an AT Admin
+I WANT to add influencers to AT Shared Pool
+SO THAT partners can discover and request them
+
+Acceptance Criteria:
+- Enter social URL, system crawls via VB
+- Set category, tier, visibility
+- Influencer saved to AT Pool database
+- Appears in partner search if PUBLIC
+```
+
+**E6-US02: Bulk Import Influencers**
+```
+AS an AT Admin
+I WANT to import multiple influencers from CSV
+SO THAT I can quickly populate the pool
+
+Acceptance Criteria:
+- Upload CSV with social URLs
+- System queues crawl jobs
+- Progress indicator
+- Report success/fail for each
+```
+
+**E6-US03: Manage Pool Sync**
+```
+AS an AT Admin
+I WANT to manage sync between AT Pool and ViewBoost
+SO THAT pool data stays fresh
+
+Acceptance Criteria:
+- View sync status dashboard
+- Trigger manual sync
+- See and retry failed syncs
+- Configure sync schedule
+```
+
+---
+
 ## 6. Data Models
 
 ### 6.1 Partner
@@ -814,28 +1085,115 @@ enum RequestStatus {
 }
 ```
 
-### 6.4 Profile Extension (Existing Model)
+### 6.4 AT Pool Influencer (NEW - AT Shared Pool)
+
+**QUAN TRỌNG:** Đây là data model cho **AT Shared Pool** - AT lưu simplified profile riêng, KHÔNG phụ thuộc vào VB database.
 
 ```prisma
-// Extend existing Profile model
-model Profile {
-  // ... existing fields ...
+// AT Shared Pool - Influencer profiles owned by AccessTrade
+model PoolInfluencer {
+  id              String   @id @default(cuid())  // AT internal ID: "at_inf_123"
 
-  // New: Visibility control
-  visibility  ProfileVisibility @default(PUBLIC)
+  // === Reference to ViewBoost ===
+  vbProfileId     String?  @unique              // ViewBoost profile ID for sync
 
-  // New: Track who added
-  addedByPartnerId String?
+  // === Basic Info (snapshot from VB) ===
+  platform        String                        // tiktok | youtube | instagram | facebook
+  username        String                        // @beauty_creator
+  displayName     String                        // "Beauty Creator VN"
+  avatarUrl       String?
+  bio             String?
 
-  // New: Category
-  category    String?
+  // === Metrics Snapshot (updated via sync) ===
+  followers       Int      @default(0)
+  following       Int      @default(0)
+  engagement      Float    @default(0)          // engagement rate %
+  avgViews        Int?
+  avgLikes        Int?
+  avgComments     Int?
+
+  // === Score (from VB) ===
+  score           Int      @default(0)          // total score 0-100
+  scoreReach      Int?                          // reach component
+  scoreEngagement Int?                          // engagement component
+  scoreAuthenticity Int?                        // authenticity component
+
+  // === AT-Specific Fields ===
+  category        String?                       // beauty | tech | lifestyle | food | travel | gaming
+  tier            InfluencerTier @default(STANDARD)
+  visibility      ProfileVisibility @default(PUBLIC)
+
+  // === Contact Info (encrypted at rest) ===
+  contactEmail    String?  @db.Text             // encrypted
+  contactPhone    String?  @db.Text             // encrypted
+
+  // === Tracking ===
+  addedBy         String?                       // admin user ID who added
+  addedByPartnerId String?                      // if added via partner request
+  source          InfluencerSource @default(MANUAL)
+
+  // === Sync Status ===
+  syncStatus      SyncStatus @default(ACTIVE)
+  syncedAt        DateTime?                     // last sync with VB
+  syncError       String?                       // last sync error if any
+
+  // === Timestamps ===
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // === Indexes ===
+  @@index([platform, visibility])
+  @@index([category, visibility])
+  @@index([score])
+  @@index([followers])
+  @@unique([platform, username])
+}
+
+enum InfluencerTier {
+  STANDARD    // < 100K followers
+  PREMIUM     // 100K - 1M followers
+  VIP         // > 1M followers
 }
 
 enum ProfileVisibility {
-  PUBLIC    // Partners can see
-  PRIVATE   // AT internal only
+  PUBLIC      // Partners can see in pool search
+  PRIVATE     // AT internal only (not in pool)
+}
+
+enum InfluencerSource {
+  MANUAL      // AT Admin added manually
+  PARTNER     // Added via partner enrich request
+  BULK_IMPORT // Imported from CSV/API
+}
+
+enum SyncStatus {
+  ACTIVE      // Syncing normally
+  PAUSED      // Temporarily paused
+  FAILED      // Last sync failed
+  ARCHIVED    // No longer syncing
 }
 ```
+
+### Data Storage Clarification
+
+| Field | Source | Storage |
+|-------|--------|---------|
+| Basic info (username, displayName...) | VB Crawl | **AT Pool** (snapshot) |
+| Metrics (followers, engagement...) | VB Crawl | **AT Pool** (snapshot, refreshed daily) |
+| Score | VB Algorithm | **AT Pool** (snapshot) |
+| Category, Tier | AT Admin | **AT Pool only** |
+| Visibility | AT Admin | **AT Pool only** |
+| Contact info | VB Crawl | **AT Pool** (encrypted) |
+| Full metrics history | VB | **VB only** (không copy) |
+| Raw crawl data | VB | **VB only** (không copy) |
+
+### Why AT stores its own copy?
+
+1. **Search Performance:** Query AT PostgreSQL, not call VB API every time
+2. **Visibility Control:** AT decides which influencers are PUBLIC/PRIVATE
+3. **Independence:** AT Pool works even if VB temporarily unavailable
+4. **Category/Tier:** AT-specific classification not in VB
+5. **Audit Trail:** Track who added, when, from where
 
 ---
 
@@ -857,7 +1215,7 @@ enum ProfileVisibility {
 | POST | `/api/v1/profiles/enrich` | Crawl new profile |
 | POST | `/api/v1/profiles/batch-refresh` | Refresh multiple profiles |
 
-### 7.3 Admin Endpoints
+### 7.3 Admin Endpoints - Partner Management
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -867,9 +1225,29 @@ enum ProfileVisibility {
 | PATCH | `/api/v1/admin/partners/:id` | Update partner |
 | POST | `/api/v1/admin/partners/:id/regenerate-key` | Regenerate API key |
 | PATCH | `/api/v1/admin/partners/:id/subscription` | Update subscription |
-| GET | `/api/v1/admin/influencers` | List influencers |
-| PATCH | `/api/v1/admin/influencers/:id/visibility` | Update visibility |
-| POST | `/api/v1/admin/influencers/bulk-visibility` | Bulk update visibility |
+
+### 7.4 Admin Endpoints - Pool Management (NEW)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/admin/pool/influencers` | List pool influencers |
+| POST | `/api/v1/admin/pool/influencers` | Add influencer to pool |
+| GET | `/api/v1/admin/pool/influencers/:id` | Get influencer detail |
+| PATCH | `/api/v1/admin/pool/influencers/:id` | Update influencer |
+| DELETE | `/api/v1/admin/pool/influencers/:id` | Remove from pool |
+| POST | `/api/v1/admin/pool/influencers/:id/sync` | Trigger sync for one |
+| POST | `/api/v1/admin/pool/import` | Bulk import from CSV |
+| PATCH | `/api/v1/admin/pool/bulk-visibility` | Bulk update visibility |
+
+### 7.5 Admin Endpoints - Sync Management (NEW)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/admin/sync/status` | Get sync dashboard |
+| POST | `/api/v1/admin/sync/trigger` | Trigger full sync |
+| GET | `/api/v1/admin/sync/errors` | List sync errors |
+| POST | `/api/v1/admin/sync/retry` | Retry failed syncs |
+| PATCH | `/api/v1/admin/sync/settings` | Update sync settings |
 
 ---
 
@@ -884,7 +1262,7 @@ AT Partner API
     │       │
     │       └── influencer-meter-adapter (TypeScript SDK)
     │               │
-    │               └── Vendor Influence-Meter API
+    │               └── Vendor Influencer Platform API
     │
     └── PostgreSQL Database
 ```
@@ -913,6 +1291,8 @@ Partners (TCB, Vinfast, Ambassador...)
 - [ ] Quota management with monthly reset
 - [ ] Profile enrichment endpoint
 - [ ] Basic admin: create/view partners
+- [ ] **Admin: Add influencer to pool (FR-011)** ← NEW
+- [ ] **AT Pool database with PoolInfluencer model** ← NEW
 
 ### 9.2 Should Have (P1)
 - [ ] Subscription status endpoint
@@ -921,12 +1301,16 @@ Partners (TCB, Vinfast, Ambassador...)
 - [ ] Admin: influencer visibility control
 - [ ] Rate limiting
 - [ ] Webhook notifications
+- [ ] **Admin: Pool sync management (FR-012)** ← NEW
+- [ ] **Bulk import influencers** ← NEW
 
 ### 9.3 Could Have (P2)
 - [ ] Admin: usage analytics dashboard
 - [ ] Admin: request history view
 - [ ] Quota warning notifications
 - [ ] API key expiration
+- [ ] **Sync error dashboard** ← NEW
+- [ ] **Configurable sync schedule** ← NEW
 
 ---
 

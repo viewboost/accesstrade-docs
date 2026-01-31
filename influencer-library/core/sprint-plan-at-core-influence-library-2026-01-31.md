@@ -14,13 +14,13 @@ Sprint plan cho **Influencer Library module** - một feature trong hệ thống
 **Key Metrics:**
 | Metric | Value |
 |--------|-------|
-| Total Stories | 10 |
-| Total Points | 42 |
-| Planned Sprints | 3 |
+| Total Stories | 12 |
+| Total Points | 52 |
+| Planned Sprints | 4 |
 | Team Size | 1 senior developer |
 | Sprint Length | 2 weeks |
 | Team Capacity | 15 points/sprint |
-| Target Completion | Week 6 (2026-03-14) |
+| Target Completion | Week 8 (2026-03-28) |
 
 **Important Context:**
 - Đây là **module/feature** trong hệ thống lớn hơn, KHÔNG phải standalone service
@@ -35,27 +35,37 @@ Sprint plan cho **Influencer Library module** - một feature trong hệ thống
 
 **Epic:** Foundation
 **Priority:** Must Have
-**Points:** 3
+**Points:** 5
 
 **User Story:**
 As a Developer
-I want to have Partner, Subscription, and Request tables
+I want to have Partner, Subscription, PoolInfluencer, and Request tables
 So that I can build Partner API features on top of it
 
 **Acceptance Criteria:**
 - [ ] Partner model với id, name, code, apiKeyHash, apiKeyPrefix, isActive, contactInfo, rateLimit
 - [ ] PartnerSubscription model với tier, status, quota fields
+- [ ] **PoolInfluencer model (NEW)** - AT Shared Pool storage:
+  - [ ] id, vbProfileId (reference to ViewBoost)
+  - [ ] platform, username, displayName, avatarUrl, bio
+  - [ ] followers, following, engagement, avgViews, avgLikes, avgComments
+  - [ ] score, scoreReach, scoreEngagement, scoreAuthenticity
+  - [ ] category, tier, visibility (PUBLIC/PRIVATE)
+  - [ ] contactEmail, contactPhone (encrypted)
+  - [ ] addedBy, addedByPartnerId, source (MANUAL/PARTNER/BULK_IMPORT)
+  - [ ] syncStatus (ACTIVE/PAUSED/FAILED/ARCHIVED), syncedAt, syncError
 - [ ] InfluencerRequest model cho audit trail
-- [ ] Profile model extended với visibility field
-- [ ] Enums: SubscriptionTier, SubscriptionStatus, ProfileVisibility, RequestStatus
-- [ ] Indexes trên frequently queried columns (code, apiKeyHash, visibility)
+- [ ] Enums: SubscriptionTier, SubscriptionStatus, ProfileVisibility, RequestStatus, InfluencerTier, InfluencerSource, SyncStatus
+- [ ] Indexes trên frequently queried columns (code, apiKeyHash, visibility, platform, category, score)
 - [ ] Migration scripts tested on staging
-- [ ] Seed data cho test partner (techcombank)
+- [ ] Seed data cho test partner (techcombank) và sample pool influencers
 
 **Technical Notes:**
+- **QUAN TRỌNG:** AT lưu simplified profile trong PoolInfluencer table, KHÔNG phụ thuộc VB database
+- PoolInfluencer là AT Shared Pool - cho phép search/request mà không cần gọi VB API
 - Extend existing Prisma schema trong `influencer-meter-service`
 - Schema phải compatible với multi-tenant architecture
-- Consider soft delete cho Partner
+- Consider soft delete cho Partner và PoolInfluencer
 
 **Dependencies:** None (foundation)
 
@@ -355,22 +365,97 @@ So that I can manage what partners can see in the pool
 
 ---
 
+### STORY-011: Admin Pool Influencer Management (NEW)
+
+**Epic:** Pool Management
+**Priority:** Must Have
+**Points:** 5
+
+**User Story:**
+As an AT Admin
+I want to add, edit, and remove influencers in AT Shared Pool
+So that partners can discover and request them
+
+**Acceptance Criteria:**
+- [ ] `POST /api/v1/admin/pool/influencers` - Add influencer by social URL
+  - [ ] Call VB API to enrich profile
+  - [ ] Save simplified profile to PoolInfluencer table
+  - [ ] Set category, tier, visibility
+- [ ] `GET /api/v1/admin/pool/influencers` - List pool với filters
+  - [ ] Filter by: visibility, category, platform, syncStatus
+  - [ ] Search by: username, displayName
+  - [ ] Sort by: score, followers, createdAt
+  - [ ] Pagination
+- [ ] `GET /api/v1/admin/pool/influencers/:id` - Get detail
+- [ ] `PATCH /api/v1/admin/pool/influencers/:id` - Update AT-specific fields
+- [ ] `DELETE /api/v1/admin/pool/influencers/:id` - Soft delete
+- [ ] `POST /api/v1/admin/pool/influencers/:id/sync` - Trigger sync for one
+- [ ] `POST /api/v1/admin/pool/import` - Bulk import từ CSV
+- [ ] Admin UI: `/admin/pool` page với list, add form, detail view
+- [ ] Unit + integration tests
+
+**Technical Notes:**
+- PoolInfluencerService class
+- Use Bull queue cho bulk import và async enrichment
+- Call `influencer-meter-adapter.getProfileByUrl()` for enrichment
+- Store job status for bulk operations
+
+**Dependencies:** STORY-001, STORY-008
+
+---
+
+### STORY-012: Pool Sync Management (NEW)
+
+**Epic:** Pool Management
+**Priority:** Should Have
+**Points:** 5
+
+**User Story:**
+As an AT Admin
+I want to manage sync between AT Pool and ViewBoost
+So that pool data stays fresh
+
+**Acceptance Criteria:**
+- [ ] `GET /api/v1/admin/sync/status` - Sync dashboard
+  - [ ] Last sync time, total count, success/fail count
+  - [ ] Next scheduled sync
+- [ ] `POST /api/v1/admin/sync/trigger` - Trigger full sync
+- [ ] `GET /api/v1/admin/sync/errors` - List failed syncs
+- [ ] `POST /api/v1/admin/sync/retry` - Retry failed syncs
+- [ ] `PATCH /api/v1/admin/sync/settings` - Update sync config
+- [ ] Cron job: Daily sync at 4 AM (configurable)
+- [ ] Batch processing: 100 influencers per batch
+- [ ] Update PoolInfluencer.syncedAt, syncStatus, syncError
+- [ ] Admin UI: `/admin/pool/sync` dashboard
+- [ ] Unit tests
+
+**Technical Notes:**
+- SyncService class
+- Use node-cron for scheduling
+- Use Bull queue for batch processing
+- Circuit breaker for VB API calls
+- Store sync history for debugging
+
+**Dependencies:** STORY-001, STORY-011
+
+---
+
 ## Sprint Allocation
 
 ### Sprint 1: Foundation (Week 1-2)
 
-**Goal:** Complete database foundation và partner authentication system
+**Goal:** Complete database foundation (bao gồm PoolInfluencer) và partner authentication system
 
 **Capacity:** 15 points
-**Committed:** 11 points (73% utilization - buffer for unknowns)
+**Committed:** 13 points (87% utilization)
 
 | Story | Title | Points | Priority |
 |-------|-------|--------|----------|
-| STORY-001 | Database Schema & Migrations | 3 | Must Have |
+| STORY-001 | Database Schema & Migrations (incl. PoolInfluencer) | 5 | Must Have |
 | STORY-002 | Partner Service (CRUD) | 3 | Must Have |
 | STORY-003 | API Key Authentication Guard | 5 | Must Have |
 
-**Deliverable:** Partner có thể được tạo và authenticate qua API key với rate limiting
+**Deliverable:** Partner có thể được tạo và authenticate qua API key với rate limiting. PoolInfluencer table ready cho AT Shared Pool.
 
 **Risks:**
 - Schema design issues → Review kỹ trước khi implement
@@ -416,34 +501,61 @@ So that I can manage what partners can see in the pool
 
 ---
 
-### Sprint 3: Enrichment & Admin (Week 5-6)
+### Sprint 3: Enrichment & Admin Partner (Week 5-6)
 
-**Goal:** Complete Profile Enrichment, Subscription service, và Admin UI
+**Goal:** Complete Profile Enrichment, Subscription service, và Admin Partner UI
 
 **Capacity:** 15 points
-**Committed:** 16 points (107% - slight overcommit, có thể push visibility control sang patch)
+**Committed:** 13 points (87% utilization)
 
 | Story | Title | Points | Priority |
 |-------|-------|--------|----------|
 | STORY-007 | Subscription Service | 3 | Must Have |
 | STORY-008 | Profile Enrichment Endpoint | 5 | Must Have |
 | STORY-009 | Admin Partner Management UI | 5 | Must Have |
-| STORY-010 | Admin Influencer Visibility Control | 3 | Must Have |
 
-**Deliverable:** Production-ready với đầy đủ features
+**Deliverable:** Partner có thể enrich profiles, subscription management working, Admin Partner UI ready
 
 **Risks:**
 - Admin UI complexity → May need to simplify some features
 - Async job handling → Use existing Bull queue setup
-- Slight overcommit → STORY-010 có thể làm simplified version
 
 **Sprint 3 Definition of Done:**
 - [ ] All stories pass acceptance criteria
-- [ ] Full E2E testing
+- [ ] Profile enrichment working end-to-end
+- [ ] Admin Partner UI functional
+- [ ] Deployed to staging
+- [ ] Demo: Enrichment flow + Admin Partner management
+
+---
+
+### Sprint 4: Pool Management & Completion (Week 7-8)
+
+**Goal:** Complete AT Shared Pool Management - Admin có thể add/manage influencers trong pool
+
+**Capacity:** 15 points
+**Committed:** 13 points (87% utilization)
+
+| Story | Title | Points | Priority |
+|-------|-------|--------|----------|
+| STORY-010 | Admin Influencer Visibility Control | 3 | Must Have |
+| STORY-011 | Admin Pool Influencer Management | 5 | Must Have |
+| STORY-012 | Pool Sync Management | 5 | Should Have |
+
+**Deliverable:** AT Admin có thể add influencers vào pool, manage visibility, và sync với VB
+
+**Risks:**
+- Bulk import complexity → Start với single add, add bulk later
+- Sync reliability → Implement retry mechanism
+- STORY-012 có thể simplified version nếu thiếu time
+
+**Sprint 4 Definition of Done:**
+- [ ] All stories pass acceptance criteria
+- [ ] Full E2E testing (Partner search → request → Admin manage pool)
 - [ ] Documentation complete
 - [ ] Deployed to staging
 - [ ] Production readiness review
-- [ ] Demo: Complete flow từ Admin → Partner → API
+- [ ] Demo: Complete flow từ Admin add to pool → Partner search → Partner request
 
 ---
 
@@ -451,23 +563,28 @@ So that I can manage what partners can see in the pool
 
 ```
 Week 1-2 (Sprint 1): Foundation
-├── STORY-001: Database Schema           [████████░░] 3 pts
-├── STORY-002: Partner Service           [████████░░] 3 pts
-└── STORY-003: Auth Guard + Rate Limit   [██████████] 5 pts
-    └── Milestone: Partner Authentication Working
+├── STORY-001: Database Schema + PoolInfluencer  [██████████] 5 pts
+├── STORY-002: Partner Service                   [████████░░] 3 pts
+└── STORY-003: Auth Guard + Rate Limit           [██████████] 5 pts
+    └── Milestone: Partner Auth Working + Pool DB Ready
 
 Week 3-4 (Sprint 2): Core API
 ├── STORY-004: Quota Service             [██████████] 5 pts
 ├── STORY-005: Pool Search               [██████████] 5 pts
 └── STORY-006: Pool Request              [██████████] 5 pts
-    └── Milestone: Partners Can Search & Request Influencers
+    └── Milestone: Partners Can Search & Request from AT Pool
 
-Week 5-6 (Sprint 3): Enrichment & Admin
+Week 5-6 (Sprint 3): Enrichment & Admin Partner
 ├── STORY-007: Subscription Service      [████████░░] 3 pts
 ├── STORY-008: Profile Enrichment        [██████████] 5 pts
-├── STORY-009: Admin Partner UI          [██████████] 5 pts
-└── STORY-010: Admin Visibility Control  [████████░░] 3 pts
-    └── Milestone: Production Ready
+└── STORY-009: Admin Partner UI          [██████████] 5 pts
+    └── Milestone: Enrichment + Admin Partner Ready
+
+Week 7-8 (Sprint 4): Pool Management & Completion
+├── STORY-010: Admin Visibility Control  [████████░░] 3 pts
+├── STORY-011: Admin Pool Management     [██████████] 5 pts  ← NEW
+└── STORY-012: Pool Sync Management      [██████████] 5 pts  ← NEW
+    └── Milestone: Production Ready - Full Pool Management
 ```
 
 ---
@@ -476,10 +593,11 @@ Week 5-6 (Sprint 3): Enrichment & Admin
 
 | Epic | Stories | Total Points | Sprint |
 |------|---------|--------------|--------|
-| Foundation | STORY-001, 002, 003 | 11 points | Sprint 1 |
+| Foundation | STORY-001, 002, 003 | 13 points | Sprint 1 |
 | Core API | STORY-004, 005, 006, 007 | 18 points | Sprint 2-3 |
 | Profile Enrichment | STORY-008 | 5 points | Sprint 3 |
-| Admin UI | STORY-009, 010 | 8 points | Sprint 3 |
+| Admin Partner | STORY-009 | 5 points | Sprint 3 |
+| Pool Management (NEW) | STORY-010, 011, 012 | 13 points | Sprint 4 |
 
 ---
 
@@ -493,10 +611,12 @@ Week 5-6 (Sprint 3): Enrichment & Admin
 | FR-004 | Quota Management | STORY-004 | 2 |
 | FR-005 | Subscription Status | STORY-007 | 3 |
 | FR-006 | Profile Enrichment | STORY-008 | 3 |
-| FR-007 | Batch Refresh Profiles | STORY-008 (partial) | 3 |
+| FR-007 | Batch Refresh Profiles | STORY-008 (partial), STORY-012 | 3, 4 |
 | FR-008 | Partner Management (Admin) | STORY-009 | 3 |
-| FR-009 | Influencer Visibility Control | STORY-010 | 3 |
+| FR-009 | Influencer Visibility Control | STORY-010 | 4 |
 | FR-010 | Subscription Management (Admin) | STORY-009 (partial) | 3 |
+| **FR-011** | **Pool Influencer Management (Admin)** | **STORY-011** | **4** |
+| **FR-012** | **Pool Sync Management (Admin)** | **STORY-012** | **4** |
 
 ---
 
@@ -535,7 +655,7 @@ Week 5-6 (Sprint 3): Enrichment & Admin
 |------------|------|--------|-------|
 | `influencer-meter-adapter` | Internal SDK | ✅ Ready | For profile enrichment |
 | `influencer-meter-service` | Internal API | ✅ Ready | Existing backend to extend |
-| Vendor Influence-Meter API | External | ✅ Production | Via adapter |
+| Vendor Influencer Platform API | External | ✅ Production | Via adapter |
 | PostgreSQL | Infrastructure | ✅ Ready | Existing database |
 | Redis | Infrastructure | ✅ Ready | For rate limiting, caching, job queue |
 | Existing Admin UI | Frontend | ✅ Ready | Next.js app to extend |
@@ -543,7 +663,7 @@ Week 5-6 (Sprint 3): Enrichment & Admin
 ### Internal Dependencies (Story Level)
 
 ```
-STORY-001 (DB Schema)
+STORY-001 (DB Schema + PoolInfluencer)
     │
     ├── STORY-002 (Partner Service)
     │       │
@@ -551,13 +671,17 @@ STORY-001 (DB Schema)
     │               │
     │               ├── STORY-004 (Quota Service)
     │               │       │
-    │               │       ├── STORY-005 (Pool Search)
+    │               │       ├── STORY-005 (Pool Search) ← queries PoolInfluencer
     │               │       │       │
     │               │       │       └── STORY-006 (Pool Request)
     │               │       │
     │               │       └── STORY-007 (Subscription)
     │               │
     │               └── STORY-008 (Profile Enrichment)
+    │                       │
+    │                       └── STORY-011 (Admin Pool Management) ← uses enrichment
+    │                               │
+    │                               └── STORY-012 (Pool Sync Management)
     │
     └── STORY-009 (Admin Partner UI) ← depends on 002, 004, 007
 
@@ -610,7 +734,7 @@ Vì đây là module trong hệ thống multi-tenant:
 **Immediate:** Begin Sprint 1
 
 ```
-✓ Sprint plan complete (3 sprints, 6 weeks)
+✓ Sprint plan complete (4 sprints, 8 weeks)
 
 Ready for implementation!
 
@@ -619,7 +743,7 @@ Options:
 2. /bmad:dev-story STORY-001 - Start implementing immediately
 3. /bmad:sprint-status - Check current sprint status
 
-Recommended: Start with /bmad:dev-story STORY-001 (Database Schema)
+Recommended: Start with /bmad:dev-story STORY-001 (Database Schema + PoolInfluencer)
 ```
 
 **Sprint Cadence:**
@@ -631,5 +755,25 @@ Recommended: Start with /bmad:dev-story STORY-001 (Database Schema)
 
 ---
 
+## Key Architecture Note: AT Shared Pool
+
+**QUAN TRỌNG:** AT **PHẢI** lưu profile riêng trong `PoolInfluencer` table để:
+
+1. **Cho phép Partners search** - Không thể search nếu không có data
+2. **Control visibility** - Quyết định influencer nào PUBLIC/PRIVATE
+3. **Giảm latency** - Trả về data từ AT DB thay vì gọi VB mỗi lần
+4. **Quản lý độc lập** - AT có thể add/remove influencer khỏi pool
+
+```
+VB (Vendor) → crawl/score → AT Pool (simplified) → Partners search/request
+                              ↑
+                    AT Admin add/manage
+```
+
+Xem thêm chi tiết tại: [PRD Section 2.4 - AT Shared Pool Architecture](prd-at-core-influence-library-2026-01-31.md#24-at-shared-pool-architecture)
+
+---
+
 **This plan was created using BMAD Method v6 - Phase 4 (Implementation Planning)**
 **Module: AT Core - Influence Library (Multi-tenant Feature)**
+**Updated:** 2026-01-31 (Added FR-011, FR-012 for Pool Management)
