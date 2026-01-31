@@ -1,10 +1,10 @@
 # Product Requirements Document: AT Core - Influence Library
 
-**Document Version:** 1.1
+**Document Version:** 1.2
 **Date:** 2026-01-31
 **Product Owner:** AccessTrade
 **Status:** Draft
-**Last Updated:** 2026-01-31 (Added AT Shared Pool Architecture section)
+**Last Updated:** 2026-01-31 (Added Partner Submission, Eligibility, Approval Workflow)
 
 ---
 
@@ -691,6 +691,177 @@ Query:
 
 ---
 
+### 3.13 FR-013: Partner Profile Submission Flow (NEW)
+
+**Description:** Partners có thể submit URL để thêm influencer vào AT Pool (self-service).
+
+**Endpoint:** `POST /api/v1/partners/pool/submit`
+
+**Acceptance Criteria:**
+- [ ] Partner submit social URL (TikTok, YouTube, Instagram, Facebook)
+- [ ] System validate URL format, extract platform + username
+- [ ] AT calls VB to enrich profile
+- [ ] Profile saved to PoolInfluencer with status PENDING_APPROVAL
+- [ ] Link `partnerUserId` để track người submit
+- [ ] Webhook notification khi approved/rejected
+- [ ] Duplicate detection (same URL already exists)
+
+**Request:**
+```json
+{
+  "url": "https://tiktok.com/@beauty_creator",
+  "callbackUrl": "https://api.partner.vn/webhooks/submission-result"
+}
+```
+
+**Response (Immediate):**
+```json
+{
+  "success": true,
+  "submissionId": "sub_abc123",
+  "status": "PENDING_APPROVAL",
+  "profile": {
+    "id": "at_inf_pending_123",
+    "platform": "tiktok",
+    "username": "beauty_creator",
+    "displayName": "Beauty Creator VN",
+    "followers": 250000,
+    "score": 78
+  },
+  "estimatedReviewTime": "24h"
+}
+```
+
+**Webhook Callback (when reviewed):**
+```json
+{
+  "submissionId": "sub_abc123",
+  "status": "APPROVED",
+  "influencerId": "at_inf_123",
+  "reviewedAt": "2026-01-31T12:00:00Z"
+}
+```
+
+---
+
+### 3.14 FR-014: Eligibility Check API (NEW)
+
+**Description:** Partners có thể kiểm tra eligibility của influencers trước khi request.
+
+**Endpoints:**
+- `GET /api/v1/partners/pool/eligibility/:id` - Single check
+- `POST /api/v1/partners/pool/eligibility/bulk` - Bulk check (max 100)
+
+**Acceptance Criteria:**
+- [ ] Check against configurable thresholds (minFollowers, minEngagement, minScore)
+- [ ] Return detailed breakdown of requirements
+- [ ] Support partner-specific thresholds (per subscription)
+- [ ] Bulk check returns summary statistics
+
+**Default Thresholds:**
+| Metric | Default Value |
+|--------|---------------|
+| minFollowers | 10,000 |
+| minEngagement | 3.0% |
+| minScore | 60 |
+| minAvgViews | 5,000 |
+
+**Response (Single):**
+```json
+{
+  "influencerId": "at_inf_123",
+  "eligible": true,
+  "requirements": {
+    "followers": {
+      "name": "Minimum Followers",
+      "required": 10000,
+      "current": 250000,
+      "met": true
+    },
+    "engagement": {
+      "name": "Minimum Engagement Rate",
+      "required": "3.0%",
+      "current": "4.8%",
+      "met": true
+    },
+    "score": {
+      "name": "Minimum Score",
+      "required": 60,
+      "current": 78,
+      "met": true
+    }
+  }
+}
+```
+
+**Response (Bulk):**
+```json
+{
+  "results": [...],
+  "summary": {
+    "total": 20,
+    "eligible": 15,
+    "ineligible": 5
+  }
+}
+```
+
+---
+
+### 3.15 FR-015: Approval Workflow Management (Admin) (NEW)
+
+**Description:** AT Admin quản lý submissions từ partners.
+
+**Endpoints:**
+- `GET /api/v1/admin/pool/submissions` - List pending submissions
+- `GET /api/v1/admin/pool/submissions/:id` - Get submission detail
+- `POST /api/v1/admin/pool/submissions/:id/approve` - Approve
+- `POST /api/v1/admin/pool/submissions/:id/reject` - Reject with reason
+
+**Acceptance Criteria:**
+- [ ] List all pending submissions with filters (partner, platform, date range)
+- [ ] View submission detail with enriched profile preview
+- [ ] Approve: Change status to ACTIVE, notify partner via webhook
+- [ ] Reject: Change status to REJECTED, include reason, notify partner
+- [ ] Auto-approve rules configuration (optional)
+- [ ] Audit log for all approval actions
+
+**Auto-Approve Rules (Optional):**
+```json
+{
+  "enabled": true,
+  "rules": {
+    "minFollowers": 100000,
+    "minScore": 80,
+    "allowedPlatforms": ["tiktok", "youtube"]
+  }
+}
+```
+
+**Admin UI Pages:**
+```
+/admin/pool/submissions
+├── List view (table)
+│   ├── Partner name, Submission date
+│   ├── Profile preview (avatar, username, platform)
+│   ├── Followers, Score
+│   └── Actions: Approve, Reject, View Detail
+│
+├── Submission Detail
+│   ├── Full enriched profile
+│   ├── Partner info
+│   ├── Eligibility check result
+│   ├── Approve/Reject buttons
+│   └── Rejection reason input (if rejecting)
+│
+└── Auto-Approve Settings
+    ├── Enable/disable toggle
+    ├── Threshold configuration
+    └── Rule history/audit
+```
+
+---
+
 ## 4. Non-Functional Requirements
 
 ### 4.1 NFR-001: Performance
@@ -741,6 +912,39 @@ Query:
 | Monitoring | Prometheus + Grafana |
 | Logging | Structured JSON logs |
 | Error Tracking | Sentry integration |
+
+### 4.6 NFR-006: Cache Strategy (NEW)
+
+| Requirement | Implementation |
+|-------------|----------------|
+| Cache Layer | Redis for profile caching |
+| TTL (Pool Profiles) | 24 hours (configurable) |
+| TTL (Search Results) | 5 minutes |
+| Cache Key Pattern | `at:pool:profile:{id}` |
+| Invalidation | On update, on sync, on approval |
+| Hit Rate Target | > 80% for profile reads |
+
+**Benefits:**
+- Reduce database load
+- Improve API response time
+- Reduce VB API calls
+
+### 4.7 NFR-007: Audit Trail (NEW)
+
+| Requirement | Implementation |
+|-------------|----------------|
+| Sync Operations | Log to SyncLog table |
+| Approval Actions | Log reviewer, timestamp, reason |
+| Partner Requests | Log in InfluencerRequest table |
+| Data Retention | 90 days for sync logs |
+| Queryable | Filter by date, type, status |
+
+**Audited Events:**
+- Sync start/complete/fail
+- Profile added to pool
+- Profile visibility changed
+- Partner submission approved/rejected
+- Quota changes
 
 ---
 
@@ -980,6 +1184,64 @@ Acceptance Criteria:
 
 ---
 
+### Epic 7: Partner Self-Service Submission (NEW)
+
+**E7-US01: Submit Influencer URL**
+```
+AS a Partner
+I WANT to submit a social media URL
+SO THAT I can request adding an influencer to AT Pool
+
+Acceptance Criteria:
+- Can submit TikTok, YouTube, Instagram, Facebook URLs
+- URL is validated and parsed
+- Profile is enriched automatically
+- Submission is queued for approval
+- Receive confirmation with estimated review time
+```
+
+**E7-US02: Track Submission Status**
+```
+AS a Partner
+I WANT to track my submission status
+SO THAT I know when the influencer is available
+
+Acceptance Criteria:
+- List all my submissions
+- See status (pending, approved, rejected)
+- See rejection reason if rejected
+- Receive webhook when status changes
+```
+
+**E7-US03: Check Influencer Eligibility**
+```
+AS a Partner
+I WANT to check if an influencer meets campaign requirements
+SO THAT I can filter before requesting
+
+Acceptance Criteria:
+- Single or bulk eligibility check
+- See detailed requirement breakdown
+- Understand why ineligible
+- Use partner-specific thresholds
+```
+
+**E7-US04: Manage Submissions (Admin)**
+```
+AS an AT Admin
+I WANT to review and approve/reject partner submissions
+SO THAT I control pool quality
+
+Acceptance Criteria:
+- List all pending submissions
+- View enriched profile preview
+- Approve with one click
+- Reject with mandatory reason
+- Configure auto-approve rules
+```
+
+---
+
 ## 6. Data Models
 
 ### 6.1 Partner
@@ -1114,9 +1376,11 @@ model PoolInfluencer {
 
   // === Score (from VB) ===
   score           Int      @default(0)          // total score 0-100
-  scoreReach      Int?                          // reach component
-  scoreEngagement Int?                          // engagement component
-  scoreAuthenticity Int?                        // authenticity component
+
+  // === Score Highlights (NEW - replaces detailed breakdown to protect VB IP) ===
+  scoreCategory     String?                     // "poor" | "average" | "good" | "excellent"
+  scoreHighlights   String[]                    // ["high_engagement", "verified_account", "consistent_posting"]
+  scoreConcerns     String[]                    // ["low_growth", "low_authenticity"]
 
   // === AT-Specific Fields ===
   category        String?                       // beauty | tech | lifestyle | food | travel | gaming
@@ -1131,6 +1395,17 @@ model PoolInfluencer {
   addedBy         String?                       // admin user ID who added
   addedByPartnerId String?                      // if added via partner request
   source          InfluencerSource @default(MANUAL)
+
+  // === Partner Submission Link (NEW) ===
+  partnerUserId     String?                     // Partner's internal user ID who submitted
+  submittedURL      String?                     // Original URL submitted by partner
+
+  // === Approval Info (NEW) ===
+  approvalStatus    ApprovalStatus @default(NOT_APPLICABLE)
+  approvalReviewedBy String?                    // Admin user ID who reviewed
+  approvalReviewedAt DateTime?
+  approvalReason    String?                     // Rejection reason if rejected
+  autoApproved      Boolean @default(false)
 
   // === Sync Status ===
   syncStatus      SyncStatus @default(ACTIVE)
@@ -1167,10 +1442,20 @@ enum InfluencerSource {
 }
 
 enum SyncStatus {
-  ACTIVE      // Syncing normally
-  PAUSED      // Temporarily paused
-  FAILED      // Last sync failed
-  ARCHIVED    // No longer syncing
+  ACTIVE            // Syncing normally
+  PAUSED            // Temporarily paused
+  FAILED            // Last sync failed
+  ARCHIVED          // No longer syncing
+  PENDING_APPROVAL  // NEW: Partner submission awaiting approval
+  REJECTED          // NEW: Partner submission rejected
+}
+
+// NEW ENUM
+enum ApprovalStatus {
+  NOT_APPLICABLE  // Admin-added, no approval needed
+  PENDING         // Awaiting review
+  APPROVED        // Approved by admin or auto-approve
+  REJECTED        // Rejected by admin
 }
 ```
 
@@ -1194,6 +1479,145 @@ enum SyncStatus {
 3. **Independence:** AT Pool works even if VB temporarily unavailable
 4. **Category/Tier:** AT-specific classification not in VB
 5. **Audit Trail:** Track who added, when, from where
+
+### Score Highlights (VB IP Protected)
+
+**Why Highlights instead of Breakdown:**
+- VB scoring algorithm is proprietary IP
+- Detailed breakdown could be reverse-engineered
+- Highlights provide actionable insights without exposing formula
+
+**Score Categories:**
+| Category | Score Range | Description |
+|----------|-------------|-------------|
+| poor | 0-39 | Below minimum standards |
+| average | 40-59 | Meets basic requirements |
+| good | 60-79 | Above average performance |
+| excellent | 80-100 | Top-tier influencer |
+
+**Highlight Labels (examples):**
+- `high_engagement` - Strong audience interaction
+- `verified_account` - Platform-verified
+- `consistent_posting` - Regular content schedule
+- `growing_audience` - Positive follower trend
+
+**Concern Labels (examples):**
+- `low_growth` - Stagnant or declining followers
+- `low_authenticity` - Potential fake followers
+- `irregular_posting` - Inconsistent content
+- `low_engagement` - Poor audience interaction
+
+---
+
+### 6.5 SyncLog (NEW)
+
+**Purpose:** Audit trail for all sync operations between AT Pool and ViewBoost.
+
+```prisma
+model SyncLog {
+  id            String   @id @default(cuid())
+
+  // Sync Type
+  type          SyncType
+
+  // Status
+  status        SyncLogStatus @default(RUNNING)
+
+  // Stats
+  totalCount    Int      @default(0)
+  successCount  Int      @default(0)
+  failedCount   Int      @default(0)
+
+  // Timing
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  durationMs    Int?
+
+  // Error Tracking
+  error         String?  @db.Text
+  failedIds     String[] // Array of influencer IDs that failed
+
+  // Trigger Info
+  triggeredBy   String?  // 'system', 'admin:<userId>', 'api:<partnerId>'
+
+  @@index([type, status])
+  @@index([startedAt])
+}
+
+enum SyncType {
+  DAILY_FULL     // Scheduled daily sync
+  MANUAL_FULL    // Admin-triggered full sync
+  MANUAL_SINGLE  // Admin-triggered single influencer sync
+  WEBHOOK        // VB webhook triggered
+  PARTNER_SUBMIT // Partner submission enrich
+}
+
+enum SyncLogStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  PARTIAL        // Some succeeded, some failed
+}
+```
+
+**Usage:**
+- Track every sync operation for debugging
+- Monitor sync health via dashboard
+- Identify failing influencers for retry
+
+---
+
+### 6.6 ApprovalSubmission (NEW)
+
+**Purpose:** Track partner submissions for pool inclusion.
+
+```prisma
+model ApprovalSubmission {
+  id              String   @id @default(cuid())
+
+  // Partner Info
+  partnerId       String
+  partnerUserId   String?  // Partner's internal user ID
+
+  // Submitted Profile
+  url             String   // Original URL submitted
+  platform        String
+  username        String
+
+  // Linked Influencer (after enrichment)
+  influencerId    String?  @unique
+  influencer      PoolInfluencer? @relation(fields: [influencerId], references: [id])
+
+  // Status
+  status          SubmissionStatus @default(PENDING)
+
+  // Review Info
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  autoApproved    Boolean @default(false)
+
+  // Callback
+  callbackUrl     String?
+  callbackSentAt  DateTime?
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([partnerId, status])
+  @@index([status, createdAt])
+}
+
+enum SubmissionStatus {
+  PENDING         // Awaiting enrichment or review
+  ENRICHING       // Profile being crawled
+  READY_FOR_REVIEW // Enriched, awaiting admin review
+  APPROVED
+  REJECTED
+  FAILED          // Enrichment failed
+}
+```
 
 ---
 
@@ -1249,6 +1673,31 @@ enum SyncStatus {
 | POST | `/api/v1/admin/sync/retry` | Retry failed syncs |
 | PATCH | `/api/v1/admin/sync/settings` | Update sync settings |
 
+### 7.6 Partner Submission Endpoints (NEW)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/partners/pool/submit` | Submit URL for pool inclusion |
+| GET | `/api/v1/partners/pool/submissions` | List own submissions |
+| GET | `/api/v1/partners/pool/submissions/:id` | Get submission status |
+
+### 7.7 Eligibility Endpoints (NEW)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/partners/pool/eligibility/:id` | Check single eligibility |
+| POST | `/api/v1/partners/pool/eligibility/bulk` | Check bulk eligibility |
+
+### 7.8 Approval Management Endpoints (Admin) (NEW)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/admin/pool/submissions` | List pending submissions |
+| GET | `/api/v1/admin/pool/submissions/:id` | Get submission detail |
+| POST | `/api/v1/admin/pool/submissions/:id/approve` | Approve submission |
+| POST | `/api/v1/admin/pool/submissions/:id/reject` | Reject with reason |
+| PATCH | `/api/v1/admin/pool/auto-approve/settings` | Configure auto-approve |
+
 ---
 
 ## 8. Integration Points
@@ -1293,6 +1742,9 @@ Partners (TCB, Vinfast, Ambassador...)
 - [ ] Basic admin: create/view partners
 - [ ] **Admin: Add influencer to pool (FR-011)** ← NEW
 - [ ] **AT Pool database with PoolInfluencer model** ← NEW
+- [ ] **Partner: Submit URL to pool (FR-013)** ← NEW
+- [ ] **Admin: Approval workflow (FR-015)** ← NEW
+- [ ] **SyncLog audit trail** ← NEW
 
 ### 9.2 Should Have (P1)
 - [ ] Subscription status endpoint
@@ -1303,6 +1755,9 @@ Partners (TCB, Vinfast, Ambassador...)
 - [ ] Webhook notifications
 - [ ] **Admin: Pool sync management (FR-012)** ← NEW
 - [ ] **Bulk import influencers** ← NEW
+- [ ] **Partner: Eligibility check API (FR-014)** ← NEW
+- [ ] **Admin: Auto-approve configuration** ← NEW
+- [ ] **Cache layer for profiles** ← NEW
 
 ### 9.3 Could Have (P2)
 - [ ] Admin: usage analytics dashboard
@@ -1343,6 +1798,14 @@ Partners (TCB, Vinfast, Ambassador...)
 - [ ] M3: Influencer visibility UI
 - [ ] M1: Batch refresh, subscription endpoints
 - [ ] Integration testing
+
+### Phase 4: Self-Service & Approval (Week 7-8) - NEW
+- [ ] FR-013: Partner profile submission flow
+- [ ] FR-015: Approval workflow management
+- [ ] FR-014: Eligibility check API
+- [ ] Epic 7 user stories
+- [ ] SyncLog and ApprovalSubmission models
+- [ ] Cache layer implementation
 
 ---
 
