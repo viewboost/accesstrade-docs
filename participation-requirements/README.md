@@ -64,6 +64,9 @@
 - Ambassador: Basic requirements (account age, email verified)
 - VIP: Exclusive requirements (KYC, total followers, quality score)
 
+**🎨 Live Mockup:**
+- [View Event Detail Checklist Mockup](https://ambassador.diso.vn/mockup-event-detail-checklist.html) - Interactive HTML mockup cho UI checklist điều kiện tham gia
+
 ---
 
 ### 4. [PM Response to Requirements](./PM-RESPONSE-TO-REQUIREMENTS.md)
@@ -313,7 +316,7 @@ interface ParticipationReview {
    - [ ] Security considerations
 
 3. **Design**
-   - [ ] UI/UX wireframes for participation flow
+   - [x] UI/UX mockup for participation checklist ([View Mockup](https://ambassador.diso.vn/mockup-event-detail-checklist.html))
    - [ ] Admin review dashboard mockups
    - [ ] Email notification templates
 

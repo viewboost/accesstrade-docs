@@ -185,6 +185,8 @@ Admin xem timeline Facebook của user, kiểm tra:
 
 ## 🎨 Giao Diện User Sẽ Thấy
 
+**🎯 [Xem Mockup Tương Tác](https://ambassador.diso.vn/mockup-event-detail-checklist.html)** - Mockup HTML hoàn chỉnh với đầy đủ trạng thái và visual design
+
 ### Màn Hình Checklist Điều Kiện
 
 ```

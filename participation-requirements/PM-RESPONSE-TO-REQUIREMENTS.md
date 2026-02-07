@@ -144,6 +144,8 @@ Không phải tất cả điều kiện đều cần admin review. Ta có thể 
 
 #### 1. User Flow Đề Xuất
 
+**🎯 [Xem Mockup UI Tương Tác](https://ambassador.diso.vn/mockup-event-detail-checklist.html)** - Mockup HTML đầy đủ với visual design, status indicators, và interactive buttons
+
 ```
 BƯỚC 1: User vào xem campaign
     ↓

@@ -330,6 +330,17 @@
 
 ## User-Facing Checklist UI (Mock)
 
+**🎯 [Xem Mockup HTML Tương Tác](https://ambassador.diso.vn/mockup-event-detail-checklist.html)**
+
+Mockup dưới đây là version text. Để xem phiên bản HTML đầy đủ với:
+- Visual status indicators (✅/⏳/❌/⏸️)
+- Color-coded badges (Auto/Manual)
+- Interactive buttons
+- Progress bar
+- Responsive design
+
+Vui lòng truy cập link mockup phía trên.
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │  Campaign: Techcombank Facebook Post Event                 │
