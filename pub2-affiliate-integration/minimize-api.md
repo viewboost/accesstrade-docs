@@ -1,14 +1,23 @@
 # Tài liệu API tích hợp AccessTrade Pub2
 
+**📊 Google Sheets:** [Danh sách API - Vui lòng comment trực tiếp](https://docs.google.com/spreadsheets/d/1HpRvj9IzCg0LHbhp2UMp2CVZkkyUFcQXi5YZYeeTOnY/edit?gid=319978358#gid=319978358)
+
 ## Tổng quan
 
 Tài liệu này mô tả các API cần thiết mà **AccessTrade Pub2** cần cung cấp để tích hợp vào hệ thống Ambassador.
 
 **Mục tiêu:**
-- Đồng bộ định danh user giữa hai hệ thống
+- Liên kết tài khoản publisher qua OAuth 2.0 (không cần API mapping riêng)
 - Lấy link affiliate theo campaign và user
 - Lấy báo cáo hiệu suất (click, đơn hàng, doanh thu/hoa hồng)
-- Cấu hình và ánh xạ campaign giữa hai bên
+- Validate campaign info (optional)
+
+**Tổng số API:** 6 APIs (1 optional)
+- 5 OAuth Endpoints (Authorization flow)
+- 1 Campaign Info API (Optional)
+- 1 Link Generation API
+- 3 Report APIs (Clicks, Conversions, Overview)
+- 1 Webhook API (Optional - Phase 4)
 
 ---
 
@@ -25,17 +34,21 @@ Tài liệu này mô tả các API cần thiết mà **AccessTrade Pub2** cần 
 │  └─────────────┘  └──────────────┘  └─────────────┘  └──────────────┘  │
 │                                                                           │
 │  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                      Pub2 API Layer                              │    │
-│  │  • Publisher Management  • Campaign Data  • Reports & Stats     │    │
+│  │                 Pub2 OAuth + API Layer                           │    │
+│  │  • OAuth 2.0 Server  • Publisher APIs  • Campaign Data           │    │
+│  │  • Reports & Analytics  • Token Management                       │    │
 │  └─────────────────────────────────────────────────────────────────┘    │
 └───────────────────────────────────┬───────────────────────────────────┘
                                     │
                     ┌───────────────┼───────────────┐
-                    │               │               │
+                    │ OAuth 2.0     │ OAuth 2.0     │ OAuth 2.0
+                    │ + Bearer      │ + Bearer      │ + Bearer
                     ▼               ▼               ▼
         ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
         │  Ambassador   │  │  Tfluencers   │  │   Vcreator    │
         │   Platform    │  │   Platform    │  │   Platform    │
+        │               │  │               │  │               │
+        │ OAuth Client  │  │ OAuth Client  │  │ OAuth Client  │
         └───────────────┘  └───────────────┘  └───────────────┘
                 │                   │                   │
                 └───────────────────┴───────────────────┘
@@ -43,7 +56,9 @@ Tài liệu này mô tả các API cần thiết mà **AccessTrade Pub2** cần 
                         ┌───────────▼───────────┐
                         │  Shared Components    │
                         ├───────────────────────┤
-                        │ • User Management     │
+                        │ • OAuth Integration   │
+                        │ • Token Management    │
+                        │ • User Mapping        │
                         │ • Campaign Mapping    │
                         │ • Link Generation     │
                         │ • Report Sync         │
@@ -54,20 +69,34 @@ Tài liệu này mô tả các API cần thiết mà **AccessTrade Pub2** cần 
                         │   End Users           │
                         │  (Influencers/        │
                         │   Ambassadors)        │
+                        │                       │
+                        │ → Authorize once      │
+                        │ → Auto token refresh  │
                         └───────────────────────┘
 ```
 
 ### Luồng dữ liệu chính
 
 ```
-1. USER MAPPING
-   Ambassador/Tfluencers/Vcreator → [API 1] → Pub2
+1. OAUTH AUTHORIZATION (1 lần duy nhất)
+   Influencer → Platform → Pub2 OAuth → Platform
+   ┌──────────────────────────────────────────────────┐
+   │ 1. User click "Liên kết Pub2"                    │
+   │ 2. Platform redirect → Pub2 OAuth login          │
+   │ 3. User login + authorize                        │
+   │ 4. Pub2 redirect → Platform với code             │
+   │ 5. Platform exchange code → access_token         │
+   │ 6. Platform lưu tokens cho user                  │
+   └──────────────────────────────────────────────────┘
+
+2. USER IDENTIFICATION (Tự động từ OAuth)
+   Platform lưu pub2_user_id từ OAuth token
    ┌──────────────┐                          ┌──────────────┐
-   │ Platform User│ ─── external_user_id ──→ │ Pub2 Publisher│
-   │      ID      │ ←── pub2_user_id ─────── │      ID      │
+   │ Platform User│ ←── OAuth /user/me ────  │ Pub2 Publisher│
+   │ + OAuth token│     (pub2_user_id)       │      ID      │
    └──────────────┘                          └──────────────┘
 
-2. CAMPAIGN REFERENCE
+3. CAMPAIGN REFERENCE
    Step 1: Admin vào Pub2 Dashboard để xem campaigns
    ┌──────────────────┐
    │ Admin            │
@@ -83,8 +112,8 @@ Tài liệu này mô tả các API cần thiết mà **AccessTrade Pub2** cần 
    │ • pub2_campaign_id (manual input)      │
    └─────────────────────────────────────────┘
 
-3. LINK GENERATION
-   Platform → [API 4] → Pub2
+4. LINK GENERATION
+   Platform → [API 2] → Pub2
    ┌────────────────────────────┐
    │ User + Campaign            │
    │ ──────────────────────────→│
@@ -93,10 +122,10 @@ Tài liệu này mô tả các API cần thiết mà **AccessTrade Pub2** cần 
    │   Affiliate Link           │
    └────────────────────────────┘
 
-4. REPORTING (2 phương thức)
+5. REPORTING (2 phương thức)
 
    A. On-demand (Real-time)
-   User Request → Platform → [API 5,6,7] → Pub2
+   User Request → Platform → [API 3,4,5] → Pub2
    ┌─────────────────────────────────────┐
    │ User click "Xem báo cáo"            │
    │   ↓                                 │
@@ -106,7 +135,7 @@ Tài liệu này mô tả các API cần thiết mà **AccessTrade Pub2** cần 
    └─────────────────────────────────────┘
 
    B. Scheduled Sync (Background)
-   Cron Job → Platform → [API 5,6,7] → Pub2
+   Cron Job → Platform → [API 3,4,5] → Pub2
    ┌─────────────────────────────────────┐
    │ Cron job chạy mỗi 1 giờ            │
    │   ↓                                 │
@@ -122,7 +151,7 @@ Tài liệu này mô tả các API cần thiết mà **AccessTrade Pub2** cần 
 
 | Hệ thống | Vai trò | Đặc điểm | Trách nhiệm |
 |----------|---------|----------|-------------|
-| **Pub2** | Affiliate Network | Single platform | • Quản lý merchants & campaigns<br>• Tracking clicks & conversions<br>• Tính toán hoa hồng<br>• Cung cấp API dữ liệu |
+| **Pub2** | Affiliate Network | Single platform | • Quản lý merchants & campaigns<br>• Tracking clicks & conversions<br>• Tính toán hoa hồng<br>• Cung cấp OAuth2 + API dữ liệu |
 | **Ambassador** | Influencer/Creator Platform | **Multi-tenant**<br>(nhiều brands) | • Quản lý influencers/creators<br>• Tạo campaigns nội bộ<br>• Hiển thị performance<br>• Phục vụ nhiều brands khác nhau |
 | **Tfluencers** | Influencer/Creator Platform | Enterprise<br>(1 brand) | • Quản lý influencers/creators<br>• Tạo campaigns nội bộ<br>• Hiển thị performance<br>• Dành riêng cho 1 brand enterprise |
 | **Vcreator** | Influencer/Creator Platform | Enterprise<br>(1 brand) | • Quản lý influencers/creators<br>• Tạo campaigns nội bộ<br>• Hiển thị performance<br>• Dành riêng cho 1 brand enterprise |
@@ -135,59 +164,26 @@ Tài liệu này mô tả các API cần thiết mà **AccessTrade Pub2** cần 
 
 ### Điểm tích hợp chính
 
-1. **Authentication**: Pub2 cấp API Key cho từng platform
-2. **Publisher Mapping**: Mỗi platform đồng bộ users của mình sang Pub2
+1. **Authentication**: OAuth 2.0 - Influencers authorize Platform truy cập Pub2 account
+2. **Publisher Identification**: Platform lưu `pub2_user_id` từ OAuth token response, không cần API mapping riêng
 3. **Campaign Reference**:
    - Admin tự soạn thảo nội dung campaign trên platform (Ambassador/Tfluencers/Vcreator)
    - Admin vào dashboard Pub2 để xem thông tin campaign và lấy `campaign_id`
    - Admin nhập `pub2_campaign_id` vào platform để liên kết campaign
-4. **Link Generation**: Platforms gọi Pub2 để tạo affiliate links
-5. **Reporting**: Platform lấy dữ liệu báo cáo từ Pub2 theo 2 cách:
-   - **On-demand**: Platform gọi API khi user request (xem báo cáo)
+4. **Link Generation**: Platforms gọi Pub2 API với access token để tạo affiliate links
+5. **Link Generation**: Platforms gọi Pub2 API 2 với Bearer token để tạo affiliate links
+6. **Reporting**: Platform lấy dữ liệu báo cáo từ Pub2 theo 2 cách:
+   - **On-demand**: Platform gọi API 3-5 khi user request (xem báo cáo)
    - **Scheduled sync**: Platform chạy cron job định kỳ (VD: mỗi 1 giờ) để đồng bộ dữ liệu về database
-6. **Display**: Platforms hiển thị dữ liệu cho end users
+7. **Display**: Platforms hiển thị dữ liệu cho end users
 
 ---
 
 ## 1. Cơ chế Authentication
 
-AccessTrade Pub2 cần hỗ trợ một trong các phương thức authentication sau:
+AccessTrade Pub2 cần hỗ trợ OAuth 2.0 authentication để đảm bảo bảo mật và user consent.
 
-### 1.1. Platform API Key Authentication ⭐ RECOMMENDED
-
-**Mô tả:** Sử dụng API Key dành riêng cho từng nền tảng đối tác
-
-**Cách thức:**
-- Pub2 cấp một API Key cho toàn bộ nền tảng đối tác (Ambassador/Tfluencers/Vcreator)
-- API Key được truyền qua header `X-API-Key: {api_key}`
-- Nền tảng đối tác sử dụng `external_user_id` để xác định publisher cụ thể trong mỗi API call
-
-**Ưu điểm:**
-- ✅ Đơn giản hóa việc quản lý authentication
-- ✅ Chỉ cần một API Key cho toàn bộ nền tảng
-- ✅ **Publisher (Influencer/Creator) không cần biết đến token**
-- ✅ **Publisher không cần tạo tài khoản hoặc login vào Pub2**
-- ✅ Platform quản lý toàn bộ authentication flow
-
-**Nhược điểm:**
-- ⚠️ Cần bảo mật API Key cẩn thận (lưu encrypted trong môi trường)
-- ⚠️ Phụ thuộc vào `external_user_id` để phân biệt publisher
-
-**Use case:**
-```
-Influencer "Alice" trên Ambassador Platform:
-├─ Alice login vào Ambassador Platform (email/password)
-├─ Alice tạo affiliate link trong Platform
-└─ Ambassador Platform gọi Pub2 API:
-    Headers: X-API-Key: amb_prod_xxxxx
-    Body: { external_user_id: "alice_123", campaign_id: "camp_456" }
-    → Pub2 trả về link cho Alice
-    → Alice KHÔNG cần biết gì về Pub2 authentication
-```
-
----
-
-### 1.2. OAuth 2.0 Authentication (Advanced)
+### 1.1. OAuth 2.0 Authentication ⭐ RECOMMENDED
 
 **Mô tả:** Sử dụng OAuth 2.0 để liên kết tài khoản Publisher với Platform, có cơ chế refresh token tự động
 
@@ -307,11 +303,58 @@ Khi access_token hết hạn (expires_in: 3600 giây = 1 giờ):
 - ⚠️ Influencer phải thực hiện thêm bước linking (1 lần duy nhất)
 - ⚠️ Cần UI flow để handle authorization
 
+**Complete OAuth Flow Example:**
+
+```bash
+# Step 1: User clicks "Liên kết tài khoản Pub2" trên Platform
+# Platform redirects to:
+https://sso.accesstrade.vn/oauth/authorize
+  ?client_id=tcb_prod_12345
+  &redirect_uri=https://tcb.creator.vn/oauth/callback
+  &response_type=code
+  &scope=publisher.read,affiliate.manage
+  &state=csrf_protection_xyz
+
+# Step 2: User login Pub2 (nếu chưa login)
+# Step 3: User authorize Platform
+
+# Step 4: Pub2 redirects back với authorization code
+https://tcb.creator.vn/oauth/callback
+  ?code=AUTH_CODE_ABC123
+  &state=csrf_protection_xyz
+
+# Step 5: Platform backend exchanges code for tokens
+POST https://sso.accesstrade.vn/oauth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&code=AUTH_CODE_ABC123
+&client_id=tcb_prod_12345
+&client_secret=SECRET_KEY
+&redirect_uri=https://tcb.creator.vn/oauth/callback
+
+# Step 6: Pub2 returns tokens
+{
+  "access_token": "eyJhbGci...",
+  "refresh_token": "def502...",
+  "expires_in": 3600,
+  "token_type": "Bearer",
+  "scope": "publisher.read affiliate.manage",
+  "pub2_user_id": "PUB_12345"
+}
+
+# Step 7: Platform lưu tokens vào database
+# Step 8: Platform gọi API với access_token
+GET https://api.pub2.accesstrade.vn/api/v1/publishers/PUB_12345
+Authorization: Bearer eyJhbGci...
+```
+
 **Required Pub2 API Endpoints:**
 ```
 1. GET  /oauth/authorize        - Authorization endpoint
 2. POST /oauth/token            - Token exchange & refresh endpoint
-3. POST /oauth/revoke           - Token revocation endpoint (optional)
+3. GET  /oauth/user/me          - Get user info endpoint
+4. POST /oauth/revoke           - Token revocation endpoint (optional)
 ```
 
 **OAuth Flow Diagram:**
@@ -372,281 +415,243 @@ Khi access_token hết hạn (expires_in: 3600 giây = 1 giờ):
 
 ---
 
-### So sánh & Khuyến nghị
-
-| Tiêu chí | Platform API Key | OAuth 2.0 ⭐ |
-|----------|------------------|-----------|
-| **Độ phức tạp implement** | ⭐ Đơn giản | ⭐⭐⭐ Phức tạp |
-| **UX cho Influencer** | ⭐⭐⭐ Tốt nhất | ⭐⭐ Tốt (1 step linking) |
-| **Bảo mật** | ⭐⭐ Tốt | ⭐⭐⭐ Tốt nhất |
-| **GDPR Compliance** | ⭐⭐ OK | ⭐⭐⭐ Tốt nhất |
-| **Onboarding friction** | ✅ Zero | ⚠️ 1 extra step |
-| **Token management** | Platform quản lý | Auto refresh |
-| **Token expiration** | API key không expire | Auto refresh |
-| **Tình trạng** | Cần implement mới | ✅ **Đã có sẵn trên Pub2** |
+### Lý do chọn OAuth 2.0
 
 **⭐ KHUYẾN NGHỊ: Sử dụng OAuth 2.0 Authentication**
 
-**Lý do:**
-- ✅ Pub2 đã có sẵn infrastructure OAuth 2.0
-- ✅ Không cần implement thêm authentication layer mới
-- ✅ Bảo mật cao nhất (industry standard)
-- ✅ GDPR/PDPA compliant
-- ✅ Token tự động refresh → Influencer không bị logout
-- ✅ User có thể revoke access bất cứ lúc nào
+**Ưu điểm:**
+- ✅ **Bảo mật cao nhất** - Industry standard OAuth 2.0
+- ✅ **Explicit user consent** - GDPR/PDPA compliant
+- ✅ **Token tự động refresh** → Influencer không bị logout
+- ✅ **User control** - Có thể revoke access bất cứ lúc nào
+- ✅ **Không chia sẻ password** - Secure delegation
+- ✅ **Phân quyền rõ ràng** - Scopes xác định permissions
+- ✅ **Audit trail** - Track được user authorization history
 
-**Trade-off:**
-- ⚠️ Influencer cần thực hiện bước linking 1 lần (acceptable UX)
-- ⚠️ Platform cần implement OAuth flow (standard, có nhiều library)
+**Cách thức hoạt động:**
+- Influencer click "Liên kết tài khoản Pub2" trong Platform
+- Platform redirect đến Pub2 OAuth login page
+- Influencer authorize Platform truy cập tài khoản Pub2
+- Pub2 trả về access_token & refresh_token
+- Platform lưu tokens và tự động refresh khi hết hạn
+- Platform sử dụng access_token để gọi Pub2 APIs thay mặt Influencer
 
-**Khi nào chọn Platform API Key:**
-- Nếu Pub2 chưa có OAuth infrastructure
-- Nếu cần go-live rất nhanh (< 2 tuần)
-- Nếu số lượng influencer ít (< 100 users)
+**Token Management:**
+- Platform backend lưu trữ `access_token` và `refresh_token` cho mỗi influencer
+- Platform tự động refresh token khi gần hết hạn (< 5 phút)
+- Platform sử dụng access_token để gọi Pub2 APIs thay mặt influencer
+- Influencer KHÔNG cần quản lý token, chỉ cần authorize 1 lần
+
+**Required Pub2 Support:**
+- OAuth 2.0 Authorization Server (RFC 6749 compliant)
+- Auto token refresh mechanism (refresh_token grant)
+- Token revocation endpoint (optional)
+- Scope-based permissions
+- CORS support cho OAuth callbacks
 
 ---
 
-## 2. Danh sách API cần thiết
+## 2. OAuth 2.0 Endpoints
 
-### API 1: Tạo/Ánh xạ Publisher
+Pub2 cần cung cấp các OAuth endpoints sau:
 
-**Mục đích:** Đồng bộ thông tin publisher từ hệ thống đối tác sang Pub2
+### OAuth 1: Authorization Endpoint
 
-**⚠️ QUAN TRỌNG - Sử dụng lại authentication có sẵn của Platform:**
+**Mục đích:** Redirect influencer đến trang login & authorization của Pub2
 
-**Platform đã có JWT authentication:**
-- ✅ Login endpoint: `POST /users/login` (file: `pkg/public/handler/user.go`)
-- ✅ JWT middleware: `internal/middleware/jwt.go`
-- ✅ Token expiry: 7 ngày
-- ✅ API này chỉ để **đồng bộ** user đã login → Pub2
+**HTTP Method:** `GET`
 
-**Flow thực tế - Sử dụng authentication có sẵn:**
+**URL đề xuất:** `/oauth/authorize`
 
+**Query Parameters:**
+- `client_id`: OAuth client ID của platform (TCB/AMB/VF)
+- `redirect_uri`: Callback URL của platform
+- `response_type`: `code` (Authorization Code flow)
+- `scope`: Permissions requested (VD: `publisher.read,affiliate.manage`)
+- `state`: CSRF protection token
+
+**Example:**
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ BƯỚC 1: User login Platform (đã có sẵn)                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│ POST /users/login                                               │
-│ Body: { email: "alice@example.com", password: "***" }          │
-│                                                                 │
-│ Response (từ code có sẵn):                                     │
-│ {                                                               │
-│   id: "675abc123",                                              │
-│   token: "eyJhbGci...",  // JWT (exp: 7 days)                  │
-│   isFirstLogin: false                                           │
-│ }                                                               │
-│                                                                 │
-│ → User authenticated, frontend lưu token                        │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│ BƯỚC 2: User click "Kích hoạt Affiliate"                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│ Frontend: POST /users/activate-affiliate                        │
-│ Headers: Authorization: Bearer {platform_jwt_token}             │
-│                                                                 │
-│ Backend (handler mới cần implement):                            │
-│ ┌─────────────────────────────────────────────────────┐        │
-│ │ 1. Middleware verify JWT → Extract user_id          │        │
-│ │ 2. Get user từ MongoDB (email, name, phone)         │        │
-│ │ 3. Check table influencer_pub2_accounts:            │        │
-│ │    IF exists → Return pub2_user_id                  │        │
-│ │    ELSE → Continue step 4                           │        │
-│ │                                                      │        │
-│ │ 4. Call Pub2 API:                                   │        │
-│ │    POST /api/v1/publishers/mapping                  │        │
-│ │    Headers: X-API-Key: {platform_api_key}          │        │
-│ │    Body: {                                          │        │
-│ │      external_user_id: user.ID,                    │        │
-│ │      email: user.Email,                            │        │
-│ │      full_name: user.Name,                         │        │
-│ │      phone: user.Phone                             │        │
-│ │    }                                                │        │
-│ │                                                      │        │
-│ │ 5. Pub2 Response:                                   │        │
-│ │    { pub2_user_id: "PUB_12345", ... }              │        │
-│ │                                                      │        │
-│ │ 6. Save to MongoDB:                                 │        │
-│ │    db.influencer_pub2_accounts.insertOne({         │        │
-│ │      influencer_id: user.ID,                       │        │
-│ │      pub2_user_id: "PUB_12345",                    │        │
-│ │      linked_at: NOW()                              │        │
-│ │    })                                               │        │
-│ │                                                      │        │
-│ │ 7. Return to frontend:                              │        │
-│ │    { success: true, pub2_user_id: "PUB_12345" }    │        │
-│ └─────────────────────────────────────────────────────┘        │
-│                                                                 │
-│ → User sẵn sàng tạo affiliate links                             │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│ BƯỚC 3: Các lần sau - Tạo affiliate link                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│ POST /campaigns/{id}/generate-link                              │
-│ Headers: Authorization: Bearer {platform_jwt_token}             │
-│                                                                 │
-│ Backend:                                                        │
-│ 1. Verify JWT → user_id                                        │
-│ 2. Get pub2_user_id from influencer_pub2_accounts              │
-│ 3. Call Pub2 API 4 (tạo link)                                  │
-│ 4. Return affiliate link                                        │
-└─────────────────────────────────────────────────────────────────┘
+GET https://sso.accesstrade.vn/oauth/authorize
+  ?client_id=tcb_prod_12345
+  &redirect_uri=https://tcb.creator.vn/oauth/callback
+  &response_type=code
+  &scope=publisher.read,affiliate.manage
+  &state=random_csrf_token_xyz
 ```
 
-**Code cần implement (Go backend):**
+**User Experience:**
+- Pub2 hiển thị login page (nếu chưa login)
+- Sau khi login, hiển thị consent screen
+- User authorize → Redirect về platform với `code`
 
-```go
-// File: pkg/public/handler/user.go (thêm handler mới)
+---
 
-// ActivateAffiliate godoc
-// @tags Users
-// @summary ActivateAffiliate - Kích hoạt tính năng affiliate
-// @id user-activate-affiliate
-// @security ApiKeyAuth
-// @accept json
-// @produce json
-// @success 200 {object} response.ActivateAffiliateResponse
-// @router /users/activate-affiliate [post]
-func (u userImpl) ActivateAffiliate(c echo.Context) error {
-	var (
-		cc     = echocustom.EchoGetCustomCtx(c)
-		ctx    = cc.GetRequestCtx()
-		userId = cc.GetCurrentUserID() // Từ JWT middleware
-		s      = service.User()
-	)
+### OAuth 2: Token Exchange Endpoint
 
-	// Check đã link chưa
-	mapping := s.GetPub2Mapping(ctx, userId)
-	if mapping != nil {
-		return cc.Response200(echo.Map{
-			"pub2_user_id":  mapping.Pub2UserID,
-			"already_linked": true,
-		}, "Affiliate đã được kích hoạt")
-	}
-
-	// Tạo mapping mới
-	pub2UserId, err := s.CreatePub2Mapping(ctx, userId)
-	if err != nil {
-		return cc.Response400(nil, err.Error())
-	}
-
-	return cc.Response200(echo.Map{
-		"pub2_user_id":  pub2UserId,
-		"already_linked": false,
-	}, "Kích hoạt affiliate thành công")
-}
-```
-
-```go
-// File: pkg/public/router/user.go (thêm route)
-
-g.POST("/activate-affiliate", h.ActivateAffiliate, a.RequiredLogin)
-```
+**Mục đích:** Exchange authorization code để lấy access_token
 
 **HTTP Method:** `POST`
 
-**URL đề xuất:** `/api/v1/publishers/mapping`
+**URL đề xuất:** `/oauth/token`
 
 **Headers:**
 ```
-X-API-Key: {api_key}  # Platform API key, KHÔNG phải user token
-Content-Type: application/json
+Content-Type: application/x-www-form-urlencoded
 ```
 
-**Request Payload:**
-```json
-{
-  "external_user_id": "string",  // Platform user ID
-  "email": "string",              // User email (để match với Pub2)
-  "full_name": "string",
-  "phone": "string"               // Optional, để match với Pub2
-}
+**Request Body (Authorization Code Grant):**
+```
+grant_type=authorization_code
+&code={authorization_code}
+&client_id={client_id}
+&client_secret={client_secret}
+&redirect_uri={redirect_uri}
 ```
 
 **Response Success (200):**
 ```json
 {
-  "success": true,
-  "data": {
-    "pub2_user_id": "string",      // Pub2's internal publisher ID
-    "external_user_id": "string",  // Platform's user ID (echo back)
-    "email": "string",
-    "full_name": "string",
-    "status": "active",
-    "created_at": "2025-01-01T00:00:00Z"
-  }
+  "access_token": "eyJhbGci...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "def502...",
+  "scope": "publisher.read affiliate.manage",
+  "pub2_user_id": "PUB_12345"
 }
 ```
 
-**Response Error (400/409):**
+---
+
+### OAuth 3: Token Refresh Endpoint
+
+**Mục đích:** Refresh access token khi hết hạn
+
+**HTTP Method:** `POST`
+
+**URL đề xuất:** `/oauth/token`
+
+**Headers:**
+```
+Content-Type: application/x-www-form-urlencoded
+```
+
+**Request Body (Refresh Token Grant):**
+```
+grant_type=refresh_token
+&refresh_token={refresh_token}
+&client_id={client_id}
+&client_secret={client_secret}
+```
+
+**Response Success (200):**
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "string",
-    "message": "string"
-  }
+  "access_token": "eyJhbGci...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "def502...",
+  "scope": "publisher.read affiliate.manage"
 }
 ```
 
 **Lưu ý:**
-- ✅ **Idempotent**: Gọi nhiều lần với cùng `external_user_id` không tạo duplicate
-- ✅ **Auto-matching**: Nếu email đã tồn tại trong Pub2 → Link với existing publisher
-- ✅ **Auto-creation**: Nếu email chưa tồn tại → Tạo publisher mới trên Pub2
-- ⚠️ **Platform authentication**: Platform đã handle user login, API này chỉ sync data
+- Platform tự động refresh token khi gần hết hạn (< 5 phút)
+- Refresh token có thể rotate (Pub2 trả về refresh_token mới)
 
 ---
 
-### API 2: Lấy thông tin Publisher
+### OAuth 4: Get User Info Endpoint
 
-**Mục đích:** Lấy thông tin chi tiết của publisher đã được ánh xạ
+**Mục đích:** Lấy thông tin publisher sau khi authorize
 
 **HTTP Method:** `GET`
 
-**URL đề xuất:** `/api/v1/publishers/{external_user_id}`
+**URL đề xuất:** `/oauth/user/me`
 
 **Headers:**
 ```
-X-API-Key: {api_key}
+Authorization: Bearer {access_token}
 ```
-
-**Path Parameters:**
-- `external_user_id`: ID của publisher trong hệ thống đối tác
 
 **Response Success (200):**
 ```json
 {
-  "success": true,
-  "data": {
-    "pub2_user_id": "string",
-    "external_user_id": "string",
-    "email": "string",
-    "full_name": "string",
-    "status": "active",
-    "created_at": "2025-01-01T00:00:00Z",
-    "updated_at": "2025-01-01T00:00:00Z"
-  }
-}
-```
-
-**Response Error (404):**
-```json
-{
-  "success": false,
-  "error": {
-    "code": "PUBLISHER_NOT_FOUND",
-    "message": "Publisher not found"
+  "principal": {
+    "id": 12345,
+    "username": "alice_publisher",
+    "email": "alice@example.com",
+    "firstName": "Alice",
+    "lastName": "Nguyen",
+    "phone": "+84912345678",
+    "dateOfBirth": "1995-01-15",
+    "gender": 1,
+    "address": "123 Le Loi, HCM"
   }
 }
 ```
 
 ---
 
-### API 3: Lấy thông tin chi tiết Campaign (Optional)
+### OAuth 5: Token Revocation Endpoint (Optional)
+
+**Mục đích:** User revoke access token
+
+**HTTP Method:** `POST`
+
+**URL đề xuất:** `/oauth/revoke`
+
+**Headers:**
+```
+Content-Type: application/x-www-form-urlencoded
+```
+
+**Request Body:**
+```
+token={access_token or refresh_token}
+&client_id={client_id}
+&client_secret={client_secret}
+```
+
+**Response Success (200):**
+```json
+{
+  "success": true
+}
+```
+
+---
+
+### OAuth Scopes
+
+Pub2 cần hỗ trợ các scopes sau:
+
+| Scope | Mô tả | Permissions |
+|-------|-------|-------------|
+| `publisher.read` | Đọc thông tin publisher | GET /publishers, GET /oauth/user/me |
+| `affiliate.manage` | Quản lý affiliate links | POST /affiliate-links, GET /reports/* |
+| `campaign.read` | Đọc campaigns | GET /campaigns/* |
+
+---
+
+## 3. Danh sách API cần thiết
+
+**⚠️ LƯU Ý QUAN TRỌNG:**
+- **TẤT CẢ** các API bên dưới đều yêu cầu OAuth 2.0 authentication
+- Header bắt buộc: `Authorization: Bearer {access_token}`
+- Access token được lấy từ OAuth flow (xem section 2)
+- Pub2 tự động identify publisher từ access_token
+- Platform backend quản lý token lifecycle (refresh, revoke, etc.)
+
+**⚠️ KHÔNG CẦN Publisher Mapping API:**
+- OAuth `/user/me` (OAuth 4) đã trả đủ thông tin publisher (id, email, username, phone, etc.)
+- Platform lưu `pub2_user_id` từ OAuth token response vào database
+- Các API bên dưới tự động identify publisher từ Bearer token
+- Pub2 không cần API riêng để mapping external_user_id → Đơn giản hóa tích hợp
+
+---
+
+### API 1: Lấy thông tin chi tiết Campaign (Optional)
 
 **Mục đích:** Lấy thông tin chi tiết của một campaign cụ thể trên Pub2 để hiển thị hoặc validation
 
@@ -663,7 +668,7 @@ X-API-Key: {api_key}
 
 **Headers:**
 ```
-X-API-Key: {api_key}
+Authorization: Bearer {access_token}
 ```
 
 **Path Parameters:**
@@ -723,21 +728,21 @@ Platform Campaign {
 }
 
 Bước 2.5 (Optional): Platform validate campaign_id
-→ Gọi API 3: GET /api/v1/campaigns/pub2_camp_456
+→ Gọi API 1: GET /api/v1/campaigns/pub2_camp_456
 → Nếu 404: Thông báo admin nhập sai campaign_id
 → Nếu 200: Hiển thị tên campaign từ Pub2 để admin confirm
 
 Bước 3: Khi user yêu cầu tạo affiliate link
-→ Platform gọi API 4 với pub2_campaign_id="pub2_camp_456"
+→ Platform gọi API 2 với pub2_campaign_id="pub2_camp_456"
 → Pub2 trả về affiliate link
 → Platform hiển thị link cho user kèm theo nội dung campaign nội bộ
 ```
 
 ---
 
-### API 4: Lấy Link Affiliate
+### API 2: Lấy Link Affiliate
 
-**Mục đích:** Tạo link affiliate cho một publisher cụ thể với một campaign cụ thể
+**Mục đích:** Tạo link affiliate cho campaign - Publisher được identify tự động từ Bearer token
 
 **HTTP Method:** `POST`
 
@@ -745,14 +750,13 @@ Bước 3: Khi user yêu cầu tạo affiliate link
 
 **Headers:**
 ```
-X-API-Key: {api_key}
+Authorization: Bearer {access_token}
 Content-Type: application/json
 ```
 
 **Request Payload:**
 ```json
 {
-  "external_user_id": "string",
   "campaign_id": "string",
   "product_url": "string (optional)",
   "sub_id": "string (optional)"
@@ -767,7 +771,6 @@ Content-Type: application/json
     "affiliate_link": "string",
     "campaign_id": "string",
     "pub2_user_id": "string",
-    "external_user_id": "string",
     "tracking_params": {
       "sub_id": "string",
       "utm_source": "string",
@@ -796,7 +799,7 @@ Content-Type: application/json
 
 ---
 
-### API 5: Lấy báo cáo Click
+### API 3: Lấy báo cáo Click
 
 **Mục đích:** Lấy thống kê số lượt click theo publisher và campaign
 
@@ -810,15 +813,16 @@ Content-Type: application/json
 
 **Headers:**
 ```
-X-API-Key: {api_key}
+Authorization: Bearer {access_token}
 ```
 
 **Query Parameters:**
-- `external_user_id`: ID publisher (bắt buộc)
 - `campaign_id`: ID campaign (optional, để trống = tất cả campaigns)
 - `from_date`: ngày bắt đầu (YYYY-MM-DD, bắt buộc)
 - `to_date`: ngày kết thúc (YYYY-MM-DD, bắt buộc)
 - `group_by`: nhóm theo (day, campaign, default: day)
+
+**Lưu ý:** Publisher được identify tự động từ Bearer token, không cần truyền `external_user_id`
 
 **Response Success (200):**
 ```json
@@ -844,7 +848,7 @@ X-API-Key: {api_key}
 
 ---
 
-### API 6: Lấy báo cáo Conversion (Đơn hàng)
+### API 4: Lấy báo cáo Conversion (Đơn hàng)
 
 **Mục đích:** Lấy thống kê đơn hàng và doanh thu theo publisher và campaign
 
@@ -858,16 +862,17 @@ X-API-Key: {api_key}
 
 **Headers:**
 ```
-X-API-Key: {api_key}
+Authorization: Bearer {access_token}
 ```
 
 **Query Parameters:**
-- `external_user_id`: ID publisher (bắt buộc)
 - `campaign_id`: ID campaign (optional)
 - `from_date`: ngày bắt đầu (YYYY-MM-DD, bắt buộc)
 - `to_date`: ngày kết thúc (YYYY-MM-DD, bắt buộc)
 - `status`: filter theo status (pending, approved, rejected, all)
 - `group_by`: nhóm theo (day, campaign, status, default: day)
+
+**Lưu ý:** Publisher được identify tự động từ Bearer token, không cần truyền `external_user_id`
 
 **Response Success (200):**
 ```json
@@ -906,7 +911,7 @@ X-API-Key: {api_key}
 
 ---
 
-### API 7: Lấy báo cáo tổng hợp
+### API 5: Lấy báo cáo tổng hợp
 
 **Mục đích:** Lấy báo cáo tổng hợp hiệu suất (click + conversion) của publisher
 
@@ -920,14 +925,15 @@ X-API-Key: {api_key}
 
 **Headers:**
 ```
-X-API-Key: {api_key}
+Authorization: Bearer {access_token}
 ```
 
 **Query Parameters:**
-- `external_user_id`: ID publisher (bắt buộc)
 - `campaign_id`: ID campaign (optional)
 - `from_date`: ngày bắt đầu (YYYY-MM-DD, bắt buộc)
 - `to_date`: ngày kết thúc (YYYY-MM-DD, bắt buộc)
+
+**Lưu ý:** Publisher được identify tự động từ Bearer token, không cần truyền `external_user_id`
 
 **Response Success (200):**
 ```json
@@ -935,8 +941,7 @@ X-API-Key: {api_key}
   "success": true,
   "data": {
     "publisher": {
-      "pub2_user_id": "string",
-      "external_user_id": "string"
+      "pub2_user_id": "string"
     },
     "period": {
       "from_date": "2025-01-01",
@@ -989,7 +994,7 @@ X-API-Key: {api_key}
 
 ---
 
-### API 8: Webhook để nhận thông báo (Optional - giai đoạn 2)
+### API 6: Webhook để nhận thông báo (Optional - giai đoạn 2)
 
 **Mục đích:** Pub2 push thông báo real-time khi có sự kiện conversion
 
@@ -1009,7 +1014,7 @@ Content-Type: application/json
   "event": "conversion.approved",
   "timestamp": "2025-01-01T10:00:00Z",
   "data": {
-    "external_user_id": "string",
+    "pub2_user_id": "string",
     "campaign_id": "string",
     "order_id": "string",
     "order_value": 2000000,
@@ -1034,7 +1039,7 @@ Content-Type: application/json
 
 ---
 
-## 3. Yêu cầu kỹ thuật chung
+## 4. Yêu cầu kỹ thuật chung
 
 ### 3.1. Response Format
 
@@ -1085,39 +1090,64 @@ Tất cả API phải trả về JSON với format chuẩn:
 - Sử dụng URL versioning: `/api/v1/...`
 - Thông báo trước 3 tháng khi deprecate API version
 
-### 3.5. Security
+### 4.5. Security
 
 - Chỉ hỗ trợ HTTPS
-- API Key phải được rotate định kỳ (khuyến nghị 6 tháng/lần)
-- IP Whitelist (optional)
-- Request signature verification cho webhook
+- OAuth 2.0 với PKCE (Proof Key for Code Exchange) - recommended
+- Access token expiry: 1 giờ (3600 giây)
+- Refresh token expiry: 30 ngày
+- CSRF protection qua `state` parameter
+- Token encryption in transit & at rest
+- Request signature verification cho webhook (HMAC SHA-256)
 
-### 3.6. Environment
+### 4.6. Environment
 
-- **Sandbox:** `https://sandbox.pub2.accesstrade.vn`
-- **Production:** `https://pub2.accesstrade.vn`
+**Sandbox:**
+- OAuth: `https://sso-sandbox.accesstrade.vn`
+- API: `https://api-sandbox.pub2.accesstrade.vn`
 
----
-
-## 4. Kế hoạch triển khai
-
-| Giai đoạn | API cần thiết | Timeline |
-|-----------|---------------|----------|
-| Phase 1 | API 1, 2, 3, 4 | Week 1-2 |
-| Phase 2 | API 5, 6, 7 | Week 3 |
-| Phase 3 | API 8 (Webhook) | Week 4+ |
+**Production:**
+- OAuth: `https://sso.accesstrade.vn`
+- API: `https://api.pub2.accesstrade.vn`
 
 ---
 
-## 5. Checklist xác nhận từ Pub2
+## 5. Kế hoạch triển khai
 
-- [ ] Xác nhận phương thức authentication (Publisher Token hoặc Platform API Key)
-- [ ] Cung cấp API Key sandbox để test
-- [ ] Xác nhận URL endpoint chính xác
-- [ ] Xác nhận schema response chi tiết
-- [ ] Cung cấp tài liệu SLA và rate limit
+| Giai đoạn | Endpoints cần thiết | Timeline |
+|-----------|---------------------|----------|
+| Phase 1 | OAuth 1-5 (Authorization flow + User info) | Week 1-2 |
+| Phase 2 | API 1-2 (Campaign info + Link generation) | Week 2-3 |
+| Phase 3 | API 3-5 (Reports: Clicks, Conversions, Overview) | Week 3-4 |
+| Phase 4 | API 6 (Webhook - Optional) | Week 5+ |
+
+---
+
+## 6. Checklist xác nhận từ Pub2
+
+### OAuth 2.0 Setup
+- [ ] Xác nhận OAuth 2.0 endpoints (authorize, token, user/me)
+- [ ] Cung cấp OAuth client credentials cho từng platform:
+  - [ ] Techcombank: `client_id`, `client_secret`
+  - [ ] Ambassador: `client_id`, `client_secret`
+  - [ ] Vinfast: `client_id`, `client_secret`
+- [ ] Xác nhận supported scopes
+- [ ] Xác nhận token expiry settings (access: 1h, refresh: 30 days)
+- [ ] Test OAuth flow trên sandbox environment
+
+### API Endpoints
+- [ ] Xác nhận API base URL (sandbox & production)
+- [ ] Cung cấp API documentation chi tiết (OpenAPI/Swagger)
+- [ ] Xác nhận schema response cho từng endpoint
+- [ ] Xác nhận error codes và error messages
 - [ ] Cung cấp sample data để test
-- [ ] Hỗ trợ môi trường sandbox để test tích hợp
+
+### Technical Requirements
+- [ ] Xác nhận rate limiting (requests/hour per token)
+- [ ] Cung cấp tài liệu SLA (uptime, response time)
+- [ ] Webhook endpoint requirements và signature verification
+- [ ] IP whitelist requirements (nếu có)
+- [ ] Hỗ trợ môi trường sandbox đầy đủ chức năng
 
 ---
 
