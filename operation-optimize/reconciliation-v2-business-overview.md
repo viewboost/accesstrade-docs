@@ -1,92 +1,119 @@
-# Hệ Thống Đối Soát Mới — Tổng Quan Cho Bộ Phận Vận Hành
+# Hệ Thống Đối Soát V2+ — Tổng Quan & Lộ Trình
 
-**Phiên bản:** 2.0
-**Ngày cập nhật:** 23/02/2026
+**Ngày cập nhật:** 25/02/2026
 **Đối tượng:** Ban Thương Hiệu (BTC), Vận hành, Quản lý cấp cao
 
 ---
 
-## Vấn Đề Hiện Tại
+## Vấn Đề Cốt Lõi — Không Thể Đối Soát
 
-Quy trình đối soát thủ công đang tạo ra nhiều điểm nghẽn:
+**Techcombank và nhiều PnL khác hiện tại không thể thực hiện đối soát được.**
 
-| Vấn đề | Hậu quả |
-|--------|---------|
-| Tạo đợt đối soát hoàn toàn thủ công | BTC mất thời gian thao tác lặp lại, dễ quên lịch |
-| Phải tự tra cứu từng content để kiểm tra view | Mất hàng giờ mỗi đợt đối soát |
-| Không có cơ chế cảnh báo tự động khi view giảm bất thường | Rủi ro thanh toán sai cho content gian lận hoặc bị xóa |
-| Mỗi campaign chỉ đối soát 1 lần cuối | Không phát hiện được gian lận xảy ra giữa chừng |
-| Không biết campaign nào đã "xong hoàn toàn" | Tốn công theo dõi thủ công |
+Nguyên nhân: hệ thống **dừng cào dữ liệu ngay khi campaign hết hạn**. Trong khi đó, đối soát thường diễn ra vài ngày sau khi campaign kết thúc. Đến lúc cần đối soát, không có cách nào biết:
 
----
+- Video còn tồn tại trên nền tảng không?
+- View có bị giảm so với thời điểm campaign không?
+- Video còn đủ hashtag / điều kiện không?
+- Content có bị xóa, ẩn, hoặc chuyển private không?
 
-## Giải Pháp: Hệ Thống Đối Soát V2
+Kết quả: operations phải **dò từng video một** bằng cách mở link thủ công ra nền tảng để kiểm tra — không có cách nào khác. Campaign hàng trăm content là **bất khả thi**.
 
-### Ý tưởng cốt lõi
-
-> **Hệ thống tự động làm phần việc lặp lại. BTC chỉ cần xem xét những trường hợp thực sự cần phán quyết.**
+> **Techcombank đã yêu cầu cải tiến và bắt buộc phải hoàn thành trước đợt đối soát campaign tháng 2.**
 
 ---
 
-## 3 Cải Tiến Lớn
+## Các Vấn Đề Khác (Phụ)
+
+Ngoài vấn đề cốt lõi trên, còn có các điểm nghẽn vận hành cần giải quyết theo thời gian:
+
+| # | Vấn đề | Hệ quả | Giải quyết ở |
+|---|--------|--------|-------------|
+| 2 | Tạo đợt đối soát hoàn toàn thủ công | BTC mất thời gian thao tác lặp lại, dễ quên lịch | **V3** |
+| 3 | Influencer không biết kết quả đối soát, không có kênh phản hồi chính thức | Tranh chấp qua email/chat, không có audit trail, BTC bị hỏi liên tục | **V4** |
 
 ---
 
-### 1. Lịch Đối Soát Nhiều Đợt — Cài Một Lần, Chạy Mãi
+## Lộ Trình Phát Triển
 
-**Trước đây:** Mỗi đợt đối soát, BTC vào hệ thống → tạo thủ công → chọn thời gian → xử lý.
+---
 
-**Bây giờ:** Admin cài sẵn lịch khi tạo campaign. Hệ thống tự tạo từng đợt đúng hẹn.
+### V2 — Unblock Đối Soát *(Deadline: 28/02/2026)*
+
+**Giải quyết vấn đề #1.**
+
+Hệ thống tiếp tục crawl video sau khi campaign kết thúc, thay vì dừng như trước:
+
+- Khi campaign hết hạn → hệ thống vẫn crawl toàn bộ video mỗi ngày
+- Tại thời điểm đối soát → đã có sẵn snapshot: view count, trạng thái video, hashtag
+- BTC tải file đối soát về → đã có đủ dữ liệu, không cần mở link thủ công
+
+**Không làm trong V2:** Tự động hóa lịch đối soát, phân loại tự động, thông báo influencer.
+
+---
+
+### V3 — Lịch & Phân Loại Tự Động *(Tháng 3/2026)*
+
+**Giải quyết vấn đề #2.**
+
+**Lịch đối soát tự động:**
+
+Admin cài lịch một lần khi tạo campaign, hệ thống tự tạo và xử lý từng đợt đúng hẹn:
 
 ```
 Ví dụ: Campaign 3 tháng (01/01 → 31/03)
 Admin cài: Đợt 1 → 31/01 | Đợt 2 → 28/02 | Đợt 3 → 31/03
 
-→ Ngày 31/01: Hệ thống tự tạo Đợt 1, bắt đầu xử lý
+→ Ngày 31/01: Hệ thống tự tạo Đợt 1, bắt đầu crawl & phân loại
 → Khi Đợt 1 xong: Hệ thống tự tạo Đợt 2
 → Khi Đợt 2 xong: Hệ thống tự tạo Đợt 3
 ```
 
-**Lợi ích:**
-- Không bao giờ quên lịch đối soát
-- Không cần thao tác lặp lại mỗi tháng
-- Đảm bảo các đợt chạy đúng thứ tự, không chồng chéo
+**Phân loại tự động — hệ thống là nguồn phán quyết chính:**
+
+V3 nâng cấp từ "có dữ liệu" (V2) lên "có kết luận". Hệ thống tự động phân loại từng phần thưởng dựa trên dữ liệu crawl — BTC chỉ cần xử lý những trường hợp ngoại lệ:
+
+| Nhóm | Ý nghĩa | BTC cần làm gì? |
+|------|---------|----------------|
+| **Tự động duyệt** | Video còn tồn tại, view ổn định, đủ điều kiện | Không cần làm gì |
+| **Cần xem xét** | View giảm đáng kể (>20%), thiếu hashtag, hoặc dữ liệu bất thường | BTC xem xét và quyết định |
+| **Tự động hủy** | Video bị xóa/ẩn, view về 0, vi phạm điều kiện rõ ràng | Không cần làm gì |
+
+BTC vẫn có toàn quyền override bất kỳ kết quả nào, kèm lý do được ghi nhận vào hệ thống.
+
+Khi tất cả đợt hoàn thành, hệ thống gợi ý admin đóng campaign — admin xác nhận thủ công, không tự động đóng.
 
 ---
 
-### 2. Crawl & Phân Loại Tự Động — Phát Hiện Gian Lận 24/7
+### V4 — Minh Bạch Với Creator & Luồng Kháng Cáo *(Sau tháng 3/2026)*
 
-Sau khi đợt đối soát được tạo, hệ thống **tự động kiểm tra lại toàn bộ content mỗi ngày** cho đến khi BTC công bố kết quả.
+**Giải quyết vấn đề #3.**
 
-Mỗi content sẽ được phân vào 1 trong 3 nhóm:
+**Thông báo kết quả cho influencer:**
+- Khi BTC bấm "Công bố": hệ thống tự gửi email + notification đến từng influencer
+- Influencer xem chi tiết trên Creator Portal: từng content, lý do duyệt/hủy, tiền dự kiến
+- Cửa sổ X ngày để phản hồi — hết hạn không phản hồi = tự động chấp nhận
 
-| Nhóm | Màu | Ý nghĩa | BTC cần làm gì? |
-|------|-----|---------|----------------|
-| **Tự động duyệt** | Xanh lá | View ổn định, không dấu hiệu bất thường | Không cần làm gì |
-| **Cần xem xét** | Cam | View giảm đáng kể (>20%), nghi ngờ bất thường | BTC xem và quyết định |
-| **Tự động hủy** | Đỏ | View về 0, link chết, dấu hiệu gian lận rõ ràng | Không cần làm gì (tự hủy) |
+**Luồng kháng cáo trong hệ thống:**
+- Influencer gửi kháng cáo kèm bằng chứng qua hệ thống
+- BTC xét duyệt, có audit trail đầy đủ, phân quyền theo giá trị kháng cáo
+- Kết quả thông báo lại ngay cho influencer
 
-**Lợi ích:**
-- BTC không cần check từng content — chỉ tập trung vào nhóm **"Cần xem xét"**
-- Phát hiện gian lận sớm hơn, không chờ cuối đợt mới biết
-- Có lịch sử view tại thời điểm đối soát để đối chiếu nếu có tranh chấp
-
----
-
-### 3. Trạng Thái "Đã Hoàn Tất Hoàn Toàn" — Biết Ngay Campaign Nào Xong
-
-**Trước đây:** Không có cách nào biết campaign đã xong hoàn toàn chưa, phải theo dõi thủ công.
-
-**Bây giờ:** Khi tất cả các đợt đối soát đã kết thúc (hoàn thành hoặc từ chối), hệ thống tự động đánh dấu campaign là **"Đã đóng hoàn toàn"**.
-
-Từ thời điểm đó:
-- Hệ thống dừng crawl campaign này (tiết kiệm tài nguyên)
-- Danh sách campaign sẽ hiển thị rõ đã xong
-- Không cần theo dõi nữa
+**Tự động đóng campaign:**
+- Sau khi hết cửa sổ kháng cáo và không còn kháng cáo pending → hệ thống tự đóng campaign
 
 ---
 
-## Luồng Làm Việc Mới Của BTC
+### Tổng Quan Lộ Trình
+
+| Phiên bản | Vấn đề giải quyết | Nội dung cốt lõi | Deadline | Trạng thái |
+|-----------|------------------|-----------------|----------|-----------|
+| **V2** | Không có dữ liệu để đối soát | Crawl sau khi campaign hết hạn | 28/02/2026 | Đang phát triển |
+| **V3** | Tạo đợt thủ công, tốn thời gian | Lịch tự động, crawl & phân loại tự động | Tháng 3/2026 | Chờ phát triển |
+| **V4** | Influencer không biết kết quả, không có kênh kháng cáo | Thông báo creator, kháng cáo trong hệ thống, tự động đóng campaign | Sau tháng 3 | Chờ phát triển |
+
+---
+
+## Luồng Làm Việc Của BTC (Từ V3)
 
 ```
 [Admin cài lịch đối soát khi tạo campaign]
@@ -108,30 +135,17 @@ Từ thời điểm đó:
 
 ---
 
-## So Sánh Trước & Sau
-
-| | Trước V2 | Sau V2 |
-|---|----------|--------|
-| **Tạo đợt đối soát** | Thủ công mỗi lần | Tự động theo lịch đã cài |
-| **Kiểm tra view content** | BTC tự kiểm tra từng cái | Hệ thống crawl mỗi ngày, tự phân loại |
-| **Phát hiện gian lận** | Cuối đợt mới biết | Liên tục, mỗi ngày |
-| **Khối lượng BTC cần xem** | Toàn bộ content | Chỉ nhóm "Cần xem xét" |
-| **Biết campaign xong chưa** | Không tự động | Hệ thống tự đánh dấu "Đã đóng" |
-| **Campaign dài nhiều tháng** | 1 đợt cuối | N đợt tự động theo lịch |
-
----
-
 ## Các Trạng Thái Đối Soát (Để Tham Khảo)
 
 ```
-PENDING          → Vừa được tạo, chờ xử lý
-PROCESSING       → Đang lấy dữ liệu rewards
-PROCESSED        → Đã có dữ liệu, đang crawl & phân loại tự động
-ĐANG XEM XÉT    → Crawl xong, BTC đang review các "warning" items
-ĐÃ CÔNG BỐ      → BTC đã công bố kết quả cho influencer
-RUNNING          → Đang chạy thanh toán
-COMPLETED        → Hoàn tất
-REJECTED         → Đợt này bị từ chối
+PENDING            → Vừa được tạo, chờ xử lý
+PROCESSING         → Đang lấy dữ liệu rewards
+PROCESSED          → Đã có dữ liệu, đang crawl & phân loại tự động
+ĐANG XEM XÉT      → Crawl xong, BTC đang review các "warning" items
+ĐÃ CÔNG BỐ        → BTC đã công bố kết quả cho influencer
+RUNNING            → Đang chạy thanh toán
+COMPLETED          → Hoàn tất
+REJECTED           → Đợt này bị từ chối
 ```
 
 ---
@@ -149,81 +163,3 @@ REJECTED         → Đợt này bị từ chối
 
 **Hỏi: Campaign không dùng đối soát tự động thì sao?**
 → Hoàn toàn bình thường. Tính năng này là tùy chọn — chỉ kích hoạt khi admin cài lịch đối soát.
-
----
-
-## Tóm Tắt Giá Trị Mang Lại
-
-1. **Tiết kiệm thời gian vận hành** — BTC không còn phải tạo thủ công hay kiểm tra view từng content
-2. **Giảm rủi ro gian lận** — Phát hiện tự động mỗi ngày, không chờ đến cuối đợt
-3. **Minh bạch hơn** — Mọi quyết định có lý do ghi nhận, có thể đối chiếu khi tranh chấp
-4. **Scale được** — Campaign 3 tháng, 10 đợt đối soát → không tốn thêm công sức vận hành
-5. **Luôn biết trạng thái thực** — Dashboard hiển thị rõ campaign nào đang đối soát, đã xong, cần xem xét
-
----
-
-## Lộ Trình Phát Triển Tiếp Theo
-
-Phiên bản V2 tập trung vào tự động hóa phần lõi. Các tính năng dưới đây đã được thiết kế và sẽ được phát triển trong các milestone tiếp theo.
-
----
-
-### Milestone 3 — Công Bố Kết Quả Cho Influencer
-
-**Vấn đề hiện tại:** Sau khi BTC công bố, influencer không biết kết quả — phải hỏi thủ công hoặc chờ email.
-
-**Tính năng sẽ có:**
-
-- **Thông báo tự động** khi BTC bấm "Công bố": hệ thống gửi email + thông báo trong app đến từng influencer, kèm chi tiết từng content được duyệt/bị hủy và tổng tiền dự kiến
-- **Trang kết quả đối soát** trên Creator Portal: influencer tự vào xem chi tiết từng content, lý do bị hủy (nếu có), không cần hỏi BTC
-- **Cửa sổ thời gian kháng cáo**: hiển thị countdown rõ ràng (ví dụ: "Còn 68 giờ để kháng cáo"), tự động nhắc nhở trước 24 giờ khi sắp hết hạn
-
-**Lợi ích:**
-- Giảm tải cho BTC: không còn bị hỏi "kết quả đâu rồi"
-- Tăng trải nghiệm influencer: biết ngay, minh bạch
-- Tạo "điểm không thể quay lại" — sau khi công bố, BTC không tự ý thay đổi được; mọi điều chỉnh phải qua kháng cáo có ghi nhận
-
----
-
-### Milestone 4 — Luồng Kháng Cáo
-
-**Vấn đề hiện tại:** Influencer bị hủy content không có kênh chính thức để phản hồi — dẫn đến tranh chấp qua email/chat, mất thời gian cả hai bên, thiếu audit trail.
-
-**Tính năng sẽ có:**
-
-- **Form kháng cáo có hướng dẫn thông minh**: tùy theo lý do bị hủy, hệ thống gợi ý loại bằng chứng cần nộp
-  - Bị hủy vì "link chết" → "Vui lòng upload screenshot cho thấy link hoạt động trong thời gian campaign"
-  - Bị hủy vì "view giảm bất thường" → "Giải thích lý do và đính kèm analytics từ platform"
-- **Upload bằng chứng**: ảnh chụp màn hình, file PDF, tối đa 5 file
-- **Hàng đợi xét duyệt cho BTC**: tab "Kháng cáo" riêng biệt, hiển thị song song kết quả gốc và bằng chứng influencer gửi lên
-- **Phân quyền xét duyệt theo giá trị**:
-  - Dưới 100K VND → bất kỳ BTC reviewer
-  - 100K – 1M VND → BTC Senior
-  - Trên 1M VND → BTC Senior + Quản lý xác nhận
-- **Kết quả kháng cáo**: Duyệt toàn bộ / Duyệt một phần (điều chỉnh view count) / Từ chối kèm lý do → thông báo ngay cho influencer
-
-**Lợi ích:**
-- Tranh chấp có kênh chính thức, minh bạch, có lịch sử đầy đủ
-- BTC xử lý nhanh hơn vì có đủ thông tin ngay từ đầu
-- Influencer tin tưởng hơn vì có quy trình rõ ràng
-
----
-
-### Milestone 5 — Phân Tích & Báo Cáo Nâng Cao
-
-**Tính năng sẽ có:**
-
-- **Báo cáo lý do hủy**: content bị hủy vì lý do gì nhiều nhất (link chết, view giảm, gian lận...) — phân tích theo platform, theo tháng → giúp cải thiện tiêu chí campaign
-- **Báo cáo kháng cáo**: tỷ lệ kháng cáo thành công theo lý do, thời gian xử lý trung bình (SLA), influencer nào kháng cáo nhiều bất thường (fraud signal)
-- **Lịch sử kiểm tra đầy đủ (Audit Trail)**: mọi thao tác trên từng content — từ lần crawl đầu tiên, phân loại tự động, override của BTC, đến kháng cáo — đều được lưu lại không thể xóa, phục vụ đối chiếu khi có tranh chấp pháp lý
-
----
-
-### Tổng Quan Lộ Trình
-
-| Milestone | Nội dung chính | Trạng thái |
-|-----------|---------------|-----------|
-| **V2 (hiện tại)** | Lịch đối soát tự động, crawl & phân loại tự động, đóng campaign tự động | Đang phát triển |
-| **Milestone 3** | Thông báo influencer, trang xem kết quả, cửa sổ kháng cáo | Đã thiết kế, chờ phát triển |
-| **Milestone 4** | Form kháng cáo, hàng đợi BTC xét duyệt, phân quyền theo giá trị | Đã thiết kế, chờ phát triển |
-| **Milestone 5** | Báo cáo phân tích, audit trail đầy đủ | Đã thiết kế, chờ phát triển |
