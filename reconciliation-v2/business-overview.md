@@ -1,6 +1,6 @@
 # Hệ Thống Đối Soát V2+ — Tổng Quan & Lộ Trình
 
-**Ngày cập nhật:** 26/02/2026
+**Ngày cập nhật:** 27/02/2026
 **Đối tượng:** Ban Thương Hiệu (BTC), Vận hành, Quản lý cấp cao
 
 ---
@@ -59,7 +59,7 @@ Ngoài vấn đề cốt lõi trên, còn có các điểm nghẽn vận hành c
 
 ---
 
-### V3 — Checklist Đối Soát & Phân Loại Tự Động *(Tháng 3/2026)*
+### V3 — Checklist Đối Soát & Đề Xuất Tự Động *(Tháng 3/2026)*
 
 **Giải quyết vấn đề #2.**
 
@@ -95,7 +95,7 @@ Mỗi checklist item có 3 trạng thái:
 | ❌ Fail | Xác nhận vi phạm | Hệ thống (tự động từ snapshot) hoặc Admin (thủ công) |
 | ⚠️ Chưa xác minh | Chưa có kết luận | Mặc định khi không có bằng chứng — chờ admin đánh |
 
-#### Phân loại tự động dựa trên checklist
+#### Đề xuất tự động dựa trên checklist
 
 Khi có snapshot, hệ thống tự đánh giá từng checklist item. Khi fail, mỗi điều kiện có mức xử lý riêng:
 
@@ -108,6 +108,20 @@ Khi có snapshot, hệ thống tự đánh giá từng checklist item. Khi fail,
 | 3 | Lượt xem không giảm | ⚠️ Warning | View có thể dao động tự nhiên, cần admin đánh giá |
 
 **Khi hệ thống không lấy được bằng chứng** (crawl fail): tất cả checklist item ở trạng thái "Chưa xác minh" → chờ admin đánh thủ công.
+
+#### Checklist-as-Gate — Validation bắt buộc
+
+> **Nguyên tắc cốt lõi:** Checklist là **cổng bắt buộc** (mandatory gate) cho mọi quyết định trạng thái, không phải gợi ý mềm.
+
+Hệ thống **không cho phép** admin duyệt/từ chối nếu checklist chưa đủ điều kiện:
+
+| Hành động | Điều kiện bắt buộc |
+|-----------|-------------------|
+| **Duyệt** | Tất cả checklist items đã pass (không còn item chưa xác minh, không có fail) |
+| **Từ chối** | Có ít nhất 1 checklist item fail (tất cả items đã được đánh giá) |
+| **Override** | Item đã ở trạng thái cuối (đã duyệt/đã từ chối) + lý do tối thiểu 10 ký tự |
+
+Điều này đảm bảo mọi quyết định đều có bằng chứng rõ ràng từ checklist.
 
 #### Admin xử lý checklist "Chưa xác minh"
 
@@ -135,17 +149,19 @@ Khi checklist item ở trạng thái ⚠️ Chưa xác minh (do crawl fail hoặ
 | **Hủy nhanh** | Admin mở link, thấy video đã xóa → fail tất cả item cùng lúc |
 | **Đánh từng item** | Một số item pass, một số fail → đánh riêng từng cái |
 
-Sau khi admin đánh xong tất cả item chưa xác minh → hệ thống tổng hợp lại kết quả cuối cùng.
+Sau khi admin đánh xong tất cả item chưa xác minh → hệ thống tự tổng hợp lại kết quả cuối cùng.
 
-#### Tổng hợp kết quả
+#### Tổng hợp kết quả (Đề xuất)
 
-| Kết quả | Điều kiện | BTC cần làm gì? |
+| Đề xuất | Điều kiện | BTC cần làm gì? |
 |---------|-----------|----------------|
-| **Tự động duyệt** | Tất cả checklist pass | Không cần làm gì |
-| **Tự động hủy** | Bất kỳ checklist nào fail với mức auto reject | Không cần làm gì (có thể override) |
+| **Đề xuất duyệt** | Tất cả checklist pass | Xác nhận → hệ thống tự áp dụng trạng thái |
+| **Đề xuất huỷ** | Bất kỳ checklist nào fail với mức auto reject | Xác nhận → hệ thống tự áp dụng trạng thái (có thể override) |
 | **Cần xem xét** | Có warning hoặc có item chưa xác minh | Admin đánh thủ công từng item, sau đó hệ thống tổng hợp |
 
-BTC vẫn có toàn quyền override bất kỳ kết quả nào, kèm lý do được ghi nhận vào hệ thống.
+> **Luồng xác nhận:** Admin xem bằng chứng (checklist) trước → bấm xác nhận → hệ thống tự áp dụng trạng thái. Không cần thao tác "Áp dụng kết quả" riêng.
+
+BTC vẫn có toàn quyền override bất kỳ kết quả nào, kèm lý do tối thiểu 10 ký tự được ghi nhận vào hệ thống (audit trail).
 
 ---
 
@@ -187,8 +203,8 @@ Khi tất cả đợt hoàn thành, hệ thống gợi ý admin đóng campaign 
 
 | Phiên bản | Vấn đề giải quyết | Nội dung cốt lõi | Deadline | Trạng thái |
 |-----------|------------------|-----------------|----------|-----------|
-| **V2** | Không có dữ liệu để đối soát | Snapshot hàng ngày, hiển thị trong đối soát & export | 28/02/2026 | Đang phát triển |
-| **V3** | Đối soát thủ công, tốn thời gian | Checklist đối soát, phân loại tự động | Tháng 3/2026 | Chờ phát triển |
+| **V2** | Không có dữ liệu để đối soát | Snapshot hàng ngày, hiển thị trong đối soát & export | 28/02/2026 | ✅ Hoàn thành |
+| **V3** | Đối soát thủ công, tốn thời gian | Checklist đối soát, đề xuất tự động, validation gate | 28/02/2026 | ✅ Hoàn thành |
 | **V4** | Tạo đợt thủ công, influencer không biết kết quả | Lịch đối soát tự động, thông báo creator, kháng cáo | Sau tháng 3 | Chờ phát triển |
 
 ---
@@ -198,18 +214,65 @@ Khi tất cả đợt hoàn thành, hệ thống gợi ý admin đóng campaign 
 ```
 [Admin tạo đợt đối soát thủ công (V3) hoặc hệ thống tự tạo theo lịch (V4)]
              ↓
-[Hệ thống dùng snapshot gần nhất → evaluate checklist → phân loại tự động]
+[Admin bấm "Đánh giá" → hệ thống evaluate checklist từ snapshot]
              ↓
-[BTC nhận thông báo: "X content cần xem xét"]
+[Hệ thống hiển thị kết quả: X đề xuất duyệt / Y đề xuất huỷ / Z cần xem xét]
              ↓
-[BTC vào xem — chỉ review nhóm "Cần xem xét" và "Chưa xác minh"]
+[BTC dùng bộ lọc "Đề xuất" để xem từng nhóm]
+             ↓
+[Với mỗi item: xem checklist → Smart CTA hiển thị hành động phù hợp]
+  ├─ Đề xuất duyệt → Bấm "Duyệt" xác nhận
+  ├─ Đề xuất huỷ → Bấm "Từ chối" xác nhận
+  └─ Cần xem xét → Đánh thủ công từng checklist item → xác nhận
+             ↓
+[Hệ thống tự áp dụng trạng thái sau khi admin xác nhận]
+             ↓
+[BTC có thể override bất kỳ item nào đã quyết định (kèm lý do)]
              ↓
 [BTC bấm "Công bố kết quả"]
              ↓
 [BTC bấm "Chốt thanh toán" → sang bộ phận tài chính]
-             ↓
-[Hệ thống tự tạo đợt tiếp theo nếu còn lịch]
 ```
+
+---
+
+## Giao Diện Admin — Các Thành Phần Chính (V3)
+
+#### Smart CTA — Nút hành động thông minh
+
+Mỗi item đối soát hiển thị một nút CTA thay đổi theo ngữ cảnh:
+
+| Trạng thái | CTA hiển thị | Màu | Hành động |
+|-----------|-------------|-----|-----------|
+| Đã duyệt | "Đã duyệt" | Xanh lá | Chỉ xem (có thể override) |
+| Đã từ chối | "Đã từ chối" | Đỏ | Chỉ xem (có thể override) |
+| Có item chưa xác minh | "Cần xem xét (X)" | Cam | Bấm → mở checklist panel |
+| Có item fail | "Từ chối" | Đỏ | Bấm → mở checklist panel |
+| Tất cả pass | "Duyệt" | Xanh lá | Bấm → mở checklist panel |
+
+#### Checklist Panel — Bảng bằng chứng
+
+Khi mở checklist panel, admin thấy:
+- Danh sách từng điều kiện checklist với trạng thái (✅/❌/⚠️)
+- Bằng chứng từ snapshot (view count, hashtag, trạng thái video)
+- Nút đánh thủ công cho item chưa xác minh
+- Nút xác nhận cuối cùng (Duyệt/Từ chối) kèm modal xác nhận
+
+#### Bộ lọc đề xuất
+
+Admin có thể lọc danh sách theo đề xuất:
+- **Đề xuất duyệt** — items hệ thống gợi ý approve
+- **Đề xuất huỷ** — items hệ thống gợi ý reject
+- **Cần xem xét** — items cần admin review thủ công
+
+#### File Export — Cột mới
+
+File export bổ sung các cột checklist:
+- Video truy cập được (✅/❌/⚠️)
+- Hashtag đúng (✅/❌/⚠️)
+- View không giảm (✅/❌/⚠️)
+- Admin xác nhận (✅/❌/⚠️)
+- Đề xuất (Đề xuất duyệt / Đề xuất huỷ / Cần xem xét)
 
 ---
 
@@ -233,8 +296,14 @@ REJECTED           → Đợt này bị từ chối
 **Hỏi: Nếu một đợt bị từ chối, đợt tiếp theo có tự động tạo không?**
 → Có. "Từ chối" cũng được coi là "đã xong" — hệ thống vẫn chuyển sang đợt tiếp theo đúng lịch.
 
-**Hỏi: BTC có thể can thiệp vào kết quả phân loại tự động không?**
-→ Có. Với các item bị "Tự động hủy" hoặc "Cần xem xét", BTC vẫn có thể override, kèm lý do ghi nhận vào hệ thống.
+**Hỏi: BTC có thể can thiệp vào kết quả đề xuất tự động không?**
+→ Có. Sau khi item đã được duyệt hoặc từ chối, BTC vẫn có thể override kèm lý do (tối thiểu 10 ký tự). Hệ thống ghi nhận đầy đủ: ai override, từ trạng thái nào sang trạng thái nào, lý do, thời điểm.
+
+**Hỏi: Admin có thể duyệt item mà chưa xem checklist không?**
+→ Không. Checklist là cổng bắt buộc — admin phải đảm bảo tất cả điều kiện đã được đánh giá (pass hoặc fail) trước khi hệ thống cho phép duyệt hoặc từ chối.
+
+**Hỏi: Khi admin đánh giá thủ công 1 điều kiện, hệ thống xử lý thế nào?**
+→ Hệ thống merge kết quả đánh giá thủ công với kết quả tự động. Điều kiện đã được admin đánh sẽ giữ nguyên, các điều kiện còn lại hệ thống tự evaluate từ snapshot.
 
 **Hỏi: Khi hệ thống không crawl được video thì sao?**
 → Tất cả checklist item chuyển sang "Chưa xác minh". Admin mở link thủ công và đánh trạng thái cho từng điều kiện.
