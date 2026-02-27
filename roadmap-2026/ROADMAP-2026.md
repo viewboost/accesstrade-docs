@@ -2,7 +2,30 @@
 
 **Dự án:** Pub2 Affiliate Integration
 **Timeline:** Tháng 3 - Tháng 8, 2026
-**Cập nhật:** 2026-02-11
+**Cập nhật:** 2026-02-28
+
+---
+
+## TIMELINE TỔNG HỢP 3 DỰ ÁN
+
+> **Ghi chú:** Timeline hiện tại được fill tạm giống nhau. Cần rà soát và cập nhật deadline riêng cho từng dự án.
+
+| # | Tính năng | Priority | T-Fluencers | VCreator | Ambassador |
+|---|-----------|:--------:|-------------|----------|------------|
+| 1 | Mở rộng MXH (Threads & Facebook Posts) | P1 | 01/03 → 15/03 | 01/03 → 15/03 | ✅ Done (15/02) |
+| 2 | Kiểm tra điều kiện tham gia (Pre-Submission Checklist) | P0 | 15/03 → 31/03 | 15/03 → 31/03 | ✅ Done (15/02) |
+| 3 | Thưởng hiệu suất (Bonus Reward) | P1 | 15/03 → 31/03 | 15/03 → 31/03 | ✅ Done |
+| 4 | Thư viện Influencer - Xây dựng Database | P0 | 16/03 → 15/04 | 16/03 → 15/04 | 16/03 → 15/04 |
+| 5 | Brand Dashboard - Hiện đại hóa | P1 | ✅ Done (28/02) | 15/03 → 31/03 | 15/03 → 31/03 |
+| 6 | Kết nối Affiliate Programs với Campaigns | P0 | 01/04 → 30/04 | 01/04 → 30/04 | 01/04 → 30/04 |
+| 7 | Trợ lý AI thiết lập chiến dịch | P1 | 01/04 → 15/04 | 01/04 → 15/04 | 01/04 → 15/04 |
+| 8 | Thư viện Influencer - Tìm kiếm & Khám phá | P0 | 16/04 → 30/04 | 16/04 → 30/04 | 16/04 → 30/04 |
+| 9 | Phát hiện gian lận - Nâng cấp ML | P0 | 16/04 → 15/05 | 16/04 → 15/05 | 16/04 → 15/05 |
+| 10 | Thư viện Influencer - Chấm điểm & Matching | P1 | 01/05 → 15/05 | 01/05 → 15/05 | 01/05 → 15/05 |
+| 11 | Quản lý vận hành - Task & Chấm điểm hiệu suất | P1 | 01/05 → 30/05 | 01/05 → 30/05 | 01/05 → 30/05 |
+| 12 | Thư viện Influencer - Đặt chỗ & Booking | P1 | 15/05 → 30/05 | 15/05 → 30/05 | 15/05 → 30/05 |
+| 13 | Tự động hóa vòng đời chiến dịch | P1 | 15/05 → 30/05 | 15/05 → 30/05 | 15/05 → 30/05 |
+| 14 | Cổng Influencer - Hiện đại hóa UX/UI | P1 | 15/05 → 30/05 | 15/05 → 30/05 | 15/05 → 30/05 |
 
 ---
 
@@ -1207,6 +1230,6 @@ Campaign Brand A "Thẻ tín dụng review" lifecycle:
 → Retention tăng 15% (users quay lại nhiều hơn vì UX tốt)
 
 
-**Cập nhật:** 2026-02-11
-**Version:** 3.0 - Enhanced with detailed benefits and implementation
+**Cập nhật:** 2026-02-28
+**Version:** 3.1 - Thêm bảng timeline tổng hợp 3 dự án
 **Người tạo:** Diso Team
