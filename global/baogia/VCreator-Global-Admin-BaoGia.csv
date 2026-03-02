@@ -1,0 +1,363 @@
+STT,Objective,Feature,Use case,Note,ADR Reference,Deadline,Status,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Phase
+,,,,,,,,,,,,,,,,
+,ADMIN — VCreator Global Platform,,,,,,,,,,,,,,,,
+,"Tổng quan: Báo giá phát triển Admin Panel cho VCreator Global. 4 roles: Local Ops, Local Finance, Local Admin, Global Admin. Mỗi country có local ops team riêng (ADR-000). Data isolation bắt buộc.",,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,
+,ADMIN INFRASTRUCTURE,,,,ADR-001 + ADR-002,,,,,,,,,,,,
+1,Admin Infrastructure,[Admin] Admin Authentication,"Admin login: email/password. MFA optional (recommended cho Finance + Global Admin). Session management.","- Email/password authentication (tách biệt OAuth Creator)
+- MFA optional (TOTP hoặc SMS)
+- Session management: timeout configurable per role
+- Logout all sessions (admin force)
+- Password policy enforcement",ADR-002,D+15,,4,8,40,24,12,0,4,8,100,1
+2,,[Admin] Permission System — RBAC,"Role-based access control: 4 roles, country-scoped, partner-scoped. API-level enforcement.","- 4 roles: global_admin, local_admin, local_finance, local_ops
+- Country-scoped: local roles chỉ access data country mình
+- Partner-scoped: nếu admin gắn partner → chỉ data partner đó
+- API middleware enforce permissions per endpoint
+- Permission matrix: role × resource × action
+- Deny by default — whitelist approach",ADR-001,D+15,,0,12,48,8,16,0,8,8,100,1
+3,,[Admin] Admin Panel i18n,"Admin panel đa ngôn ngữ: Filipino, Vietnamese, English. Dùng chung i18n framework với Creator.","- Reuse i18n framework (ADR-003)
+- Admin-specific locale files
+- Language switcher trong admin panel
+- Fallback: English
+- Đa ngôn ngữ cho labels, buttons, messages, tooltips",ADR-003,D+20,,0,2,16,24,8,0,4,4,58,1
+4,,[Admin] Audit Trail Service,"Immutable audit log: auto-log mọi action quan trọng. Searchable, filterable, exportable.","- Auto-log: CRUD campaigns, content moderation, KYC decisions, payment, role changes, config changes
+- Immutable: không edit/delete được
+- Fields: actor, action, resource, country, timestamp, IP, user_agent
+- Retention policy configurable
+- Performance: async write, bulk indexing",ADR-001,D+20,,2,8,40,0,8,0,4,8,70,1
+5,,[Admin] Admin Activity Dashboard,"Ai đang online, recent actions, system health overview.","- Online admins per country
+- Recent actions feed (realtime)
+- System health: API latency, error rate
+- Quick links per role",ADR-001,D+35,,0,2,16,20,4,0,2,4,48,2
+,,,,,,,,,,,,,,,,
+,LOCAL OPS — Content Moderation & Creator Management,,,,,,,,,,,,,,,,
+6,Content Moderation,[Ops] Content Moderation Queue,"Queue content chờ duyệt. Sort, filter theo campaign/platform/date. Optimized cho throughput.","- Queue sortable: newest, oldest, priority
+- Filter: campaign, platform (TikTok/FB/IG), date range, creator
+- Count hiển thị: ""245 content chờ duyệt""
+- Auto-refresh khi có content mới
+- Keyboard shortcuts cho power users (j/k navigate, a approve, r reject)",ADR-001,D+20,,0,4,32,32,12,4,4,8,96,1
+7,,[Ops] Content Inline Preview,"Xem nhanh content: thumbnail, link social, hashtag, creator info — không cần mở tab mới.","- Inline preview panel (side panel hoặc modal)
+- Thumbnail/video preview
+- Social media link (click-to-open)
+- Hashtag verification (highlight required hashtags)
+- Creator info: name, avatar, KYC status, past submissions",ADR-001,D+20,,0,2,16,28,8,4,2,4,64,1
+8,,[Ops] Content Approve/Reject,"Approve 1-click, reject bắt buộc lý do. Request revision cho content cần sửa.","- Approve: 1-click (hoặc keyboard shortcut)
+- Reject: bắt buộc chọn reason category + optional note
+- Request Revision: yêu cầu sửa mà không reject hoàn toàn
+- Rejection reasons: predefined list + custom
+- Auto-notification to creator khi status change",ADR-001,D+20,,0,2,24,20,8,0,4,4,62,1
+9,,[Ops] Bulk Content Actions,"Select multiple content → approve/reject tất cả. Cho queue lớn.","- Multi-select (checkbox + shift-click)
+- Bulk approve: confirm dialog → approve all
+- Bulk reject: chọn chung 1 reason → apply all
+- Progress indicator cho bulk operations
+- Undo window (5 giây) sau bulk action",ADR-001,D+25,,0,2,16,16,4,0,2,4,44,1
+10,,[Ops] Auto-Reject Conditions,"Cấu hình auto-reject per campaign: video quá ngắn, thiếu hashtag, sai platform.","- Rule engine: conditions → auto-reject
+- VD: video_duration < 10s, missing_hashtag, wrong_platform
+- Per campaign configurable (Local Admin setup)
+- Auto-reject → notification to creator với lý do
+- Override: Ops có thể manually approve auto-rejected content",,D+30,,0,4,24,12,8,0,4,4,56,2
+11,,[Ops] Content Violation Reporting,"Report content vi phạm: spam, fake views, inappropriate content.","- Report button on content review
+- Violation categories: spam, fake, inappropriate, copyright
+- Escalate to Local Admin nếu nghiêm trọng
+- Track reported content history",,D+30,,0,2,16,12,4,0,2,4,40,2
+,,,,,,,,,,,,,,,,
+12,KYC Review,[Ops] KYC Review Queue,"Queue KYC pending review. Xem documents, approve/reject.","- Queue sortable: oldest first (FIFO), priority
+- Filter: status, document type, date
+- Count hiển thị: ""18 KYC chờ duyệt""",ADR-001,D+20,,0,2,16,20,8,0,2,4,52,1
+13,,[Ops] KYC Document Review,"Xem KYC documents: gov ID, bank info, tax ID. Access logged vì sensitive.","- Document viewer (image zoom, rotate)
+- Side-by-side: submitted info vs document
+- Sensitive data access → auto-log (actor, timestamp, document type)
+- Visual indicator: ""Bạn đang xem dữ liệu nhạy cảm""",ADR-002,D+20,,0,4,24,24,8,0,4,4,68,1
+14,,[Ops] KYC Approve/Reject,"Approve KYC hoặc reject với lý do cụ thể. Cho creator re-submit phần bị reject.","- Approve: confirm → status = approved → notification
+- Reject: bắt buộc lý do per field (ảnh mờ, sai thông tin, ...)
+- Partial reject: chỉ reject field cụ thể → creator re-submit field đó
+- Re-submission tracking: lần thứ mấy, history",ADR-002,D+20,,0,2,20,16,8,0,4,4,54,1
+,,,,,,,,,,,,,,,,
+15,Creator Management,[Ops] Creator List & Search,"Danh sách creators trong country. Search, filter, sort.","- Country-scoped (bắt buộc)
+- Search: tên, email, phone, referral code
+- Filter: KYC status, campaign, earnings range, active/suspended
+- Sort: newest, earnings, content count
+- Pagination + export to CSV",ADR-001,D+20,,0,2,16,20,8,0,2,4,52,1
+16,,[Ops] Creator Detail,"Chi tiết creator: profile, social accounts, KYC status, campaigns, earnings, content history.","- Profile info: name, avatar, social links, joined date
+- KYC status + documents (access logged)
+- Campaigns tham gia: active + completed
+- Earnings summary
+- Content history: submitted, approved, rejected
+- Activity timeline",ADR-001,D+20,,0,2,16,24,8,0,2,4,56,1
+17,,[Ops] Creator Ban/Suspend,"Ban hoặc suspend creator. Bắt buộc lý do + audit log.","- Suspend: tạm ngưng (có thể reactivate)
+- Ban: vĩnh viễn (settle earnings trước)
+- Bắt buộc lý do (predefined + custom)
+- Notification to creator
+- Audit log: ai ban, lý do, timestamp
+- Reactivate flow (Ops hoặc Admin)",ADR-001,D+25,,0,2,16,12,8,0,2,4,44,1
+18,,[Ops] Send Notifications to Creators,"Gửi notification cho creators trong country: all hoặc targeted.","- Target: all creators, by campaign, by status, custom list
+- Content: title + message (đa ngôn ngữ)
+- Channels: in-app, email
+- Schedule: send now hoặc schedule
+- History: sent notifications + delivery status",,D+30,,0,2,16,16,4,0,2,4,44,2
+19,,[Ops] Country Data Isolation,"Local Ops chỉ thấy data country mình. KHÔNG xem được country khác.","- Middleware enforce country_code filter
+- UI: không hiển thị country selector
+- API: reject requests cho country khác
+- Integration test: verify data isolation
+- This is NOT a separate feature — built into all Ops features above. Estimate = QC testing effort.",ADR-001,D+15,,0,0,0,0,16,0,2,0,18,1
+,,,,,,,,,,,,,,,,
+,LOCAL FINANCE — Reconciliation & Payment,,,,,,,,,,,,,,,,
+20,Reconciliation,[Finance] Create Reconciliation Batch,"Tạo batch đối soát: chọn period, campaigns, review earnings overview.","- Chọn date range (period)
+- Chọn campaigns (all hoặc specific)
+- Auto-calculate: total earnings, creator count, content count
+- Preview tổng trước khi proceed
+- Status: draft → under_review → approved → paid",ADR-004,D+25,,0,8,40,24,12,0,4,8,96,1
+21,,[Finance] Exchange Rate Lock,"Chốt tỷ giá khi đối soát. Accept suggested hoặc nhập manual (bắt buộc reason). Immutable sau confirm.","- Suggest: current realtime rate
+- Manual: nhập rate + bắt buộc reason
+- Validation: manual rate phải trong ±5% so với realtime → nếu ngoài → warning + double confirm
+- Preview: total payment amount VỚI rate sẽ chốt
+- 2-step: review → confirm → LOCK (immutable)
+- Audit: ai chốt, rate, source, reason",ADR-004,D+25,,0,4,24,16,8,0,4,4,60,1
+22,,[Finance] Reconciliation Detail Review,"Review chi tiết earnings trong batch: per creator, per campaign, per content.","- Table: creator, campaign, content count, gross earnings, tax, net
+- Drill-down: click creator → xem từng content
+- Highlight anomalies: earnings đột biến, unusual patterns
+- Export detail to Excel",ADR-004,D+25,,0,4,24,24,8,0,4,4,68,1
+23,,[Finance] Approve Reconciliation Batch,"Approve batch → lock calculations. Sau approve: rate + earnings IMMUTABLE.","- Review summary: total, rate, creator count
+- Approve button + confirmation dialog
+- Sau approve: batch locked, không thể edit
+- Sai → tạo adjustment batch mới (không sửa batch cũ)
+- Audit: ai approve, timestamp",ADR-004,D+25,,0,2,16,8,4,0,2,4,36,1
+24,,[Finance] Reconciliation History & Export,"Lịch sử các batch đối soát. Filter, search, export.","- List batches: date, status, total, rate, approver
+- Filter: status, date range, campaign
+- Export: Excel, PDF
+- Click → xem detail",ADR-004,D+25,,0,2,16,16,4,0,2,4,44,1
+,,,,,,,,,,,,,,,,
+25,Payment,[Finance] Payment Queue,"Danh sách payments cần execute từ batch đã approve.","- Queue từ approved reconciliation batches
+- Per creator: amount, bank/wallet, status
+- Prioritize: oldest batch first
+- Batch execute option",ADR-004,D+30,,0,4,24,20,8,0,4,4,64,1
+26,,[Finance] Execute Payment,"Trigger payment transfer: bank transfer hoặc e-wallet per country.","- Execute per creator hoặc bulk execute
+- Payment gateway integration per country
+- VN: bank transfer
+- PH: bank transfer + GCash
+- Confirmation dialog trước execute
+- Auto-retry configurable (1-3 times)",ADR-004,D+30,,4,8,48,16,16,0,4,8,104,1
+27,,[Finance] Payment Status Tracking,"Trạng thái payment per creator: pending, processing, completed, failed.","- Realtime status tracking (webhook from payment gateway)
+- Status: pending → processing → completed/failed
+- Failed: reason + retry button + manual resolve option
+- Notification to creator khi completed
+- Dashboard: success rate, avg processing time",ADR-004,D+30,,0,4,24,20,8,0,4,4,64,1
+28,,[Finance] Failed Payment Handling,"Xử lý payment thất bại: retry, manual resolve, refund to balance.","- Retry: auto hoặc manual trigger
+- Manual resolve: nhập reference number khi transfer qua kênh khác
+- Refund to balance: hoàn lại balance creator nếu không thể pay
+- Escalate to Local Admin nếu cần
+- All actions logged",ADR-004,D+30,,0,4,24,12,8,0,4,4,56,1
+29,,[Finance] Payment History & Export,"Lịch sử payment đầy đủ. Filter, search, export.","- Filter: status, date, creator, batch, amount range
+- Export: Excel, CSV
+- Per payment: amount, bank, reference, status, timestamp
+- Reconcile with bank statements",ADR-004,D+30,,0,2,16,16,4,0,2,4,44,1
+,,,,,,,,,,,,,,,,
+30,Financial Reporting,[Finance] Revenue Dashboard,"Dashboard doanh thu: local currency + USD reference. Confirmed vs estimated.","- Revenue summary: confirmed (chốt rate) vs estimated (realtime)
+- Visual phân biệt: confirmed (text đen) vs estimated (xám + ~)
+- Currency: local primary, USD reference
+- Period: daily, weekly, monthly, custom
+- Charts: trend lines",ADR-004,D+25,,0,4,24,28,8,4,4,4,76,1
+31,,[Finance] Tax Withholding Summary,"Tổng thuế đã khấu trừ per period. Per country tax rules.","- Total tax withheld per period
+- Breakdown per tax type (income tax, withholding)
+- Per creator summary
+- Export cho government filing",ADR-004,D+30,,0,2,16,16,4,0,2,4,44,1
+32,,[Finance] Annual Tax Summary per Creator,"Export tax summary per creator per year — cho creator khai thuế.","- Per creator: total gross, total tax, total net
+- Per year breakdown
+- Export PDF (per creator hoặc bulk)
+- Template per country tax authority format",,D+35,,0,2,16,12,4,0,2,4,40,2
+33,,[Finance] Exchange Rate History,"Xem rate history + rates đã chốt trong past reconciliations.","- Current realtime rate
+- Historical chart (daily)
+- Rates chốt per batch (labeled)
+- Compare: chốt rate vs realtime rate at time of lock",ADR-004,D+30,,0,2,16,16,4,0,2,4,44,1
+34,,[Finance] Financial Trend Charts,"Revenue, payouts, tax trends over time.","- Line/bar charts: revenue, payouts, tax
+- Granularity: daily, weekly, monthly
+- Compare periods
+- Export charts",ADR-004,D+35,,0,2,16,20,4,0,2,4,48,2
+,,,,,,,,,,,,,,,,
+,LOCAL ADMIN — Campaign & Country Management,,,,,,,,,,,,,,,,
+35,Campaign Management,[Admin] Create Campaign,"Tạo campaign: brand, reward, rules, deadline, content requirements. Đa ngôn ngữ.","- Campaign form: name, brand, description, reward structure, rules, deadline
+- Multilingual content (local + EN) — tab/switch per language
+- Content requirements: format, duration, platforms, hashtags
+- Image upload: banner, brand logo
+- Save draft / Submit for review",ADR-003,D+20,,0,8,40,40,16,4,8,8,124,1
+36,,[Admin] Campaign Approval Workflow,"Draft → Review → Active → Paused → Closed. State machine.","- Status flow: draft → pending_review → active → paused → closed
+- Transitions: chỉ allowed state changes
+- Review: Local Admin approve trước khi active
+- Pause/Resume: tạm dừng campaign khi cần
+- Auto-close khi deadline passed hoặc budget cap",ADR-001,D+20,,0,4,24,16,8,0,4,4,60,1
+37,,[Admin] Campaign Reward Structure,"Cấu hình reward: per view, per post, bonus tiers. Tiền tệ local.","- Reward types: per_view, per_post, per_engagement, bonus_tier
+- Bonus tiers: milestone-based (>1000 views → bonus)
+- Currency: local currency (from Country Config)
+- Budget estimation: estimated total cost
+- Editable khi campaign còn draft/paused",ADR-004,D+20,,0,4,24,20,8,0,4,4,64,1
+38,,[Admin] Campaign Budget Management,"Budget cap per campaign. Warning ở 90%, chặn submissions khi vượt.","- Set budget cap (local currency)
+- Real-time tracking: budget used vs budget cap
+- Alert: 75% → yellow, 90% → red warning
+- Auto-pause campaign khi 100% budget
+- Override: Admin có thể increase budget",,D+25,,0,2,16,16,4,0,2,4,44,1
+39,,[Admin] Campaign Clone,"Duplicate campaign với modifications. Tạo campaign tương tự nhanh.","- Clone from existing campaign
+- Pre-fill all fields
+- Editable: change dates, budget, specific fields
+- New campaign ID",,D+30,,0,2,12,12,4,0,2,2,34,2
+40,,[Admin] Campaign Analytics,"Dashboard per campaign: creators, content, views, earnings, budget.","- Metrics: creators joined, content submitted, approved/rejected, views, earnings
+- Budget used vs cap
+- Charts: timeline, breakdown by platform
+- Export to Excel",,D+25,,0,4,24,28,8,0,4,4,72,1
+,,,,,,,,,,,,,,,,
+41,Partner Management,[Admin] Partner List & Config,"Quản lý partners trong country: branding, landing page, campaign assignment.","- Partner list per country
+- Partner config: name, logo, branding colors, landing page
+- Assign campaigns to partner
+- Partner-scoped analytics",ADR-001,D+25,,0,4,24,24,8,0,4,4,68,1
+42,,[Admin] Partner Analytics,"Analytics per partner: creators, campaigns, revenue scoped by partner.","- Dashboard per partner
+- Metrics: creators, campaigns, content, revenue
+- Compare partners within country",,D+30,,0,2,16,20,4,0,2,4,48,2
+,,,,,,,,,,,,,,,,
+43,Team Management,[Admin] Invite/Add Staff,"Invite admin staff vào local team. Assign role (ops, finance).","- Invite by email
+- Assign role: local_ops, local_finance
+- Invitation link with expiry
+- Welcome email with getting started guide
+- Max staff per role configurable",ADR-002,D+20,,0,4,24,20,8,0,4,4,64,1
+44,,[Admin] Manage Team & Activity,"Remove/deactivate staff. View team activity log.","- Staff list: name, role, status, last active
+- Deactivate: revoke access immediately
+- Remove: delete account
+- Activity log per staff member
+- Audit: who changed roles, when",ADR-002,D+20,,0,2,16,16,4,0,2,4,44,1
+,,,,,,,,,,,,,,,,
+45,Country Dashboard,[Admin] Country Overview Dashboard,"Overview KPIs: creators, campaigns, content, revenue. Charts.","- KPIs: total creators, active campaigns, content this month, revenue
+- Charts: creator growth, content volume, revenue trend
+- Comparison: this month vs last month
+- Quick links to key actions per role",,D+25,,0,4,24,32,8,4,4,4,80,1
+46,,[Admin] Content Moderation Stats,"Thống kê moderation: approval rate, avg review time, queue size.","- Approval rate (%)
+- Average review time
+- Queue size trend
+- Ops performance (nếu nhiều Ops)",,D+30,,0,2,16,20,4,0,2,4,48,2
+,,,,,,,,,,,,,,,,
+47,CMS,[Admin] Content Management — T&C & Guides,"Quản lý CMS content: T&C, articles, guides, FAQ — đa ngôn ngữ.","- Content types: T&C, articles, guides, FAQ, announcements
+- Multilingual editor (tab per language)
+- Rich text editor (WYSIWYG)
+- Preview before publish
+- Versioning: save history, rollback
+- T&C: bắt buộc manual nhập (không AI translate)",ADR-003,D+25,,0,4,24,28,8,0,4,4,72,1
+48,,[Admin] Notification Templates,"Quản lý notification templates đa ngôn ngữ: campaign, payment, KYC notifications.","- Template per notification type per language
+- Variables: {creator_name}, {campaign_name}, {amount}, etc.
+- Preview with sample data
+- Test send",,D+30,,0,2,16,16,4,0,2,4,44,2
+,,,,,,,,,,,,,,,,
+49,Data Operations,[Admin] Bulk Import Creators,"Import creators từ CSV. Auto-create accounts nếu chưa có.","- Upload CSV file
+- Validation: required fields, format check
+- Preview: show errors before import
+- Auto-create user identity + country profile
+- Report: success/failed count, error details",,D+35,,0,4,24,16,8,0,4,4,60,2
+50,,[Admin] Export All Reports,"Export creators, campaigns, content, earnings to Excel/CSV.","- Export types: creators, campaigns, content, earnings, reconciliation
+- Format: Excel, CSV
+- Filters: date range, status, campaign
+- Async export cho data lớn (email link khi done)",,D+25,,0,2,16,12,4,0,2,4,40,1
+51,,[Admin] Local Admin Data Isolation,"Local Admin KHÔNG xem được data country khác.","- Same middleware as Ops (ADR-001)
+- Country selector: chỉ hiển thị country mình
+- Tất cả API responses scoped by country
+- Integration test: verify isolation
+- This is NOT a separate feature — built into all Admin features above. Estimate = QC testing effort.",ADR-001,D+15,,0,0,0,0,16,0,2,0,18,1
+,,,,,,,,,,,,,,,,
+,GLOBAL ADMIN — Cross-Country Management,,,,,,,,,,,,,,,,
+52,Global Dashboard,[Global] Cross-Country Dashboard,"Dashboard tổng hợp all countries. Revenue USD. Creators, campaigns per country.","- Summary cards: total revenue (USD), total creators, total campaigns
+- Per country breakdown table
+- Charts: revenue per country, creator growth per country
+- Trend: this month vs last month
+- Anomaly alerts: spike/drop per country",ADR-004,D+25,,0,8,32,36,12,4,4,8,104,1
+53,,[Global] Revenue Confirmed vs Estimated,"Revenue chia rõ: confirmed (chốt rate) vs estimated (realtime rate).","- Confirmed: dựa trên reconciliation batches đã approve
+- Estimated: dựa trên realtime rate × pending earnings
+- Visual: confirmed = solid, estimated = dashed/grey
+- Tooltip: giải thích sự khác biệt",ADR-004,D+25,,0,2,16,16,4,0,2,4,44,1
+54,,[Global] Country Comparison Charts,"So sánh performance giữa các countries: revenue, creators, content.","- Bar/line charts: revenue, creators, content by country
+- Time range: weekly, monthly, quarterly
+- Metrics selector: choose what to compare
+- Export charts",,D+30,,0,2,16,20,4,0,2,4,48,2
+55,,[Global] Drill-Down per Country,"Click country → xem chi tiết như Local Admin view.","- Click country card → navigate to country detail
+- View = Local Admin dashboard (read-only unless acting as local)
+- Breadcrumb: Global > Country Name",,D+25,,0,2,8,12,4,0,2,2,30,1
+,,,,,,,,,,,,,,,,
+56,Acting as Local,[Global] Acting as Local — Enter Mode,"Switch scope sang 1 country để thao tác. Bắt buộc reason. Visual indicator.","- Select country → enter ""acting as local"" mode
+- Bắt buộc nhập reason (text, min 10 chars)
+- Visual indicator rõ: banner ""Acting as [Philippines]"" (red/orange)
+- Session logged: start time, reason
+- Inherit Local Admin permissions for that country",ADR-001,D+30,,0,8,32,24,12,4,4,8,92,1
+57,,[Global] Acting as Local — Audit & Sensitive Data,"Mọi action logged. Sensitive data (KYC/bank) cần additional confirmation.","- ALL actions in acting-as-local → special audit category
+- Sensitive data access (KYC, bank) → additional confirmation dialog
+- Confirmation: ""Bạn đang xem KYC data của creator Philippines. Xác nhận?""
+- Session summary: khi exit mode → show summary of all actions taken
+- Local Admin có thể xem: ai đã act-as-local trong country mình",ADR-001,D+30,,0,4,24,16,8,0,4,4,60,1
+58,,[Global] Acting as Local — Exit Mode,"Thoát acting-as-local. Show session summary.","- Exit button always visible khi đang in mode
+- Session summary: duration, actions count, categories
+- Auto-exit after configurable timeout (default 30 min)
+- Log: exit time, total duration",,D+30,,0,2,8,8,4,0,2,2,26,1
+,,,,,,,,,,,,,,,,
+59,Country Configuration,[Global] Country Config CRUD,"CRUD country config: currency, languages, tax rules, KYC requirements, payment, social platforms.","- Form per country: all configurable fields
+- Currency, languages[], tax_rules{}, kyc_requirements{}
+- Payment gateway config per country
+- Social platforms per country
+- Feature flags per country → link to Feature Flags UI
+- All changes → audit log",ADR-001 + ADR-005,D+20,,0,8,32,32,12,4,4,8,100,1
+60,,[Global] Feature Flags Management,"Bật/tắt tính năng per country. Percentage rollout. Audit log.","- Flag list: name, status per country, description
+- Toggle: enabled, disabled, percentage rollout
+- Scope: global, per-country
+- History: changes per flag
+- Audit: who changed, when, from → to",ADR-005,D+20,,0,4,16,20,4,0,2,4,50,1
+,,,,,,,,,,,,,,,,
+61,User & Role Management,[Global] Admin User Management,"Tạo Local Admin accounts per country. Assign/revoke roles.","- Create admin: email, name, role, country
+- Assign role: global_admin, local_admin, local_finance, local_ops
+- 1 admin = 1 country (local roles)
+- Deactivate/reactivate admin
+- List all admins: filter by country, role, status
+- All changes → audit log",ADR-002,D+20,,0,4,24,24,8,0,4,4,68,1
+62,,[Global] Role Permission Matrix,"Xem permission matrix: role × resource × action. Config nếu cần.","- Matrix view: role vs resource (campaigns, content, KYC, payment, config)
+- Actions: view, create, edit, delete, approve
+- Read-only default (hardcoded roles) hoặc configurable
+- Export matrix for compliance",,D+25,,0,2,8,16,4,0,2,2,34,1
+,,,,,,,,,,,,,,,,
+63,Audit System,[Global] Audit Log Viewer,"Xem audit log toàn hệ thống. Search, filter, paginated.","- Search: keyword, actor name
+- Filter: country, role, action type, date range
+- Special filter: ""acting as local"" sessions
+- Pagination + infinite scroll
+- Detail view: full context per audit entry",ADR-001,D+25,,0,4,24,28,8,0,4,4,72,1
+64,,[Global] Acting-as-Local Session Viewer,"Xem riêng các session acting-as-local: ai, country nào, khi nào, làm gì.","- Session list: admin, country, start/end, reason, action count
+- Drill-down: xem từng action trong session
+- Export sessions
+- Alert nếu session bất thường (quá dài, quá nhiều sensitive data access)",,D+30,,0,2,16,20,4,0,2,4,48,2
+65,,[Global] Export Audit Logs,"Export audit logs to CSV/Excel. Filter trước khi export.","- Apply filters → export kết quả
+- Formats: CSV, Excel
+- Large exports: async + email link
+- Audit retention: configurable (default 1 year)",,D+30,,0,2,8,8,4,0,2,2,26,1
+,,,,,,,,,,,,,,,,
+66,Global Communications,[Global] Notifications to Local Teams,"Gửi notification cho Local Admin teams. Target by country/role. Scheduled.","- Target: all teams, specific country, specific role
+- Content: title + message (multilingual)
+- Schedule: send now hoặc schedule
+- History: sent, delivered, read status",,D+35,,0,2,16,16,4,0,2,4,44,2
+,,,,,,,,,,,,,,,,
+67,Global Reporting,[Global] Cross-Country Reports,"Revenue, creators, content comparison across countries. Export.","- Report types: revenue, creators, campaigns, content, payouts
+- Comparison: country vs country
+- Time range: monthly, quarterly, yearly
+- Export: Excel, PDF
+- Scheduled reports (email digest)",,D+30,,0,4,24,24,8,0,4,4,68,1
+68,,[Global] Tax Rules Management,"Quản lý tax rules per country. Update rates. Audit log.","- Tax rules per country: rate, bands, withholding type
+- CRUD: create/update rules (Global Admin only)
+- Effective date: new rules apply from specific date
+- History: all changes logged
+- Impact preview: simulate tax change impact",ADR-004,D+25,,0,4,24,16,8,0,4,4,60,1
+69,,[Global] System Health Dashboard,"System health: API latency, errors, per country metrics.","- API latency per country (avg, p95, p99)
+- Error rate per country
+- Active users (admin + creators)
+- Infrastructure: CPU, memory, DB connections
+- Alerting: threshold-based per metric",,D+35,,4,4,16,24,4,0,2,4,58,2
+,,,,,,,,,,,,,,,,
+,TỔNG HỢP,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,
+,"Phase 1 (Core — D+25)","","Admin Auth, RBAC, i18n, Audit, Content Moderation, KYC Review, Creator Management, Campaign CRUD, Team, Dashboard, CMS, Export, Country Config, Feature Flags, Admin Users, Audit Viewer, Tax Rules, Reconciliation, Payment Queue",,,,14,138,708,640,236,28,118,156,2038,
+,"Phase 2 (Enhancement — D+40)","","Activity Dashboard, Auto-Reject, Violation Report, Notifications, Campaign Clone, Partner Analytics, Mod Stats, Templates, Bulk Import, Country Comparison, Acting-as-Local Session, Export Audit, Global Notifications, Cross-Country Reports, System Health, Annual Tax Summary, Financial Trends",,,,4,46,304,328,100,4,46,70,902,
+,,,,,,,,,,,,,,,,
+,GRAND TOTAL,,,,,,18,184,1012,968,336,32,164,226,2940,
+,,,,,,,,,,,,,,,,
+,BÁO GIÁ TỔNG DỰ ÁN (all CSVs),,,,,,,,,,,,,,,,
+,Creator Features (Creator CSV),,,,,,22,100,648,736,212,28,110,228,2084,
+,Platform Core (PlatformCore CSV),,,,,,34,112,552,136,150,0,72,138,1194,
+,Admin Features (file này),,,,,,18,184,1012,968,336,32,164,226,2940,
+,GRAND TOTAL PROJECT,,,,,,74,396,2212,1840,698,60,346,592,6218,

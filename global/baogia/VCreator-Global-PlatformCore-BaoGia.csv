@@ -1,0 +1,130 @@
+STT,Objective,Feature,Use case,Note,ADR Reference,Deadline,Status,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Phase
+,,,,,,,,,,,,,,,,
+,PLATFORM CORE — VCreator Global,,,,,,,,,,,,,,,,
+,Tổng quan: Báo giá phát triển Platform Core (Multi-Tenancy + i18n + Currency + Tax + Infra). Đây là nền tảng shared cho tất cả personas (Creator + Admin + Global Admin). Chi tiết kiến trúc xem ADR: adr-platform-core.md,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,
+,MULTI-TENANCY CORE,,,,ADR-001,,,,,,,,,,,,
+1,Multi-Tenancy,[System] Country Config Service,"Country configuration: currency, language, tax rules, KYC requirements, payment config, OAuth providers, social platforms, feature flags.","- CRUD API cho country config (Global Admin only)
+- Per country: code, name, currency, languages[], tax_rules, kyc_requirements, payment_config, social_platforms[]
+- Cache Redis (invalidation on update)
+- Feature flags per country (ADR-005)
+- Audit log cho mọi config change
+- Seed data cho VN + PH",ADR-001 + ADR-005,D+15,,4,8,40,0,8,0,4,8,72,1
+2,,[System] Country Context Middleware,"Middleware tự động extract country_code → inject vào query context → enforce data isolation.","- Extract country_code từ: URL path (/ph/...) hoặc JWT claim
+- Validate: country_code trong danh sách active countries
+- Inject country_code vào request context
+- Tất cả DB queries auto-append country_code filter
+- Local Admin: chỉ data nước mình
+- Creator: chỉ data country profile đang active
+- Global Admin: cross-country hoặc filter specific
+- Zero data leak giữa countries (critical)",ADR-001,D+15,,0,8,40,0,12,0,4,8,72,1
+3,,[System] URL Country Routing,"URL format /{country_code}/... Country code 2 ký tự. Country selector landing page.","- URL: /ph/campaign/123, /vn/campaign/456
+- Country selector page tại root /
+- Redirect đúng country path sau chọn
+- Validation: chỉ accept configured countries
+- 404 cho invalid codes
+- Backward compatible: /vn/ cho existing VN URLs",ADR-001,D+15,,0,4,16,16,8,0,2,4,50,1
+4,,[System] Dual-Dimension Tenancy,"Mở rộng partner tenancy hiện tại thành country + partner.","- Hiện tại: { partner_code: ""techcombank"" }
+- Mới: { country_code: ""ph"", partner_code: ""brand_x"" }
+- Compound indexes: { country_code, partner_code, ... }
+- Queries filter cả 2 dimensions",ADR-001,D+20,,0,8,32,0,8,0,4,8,60,1
+,,,,,,,,,,,,,,,,
+,USER IDENTITY,,,,ADR-002,,,,,,,,,,,,
+5,User Identity,[System] Shared User Identity Model,"Refactor user model: tách User Identity (shared) vs Country Profile (per country).","- users collection: oauth, display_name, avatar, language_pref, active_country, country_profiles[]
+- country_profiles collection: user_id, country_code, kyc_status, kyc_data, bank, tax_id, contract, referral_code
+- Migration: existing VN users → tạo country_profile ""vn""
+- Index: { user_id, country_code } unique",ADR-002,D+15,,0,8,48,0,12,0,4,8,80,1
+6,,[System] Country Profile CRUD,"API tạo/đọc/cập nhật country profile. Cho phép user thêm country mới.","- POST /api/user/country-profile (tạo profile mới)
+- GET /api/user/country-profile/:cc (đọc profile)
+- PUT /api/user/country-profile/:cc (cập nhật)
+- Validation: country phải active, user chưa có profile country này
+- Sensitive fields encrypted (KYC, bank)",ADR-002,D+20,,0,4,24,0,8,0,2,4,42,1
+7,,[System] Country Context Switching,"API + logic switch active country cho user. Refresh scoped data.","- PUT /api/user/active-country (switch country)
+- Update active_country trong user identity
+- Frontend: refresh campaigns, earnings, content theo country mới
+- Last used country = default khi login lại",ADR-002,D+20,,0,4,16,16,8,0,2,4,50,1
+,,,,,,,,,,,,,,,,
+,INTERNATIONALIZATION (i18n),,,,ADR-003,,,,,,,,,,,,
+8,i18n,[System] Backend i18n — Locale Files,"Backend multi-language: locale files per language, API responses, error messages.","- Accept-Language header + user preference
+- Locale files: Vietnamese, English, Filipino/Tagalog, Indonesian (Phase 3)
+- Error messages đa ngôn ngữ
+- Notification templates đa ngôn ngữ
+- Fallback chain: manual choice → market default → English
+- Audit + hoàn thiện 17 locale dirs hiện có",ADR-003,D+20,,0,4,40,0,8,0,4,8,64,1
+9,,[System] Frontend i18n — Translation Framework,"Frontend i18n library integration. Locale loading, number/currency formatting.","- react-intl hoặc tương đương (phù hợp UmiJS stack)
+- Locale files loaded async (code splitting per language)
+- Toàn bộ UI labels, buttons, system messages
+- Number/currency format per locale: ₱1,000 vs 1.000₫ vs $1,000
+- Date format per locale
+- T&C, KV content theo language setting",ADR-003,D+25,,0,4,8,40,8,0,4,8,72,1
+10,,[System] Multilingual Content CMS,"Admin nhập content (T&C, campaign desc, notifications) per language. Preview + validation.","- Content editor có tab/switch per language
+- Data model: { language_code: content_body } per content item
+- Preview per ngôn ngữ trước publish
+- Validation: bắt buộc ít nhất 1 ngôn ngữ (local hoặc EN)
+- Warning nếu content thiếu bản dịch cho ngôn ngữ nào đó
+- Legal content (T&C): bắt buộc manual nhập (không AI translate)",ADR-003,D+25,,0,4,24,24,8,0,4,8,72,1
+,,,,,,,,,,,,,,,,
+,MULTI-CURRENCY & TAX,,,,ADR-004,,,,,,,,,,,,
+11,Currency & Tax,[System] Realtime Exchange Rate Service,"Lấy tỷ giá tham chiếu realtime từ bank authority/financial API. Cache Redis.","- API lấy realtime rate per country (bank authority / financial API)
+- Cache Redis với TTL configurable (default 15 min per country)
+- Fallback: nếu API fail → dùng rate gần nhất + hiển thị timestamp
+- Rate history lưu lại (lịch sử tỷ giá theo ngày)
+- Rate refresh interval configurable per country
+- Label rõ: ""Tỷ giá tham chiếu — không dùng cho thanh toán""",ADR-004,D+25,,0,4,32,0,8,0,4,8,56,1
+12,,[System] Reconciliation Rate (Chốt Rate),"Chốt tỷ giá khi đối soát. Immutable. Dùng cho payment + official reporting.","- Khi tạo reconciliation batch → suggest current rate
+- Admin chọn: accept rate hoặc nhập manual (bắt buộc reason)
+- Confirm → rate chốt (snapshot), gắn vào batch
+- IMMUTABLE sau confirm (sai → tạo adjustment batch)
+- Tất cả payment trong batch dùng cùng 1 chốt rate
+- Audit log: ai chốt, lúc nào, rate, source",ADR-004,D+30,,0,4,24,8,8,0,4,8,56,1
+13,,[System] Multi-Currency Display Service,"Currency config per country. Hiển thị local + USD reference. Format per locale.","- Currency config per country (from Country Config)
+- Display rules: Creator/Local = local primary + USD ref, Global = USD primary
+- UI phân biệt: realtime (≈ màu xám) vs chốt (text đen)
+- Number formatting per locale
+- Currency symbol position: ₱100 vs 100₫",ADR-004,D+20,,0,2,8,16,4,0,2,4,36,1
+14,,[System] Tax Calculation Engine,"Tax rules configurable per country. Net income = Gross - Income Tax.","- Tax rules per country: rate, bands, withholding rules
+- VN: thuế TNCN
+- PH: withholding tax
+- KHÔNG tính exchange fee vào net income
+- Transparent breakdown: Gross → Tax → Net
+- Updatable by Global Admin (audit log)
+- Annual tax summary generation per creator",ADR-004,D+25,,0,4,32,0,8,0,4,8,56,1
+,,,,,,,,,,,,,,,,
+,INFRASTRUCTURE,,,,ADR-001 + ADR-005,,,,,,,,,,,,
+15,Infrastructure,[Infra] Database Migration Scripts — VN Data,"Add country_code=""vn"" to all existing VN records. Idempotent, reversible, zero-downtime.","- Migration scripts cho tất cả MongoDB collections
+- Batch update: set country_code=""vn""
+- Add compound indexes: { country_code, existing_fields... }
+- Idempotent (chạy nhiều lần không sai)
+- Reversible (rollback plan)
+- Zero-downtime (background migration)
+- Validation report: data integrity check sau migration
+- Timing: scripts Phase 1, execution Phase 2/3 (sau PH go-live)",ADR-001,D+20,,8,8,40,0,8,0,4,8,76,1
+16,,[Infra] User Data Migration — Identity Split,"Migrate existing VN user data sang Shared Identity + Country Profile model.","- Tách users collection → users (identity) + country_profiles
+- Existing VN users: tạo country_profile ""vn"" per user
+- Backward compatible: API responses giữ nguyên format
+- Zero-downtime migration
+- Validation: user count, profile count match",ADR-002,D+20,,0,8,32,0,8,0,4,8,60,1
+17,,[Infra] Feature Flag System per Country,"Feature flags bật/tắt per country. Backend + frontend check.","- Tích hợp vào Country Config (ADR-005)
+- Flag CRUD (Global Admin only)
+- Scope: global, per-country
+- Backend: isFeatureEnabled(name, country_code) → bool
+- Frontend: flags fetched via API → conditional rendering
+- States: enabled, disabled, percentage rollout
+- Audit log cho flag changes",ADR-005,D+20,,2,4,24,8,4,0,2,4,48,1
+18,,[Infra] Monitoring & Observability per Country,"Country-level metrics, alerting, Elastic APM expansion.","- Country-level metrics (requests, errors, latency per country)
+- Elastic APM expansion cho multi-country tagging
+- Alerting per country (threshold configurable)
+- Dashboard per country health
+- Data isolation violation alert",ADR-001,D+30,,8,4,16,0,4,0,2,4,38,2
+19,,[Infra] Secrets Management per Country,"OAuth credentials, API keys, payment gateway secrets per country.","- Secrets store: encrypted config per country
+- OAuth credentials (shared — per ADR-002)
+- Payment gateway API keys per country
+- Exchange rate API keys per country
+- Rotation policy",ADR-001,D+20,,4,4,16,0,4,0,2,4,34,1
+,,,,,,,,,,,,,,,,
+,TỔNG HỢP,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,
+,Phase 1 (Core — D+25),,"Country Config, Middleware, URL Routing, Dual Tenancy, User Identity, i18n, Currency, Tax, Migration, Feature Flags, Secrets",,,,26,104,512,128,138,0,66,126,1100,
+,Phase 2 (Enhancement — D+40),,"Monitoring per Country, Reconciliation Rate",,,,8,8,40,8,12,0,6,12,94,
+,,,,,,,,,,,,,,,,
+,GRAND TOTAL,,,,,,34,112,552,136,150,0,72,138,1194,
