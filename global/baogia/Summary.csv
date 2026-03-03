@@ -1,0 +1,115 @@
+Module,Phase,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours)
+
+,TỔNG HỢP THEO MODULE,,,,,,,,,,
+,,,,,,,,,,,,
+
+,PLATFORM CORE,,,,,,,,,,
+,Phase 1 (Core — D+10~D+25),"Country Config, Middleware, URL Routing, Dual Tenancy, User Identity, i18n, Currency, Display Currency Pref, Tax, Feature Flags, Secrets",18,90,456,136,126,0,60,114,1000
+,Phase 2 (Enhancement — D+35),"Monitoring per Country, Reconciliation Rate",8,8,40,8,12,0,6,12,94
+,Platform Core TOTAL,,26,98,496,144,138,0,66,126,1094
+,,,,,,,,,,,,
+
+,CREATOR FEATURES,,,,,,,,,,
+,Phase 1 (Core — D+25~D+45),"Authentication, Landing, KYC, Campaign, Content, Earnings, Payout, Push Notifications, Currency Switcher",16,76,480,584,156,32,84,172,1600
+,Phase 2 (Enhancement — D+45~D+55),"Facebook Login, Deferred KYC, Leaderboard, E-Wallet, Receipt, Referral, Chart, Email Notifications, Notification Prefs, Account Deletion",6,26,176,172,60,0,28,60,528
+,Creator TOTAL,,22,102,656,756,216,32,112,232,2128
+,,,,,,,,,,,,
+
+,ADMIN FEATURES,,,,,,,,,,
+,Phase 1 (Core — D+20~D+45),"Admin Auth, RBAC, i18n, Audit, Content Moderation, KYC Review, Creator Management, Campaign CRUD, Team, Dashboard, CMS, Export, Country Config, Feature Flags, Admin Users, Audit Viewer, Tax Rules, Reconciliation, Payment Queue",14,138,708,640,236,28,118,156,2038
+,Phase 2 (Enhancement — D+45~D+55),"Activity Dashboard, Auto-Reject, Violation Report, Notifications, Campaign Clone, Partner Analytics, Mod Stats, Templates, Bulk Import, Country Comparison, Acting-as-Local Session, Export Audit, Global Notifications, Cross-Country Reports, System Health, Annual Tax Summary, Financial Trends",4,46,304,328,100,4,46,70,902
+,Admin TOTAL,,18,184,1012,968,336,32,164,226,2940
+,,,,,,,,,,,,
+
+,BRAND PORTAL,,,,,,,,,,
+,Phase 2A (Core — D+50~D+65),"Brand Auth, RBAC, Onboarding, Market Selection, Campaign Builder, Reward, Budget, Approval, Scheduling, Requirements, Hashtag, Creators List, Content Feed, Preview, Status Tracking, Dashboard, Campaign Analytics, Budget Overview, Cost Summary, Profile, Branding, Team, Data Isolation",8,72,412,448,148,24,72,100,1284
+,Phase 2B (Enhancement — D+65~D+75),"KYB, Campaign Clone, Brand Content Review, Creator Ranking, Content Analytics, ROI, Cross-Country, Export Reports, Invoice, Financial Reports, Custom Domain, Notification Prefs",4,30,204,188,68,0,30,44,568
+,Phase 3 (Advanced — D+85),API & Webhook Configuration,2,8,40,20,12,0,4,8,94
+,Brand Portal TOTAL,,14,110,656,656,228,24,106,152,1946
+,,,,,,,,,,,,
+
+,MIGRATION (TÁCH RIÊNG),,,,,,,,,,
+,Phase TBD,"Database Migration Scripts, User Data Migration",8,16,72,0,16,0,8,16,136
+,Migration TOTAL,,8,16,72,0,16,0,8,16,136
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+
+,TỔNG HỢP THEO PHASE,,,,,,,,,,
+,,,,,,,,,,,,
+
+Phase,Scope,,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours)
+Phase 1,"Platform Core (D+10~D+25) + Creator Core (D+25~D+45) + Admin Core (D+20~D+45)",,48,304,1644,1360,518,60,262,442,4638
+Phase 2,"Creator Enhancement (D+45~D+55) + Admin Enhancement (D+45~D+55) + Brand Portal Core (D+50~D+65)",,22,174,1096,1136,376,28,176,274,3282
+Phase 3,Brand Portal Advanced — API & Webhook (D+85),,2,8,40,20,12,0,4,8,94
+,,,,,,,,,,,,
+
+,GRAND TOTAL PROJECT (excl. Migration),,80,494,2820,2524,918,88,448,736,8108
+,,,,,,,,,,,,
+,Migration (TÁCH RIÊNG — chỉ khi cần),,8,16,72,0,16,0,8,16,136
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+
+,PHÂN BỔ NHÂN SỰ THEO ROLE,,,,,,,,,,
+,,,,,,,,,,,,
+Role,Total (hours),% of Total,,,,,,,,,
+DevOps,80,1.0%,,,,,,,,,
+SA,494,6.1%,,,,,,,,,
+BE,2820,34.8%,,,,,,,,,
+FE,2524,31.1%,,,,,,,,,
+QC,918,11.3%,,,,,,,,,
+Design,88,1.1%,,,,,,,,,
+BA,448,5.5%,,,,,,,,,
+PM,736,9.1%,,,,,,,,,
+TOTAL,8108,100%,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+
+,TECH STACK & TEAM COMPOSITION,,,,,,,,,,
+,"Timeline D+85 dưới đây dựa trên team composition sau:",,,,,,,,,,
+,,,,,,,,,,,,
+Role,Headcount,Type,Hours/tháng,Total Hours,Thời gian (tháng),Bottleneck?,,,,,,
+BE (Backend),2,Full-time,320,2820,8.8,★ BOTTLENECK,,,,,,
+FE (Frontend),2,Full-time,320,2524,7.9,,,,,,,
+QC (Tester),1,Full-time,160,918,5.7,,,,,,,
+PM (Project Manager),1,Full-time,160,736,4.6,,,,,,,
+SA (Solution Architect),0.5,Part-time,80,494,6.2,,,,,,,
+BA (Business Analyst),0.5,Part-time,80,448,5.6,,,,,,,
+DevOps,0.5,Part-time,80,80,1.0,,,,,,,
+Design,0.5,Part-time,80,88,1.1,,,,,,,
+TOTAL TEAM,8 người (4 full + 4 half),,1280,8108,~8.8 (theo bottleneck BE),,,,,,,
+,,,,,,,,,,,,
+,Tech Stack: Go/Echo (BE) + React/UmiJS (FE) + MongoDB + Redis + MinIO,,,,,,,,,,
+,"Timeline thực tế: ~9 tháng (8.8 tháng BE bottleneck + buffer). D+85 ngày làm việc ≈ 4.25 tháng calendar — CHỈ KHẢ THI nếu tăng team BE lên 4-5 người.",,,,,,,,,,
+,"Với team 2 BE: D+85 → D+175 (≈ 8.8 tháng). Hoặc giữ D+85 nếu tăng BE lên 4 người.",,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,GHI CHÚ,,,,,,,,,,
+,"1. Grand Total 8,108h = effort xây dựng platform (KHÔNG bao gồm onboard country)",,,,,,,,,,
+,"2. Migration (136h) tách riêng — chỉ khi cần migrate VN data",,,,,,,,,,
+,"3. Phase 1 = Platform Core (D+10~25) → Creator+Admin Core (D+20~45). Platform Core là foundation, phải xong trước. Creator + Admin overlap từ ~D+20.",,,,,,,,,,
+,"4. Phase 2 = Creator+Admin Enhancement (D+45~55) + Brand Portal Core (D+50~65). Brand Portal bắt đầu sau khi Admin Campaign + Content pipeline stable.",,,,,,,,,,
+,"5. Phase 3 = Brand Portal Advanced — API/Webhook (D+85). Sau khi Brand Portal core stable.",,,,,,,,,,
+,"6. Hệ thống VN cũ (ambassabor) tiếp tục chạy song song — KHÔNG bị ảnh hưởng",,,,,,,,,,
+,"7. Bottleneck = BE (2,820h / 2 người = 8.8 tháng). Muốn rút ngắn timeline → ưu tiên tăng BE.",,,,,,,,,,
+,"8. D+x trong báo giá = working days tương đối. Quy đổi: D+20 ≈ 1 tháng, D+40 ≈ 2 tháng, D+85 ≈ 4.25 tháng (nếu đủ team).",,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,
+,BÁO GIÁ RIÊNG — ONBOARD QUỐC GIA MỚI,,,,,,,,,,
+,"(Tách biệt khỏi báo giá xây dựng platform — áp dụng cho MỖI LẦN thêm country)",,,,,,,,,,
+,"(Chi tiết xem: VCreator-Global-NewCountry-BaoGia.csv)",,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,
+,,,,,,,,,,,,
+Category,Tasks,,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours)
+Legal & Compliance,5 tasks — Tax / KYC / Privacy / Legal Review / Business Compliance,,0,4,0,0,0,0,48,24,76
+Platform Configuration,9 tasks — Country Config / Currency / Tax / KYC / Bank / OAuth / Flags / Secrets / Monitoring,,6,16,72,10,28,0,14,18,164
+Content & Localization,7 tasks — UI Translation / T&C / Notifications / Landing Page / Templates / Training Docs,,0,0,20,36,26,6,40,16,144
+Local Ops Setup,3 tasks — Recruit Team / Create Accounts / Training,,0,0,4,0,4,0,10,18,36
+Payment & Finance,2 tasks — Payment Gateway Test / Reconciliation Setup,,2,4,16,4,16,0,4,4,50
+QA & Launch,3 tasks — E2E Test / Data Isolation / UAT + Go-Live,,2,4,20,16,48,0,6,8,104
+,,,,,,,,,,,,
+,TOTAL PER NEW COUNTRY (29 tasks),,10,28,132,66,122,6,122,88,574
+,,,,,,,,,,,,
+,"Timeline: ~4 tuần (parallel execution). Critical path: Legal Review (2-4 tuần lead time).",,,,,,,,,,
+,"Country thứ 3+ estimate ~70-80% nhờ experience + templates.",,,,,,,,,,

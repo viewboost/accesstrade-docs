@@ -1,0 +1,218 @@
+STT,Objective,Feature,Use case,Note,ADR Reference,Deadline,Status,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Phase
+
+,BRAND PORTAL — VCreator Global Platform,,,,,,,,,,,,,,,,
+,"Tổng quan: Báo giá phát triển Brand Portal (Partner Admin) cho VCreator Global. Brand/Partner tự quản lý campaigns, theo dõi content, xem analytics, quản lý budget. 3 roles: Brand Owner, Brand Manager, Brand Viewer. Data isolation: country_code + partner_code (ADR-001).",,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,
+
+,BRAND AUTHENTICATION & ONBOARDING,,,,ADR-002,,,,,,,,,,,,
+1,Brand Authentication,[Brand] Brand Login & MFA,Brand login bằng email/password. MFA bắt buộc cho Owner. Session management.,"- Email/password authentication (tách biệt OAuth Creator)
+- MFA bắt buộc cho Brand Owner (TOTP hoặc SMS)
+- MFA optional cho Manager/Viewer
+- Session management: timeout configurable
+- Password policy enforcement
+- Forgot password flow",ADR-002,D+50,,2,8,32,20,8,0,4,8,82,2A
+2,,[Brand] Brand RBAC — 3 Roles,"Role-based access: Brand Owner (full), Brand Manager (campaigns + content), Brand Viewer (read-only).","- 3 roles: brand_owner, brand_manager, brand_viewer
+- Brand Owner: full access (team, settings, campaigns, finance)
+- Brand Manager: campaigns, content, creators, basic analytics
+- Brand Viewer: read-only analytics, content view
+- API middleware enforce brand + role permissions
+- Tích hợp vào RBAC system hiện có (ADR-002)",ADR-001 + ADR-002,D+50,,0,8,40,8,12,0,4,8,80,2A
+3,,[Brand] KYB — Know Your Business,"Verify business entity: business license, tax ID, company info. Configurable per country.","- KYB form per country (configurable requirements)
+- VN: Giấy phép kinh doanh + MST doanh nghiệp
+- PH: SEC Registration + TIN + Mayor's Permit
+- Document upload (encrypted storage)
+- KYB status: pending → under_review → approved/rejected
+- Deferred KYB: cho tạo campaign draft, KYB cần trước khi go-live",ADR-001,D+70,,0,4,32,24,12,0,4,8,84,2B
+4,,[Brand] Brand Onboarding Wizard,Step-by-step onboarding: profile → branding → market selection → first campaign guide.,"- Guided wizard sau khi login lần đầu
+- Step 1: Company profile (name, logo, website)
+- Step 2: Branding setup (colors, covers)
+- Step 3: Market selection (chọn countries)
+- Step 4: First campaign guide (optional)
+- Skip & complete later available
+- Progress tracker",ADR-001,D+50,,0,2,16,24,8,4,4,4,62,2A
+5,,[Brand] Brand Country/Market Selection,Chọn countries sẽ chạy campaign. Activate/deactivate markets.,"- Danh sách active countries trên platform
+- Brand chọn markets sẽ hoạt động
+- Per market: currency, language info hiển thị
+- Activate/deactivate market (không xóa data)
+- Market switcher trong Brand Portal header",ADR-001,D+50,,0,2,16,16,4,0,2,4,44,2A
+,,,,,,,,,,,,,,,,
+
+,CAMPAIGN MANAGEMENT,,,,,,,,,,,,,,,,
+6,Campaign Management,[Brand] Campaign Builder,"Tạo/sửa campaign: wizard multi-step, multilingual content, preview trước submit.","- Campaign form wizard: info → reward → requirements → content → preview
+- Multilingual content per country (local + EN)
+- Rich text editor cho description
+- Image upload: banner, brand assets
+- Preview trước submit
+- Save as draft
+- Validation: required fields per country",ADR-003,D+55,,0,8,48,48,16,4,8,8,140,2A
+7,,[Brand] Campaign Reward Structure,"Cấu hình reward: per view, per post, bonus tiers. Local currency.","- Reward types: per_view, per_post, per_engagement, bonus_tier
+- Bonus tiers: milestone-based (>1000 views → bonus)
+- Currency: local currency per country (from Country Config)
+- Budget estimation: estimated total cost based on reward + target creators
+- Editable khi campaign còn draft",ADR-004,D+55,,0,4,24,20,8,0,4,4,64,2A
+8,,[Brand] Campaign Budget Management,Set budget cap per campaign. Track spending realtime. Alert thresholds.,"- Set budget cap (local currency)
+- Realtime tracking: budget used vs cap
+- Alerts: 75% → yellow, 90% → red, 100% → auto-pause option
+- Budget increase request (nếu cần admin approval)
+- Budget summary per campaign",ADR-004,D+55,,0,2,16,16,4,0,2,4,44,2A
+9,,[Brand] Campaign Approval Workflow,Brand draft → submit → Local Admin review → approved/rejected. Feedback loop.,"- Status flow: draft → submitted → admin_review → approved/rejected → active
+- Submit: brand gửi campaign cho Admin review
+- Admin review: Local Admin approve/reject (với feedback)
+- Rejected: brand sửa theo feedback → re-submit
+- Approved: brand có thể activate campaign
+- Notification mỗi lần status change",ADR-001,D+55,,0,4,24,16,8,0,4,4,60,2A
+10,,[Brand] Campaign Scheduling & Lifecycle,Schedule start/end. Pause/resume. Auto-close khi hết deadline hoặc budget.,"- Schedule: set start date + end date
+- Auto-activate khi đến start date (nếu approved)
+- Pause/Resume: brand tạm dừng campaign
+- Auto-close: hết deadline hoặc budget cap reached
+- Status badges rõ ràng",ADR-001,D+55,,0,2,16,12,4,0,2,4,40,2A
+11,,[Brand] Campaign Clone & Templates,Clone campaign existing. Template library cho reuse cross-country.,"- Clone from existing campaign (same country hoặc cross-country)
+- Pre-fill all fields, editable
+- Template library: save campaign as template
+- Apply template to different country → auto-adjust currency, language
+- Template sharing per brand team",ADR-001,D+70,,0,4,24,20,8,0,4,4,64,2B
+12,,[Brand] Content Requirements Builder,"Visual checklist tạo content requirements: format, duration, platforms, hashtags.","- Drag-drop requirement builder
+- Predefined items: video duration, platform, hashtags, mentions
+- Custom requirements (text)
+- Preview: hiển thị cho Creator sẽ thấy gì
+- Per campaign, đa ngôn ngữ",ADR-003,D+55,,0,2,8,20,4,4,2,4,44,2A
+13,,[Brand] Hashtag Management,Quản lý hashtags per campaign. Auto-assign personal hashtag per creator.,"- Campaign hashtags: brand sets required hashtags
+- Personal hashtag: auto-generated per creator per campaign
+- Hashtag list view: all hashtags + copy
+- Validation: check hashtag uniqueness
+- Reuse i18n cho hashtag format per country",ADR-001,D+55,,0,2,16,12,4,0,2,4,40,2A
+,,,,,,,,,,,,,,,,
+
+,CREATOR & CONTENT MONITORING,,,,,,,,,,,,,,,,
+14,Content Monitoring,[Brand] Campaign Creators List,Danh sách creators đã join campaign của brand. Stats per creator (NO PII).,"- Per campaign: list creators đã join
+- Info shown: display name, avatar, content count, views, engagement
+- NO PII: không hiển thị KYC, bank, tax, email, phone
+- Sort: by views, content count, engagement
+- Filter: active, completed
+- Pagination",ADR-001,D+60,,0,2,16,20,8,0,2,4,52,2A
+15,,[Brand] Content Feed & Queue,"All content submitted cho brand's campaigns. Filterable, searchable.","- Content list scoped by brand's campaigns
+- Filter: campaign, platform, status, date range
+- Sort: newest, most views, status
+- Count: ""156 content cho campaigns của bạn""
+- Auto-refresh khi có content mới",ADR-001,D+60,,0,2,16,24,8,0,2,4,56,2A
+16,,[Brand] Content Inline Preview,"Xem nhanh content: thumbnail, video preview, social link, hashtag check.","- Inline preview panel (side panel hoặc modal)
+- Thumbnail/video preview
+- Social media link (click-to-open new tab)
+- Hashtag verification: highlight required hashtags present/missing
+- Creator info: display name, avatar (NO PII)",ADR-001,D+60,,0,2,16,24,8,4,2,4,60,2A
+17,,[Brand] Brand Content Review,Brand approve/reject content trước khi Ops review (optional per campaign config).,"- Feature flag: enable brand review per campaign
+- If enabled: content → brand review → ops review → approved
+- If disabled: content → ops review → approved (brand chỉ view)
+- Brand approve/reject actions
+- Reject: bắt buộc reason
+- KHÔNG thay thế Ops review — chỉ pre-screen",ADR-005,D+70,,0,4,32,20,12,0,4,4,76,2B
+18,,[Brand] Content Status Tracking,Pipeline view: submitted → brand review → ops review → approved/rejected.,"- Visual pipeline/kanban view per campaign
+- Status counts per stage
+- Click → xem detail
+- Filter by campaign
+- Notification khi content thay đổi status",ADR-001,D+60,,0,2,16,20,4,0,2,4,48,2A
+19,,[Brand] Creator Performance Ranking,Top creators per campaign by views/engagement. Leaderboard.,"- Per campaign leaderboard
+- Metrics: views, engagement, content count
+- Top 10/20/50 creators
+- Charts: bar chart performance comparison
+- Export top creators list",ADR-001,D+70,,0,2,16,20,4,0,2,4,48,2B
+,,,,,,,,,,,,,,,,
+
+,ANALYTICS & REPORTING,,,,,,,,,,,,,,,,
+20,Analytics,[Brand] Brand Dashboard — KPI Overview,"Dashboard tổng quan: campaigns, creators, content, spending, engagement.","- KPI cards: active campaigns, total creators, content count, total spending
+- Charts: spending trend, content volume, engagement
+- Period: this month, last month, all-time
+- Quick links to key actions
+- Per country breakdown (nếu multi-market brand)",ADR-004,D+60,,0,4,24,32,8,4,4,4,80,2A
+21,,[Brand] Campaign Analytics Deep Dive,"Per campaign: creators, content stats, views, engagement, budget utilization.","- Per campaign detail analytics
+- Metrics: creators joined, content submitted/approved/rejected
+- Views, engagement (likes, comments, shares)
+- Budget: allocated vs spent
+- Charts: daily/weekly trend
+- Compare with previous campaigns",ADR-004,D+60,,0,4,24,28,8,0,4,4,72,2A
+22,,[Brand] Content Performance Analytics,"Top content, platform breakdown, views/engagement charts.","- Top performing content list
+- Platform breakdown: TikTok vs FB vs IG
+- Engagement rate per platform
+- Content type analysis
+- Charts: content performance over time",ADR-004,D+70,,0,2,16,24,4,0,2,4,52,2B
+23,,[Brand] ROI & Spend Analysis,"Cost per view, cost per engagement, budget efficiency metrics.","- ROI metrics: CPV (cost per view), CPE (cost per engagement)
+- Budget efficiency: % budget used vs results
+- Compare across campaigns
+- Compare across countries (multi-market)
+- Trend: ROI improvement over time",ADR-004,D+75,,0,4,24,24,8,0,4,4,68,2B
+24,,[Brand] Cross-Country Comparison,Multi-market brands compare performance across countries.,"- Side-by-side: country A vs country B
+- Metrics: creators, content, views, spending, ROI
+- Normalized to same currency (USD)
+- Charts: bar charts per country
+- Only for brands active in multiple countries",ADR-004,D+75,,0,2,16,20,4,0,2,4,48,2B
+25,,[Brand] Export & Scheduled Reports,Export analytics to Excel/PDF. Schedule weekly/monthly email digest.,"- Export: Excel, PDF, CSV
+- Filters apply trước export
+- Scheduled reports: weekly or monthly
+- Email digest to brand team
+- Async export cho data lớn",ADR-001,D+75,,0,2,16,16,4,0,2,4,44,2B
+,,,,,,,,,,,,,,,,
+
+,FINANCE & BUDGET,,,,,,,,,,,,,,,,
+26,Finance,[Brand] Budget Overview & Spending Tracker,"Total budget, allocated, spent, remaining per campaign. Realtime.","- Summary: total budget (all campaigns), allocated, spent, remaining
+- Per campaign breakdown
+- Spending chart: daily/weekly/monthly
+- Currency: local per country + USD reference
+- Alert history",ADR-004,D+60,,0,4,24,24,8,0,4,4,68,2A
+27,,[Brand] Campaign Cost Summary,"Breakdown cost per campaign, per period, per content type.","- Per campaign: gross cost, tax (if applicable), net
+- Per period: monthly/quarterly summary
+- Per content type: video vs photo costs
+- Compare campaigns: cost efficiency",ADR-004,D+65,,0,2,16,20,4,0,2,4,48,2A
+28,,[Brand] Invoice & Receipt Download,Per campaign hoặc period invoice. PDF download. Annual summary.,"- Digital invoice per campaign/period
+- Info: brand, campaign, amount, tax, date, reference
+- Download PDF
+- Annual summary export
+- Invoice template per country",ADR-004,D+75,,0,2,16,12,4,0,2,4,40,2B
+29,,[Brand] Financial Reports & Tax Documents,"Spending summary, tax documents per country cho brand accounting.","- Spending summary per year/quarter
+- Tax withholding summary (if platform withholds)
+- Per country breakdown
+- Export for brand's accountant
+- Template per country tax authority",ADR-004,D+75,,0,2,16,12,4,0,2,4,40,2B
+,,,,,,,,,,,,,,,,
+
+,BRAND SETTINGS & CONFIGURATION,,,,,,,,,,,,,,,,
+30,Settings,[Brand] Brand Profile Management,"Quản lý brand profile: name, logo, website, company info.","- Profile edit page
+- Upload logo
+- Company info: name, website, description
+- Contact info
+- Per country: business registration info (từ KYB)
+- Audit log cho changes",ADR-001,D+50,,0,2,16,20,8,0,2,4,52,2A
+31,,[Brand] Branding Config,"Custom branding: colors, covers, landing page per country.","- Brand colors: primary, secondary
+- Cover images per platform (desktop, mobile)
+- Landing page customization (cho creator-facing)
+- Preview branding changes
+- Per country: branding có thể khác nhau",ADR-001,D+55,,0,2,8,20,4,4,2,4,44,2A
+32,,[Brand] Custom Domain Management,Branded domain config. DNS verification. SSL setup.,"- Add custom domain (e.g., creator.brandname.com)
+- DNS verification guide
+- SSL auto-provisioning (Let's Encrypt)
+- Domain status tracking
+- Per country: different domains possible",ADR-001,D+75,,4,4,24,12,8,0,4,4,60,2B
+33,,[Brand] Team Management,"Invite members, assign roles, deactivate, activity log.","- Invite by email
+- Assign role: owner, manager, viewer
+- Max team members configurable
+- Deactivate/reactivate member
+- Activity log per member
+- Transfer ownership flow",ADR-002,D+55,,0,4,24,24,8,0,4,4,68,2A
+34,,[Brand] Notification Preferences,Bật/tắt notifications per event type. In-app + email.,"- Event types: campaign status, content submitted, content status, budget alerts
+- Channels: in-app, email
+- Per member configurable
+- Digest frequency: realtime, daily, weekly",ADR-001,D+75,,0,2,8,16,4,0,2,4,36,2B
+35,,[Brand] API & Webhook Configuration,API keys cho brand integration. Webhook events subscription.,"- API key generation (read-only)
+- Webhook URL configuration
+- Events: campaign_active, content_approved, budget_alert, campaign_completed
+- Webhook testing UI (send test event)
+- Webhook delivery log
+- Rate limiting",ADR-001,D+85,,2,8,40,20,12,0,4,8,94,3
+36,,[Brand] Brand Data Isolation,Brand ONLY sees own data. country_code + partner_code enforcement. QC effort.,"- Middleware enforce: country_code + partner_code filter
+- Brand KHÔNG thấy: creator PII, other brands, admin ops
+- UI: không hiển thị data ngoài scope
+- API: reject requests ngoài brand scope
+- Integration test: verify data isolation
+- QC testing effort chính",ADR-001,D+50,,0,0,0,0,16,0,2,0,18,2A
+,,,,,,,,,,,,,,,,
+
+,Xem tổng hợp tại: VCreator-Global-Summary-BaoGia.csv,,,,,,,,,,,,,,,,

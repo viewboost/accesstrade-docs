@@ -1,0 +1,23 @@
+STT,Objective,Feature,Use case,Note,ADR Reference,Deadline,Status,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Phase
+,,,,,,,,,,,,,,,,
+,MIGRATION — VCreator Global (TÁCH RIÊNG),,,,,,,,,,,,,,,,
+,"Tổng quan: Các task migration data từ hệ thống VN cũ (ambassabor) sang Global Platform. TÁCH RIÊNG khỏi báo giá chính vì quyết định: User sẽ vào lại từ đầu trên Global Platform, KHÔNG migrate data cũ. Các task này CHỈ thực hiện khi có yêu cầu migrate VN data sau này (Phase 3+).",,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,
+,VN DATA MIGRATION,,,,ADR-001,,,,,,,,,,,,
+1,VN Migration,[Infra] Database Migration Scripts — VN Data,"Add country_code=""vn"" to all existing VN records. Idempotent, reversible, zero-downtime.","- Migration scripts cho tất cả MongoDB collections
+- Batch update: set country_code=""vn""
+- Add compound indexes: { country_code, existing_fields... }
+- Idempotent (chạy nhiều lần không sai)
+- Reversible (rollback plan)
+- Zero-downtime (background migration)
+- Validation report: data integrity check sau migration
+- Timing: scripts Phase 1, execution Phase 2/3 (sau PH go-live)
+- NOTE: CHỈ cần nếu quyết định migrate VN data. Nếu user vào lại từ đầu → KHÔNG CẦN task này.",ADR-001,TBD,,8,8,40,0,8,0,4,8,76,TBD
+2,,[Infra] User Data Migration — Identity Split,"Migrate existing VN user data sang Shared Identity + Country Profile model.","- Tách users collection → users (identity) + country_profiles
+- Existing VN users: tạo country_profile ""vn"" per user
+- Backward compatible: API responses giữ nguyên format
+- Zero-downtime migration
+- Validation: user count, profile count match
+- NOTE: CHỈ cần nếu quyết định migrate VN data. Nếu user vào lại từ đầu → KHÔNG CẦN task này.",ADR-002,TBD,,0,8,32,0,8,0,4,8,60,TBD
+,,,,,,,,,,,,,,,,
+,Xem tổng hợp tại: VCreator-Global-Summary-BaoGia.csv,,,,,,,,,,,,,,,,
