@@ -1,0 +1,111 @@
+Module,Phase,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Total ($)
+
+,TỔNG HỢP THEO GÓI (ĐÃ DÒ LẠI SOURCE CODE AMBASSABOR),,,,,,,,,,,,
+,"(Số liệu verified từ source code thực tế — giảm ~70% nhờ reuse. Tech stack: Go/Echo + React/UmiJS + MongoDB)",,,,,,,,,,,,
+
+,GÓI 1: ONBOARD CƠ BẢN,,,,,,,,,,,,
+,Phase 1 (D+1 ~ D+15),"Partner setup (ĐÃ CÓ), Department Mgmt (MỚI), CBNV Onboard, Social Linking (ĐÃ CÓ), Crawl Integration (KHÓ), Analytics, Dashboard, Landing Page, CMS, Branding (ĐÃ CÓ), Infra",12,6,76,60,38,16,12,20,240,"$3,412"
+,Gói 1 TOTAL,,12,6,76,60,38,16,12,20,240,"$3,412"
+
+,GÓI 2: HỆ THỐNG TÍCH ĐIỂM,,,,,,,,,,,,
+,Phase 1 (D+5 ~ D+25),"Point System Refactor (từ CashFlow), API Integration Sovico (MỚI), Point History, Admin Config",2,8,42,28,16,0,8,8,112,"$1,620"
+,Gói 2 TOTAL,,2,8,42,28,16,0,8,8,112,"$1,620"
+
+,GÓI 3: TƯƠNG TÁC CŨNG ĐƯỢC TIỀN,,,,,,,,,,,,
+,Phase 2 (D+15 ~ D+25),"Campaign (reuse Event), CBNV Participation, Crawl per Campaign (KHÓ), Validation (MỚI), Reward, Dashboard",0,8,44,34,26,0,8,8,128,"$1,816"
+,Gói 3 TOTAL,,0,8,44,34,26,0,8,8,128,"$1,816"
+
+,GÓI 4: ĐÁNH GIÁ 5 SAO ĐƯỢC TIỀN,,,,,,,,,,,,
+,Phase 2 (D+15 ~ D+25),"Rating Flow (MỚI), Proof Upload (reuse MinIO), Verify (reuse moderation), Reward",0,4,32,28,16,4,4,8,96,"$1,368"
+,Gói 4 TOTAL,,0,4,32,28,16,4,4,8,96,"$1,368"
+
+,GÓI 5: CHECK-IN ĐƯỢC TIỀN,,,,,,,,,,,,
+,Phase 2 (D+15 ~ D+25),"Check-in Flow, Proof (reuse Gói 4), Verify (reuse Gói 4), Location Mgmt (MỚI), Reward",0,2,22,24,12,4,2,4,70,"$990"
+,Gói 5 TOTAL,,0,2,22,24,12,4,2,4,70,"$990"
+
+,,,,,,,,,,,,,,
+
+,TỔNG HỢP THEO PHASE,,,,,,,,,,,,
+
+Phase,Scope,,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Total ($)
+Phase 1,"Gói 1 (D+1~D+15) + Gói 2 start (D+5~D+25)",,14,14,118,88,54,16,20,28,352,"$5,032"
+Phase 2,"Gói 2 finish + Gói 3+4+5 (D+15~D+25)",,0,14,98,86,54,8,14,20,294,"$4,174"
+
+,GRAND TOTAL PROJECT,,14,28,216,174,108,24,34,48,646,"$9,206"
+,,,,,,,,,,,,,,
+
+,PHÂN BỔ NHÂN SỰ THEO ROLE + CHI PHÍ,,,,,,,,,,,,
+
+Role,Total (hours),Rate ($/h),Cost ($),% of Total Hours,% of Total Cost,,,,,,,,
+DevOps,14,$17,"$238",2.2%,2.6%,,,,,,,,
+SA,28,$17,"$476",4.3%,5.2%,,,,,,,,
+BE,216,$15,"$3,240",33.4%,35.2%,,,,,,,,
+FE,174,$15,"$2,610",26.9%,28.4%,,,,,,,,
+QC,108,$11,"$1,188",16.7%,12.9%,,,,,,,,
+Design,24,$11,"$264",3.7%,2.9%,,,,,,,,
+BA,34,$11,"$374",5.3%,4.1%,,,,,,,,
+PM,48,$17,"$816",7.4%,8.9%,,,,,,,,
+TOTAL,646,,"$9,206",100%,100%,,,,,,,,
+
+,,,,,,,,,,,,,,
+
+,CHI PHÍ THEO GÓI,,,,,,,,,,,,
+
+Gói,Tên,Hours,Cost ($),% of Total,,,,,,,,
+1,Onboard Cơ Bản + Landing + CMS,240,"$3,412",37.1%,,,,,,,,
+2,Hệ Thống Tích Điểm,112,"$1,620",17.6%,,,,,,,,
+3,Tương Tác Cũng Được Tiền,128,"$1,816",19.7%,,,,,,,,
+4,Đánh Giá 5 Sao Được Tiền,96,"$1,368",14.9%,,,,,,,,
+5,Check-in Được Tiền,70,"$990",10.8%,,,,,,,,
+,TOTAL,646,"$9,206",100%,,,,,,,,
+
+,,,,,,,,,,,,,,
+
+,TEAM COMPOSITION & TIMELINE,,,,,,,,,,,,
+
+Role,Headcount,Type,Capacity/tháng,Total Hours,Cần trong D+27 (5.5 tuần),Đủ?,,,,,,
+BE (Backend),1,Full-time,160h,216h,1.1 người,⚠️ Hơi thiếu (crawl integration khó),,,,,,
+FE (Frontend),1,Full-time,160h,174h,0.9 người,✓ Vừa đủ (thêm landing + CMS),,,,,,
+QC (Tester),0.5,Part-time,80h,108h,0.56 người,⚠️ Hơi thiếu (cần test crawl kỹ),,,,,,
+PM,0.5,Part-time,80h,48h,0.25 người,✓ Đủ,,,,,,
+SA,0.5,Part-time,80h,28h,0.15 người,✓ Đủ,,,,,,
+BA,0.5,Part-time,80h,34h,0.18 người,✓ Đủ,,,,,,
+DevOps,0.5,Part-time,80h,14h,0.07 người,✓ Đủ (chủ yếu tuần 1),,,,,,
+Design,0.5,Part-time,80h,24h,0.12 người,✓ Đủ,,,,,,
+TOTAL TEAM,"5 người (2 full + 3 half)",,800h/tháng,646h,,,,,,,,
+
+,,,,,,,,,,,,,,
+
+,SO SÁNH: BUILD MỚI vs TẬN DỤNG AMBASSABOR,,,,,,,,,,,,
+
+Role,Rate ($/h),Build mới (h),Build mới ($),Còn lại (h),Còn lại ($),Tiết kiệm ($),% giảm,,,,,,
+DevOps,$17,48,"$816",14,"$238","$578",71%,,,,,,
+SA,$17,93,"$1,581",28,"$476","$1,105",70%,,,,,,
+BE,$15,720,"$10,800",216,"$3,240","$7,560",70%,,,,,,
+FE,$15,580,"$8,700",174,"$2,610","$6,090",70%,,,,,,
+QC,$11,360,"$3,960",108,"$1,188","$2,772",70%,,,,,,
+Design,$11,80,"$880",24,"$264","$616",70%,,,,,,
+BA,$11,113,"$1,243",34,"$374","$869",70%,,,,,,
+PM,$17,160,"$2,720",48,"$816","$1,904",70%,,,,,,
+TOTAL,,2154,"$30,700",646,"$9,206","$21,494",~70%,,,,,,
+
+,,,,,,,,,,,,,,
+,TIMELINE OPTIONS,,,,,,,,,,,,
+
+Option,Team Size,BE,FE,Timeline,Ghi chú,,,,,,,
+"A. Team tối thiểu (4-5 người)","4-5 người","BE×1","FE×1","D+28 (5.5 tuần)","Khả thi nhưng BE+FE tight. Cần OT nhẹ.",,,,,,
+"B. Team thoải mái (5-6 người)","5-6 người","BE×1.5","FE×1.5","D+22 (4.5 tuần)","Recommended. BE+FE thoải mái hơn.",,,,,,
+"C. Fast track (7 người)","7 người","BE×2","FE×2","D+15 (3 tuần)","Nhanh nhất. Phù hợp target 1 tháng.",,,,,,
+
+,,,,,,,,,,,,,,
+,GHI CHÚ,,,,,,,,,,,,
+,"1. Estimate ĐÃ VERIFIED từ source code ambassabor. Giảm ~70% so với build mới (2,154h / $30,700 → 646h / $9,206). Tiết kiệm: $21,494.",,,,,,,,,,,,
+,"2. Tech stack giữ nguyên: Go/Echo (BE) + React/UmiJS (FE) + MongoDB + Redis + MinIO.",,,,,,,,,,,,
+,"3. ASSUMPTION: Dịch vụ crawl (lấy data ai like/comment/share) ĐÃ CÓ SẴN. Estimate chỉ gồm chi phí tích hợp.",,,,,,,,,,,,
+,"4. Features ĐÃ CÓ gần 100% (chỉ cần config): Partner/company setup, Social linking (8+ platforms), Custom branding, File upload, OTP. CMS (News/Article/CommonConfigs) đã có full CRUD.",,,,,,,,,,,,
+,"5. Features CẦN REFACTOR: CashFlow → Point system, Content analytics → Interaction analytics, ContentCallback → User-level data.",,,,,,,,,,,,
+,"6. Features MỚI 100%: Department management, InteractionRecord model, Matching engine, Location management (check-in), Comment validation engine.",,,,,,,,,,,,
+,"7. ContentCallback webhook (/api/public/content-callback) ĐÃ CÓ — cần mở rộng nhận user-level interaction data (hiện chỉ nhận aggregate numbers).",,,,,,,,,,,,
+,"8. Gói 5 giảm đáng kể nhờ reuse gần như toàn bộ proof-submission + verify + reward từ Gói 4.",,,,,,,,,,,,
+,"9. Gói 1 là foundation. Gói 2 song song. Gói 3/4/5 bắt đầu sau Gói 1 hoàn thành.",,,,,,,,,,,,
+,"10. D+28 = 28 ngày làm việc ≈ 5.5 tuần calendar. Target 1 tháng khả thi với team Option B (recommended).",,,,,,,,,,,,

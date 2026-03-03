@@ -1,0 +1,102 @@
+STT,Gói,Objective,Feature,Use case,Source Code Verification,Deadline,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Total ($),Phase
+,,,,,,,"$17/h","$17/h","$15/h","$15/h","$11/h","$11/h","$11/h","$17/h",,,,
+
+,GÓI 1: ONBOARD CƠ BẢN,,,,,,,,,,,,,,,,,,
+
+1,1,Multi-Company Setup,[Platform] Multi-Company Configuration,"Setup cấu trúc nhiều công ty con (HDBank, Vikki, Vietjet) trên cùng 1 instance. Mỗi company có config riêng: tên, logo, màu sắc, kênh MXH.","ĐÃ CÓ 95% — PartnerRaw model đã có: Name, Logo, Covers, Slug, AllowDomains, Bpp (budget), Status. Admin CRUD đầy đủ (POST/PUT/PATCH/GET /partners). UserPartner cho phép user join nhiều partner. Staff gắn per partner. → Chỉ cần tạo data cho Sovico companies.",D+3,0,0,2,0,2,0,2,2,8,"$104",1
+
+2,1,Multi-Company Setup,[Platform] Department/Unit Management,"Quản lý phòng ban/đơn vị theo từng công ty con. Cấu trúc cây phòng ban. Import danh sách từ Excel.","MỚI 100% — Không có field department/team/unit/division nào trong toàn bộ codebase. User model không có department. Staff model không có department. Cần: Department model mới, CRUD API, Excel import, gắn vào User + Partner.",D+8,0,2,16,8,4,0,2,2,34,"$476",1
+
+3,1,CBNV Onboarding,[CBNV] Luồng đăng ký CBNV,"CBNV đăng ký bằng email/SĐT. Chọn công ty + phòng ban. Xác thực OTP. Kết nối tài khoản MXH.","ĐÃ CÓ 80% — RegisterBody có Name/Email/Phone/Password. OTP đầy đủ (email + phone). UserPartner cho join partner. → Cần thêm: chọn Partner + Department khi register, bỏ fields không cần (City/Gender required → optional).",D+10,0,0,6,8,4,4,2,2,26,"$334",1
+
+4,1,CBNV Onboarding,[CBNV] Kết nối tài khoản MXH,"Kết nối Facebook, TikTok, YouTube. Lấy thông tin profile tự động. Cho phép kết nối nhiều platform.","ĐÃ CÓ 100% — UserSocialRaw hỗ trợ: TikTok, Google, Facebook, YouTube, Instagram, Threads, Shopee, Accesstrade. API: link/unlink/getList. Data: ID, Username, Name, Photo, Followers, Token. Approval per event + per partner. → Không cần build gì thêm, chỉ config.",D+5,0,0,0,0,2,0,0,0,2,"$22",1
+
+5,1,Social Tracking,[Tracking] Tích hợp Crawl Service — Nhận data tương tác cá nhân,"Tích hợp API từ crawl service. Nhận data: CBNV nào (social user ID) đã like/comment/share bài nào trên kênh thương hiệu. Matching social_user_id → CBNV. Lưu interaction records.","CÓ MỘT PHẦN — ContentCallback webhook đã có (/api/public/content-callback) với Information bson.M linh hoạt. ProcessContentCallback chạy mỗi phút. NHƯNG: hiện chỉ extract aggregate numbers (view/like/comment = int). → Cần: (1) mở rộng callback handler nhận user-level data, (2) tạo InteractionRecord model mới, (3) matching engine social_user_id → CBNV qua UserSocial.Data.ID. ĐỘ KHÓ CAO: matching engine edge cases (trùng social ID, user chưa link, bulk processing, race conditions, reconciliation).",D+12,0,2,32,0,10,0,0,2,46,"$658",1
+
+6,1,Social Tracking,[Tracking] Daily Analytics Aggregation per CBNV,"Tổng hợp chỉ số tương tác theo ngày cho từng CBNV. Breakdown: like, comment, share. Aggregation theo phòng ban.","CÓ MỘT PHẦN — ContentAnalyticDailyRaw đã có aggregation per user/content/event/partner/date. → Cần: tạo InteractionAnalyticDaily mới (aggregation từ interaction records thay vì từ content crawl), thêm dimension department. ĐỘ KHÓ CAO: aggregation pipeline phức tạp, cần xử lý volume lớn + data consistency.",D+12,0,0,12,0,4,0,0,2,18,"$258",1
+
+7,1,Dashboard,[CBNV] Dashboard cá nhân,"CBNV xem kết quả tương tác: tổng like, comment, share. So sánh với tháng trước. Ranking trong phòng ban.","CÓ MỘT PHẦN — UserEventStatistic đã có per-platform stats. Leaderboard API đã có. → Cần: thay data source từ interaction records, thêm department-scoped ranking, monthly comparison UI.",D+15,0,0,0,12,2,4,0,2,20,"$280",1
+
+8,1,Dashboard,[Admin] Dashboard tổng hợp,"Admin xem tổng tương tác theo company, phòng ban, CBNV. Filter theo ngày, phòng ban, nền tảng. Export.","CÓ 70% — EventAnalyticDailyRaw đầy đủ per-platform breakdown. DataExport đầy đủ (scheduled + filtered + email). → Cần: thêm department dimension, interaction-based aggregation, company filter.",D+15,0,2,4,8,2,0,2,2,20,"$286",1
+
+9,1,Custom Branding,[Platform] Custom Branding per Company,"Mỗi công ty con có giao diện riêng: logo, primary color, banner.","ĐÃ CÓ 90% — Partner.Logo + Partner.Covers + CommonConfigs (key-value per partner). Branded app pattern chạy 10+ brands. → Chỉ cần config cho từng Sovico company + minor FE theming.",D+5,0,0,0,2,2,2,0,0,6,"$72",1
+
+10,1,Landing Page,[CBNV] Landing Page & Trang chủ,"Trang chủ cho CBNV: giới thiệu chương trình, hướng dẫn tham gia, CTA đăng ký/đăng nhập, danh sách chương trình đang mở, popup banner thông báo.","ĐÃ CÓ 75% — main-home đã có: HeroSection, TargetAudienceSection, EarningMethodsSection, WhyChooseSection, TestimonialsSection. Popup news system đã có (scheduling + analytics). → Cần: redesign sections cho CBNV flow (thay KOC content → tương tác thương hiệu), thêm section danh sách chương trình, adjust CTA cho register CBNV.",D+10,0,0,2,16,4,6,2,2,32,"$424",1
+
+11,1,CMS,[Admin] CMS — Quản lý nội dung & Banner,"Admin quản lý: banner/popup (News), bài viết hướng dẫn/thể lệ (Article), cấu hình chung (CommonConfigs). Nội dung per company.","ĐÃ CÓ 85% — News model (title, photo, startAt/endAt, status, partner, popup/banner types) + Article model (title, HTML content, covers, CTA action, partner) + CommonConfigs (key-value per partner). Admin CRUD đầy đủ cả 3. Public API có sẵn. → Cần: tạo content mới cho Sovico (banner, thể lệ, hướng dẫn per company), minor adjust admin UI nếu cần thêm fields.",D+10,0,0,2,6,2,0,2,2,14,"$194",1
+
+12,1,Infrastructure,[DevOps] Setup môi trường Sovico,"Setup Docker, CI/CD, staging/production. Config MongoDB, Redis, MinIO. Domain setup.","Reuse 80% — Docker compose đã có (5 services). Dockerfile cho admin/public/file server. Nginx config. → Clone + adjust env config cho Sovico instance.",D+3,12,0,0,0,0,0,0,2,14,"$238",1
+
+,Gói 1 TOTAL,,,,,,,12,6,76,60,38,16,12,20,240,"$3,412",
+
+,,,,,,,,,,,,,,,,,,
+
+,GÓI 2: HỆ THỐNG TÍCH ĐIỂM,,,,,,,,,,,,,,,,
+
+13,2,Point System,[Platform] Point System Core,"Thay thế tiền bằng điểm. Cấu hình quy đổi: 1 like = X điểm, 1 comment = Y điểm. Admin config per company.","CÓ NỀN TẢNG TỐT — EventSchemaCashReward đã có CashPerLike, CashPerComment, CashPerView, CashPerShare. CashFlowRaw đã có full audit trail (OldBalance/NewBalance/Value/Action). → Refactor: rename cash → point, thêm point config per partner, conversion rules.",D+15,0,4,20,8,4,0,4,4,44,"$624",1
+
+14,2,Point System,[Platform] API Integration Sovico,"Khi điểm confirm → gọi API sang hệ thống tích điểm Sovico. Retry mechanism. Logging.","MỚI — Cần spec API từ Sovico. Build: API client, retry queue (có thể tận dụng cron scheduling đã có), failure handling, reconciliation log.",D+20,2,4,16,0,4,0,4,4,34,"$474",1
+
+15,2,Point History,[CBNV] Lịch sử điểm,"CBNV xem lịch sử cộng/trừ điểm. Filter theo ngày, loại tương tác.","ĐÃ CÓ 75% — CashFlow API + FE page đã có history view. → Refactor: cash → points, thêm filter loại tương tác.",D+20,0,0,2,12,4,0,0,0,18,"$246",1
+
+16,2,Point Admin,[Admin] Quản lý điểm,"Admin cấu hình quy đổi. Duyệt/reject batch. Xem sync API Sovico.","CÓ 60% — Reconciliation + CashFlow admin đã có. → Thêm: API sync status dashboard, point config UI.",D+25,0,0,4,8,4,0,0,0,16,"$224",1
+
+,Gói 2 TOTAL,,,,,,,2,8,42,28,16,0,8,8,112,"$1,620",
+
+,,,,,,,,,,,,,,,,,,
+
+,GÓI 3: TƯƠNG TÁC CŨNG ĐƯỢC TIỀN,,,,,,,,,,,,,,,,
+
+17,3,Campaign,[Admin] Tạo chương trình tương tác,"Admin tạo campaign khuyến khích tương tác trên Own Channel. Cấu hình: thời gian, bài viết target, quy tắc thưởng.","CÓ 70% — EventRaw model đầy đủ (Partner, StartAt, EndAt, Reward, Budget). EventSchema có reward rates. → Thêm: event type 'interaction', target post config (URL list), Own Channel reference.",D+18,0,2,8,8,4,0,2,2,26,"$376",2
+
+18,3,CBNV Participation,[CBNV] Đăng ký tham gia chương trình,"CBNV xem danh sách chương trình, đăng ký tham gia.","CÓ 85% — UserEvent model đã có user-event relationship. Event participation flow + API đã có. → Simplify: bỏ content submission, giữ registration.",D+18,0,0,2,6,2,0,0,0,10,"$140",2
+
+19,3,Tích hợp Crawl,[System] Tích hợp Crawl Service — Campaign-scoped,"Tích hợp crawl service per campaign: target posts, nhận data tương tác, reuse matching engine từ Gói 1.","Reuse STT 5 matching engine + ContentCallback webhook. → Thêm: campaign-scoped crawl config, trigger crawl per target post, webhook nhận data per campaign. ĐỘ KHÓ CAO: campaign-scoped filtering phức tạp, dedup cross-campaign, scheduling trigger per post.",D+22,0,2,16,0,8,0,2,2,30,"$418",2
+
+20,3,Validation,[System] Đánh giá tương tác hợp lệ,"Check comment hợp lệ, không spam, không trùng. Auto-approve hoặc flag.","MỚI logic, CÓ flow — Content moderation flow đã có (approve/reject + status tracking). → Tạo rule engine cho comment validation, reuse moderation status flow.",D+22,0,2,12,0,4,0,2,2,22,"$318",2
+
+21,3,Reward,[System] Tính thưởng tự động,"Tương tác hợp lệ → tính điểm → cộng point balance.","CÓ 70% — EventBonus + EventReward + CashFlow engine đã có. Cron scheduling cho batch processing đã có. → Adjust: input từ interaction records, output points thay vì cash.",D+25,0,2,6,0,2,0,2,2,14,"$202",2
+
+22,3,Dashboard,[CBNV] Kết quả tương tác,"CBNV xem tương tác đã verify, điểm, ranking.","CÓ 70% — Leaderboard + earnings page đã có. → Thay data source, thêm interaction detail view.",D+25,0,0,0,12,4,0,0,0,16,"$224",2
+
+23,3,Admin,[Admin] Quản lý chương trình tương tác,"Admin xem tương tác, approve/reject, thống kê.","CÓ 70% — Content moderation admin + event analytics đã có. → Adjust view cho interaction data.",D+25,0,0,0,8,2,0,0,0,10,"$142",2
+
+,Gói 3 TOTAL,,,,,,,0,8,44,34,26,0,8,8,128,"$1,816",
+
+,,,,,,,,,,,,,,,,,,
+
+,GÓI 4: ĐÁNH GIÁ 5 SAO ĐƯỢC TIỀN,,,,,,,,,,,,,,,,
+
+24,4,Rating Flow,[CBNV] Luồng đánh giá App Store,"CBNV chọn app, redirect App Store, đánh giá 5 sao + hashtag.","MỚI flow. Reuse: campaign participation pattern (Event + UserEvent).",D+18,0,2,8,12,4,4,2,2,34,"$482",2
+
+25,4,Proof Submission,[CBNV] Chụp bằng chứng,"CBNV upload screenshot đánh giá + hashtag.","CÓ 80% — Content submission + MinIO file upload đã có đầy đủ. → Thêm: proof-type content model (simpler than current Content).",D+20,0,0,6,6,4,0,0,2,18,"$252",2
+
+26,4,Verification,[System] Verify đánh giá,"Manual admin review queue. Status: pending → approved/rejected.","CÓ 60% — Content moderation flow đã có (approve/reject + audit trail + status). → Tạo verify handler cho proof type, reuse moderation pattern. (OCR optional — phase 2).",D+22,0,2,12,0,4,0,2,2,22,"$318",2
+
+27,4,Reward,[System] Thưởng điểm rating,"Verify OK → cộng điểm. Dedup per app per user.","CÓ 70% — EventReward + CashFlow engine. → Thêm dedup logic.",D+25,0,0,4,4,2,0,0,2,12,"$176",2
+
+28,4,Admin,[Admin] Quản lý đánh giá,"Admin xem proof list, verify/reject, thống kê.","CÓ 75% — Content moderation admin panel đầy đủ. → Adjust view cho proof type.",D+25,0,0,2,6,2,0,0,0,10,"$142",2
+
+,Gói 4 TOTAL,,,,,,,0,4,32,28,16,4,4,8,96,"$1,368",
+
+,,,,,,,,,,,,,,,,,,
+
+,GÓI 5: CHECK-IN ĐƯỢC TIỀN,,,,,,,,,,,,,,,,
+
+29,5,Check-in Flow,[CBNV] Luồng check-in Google Maps,"CBNV chọn địa điểm, hướng dẫn check-in Google Maps + hashtag.","MỚI flow. Tương tự Gói 4 nhưng cho Google Maps. Reuse: Gói 4 proof-submission pattern.",D+18,0,2,6,10,4,4,2,2,30,"$426",2
+
+30,5,Proof Submission,[CBNV] Chụp bằng chứng check-in,"Upload screenshot review Google Maps + hashtag.","Reuse 95% từ Gói 4 STT 23 — cùng proof submission module.",D+20,0,0,2,2,2,0,0,0,6,"$82",2
+
+31,5,Verification,[System] Verify check-in,"Manual admin review. Status tracking.","Reuse 95% từ Gói 4 STT 24 verify engine.",D+22,0,0,2,0,2,0,0,0,4,"$52",2
+
+32,5,Location Management,[Admin] Quản lý địa điểm check-in,"Admin CRUD danh sách địa điểm per company. Google Maps link.","MỚI — Location model + admin CRUD UI. Tham khảo: Partner CRUD pattern (đã có).",D+18,0,0,8,8,2,0,0,2,20,"$276",2
+
+33,5,Reward + Admin,[System] Thưởng + Quản lý,"Thưởng điểm. Dedup per location per user. Admin dashboard.","Reuse 90% từ Gói 4 STT 25 + 26.",D+25,0,0,4,4,2,0,0,0,10,"$142",2
+
+,Gói 5 TOTAL,,,,,,,0,2,22,24,12,4,2,4,70,"$990",
+
+,,,,,,,,,,,,,,,,,,
+
+,GRAND TOTAL (5 Gói),,,,,,,14,28,216,174,108,24,34,48,646,"$9,206",
+,RATE ($/h),,,,,,,$17,$17,$15,$15,$11,$11,$11,$17,,,
+,COST PER ROLE ($),,,,,,,"$238","$476","$3,240","$2,610","$1,188","$264","$374","$816",,"$9,206",
