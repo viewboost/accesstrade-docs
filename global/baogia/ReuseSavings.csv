@@ -1,0 +1,181 @@
+GIẢM EFFORT KHI TẬN DỤNG SOURCE CODE CŨ — VCreator Global Platform
+Phân tích chi tiết % effort giảm cho từng feature khi refactor từ source code cũ (cùng tech stack Go/Echo + React/UmiJS + MongoDB) thay vì build mới hoàn toàn.
+
+
+TỔNG HỢP GIẢM EFFORT THEO MODULE
+
+Module,,BE gốc (h),BE giảm (h),BE còn lại (h),% giảm BE,FE gốc (h),FE giảm (h),FE còn lại (h),% giảm FE,QC gốc (h),QC giảm (h),SA gốc (h),SA giảm (h),BA gốc (h),BA giảm (h)
+Platform Core,,456,166,290,36%,136,46,90,34%,132,45,84,30,56,20
+Creator,,864,391,473,45%,804,355,449,44%,312,140,124,50,134,55
+Admin,,1440,552,888,38%,1288,478,810,37%,504,187,240,86,214,79
+
+TOTAL,,2760,1109,1651,40%,2228,879,1349,39%,948,372,448,166,404,154
+
+Các role khác (ước tính)
+Role,Gốc (h),Giảm (h),Còn lại (h),% giảm
+DevOps,80,24,56,30%
+Design,88,35,53,40%
+PM,736,221,515,30%
+
+TỔNG GIẢM TẤT CẢ ROLES: 2960h (~37% tổng project)
+
+
+CHI TIẾT — PLATFORM CORE
+
+STT,Feature,Lý do có thể tận dụng source code cũ,Reuse %,BE gốc (h),FE gốc (h),BE giảm (h),FE giảm (h),QC gốc (h),QC giảm (h),SA gốc (h),SA giảm (h),BA gốc (h),BA giảm (h)
+1,Country Config Service,Partner config có sẵn. Extend thêm country dimension.,30%,40,0,12,0,8,2,8,2,4,1
+2,Country Context Middleware,Partner middleware có sẵn. Refactor thêm country_code.,35%,40,0,14,0,12,4,8,3,4,1
+3,URL Country Routing,Router framework có sẵn. URL pattern mới.,15%,16,16,2,2,8,1,4,1,2,0
+4,Dual-Dimension Tenancy,Partner tenancy có sẵn. Thêm country dimension.,40%,32,0,13,0,8,3,8,3,4,2
+5,Shared User Identity Model,User model có sẵn. Tách shared vs country profile.,40%,48,0,19,0,12,5,8,3,4,2
+6,Country Profile CRUD,User CRUD có sẵn. Thêm country profile.,50%,24,0,12,0,8,4,4,2,2,1
+7,Country Context Switching,Session management có sẵn.,30%,16,16,5,5,8,2,4,1,2,1
+8,Backend i18n — Locale Files,17 locale dirs có sẵn. Mở rộng + hoàn thiện.,50%,40,0,20,0,8,4,4,2,4,2
+9,Frontend i18n — Translation,react-intl concept có. Mở rộng multilingual.,40%,8,40,3,16,8,3,4,2,4,2
+10,Multilingual Content CMS,Article/News CMS có sẵn. Thêm multi-language tab.,50%,24,24,12,12,8,4,4,2,4,2
+11,Realtime Exchange Rate,Mới — chưa có multi-currency.,10%,32,0,3,0,8,1,4,0,4,0
+12,Reconciliation Rate,Reconciliation có sẵn. Thêm exchange rate lock.,40%,24,8,10,3,8,3,4,2,4,2
+13,Multi-Currency Display,Mới — currency switching.,15%,8,16,1,2,4,1,2,0,2,0
+14,Display Currency Preference,Mới — user preference.,10%,16,8,2,1,4,0,2,0,2,0
+15,Tax Calculation Engine,Cashflow model reuse. Tax logic mới per country.,25%,32,0,8,0,8,2,4,1,4,1
+16,Feature Flag System,Feature flag per partner có sẵn. Extend per country.,60%,24,8,14,5,4,2,4,2,2,1
+17,Monitoring per Country,Monitoring framework có. Thêm country dimension.,40%,16,0,6,0,4,2,4,2,2,1
+18,Secrets Management,Secrets per partner có. Extend per country.,60%,16,0,10,0,4,2,4,2,2,1
+
+SUBTOTAL PLATFORM CORE,,,~36%,456,136,166,46,132,45,84,30,56,20
+
+
+CHI TIẾT — CREATOR
+
+STT,Feature,Lý do có thể tận dụng source code cũ,Reuse %,BE gốc (h),FE gốc (h),BE giảm (h),FE giảm (h),QC gốc (h),QC giảm (h),SA gốc (h),SA giảm (h),BA gốc (h),BA giảm (h)
+1,OAuth Login,OAuth TikTok + Google có sẵn. Refactor shared identity.,65%,60,40,39,26,16,10,8,5,8,5
+2,Facebook Login (Phase 2),Facebook OAuth có sẵn. Feature flag per country.,70%,24,16,17,11,8,6,4,3,4,3
+3,Country Selection,Mới — multi-country flow.,10%,24,24,2,2,8,1,4,0,4,0
+4,Add Country Profile,Mới — multi-country profile.,10%,24,20,2,2,8,1,4,0,4,0
+5,Country Switcher,Mới — country switching UI.,10%,16,20,2,2,8,1,2,0,2,0
+6,Language Switcher,i18n switcher concept có. Build UI mới.,30%,16,24,5,7,8,2,2,1,2,1
+7,Currency Switcher,Mới — currency display switching.,10%,8,20,1,2,4,0,2,0,2,0
+9a,Landing Page,Partner landing có sẵn. Multilingual + country selector.,40%,16,32,6,13,8,3,2,1,4,2
+9b,Public Campaign Preview,Event listing có sẵn. Public access + country scope.,50%,8,16,4,8,4,2,0,0,2,1
+10,Referral Link,Referral system có sẵn. Thêm country scope.,60%,16,8,10,5,4,2,2,1,2,1
+11,KYC Checklist & Flow,eKYC flow có sẵn. Configurable per country.,55%,40,32,22,18,16,9,8,4,8,4
+12,Government ID Upload,ID upload có sẵn. Thêm ID types per country.,60%,24,20,14,12,8,5,4,2,4,2
+13,Bank Account per Country,Bank card model có sẵn. Bank list per country.,55%,24,20,13,11,8,4,4,2,4,2
+14,Tax ID per Country,Tax info basic có. Format validation per country.,45%,16,12,7,5,4,2,2,1,2,1
+15,Electronic Contract,Contract signing có sẵn. Thêm multilingual.,55%,16,16,9,9,4,2,2,1,4,2
+16,KYC Status Tracking,Status tracking có sẵn. Notification i18n.,60%,16,16,10,10,8,5,2,1,4,2
+17,Deferred KYC (Phase 2),Flow mới — refactor cho deferred.,20%,24,16,5,3,8,2,4,1,4,1
+18,Campaign List,Event listing có sẵn. Country scope + i18n.,60%,16,24,10,14,8,5,2,1,2,1
+19,Campaign Detail,Event detail có sẵn. Multilingual + currency.,55%,16,24,9,13,8,4,2,1,2,1
+20,Join Campaign,Join event + hashtag auto-assign có sẵn.,65%,16,12,10,8,4,3,2,1,2,1
+21,My Campaigns,My events có sẵn. Country filter.,60%,16,20,10,12,8,5,2,1,2,1
+22,Campaign Leaderboard (Phase 2),Mới — leaderboard.,10%,16,16,2,2,4,0,2,0,2,0
+23,Submit Content Link,Content submit + hashtag validate có sẵn.,60%,32,20,19,12,12,7,4,2,4,2
+24,Content Status Tracking,Status tracking + notification có sẵn.,65%,16,16,10,10,8,5,2,1,2,1
+25,My Content,Content list + filter có sẵn.,60%,16,20,10,12,8,5,2,1,2,1
+26,Content Requirements,Requirements concept có. Thêm i18n.,40%,4,12,2,5,4,2,0,0,2,1
+27,Earnings Dashboard,Statistic page có sẵn. Multi-currency + tax breakdown.,45%,32,32,14,14,12,5,4,2,4,2
+28,Earnings per Campaign,Cashflow per event có sẵn.,55%,16,16,9,9,4,2,2,1,2,1
+29,Earnings per Content,Content analytics có sẵn.,55%,16,16,9,9,4,2,2,1,2,1
+30,Net Income & Tax Breakdown,Mới — tax breakdown per country.,15%,24,20,4,3,8,1,4,1,4,1
+31,Referral Earnings (Phase 2),Referral tracking có sẵn. Country scope.,55%,16,16,9,9,4,2,2,1,2,1
+32,Earnings Chart (Phase 2),Chart mới — data model có sẵn.,30%,16,20,5,6,4,1,2,1,2,1
+33,Available Balance,Withdraw balance có sẵn. Minimum per country.,55%,24,16,13,9,8,4,4,2,4,2
+34,Withdrawal Request,Withdraw flow + OTP có sẵn. Country validation.,55%,24,20,13,11,12,7,4,2,4,2
+35,Withdrawal Status & History,Withdraw history có sẵn.,60%,16,16,10,10,8,5,2,1,2,1
+36,E-Wallet Payment PH (Phase 2),Mới — GCash integration.,10%,24,16,2,2,8,1,4,0,4,0
+37,Payment Receipt (Phase 2),Mới — receipt/PDF.,10%,16,12,2,1,4,0,2,0,2,0
+38,Profile Management,Profile page có sẵn.,60%,16,20,10,12,8,5,2,1,2,1
+39,Social Account Linking,Social linking có sẵn (TikTok/FB/IG/YouTube).,65%,24,20,16,13,8,5,4,3,4,3
+40,Notification Preferences (Phase 2),Mới — granular control.,15%,8,16,1,2,4,1,2,0,2,0
+41,Account Deletion (Phase 2),Mới — GDPR requirement.,10%,24,12,2,1,8,1,4,0,4,0
+42,Push Notifications,Notification system có sẵn. i18n templates.,55%,32,16,18,9,8,4,4,2,4,2
+43,Email Notifications (Phase 2),Template engine basic có.,25%,16,4,4,1,4,1,2,1,2,1
+
+SUBTOTAL CREATOR,,,~45%,864,804,391,355,312,140,124,50,134,55
+
+
+CHI TIẾT — ADMIN
+
+STT,Feature,Lý do có thể tận dụng source code cũ,Reuse %,BE gốc (h),FE gốc (h),BE giảm (h),FE giảm (h),QC gốc (h),QC giảm (h),SA gốc (h),SA giảm (h),BA gốc (h),BA giảm (h)
+1,Admin Authentication,Staff login có sẵn. Thêm MFA.,50%,40,24,20,12,12,6,8,4,4,2
+2,Permission System — RBAC,Role system có sẵn. Extend country-scoped.,45%,48,8,22,4,16,7,12,5,8,4
+3,Admin Panel i18n,Reuse i18n framework từ frontend.,35%,16,24,6,8,8,3,2,1,4,1
+4,Audit Trail Service,Audit service có sẵn. Thêm country dimension.,55%,40,0,22,0,8,4,8,4,4,2
+5,Admin Activity Dashboard (P2),Mới — real-time activity.,10%,16,20,2,2,4,0,2,0,2,0
+6,Content Moderation Queue,Content queue có sẵn. Country filter + shortcuts.,55%,32,32,18,18,12,7,4,2,4,2
+7,Content Inline Preview,Content preview có sẵn. Hashtag highlight.,50%,16,28,8,14,8,4,2,1,2,1
+8,Content Approve/Reject,Approve/reject + reasons có sẵn.,65%,24,20,16,13,8,5,2,1,4,3
+9,Bulk Content Actions,Bulk actions có sẵn. Undo window mới.,50%,16,16,8,8,4,2,2,1,2,1
+10,Auto-Reject Conditions (P2),Auto-reject rules có trong event model.,55%,24,12,13,7,8,4,4,2,4,2
+11,Content Violation Report (P2),Mới — violation tracking.,10%,16,12,2,1,4,0,2,0,2,0
+12,KYC Review Queue,Identification queue có sẵn. Country filter.,55%,16,20,9,11,8,4,2,1,2,1
+13,KYC Document Review,Document viewer + access log có sẵn.,55%,24,24,13,13,8,4,4,2,4,2
+14,KYC Approve/Reject,KYC approve/reject có sẵn. Partial reject extend.,50%,20,16,10,8,8,4,2,1,4,2
+15,Creator List & Search,User list + search/filter có sẵn. Country scope.,60%,16,20,10,12,8,5,2,1,2,1
+16,Creator Detail,User detail có sẵn. Activity timeline mới.,50%,16,24,8,12,8,4,2,1,2,1
+17,Creator Ban/Suspend,Ban/suspend + audit có sẵn.,65%,16,12,10,8,8,5,2,1,2,1
+18,Send Notifications (P2),Admin notification có sẵn. Targeting + schedule.,40%,16,16,6,6,4,2,2,1,2,1
+19,Country Data Isolation (QC),Partner isolation concept có.,30%,0,0,0,0,16,5,0,0,2,1
+20,Create Reconciliation Batch,Reconciliation có sẵn. Period + preview.,50%,40,24,20,12,12,6,8,4,4,2
+21,Exchange Rate Lock,Mới — rate locking.,10%,24,16,2,2,8,1,4,0,4,0
+22,Reconciliation Detail Review,Recon detail có sẵn. Anomaly highlight.,45%,24,24,11,11,8,4,4,2,4,2
+23,Approve Reconciliation Batch,Approval flow có sẵn.,55%,16,8,9,4,4,2,2,1,2,1
+24,Reconciliation History,History/export có sẵn.,60%,16,16,10,10,4,2,2,1,2,1
+25,Payment Queue,Withdraw concept có. Extend batch.,40%,24,20,10,8,8,3,4,2,4,2
+26,Execute Payment,VN gateway có. PH gateway mới.,25%,48,16,12,4,16,4,8,2,4,1
+27,Payment Status Tracking,Withdraw status có sẵn. Webhook tracking.,45%,24,20,11,9,8,4,4,2,4,2
+28,Failed Payment Handling,Failed handling basic có. Extend retry.,40%,24,12,10,5,8,3,4,2,4,2
+29,Payment History,Withdraw history có sẵn.,60%,16,16,10,10,4,2,2,1,2,1
+30,Revenue Dashboard,Dashboard basic có. Multi-currency mới.,35%,24,28,8,10,8,3,4,1,4,1
+31,Tax Withholding Summary,Mới — tax summary per country.,10%,16,16,2,2,4,0,2,0,2,0
+32,Annual Tax Summary (P2),Mới — annual export.,10%,16,12,2,1,4,0,2,0,2,0
+33,Exchange Rate History,Mới — rate history chart.,10%,16,16,2,2,4,0,2,0,2,0
+34,Financial Trend Charts (P2),Chart mới — data model có.,25%,16,20,4,5,4,1,2,1,2,1
+35,Create Campaign,Event CRUD + schema có sẵn. i18n + multilingual.,50%,40,40,20,20,16,8,8,4,8,4
+36,Campaign Approval Workflow,Event status flow có sẵn.,60%,24,16,14,10,8,5,4,2,4,2
+37,Campaign Reward Structure,Reward/bonus có sẵn. Multi-currency.,50%,24,20,12,10,8,4,4,2,4,2
+38,Campaign Budget Management,Budget per event có sẵn. Alert thresholds.,50%,16,16,8,8,4,2,2,1,2,1
+39,Campaign Clone (P2),Mới — clone.,10%,12,12,1,1,4,0,2,0,2,0
+40,Campaign Analytics,Event statistic có sẵn. Charts + export.,40%,24,28,10,11,8,3,4,2,4,2
+41,Partner List & Config,Partner management có sẵn. Country scope.,55%,24,24,13,13,8,4,4,2,4,2
+42,Partner Analytics (P2),Mới — analytics per partner.,15%,16,20,2,3,4,1,2,0,2,0
+43,Invite/Add Staff,Staff invite có sẵn. Country assignment.,50%,24,20,12,10,8,4,4,2,4,2
+44,Manage Team & Activity,Team management + activity log có sẵn.,55%,16,16,9,9,4,2,2,1,2,1
+45,Country Overview Dashboard,Dashboard basic có. KPI + charts.,30%,24,32,7,10,8,2,4,1,4,1
+46,Content Moderation Stats (P2),Mới — moderation analytics.,10%,16,20,2,2,4,0,2,0,2,0
+47,CMS — T&C & Guides,Article/News CMS có sẵn. Multilingual + versioning.,50%,24,28,12,14,8,4,4,2,4,2
+48,Notification Templates (P2),Notification model có. Template mới.,25%,16,16,4,4,4,1,2,1,2,1
+49,Bulk Import Creators (P2),Import tools có sẵn. Extend CSV.,40%,24,16,10,6,8,3,4,2,4,2
+50,Export All Reports,Export framework có sẵn. Async + email.,55%,16,12,9,7,4,2,2,1,2,1
+51,Local Admin Data Isolation (QC),Partner isolation concept có.,30%,0,0,0,0,16,5,0,0,2,1
+52,Cross-Country Dashboard,Mới — multi-country aggregation.,10%,32,36,3,4,12,1,8,1,4,0
+53,Revenue Confirmed vs Estimated,Mới — concept mới.,10%,16,16,2,2,4,0,2,0,2,0
+54,Country Comparison Charts (P2),Mới — cross-country.,10%,16,20,2,2,4,0,2,0,2,0
+55,Drill-Down per Country,Dashboard reuse.,30%,8,12,2,4,4,1,2,1,2,1
+56,Acting as Local — Enter Mode,Mới — impersonation.,5%,32,24,2,1,12,1,8,0,4,0
+57,Acting as Local — Audit,Audit framework có sẵn. Sensitive tracking.,35%,24,16,8,6,8,3,4,1,4,1
+58,Acting as Local — Exit Mode,Mới — session summary.,10%,8,8,1,1,4,0,2,0,2,0
+59,Country Config CRUD,Config management có sẵn. Extend full.,35%,32,32,11,11,12,4,8,3,4,1
+60,Feature Flags Management,Backend flag có. UI mới.,40%,16,20,6,8,4,2,4,2,2,1
+61,Admin User Management,Staff management có sẵn. Country + roles.,50%,24,24,12,12,8,4,4,2,4,2
+62,Role Permission Matrix,Mới — visual matrix.,10%,8,16,1,2,4,0,2,0,2,0
+63,Audit Log Viewer,Audit log có sẵn. Search/filter UI.,45%,24,28,11,13,8,4,4,2,4,2
+64,Acting-as-Local Session Viewer (P2),Mới — session viewer.,10%,16,20,2,2,4,0,2,0,2,0
+65,Export Audit Logs,Export framework có sẵn.,50%,8,8,4,4,4,2,2,1,2,1
+66,Notifications to Local Teams (P2),Admin notification có sẵn. Targeting.,40%,16,16,6,6,4,2,2,1,2,1
+67,Cross-Country Reports (P2),Mới — cross-country.,10%,24,24,2,2,8,1,4,0,4,0
+68,Tax Rules Management,Mới — tax rules CRUD.,10%,24,16,2,2,8,1,4,0,4,0
+69,System Health Dashboard (P2),Monitoring basic có. Extend.,25%,16,24,4,6,4,1,4,1,2,1
+
+SUBTOTAL ADMIN,,,~38%,1440,1288,552,478,504,187,240,86,214,79
+
+
+GHI CHÚ
+,1. Reuse % = phần trăm effort giảm khi tận dụng source code cũ so với build mới hoàn toàn.
+,"2. Reuse 0-20% = feature hầu như mới (multi-tenancy, multi-currency, tax per country)."
+,"3. Reuse 40-70% = feature đã có trong source cũ — chỉ cần extend (thêm country scope, i18n, currency)."
+,4. Phần giảm nhiều nhất: Creator (~45%) — hầu hết flow creator đã hoạt động ổn định.
+,5. Phần giảm ít nhất: Platform Core (~36%) — multi-tenancy layer phần lớn là concept mới.
+,6. Rủi ro: Retrofit multi-tenancy (country_code) vào code cũ cần kiểm thử data isolation kỹ lưỡng.
+,7. Source code cũ cùng tech stack: Go/Echo (BE) + React/UmiJS (FE) + MongoDB + Redis + MinIO.

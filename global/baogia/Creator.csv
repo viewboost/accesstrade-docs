@@ -201,8 +201,3 @@ STT,Objective,Feature,Use case,Note,Deadline,Status,DevOps,SA,BE,FE,QC,Design,BA
 - Campaign deadline reminder
 - Configurable frequency",D+45,,2,2,16,4,4,0,2,4,34,2
 ,,,,,,,,,,,,,,,,
-,NOTE: Phần Platform Core ([System] + [Infra]) đã tách sang file riêng:,,,,,,,,,,,,,,,,
-,"→ VCreator-Global-PlatformCore-BaoGia.csv (Multi-Tenancy, i18n, Currency, Tax, Migration, Feature Flags, Monitoring)",,,,,,,,,,,,,,,,
-,→ ADR chi tiết: adr-platform-core.md (ADR-001 ~ ADR-005),,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-,Xem tổng hợp tại: VCreator-Global-Summary-BaoGia.csv,,,,,,,,,,,,,,,,

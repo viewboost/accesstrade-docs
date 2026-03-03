@@ -20,4 +20,3 @@ STT,Objective,Feature,Use case,Note,ADR Reference,Deadline,Status,DevOps,SA,BE,F
 - Validation: user count, profile count match
 - NOTE: CHỈ cần nếu quyết định migrate VN data. Nếu user vào lại từ đầu → KHÔNG CẦN task này.",ADR-002,TBD,,0,8,32,0,8,0,4,8,60,TBD
 ,,,,,,,,,,,,,,,,
-,Xem tổng hợp tại: VCreator-Global-Summary-BaoGia.csv,,,,,,,,,,,,,,,,

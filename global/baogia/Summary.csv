@@ -1,31 +1,32 @@
 Module,Phase,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours)
 
-,TỔNG HỢP THEO MODULE,,,,,,,,,,
+,TỔNG HỢP THEO MODULE (ĐÃ GIẢM — TẬN DỤNG SOURCE CODE CŨ),,,,,,,,,,
+,"(Số liệu đã áp dụng ~37% giảm effort nhờ reuse source code cũ cùng tech stack. Chi tiết: ReuseSavings.csv)",,,,,,,,,,
 ,,,,,,,,,,,,
 
 ,PLATFORM CORE,,,,,,,,,,
-,Phase 1 (Core — D+10~D+25),"Country Config, Middleware, URL Routing, Dual Tenancy, User Identity, i18n, Currency, Display Currency Pref, Tax, Feature Flags, Secrets",18,90,456,136,126,0,60,114,1000
-,Phase 2 (Enhancement — D+35),"Monitoring per Country, Reconciliation Rate",8,8,40,8,12,0,6,12,94
-,Platform Core TOTAL,,26,98,496,144,138,0,66,126,1094
+,Phase 1 (Core — D+10~D+25),"Country Config, Middleware, URL Routing, Dual Tenancy, User Identity, i18n, Currency, Display Currency Pref, Tax, Feature Flags, Secrets",12,60,277,89,75,0,39,80,632
+,Phase 2 (Enhancement — D+35),"Monitoring per Country, Reconciliation Rate",6,5,24,5,7,0,4,8,59
+,Platform Core TOTAL,,18,65,301,94,82,0,43,88,691
 ,,,,,,,,,,,,
 
 ,CREATOR FEATURES,,,,,,,,,,
-,Phase 1 (Core — D+25~D+45),"Authentication, Landing, KYC, Campaign, Content, Earnings, Payout, Push Notifications, Currency Switcher",16,76,480,584,156,32,84,172,1600
-,Phase 2 (Enhancement — D+45~D+55),"Facebook Login, Deferred KYC, Leaderboard, E-Wallet, Receipt, Referral, Chart, Email Notifications, Notification Prefs, Account Deletion",6,26,176,172,60,0,28,60,528
-,Creator TOTAL,,22,102,656,756,216,32,112,232,2128
+,Phase 1 (Core — D+25~D+45),"Authentication, Landing, KYC, Campaign, Content, Earnings, Payout, Push Notifications, Currency Switcher",11,51,291,381,92,19,55,120,1020
+,Phase 2 (Enhancement — D+45~D+55),"Facebook Login, Deferred KYC, Leaderboard, E-Wallet, Receipt, Referral, Chart, Email Notifications, Notification Prefs, Account Deletion",4,17,107,112,36,0,18,42,336
+,Creator TOTAL,,15,68,398,493,128,19,73,162,1356
 ,,,,,,,,,,,,
 
 ,ADMIN FEATURES,,,,,,,,,,
-,Phase 1 (Core — D+20~D+45),"Admin Auth, RBAC, i18n, Audit, Content Moderation, KYC Review, Creator Management, Campaign CRUD, Team, Dashboard, CMS, Export, Country Config, Feature Flags, Admin Users, Audit Viewer, Tax Rules, Reconciliation, Payment Queue",14,138,708,640,236,28,118,156,2038
-,Phase 2 (Enhancement — D+45~D+55),"Activity Dashboard, Auto-Reject, Violation Report, Notifications, Campaign Clone, Partner Analytics, Mod Stats, Templates, Bulk Import, Country Comparison, Acting-as-Local Session, Export Audit, Global Notifications, Cross-Country Reports, System Health, Annual Tax Summary, Financial Trends",4,46,304,328,100,4,46,70,902
-,Admin TOTAL,,18,184,1012,968,336,32,164,226,2940
+,Phase 1 (Core — D+20~D+45),"Admin Auth, RBAC, i18n, Audit, Content Moderation, KYC Review, Creator Management, Campaign CRUD, Team, Dashboard, CMS, Export, Country Config, Feature Flags, Admin Users, Audit Viewer, Tax Rules, Reconciliation, Payment Queue",10,92,430,417,140,17,78,109,1293
+,Phase 2 (Enhancement — D+45~D+55),"Activity Dashboard, Auto-Reject, Violation Report, Notifications, Campaign Clone, Partner Analytics, Mod Stats, Templates, Bulk Import, Country Comparison, Acting-as-Local Session, Export Audit, Global Notifications, Cross-Country Reports, System Health, Annual Tax Summary, Financial Trends",3,30,184,214,60,2,30,49,572
+,Admin TOTAL,,13,122,614,631,200,19,108,158,1865
 ,,,,,,,,,,,,
 
 ,BRAND PORTAL,,,,,,,,,,
-,Phase 2A (Core — D+50~D+65),"Brand Auth, RBAC, Onboarding, Market Selection, Campaign Builder, Reward, Budget, Approval, Scheduling, Requirements, Hashtag, Creators List, Content Feed, Preview, Status Tracking, Dashboard, Campaign Analytics, Budget Overview, Cost Summary, Profile, Branding, Team, Data Isolation",8,72,412,448,148,24,72,100,1284
-,Phase 2B (Enhancement — D+65~D+75),"KYB, Campaign Clone, Brand Content Review, Creator Ranking, Content Analytics, ROI, Cross-Country, Export Reports, Invoice, Financial Reports, Custom Domain, Notification Prefs",4,30,204,188,68,0,30,44,568
-,Phase 3 (Advanced — D+85),API & Webhook Configuration,2,8,40,20,12,0,4,8,94
-,Brand Portal TOTAL,,14,110,656,656,228,24,106,152,1946
+,Phase 2A (Core — D+50~D+65),"Brand Auth, RBAC, Onboarding, Market Selection, Campaign Builder, Reward, Budget, Approval, Scheduling, Requirements, Hashtag, Creators List, Content Feed, Preview, Status Tracking, Dashboard, Campaign Analytics, Budget Overview, Cost Summary, Profile, Branding, Team, Data Isolation",6,48,250,292,88,15,48,70,817
+,Phase 2B (Enhancement — D+65~D+75),"KYB, Campaign Clone, Brand Content Review, Creator Ranking, Content Analytics, ROI, Cross-Country, Export Reports, Invoice, Financial Reports, Custom Domain, Notification Prefs",3,20,124,122,41,0,20,31,361
+,Phase 3 (Advanced — D+85),API & Webhook Configuration,1,5,24,13,7,0,2,6,58
+,Brand Portal TOTAL,,10,73,398,427,136,15,70,107,1236
 ,,,,,,,,,,,,
 
 ,MIGRATION (TÁCH RIÊNG),,,,,,,,,,
@@ -38,12 +39,12 @@ Module,Phase,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours)
 ,,,,,,,,,,,,
 
 Phase,Scope,,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours)
-Phase 1,"Platform Core (D+10~D+25) + Creator Core (D+25~D+45) + Admin Core (D+20~D+45)",,48,304,1644,1360,518,60,262,442,4638
-Phase 2,"Creator Enhancement (D+45~D+55) + Admin Enhancement (D+45~D+55) + Brand Portal Core (D+50~D+65)",,22,174,1096,1136,376,28,176,274,3282
-Phase 3,Brand Portal Advanced — API & Webhook (D+85),,2,8,40,20,12,0,4,8,94
+Phase 1,"Platform Core (D+10~D+25) + Creator Core (D+25~D+45) + Admin Core (D+20~D+45)",,33,203,998,887,307,36,172,309,2945
+Phase 2,"Platform Core Enhancement (D+35) + Creator Enhancement (D+45~D+55) + Admin Enhancement (D+45~D+55) + Brand Portal Core+Enhancement (D+50~D+75)",,16,72,439,453,144,2,72,130,1328
+Phase 3,Brand Portal Advanced — API & Webhook (D+85),,1,5,24,13,7,0,2,6,58
 ,,,,,,,,,,,,
 
-,GRAND TOTAL PROJECT (excl. Migration),,80,494,2820,2524,918,88,448,736,8108
+,GRAND TOTAL PROJECT (excl. Migration),,56,328,1711,1645,546,53,294,515,5148
 ,,,,,,,,,,,,
 ,Migration (TÁCH RIÊNG — chỉ khi cần),,8,16,72,0,16,0,8,16,136
 ,,,,,,,,,,,,
@@ -52,46 +53,70 @@ Phase 3,Brand Portal Advanced — API & Webhook (D+85),,2,8,40,20,12,0,4,8,94
 ,PHÂN BỔ NHÂN SỰ THEO ROLE,,,,,,,,,,
 ,,,,,,,,,,,,
 Role,Total (hours),% of Total,,,,,,,,,
-DevOps,80,1.0%,,,,,,,,,
-SA,494,6.1%,,,,,,,,,
-BE,2820,34.8%,,,,,,,,,
-FE,2524,31.1%,,,,,,,,,
-QC,918,11.3%,,,,,,,,,
-Design,88,1.1%,,,,,,,,,
-BA,448,5.5%,,,,,,,,,
-PM,736,9.1%,,,,,,,,,
-TOTAL,8108,100%,,,,,,,,,
+DevOps,56,1.1%,,,,,,,,,
+SA,328,6.4%,,,,,,,,,
+BE,1711,33.2%,,,,,,,,,
+FE,1645,32.0%,,,,,,,,,
+QC,546,10.6%,,,,,,,,,
+Design,53,1.0%,,,,,,,,,
+BA,294,5.7%,,,,,,,,,
+PM,515,10.0%,,,,,,,,,
+TOTAL,5148,100%,,,,,,,,,
 ,,,,,,,,,,,,
 ,,,,,,,,,,,,
 
 ,TECH STACK & TEAM COMPOSITION,,,,,,,,,,
-,"Timeline D+85 dưới đây dựa trên team composition sau:",,,,,,,,,,
-,,,,,,,,,,,,
-Role,Headcount,Type,Hours/tháng,Total Hours,Thời gian (tháng),Bottleneck?,,,,,,
-BE (Backend),2,Full-time,320,2820,8.8,★ BOTTLENECK,,,,,,
-FE (Frontend),2,Full-time,320,2524,7.9,,,,,,,
-QC (Tester),1,Full-time,160,918,5.7,,,,,,,
-PM (Project Manager),1,Full-time,160,736,4.6,,,,,,,
-SA (Solution Architect),0.5,Part-time,80,494,6.2,,,,,,,
-BA (Business Analyst),0.5,Part-time,80,448,5.6,,,,,,,
-DevOps,0.5,Part-time,80,80,1.0,,,,,,,
-Design,0.5,Part-time,80,88,1.1,,,,,,,
-TOTAL TEAM,8 người (4 full + 4 half),,1280,8108,~8.8 (theo bottleneck BE),,,,,,,
-,,,,,,,,,,,,
 ,Tech Stack: Go/Echo (BE) + React/UmiJS (FE) + MongoDB + Redis + MinIO,,,,,,,,,,
-,"Timeline thực tế: ~9 tháng (8.8 tháng BE bottleneck + buffer). D+85 ngày làm việc ≈ 4.25 tháng calendar — CHỈ KHẢ THI nếu tăng team BE lên 4-5 người.",,,,,,,,,,
-,"Với team 2 BE: D+85 → D+175 (≈ 8.8 tháng). Hoặc giữ D+85 nếu tăng BE lên 4 người.",,,,,,,,,,
+,,,,,,,,,,,,
+Role,Headcount,Type,Capacity/tháng,Total Hours,Cần trong D+85 (4.25 tháng),Đủ?,,,,,,
+BE (Backend),2,Full-time,320h,1711h,2.5 người,~ Gần đủ (thiếu 0.5 BE),,,,,,
+FE (Frontend),2,Full-time,320h,1645h,2.4 người,~ Gần đủ (thiếu 0.4 FE),,,,,,
+QC (Tester),1,Full-time,160h,546h,0.8 người,✓ Đủ,,,,,,
+PM (Project Manager),1,Full-time,160h,515h,0.8 người,✓ Đủ,,,,,,
+SA (Solution Architect),0.5,Part-time,80h,328h,0.5 người,✓ Vừa đủ,,,,,,
+BA (Business Analyst),0.5,Part-time,80h,294h,0.4 người,✓ Đủ,,,,,,
+DevOps,0.5,Part-time,80h,56h,0.1 người,✓ Đủ,,,,,,
+Design,0.5,Part-time,80h,53h,0.1 người,✓ Đủ,,,,,,
+TOTAL TEAM,8 người (4 full + 4 half),,1280h/tháng,5148h,,,,,,,
+,,,,,,,,,,,,
+,"D+85 = 85 ngày làm việc ≈ 4.25 tháng calendar. Cả team làm SONG SONG nên total 5,148h chia đều cho 4.25 tháng.",,,,,,,,,,
+,"Cột 'Cần trong D+85' = Total Hours / 4.25 tháng / 160h = số người cần full-time để hoàn thành trong D+85.",,,,,,,,,,
+,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,
+,SO SÁNH: BUILD MỚI vs TẬN DỤNG SOURCE CODE CŨ,,,,,,,,,,
+,"(Source code cũ cùng tech stack Go/Echo + React/UmiJS + MongoDB. Chi tiết: ReuseSavings.csv)",,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,
+,,,,,,,,,,,,
+Role,Build mới (h),Giảm (h),Còn lại (h),% giảm,,,,,,,,
+DevOps,80,24,56,30%,,,,,,,,
+SA,494,166,328,34%,,,,,,,,
+BE,2820,1109,1711,39%,,,,,,,,
+FE,2524,879,1645,35%,,,,,,,,
+QC,918,372,546,41%,,,,,,,,
+Design,88,35,53,40%,,,,,,,,
+BA,448,154,294,34%,,,,,,,,
+PM,736,221,515,30%,,,,,,,,
+TOTAL,8108,2960,5148,~37%,,,,,,,,
+,,,,,,,,,,,,
+,TIMELINE OPTIONS,,,,,,,,,,
+,,,,,,,,,,,,
+Option,Team Size,BE,FE,Timeline,Ghi chú,,,,,,
+"A. Team hiện tại (8 người)","8 người","BE×2","FE×2","~D+107 (5.3 tháng)","BE 1,711h / 320h = 5.3 tháng. Khả thi nhưng vượt D+85.",,,,,,
+"B. Tăng nhẹ (10 người)","10 người","BE×3","FE×3","~D+72 (3.6 tháng)","Nhanh. Cân bằng chi phí. Trong D+85.",,,,,,
+"C. Giữ D+85 (4.25 tháng)","8-9 người","BE×2 + 0.5","FE×2","D+85","Khả thi. Chỉ cần thêm ~0.5 BE.",,,,,,
 ,,,,,,,,,,,,
 ,,,,,,,,,,,,
 ,GHI CHÚ,,,,,,,,,,
-,"1. Grand Total 8,108h = effort xây dựng platform (KHÔNG bao gồm onboard country)",,,,,,,,,,
+,"1. Số liệu ĐÃ ÁP DỤNG giảm ~37% nhờ tận dụng source code cũ (build mới: 8,108h → còn: 5,148h).",,,,,,,,,,
 ,"2. Migration (136h) tách riêng — chỉ khi cần migrate VN data",,,,,,,,,,
 ,"3. Phase 1 = Platform Core (D+10~25) → Creator+Admin Core (D+20~45). Platform Core là foundation, phải xong trước. Creator + Admin overlap từ ~D+20.",,,,,,,,,,
-,"4. Phase 2 = Creator+Admin Enhancement (D+45~55) + Brand Portal Core (D+50~65). Brand Portal bắt đầu sau khi Admin Campaign + Content pipeline stable.",,,,,,,,,,
+,"4. Phase 2 = PC Enhancement (D+35) + Creator+Admin Enhancement (D+45~55) + Brand Portal Core+Enhancement (D+50~75).",,,,,,,,,,
 ,"5. Phase 3 = Brand Portal Advanced — API/Webhook (D+85). Sau khi Brand Portal core stable.",,,,,,,,,,
-,"6. Hệ thống VN cũ (ambassabor) tiếp tục chạy song song — KHÔNG bị ảnh hưởng",,,,,,,,,,
-,"7. Bottleneck = BE (2,820h / 2 người = 8.8 tháng). Muốn rút ngắn timeline → ưu tiên tăng BE.",,,,,,,,,,
-,"8. D+x trong báo giá = working days tương đối. Quy đổi: D+20 ≈ 1 tháng, D+40 ≈ 2 tháng, D+85 ≈ 4.25 tháng (nếu đủ team).",,,,,,,,,,
+,"6. Hệ thống VN cũ tiếp tục chạy song song — KHÔNG bị ảnh hưởng.",,,,,,,,,,
+,"7. D+85 = 85 ngày làm việc ≈ 4.25 tháng calendar. Quy đổi: D+20 ≈ 1 tháng, D+40 ≈ 2 tháng.",,,,,,,,,,
+,"8. Với team BE×2: timeline ~5.3 tháng. Tăng BE×3 → 3.6 tháng. Thêm 0.5 BE → vừa D+85.",,,,,,,,,,
+,"9. Rủi ro: Retrofit multi-tenancy vào source cũ cần test data isolation kỹ. Chi tiết giảm: ReuseSavings.csv.",,,,,,,,,,
+,"10. Tỷ lệ giảm áp dụng theo role: DevOps -30%, SA -34%, BE -39%, FE -35%, QC -41%, Design -40%, BA -34%, PM -30%.",,,,,,,,,,
 ,,,,,,,,,,,,
 ,,,,,,,,,,,,
 ,,,,,,,,,,,,
