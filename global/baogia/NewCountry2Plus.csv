@@ -1,0 +1,178 @@
+STT,Objective,Task,Mô tả,Note,Timeline,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours)
+
+,MỞ RỘNG QUỐC GIA MỚI (COUNTRY THỨ 2+) — VCreator Global,,,,,,,,,,,,,,
+,"Tổng quan: Báo giá cho country thứ 2+ khi đã có ít nhất 1 country (VN/PH) chạy production. Phần lớn task chỉ là THAY CONFIG VALUES + LOCALIZE CONTENT. Platform, logic, test scripts đã có sẵn.",,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+
+,LEGAL & COMPLIANCE RESEARCH,,,,,,,,,,,,,
+1,Legal & Compliance,Tax Rules Research,"Nghiên cứu thuế TNCN/withholding tax per country. So sánh vs countries hiện có.","- Nghiên cứu tax law per country
+- So sánh vs countries hiện có (VN, PH)
+- Output: tax config values cho dev nhập",D-30 → D-20,0,0,0,0,0,0,4,2,6
+2,,KYC Requirements Mapping,"Xác định ID types accepted, validation rules per country.","- Danh sách Government ID types
+- Validation rules per ID type
+- Output: KYC config values — pattern đã có sẵn từ VN/PH",D-30 → D-20,0,0,0,0,0,0,4,2,6
+3,,Privacy & Data Protection Assessment,"Đánh giá privacy laws. Checklist đã có template từ countries trước.","- Privacy law assessment (dùng template có sẵn)
+- Data residency requirements
+- Output: privacy compliance checklist",D-30 → D-20,0,2,0,0,0,0,4,2,8
+4,,Legal Content Review & Drafting,"Soạn T&C, Contract, Privacy Policy — dùng template countries trước, chỉnh per country.","- Fork T&C/Contract/Privacy từ country hiện có
+- Chỉnh per country per language
+- Legal review bởi luật sư local
+- CRITICAL PATH: lead time 2-4 tuần",D-30 → D-10,0,0,0,0,0,0,8,4,12
+5,,Business & Regulatory Compliance,"Giấy phép kinh doanh, compliance per country.","- Dùng checklist từ countries trước
+- Output: compliance readiness report",D-30 → D-15,0,0,0,0,0,0,4,2,6
+,,,,,,,,,,,,,,
+
+,PLATFORM CONFIGURATION — CHỈ THAY VALUES,,,,,,,,,,,,,
+6,Platform Config,Country Config Setup,"Copy config từ country hiện có, đổi: code, name, currency, languages, timezone.","- Copy country config record hiện có
+- Đổi values: currency, languages, timezone
+- Enable country: active = true
+- Test: country xuất hiện trong country selector
+- ĐÃ CÓ PATTERN — chỉ thay values",D-10 → D-8,0,0,2,0,1,0,1,1,5
+7,,Currency & Exchange Rate Setup,"Config currency. Nếu dùng chung exchange rate API → chỉ add currency code. Nếu cần API riêng → integrate mới.","- Nếu exchange rate API hiện có support currency mới → chỉ add config (2h)
+- Nếu cần API riêng (central bank) → integrate mới (8h)
+- Test: rate hiển thị đúng + fallback",D-10 → D-8,0,1,6,0,2,0,1,1,11
+8,,Tax Engine Configuration,"Nhập tax rates/bands mới vào Tax Engine. Logic engine đã có sẵn.","- Nhập tax rules từ Legal Research
+- Config: rate, bands, withholding type
+- Test: Gross → Tax → Net (logic đã có)
+- Test: edge cases",D-8 → D-6,0,0,2,0,2,0,1,1,6
+9,,KYC Configuration,"Đổi accepted ID types + validation rules. Form + logic đã có sẵn.","- Nhập accepted ID types per country
+- Config validation rules (format đã có pattern)
+- Test: KYC form hiển thị đúng ID types",D-8 → D-6,0,0,2,1,2,0,1,1,7
+10,,Bank List & Payment Gateway Setup,"Nhập banks list. Payment gateway: nếu cùng provider → chỉ add credentials. Nếu provider mới → integrate.","- Nhập bank list + validation format
+- CÓ THỂ PHỨC TẠP nếu payment gateway khác hoàn toàn
+- Nếu cùng provider (VD: cùng Xendit cho SEA) → 4h
+- Nếu provider mới → 16h (giữ estimate cao)
+- Test: sandbox payment end-to-end",D-10 → D-6,1,2,10,0,4,0,1,1,19
+11,,OAuth & Social Platform Config,"Shared OAuth credentials. Chỉ enable/disable platforms per country.","- OAuth: shared credentials — chỉ config enable
+- Social platforms: toggle per country
+- Test: OAuth login flow
+- ĐƠN GIẢN — chỉ config",D-8 → D-6,0,0,1,1,1,0,0,0,3
+12,,Feature Flags Setup,"Toggle features per country. Checklist có sẵn.","- Review feature flags checklist
+- Toggle on/off per country
+- Test: feature visibility
+- ĐƠN GIẢN — 30 phút config + 30 phút test",D-8 → D-6,0,0,1,0,1,0,0,0,2
+13,,Secrets & API Keys Setup,"Add API keys vào vault. Pattern đã có.","- Add payment gateway keys (sandbox + prod)
+- Add exchange rate API keys
+- Store in secrets management
+- ĐƠN GIẢN",D-10 → D-8,1,0,1,0,1,0,0,0,3
+14,,Monitoring & Alerting Config,"Add country tag vào monitoring. Dashboard template có sẵn.","- Add country tag trong Elastic APM
+- Clone monitoring dashboard, đổi country filter
+- Test: metrics flowing
+- ĐƠN GIẢN",D-6 → D-4,1,0,1,0,1,0,0,0,3
+,,,,,,,,,,,,,,
+
+,CONTENT & LOCALIZATION — DÙNG TEMPLATE CÓ SẴN,,,,,,,,,,,,,
+15,Content & i18n,UI Translation — Backend Locale Files,"Copy locale files, thay translations. Review bởi native speaker.","- Copy locale files từ country hiện có
+- Thay translations (có thể dùng AI draft + native review)
+- Test: messages hiển thị đúng
+- Fallback test: thiếu key → English",D-8 → D-5,0,0,3,0,2,0,2,1,8
+16,,UI Translation — Frontend Labels,"Copy frontend locale files, thay translations.","- Copy frontend locale files
+- Thay translations (AI draft + native review)
+- Test: toàn bộ screens
+- Test: number/currency/date format per locale",D-8 → D-5,0,0,0,6,4,0,2,1,13
+17,,T&C / Contract / Privacy Policy Content,"Nhập nội dung legal đã approved vào CMS.","- Nhập content vào CMS (đã có template)
+- Per language: local + English
+- Test: Creator thấy đúng T&C
+- ĐƠN GIẢN — CMS data entry",D-5 → D-3,0,0,1,1,2,0,2,1,7
+18,,Notification & Email Templates,"Copy templates, thay language. Variables giữ nguyên.","- Copy templates từ country hiện có
+- Thay language content
+- Variables giữ nguyên: {creator_name}, {amount}
+- Test send mỗi template",D-5 → D-3,0,0,1,1,2,0,2,1,7
+19,,Landing Page Content,"Localize landing page: copy, images.","- Fork landing page content
+- Thay copy per language
+- Localized images (nếu cần)
+- Design review",D-5 → D-3,0,0,2,4,2,2,2,1,13
+20,,Campaign Templates & Sample Content,"Copy campaign templates, localize per country.","- Copy templates từ country hiện có
+- Localize per category
+- ĐƠN GIẢN",D-5 → D-3,0,0,0,1,1,1,2,1,6
+21,,Training & SOP Documents,"Fork training docs từ country trước, chỉnh per country.","- Fork SOPs/guides từ country hiện có
+- Chỉnh per country specifics
+- Giảm nhiều vì đã có template",D-8 → D-3,0,0,0,0,0,0,8,2,10
+,,,,,,,,,,,,,,
+
+,LOCAL OPERATIONS SETUP,,,,,,,,,,,,,
+22,Local Ops,Recruit & Assign Local Team,"Tuyển/assign team. Process đã có SOP.","- Dùng SOP hiring từ country trước
+- Xác định headcount
+- Recruit/assign + onboard",D-20 → D-8,0,0,0,0,0,0,2,4,6
+23,,Create Admin Accounts & Roles,"Tạo accounts, assign roles. RBAC system đã có.","- Tạo accounts: Local Admin, Ops, Finance
+- Assign roles (RBAC đã có)
+- Verify data isolation per country
+- ĐƠN GIẢN — admin operation",D-5 → D-3,0,0,1,0,2,0,1,1,5
+24,,Local Team Training,"Training với local team. Materials đã có, chỉ customize.","- Dùng training materials từ country trước
+- Customize per country specifics
+- Hands-on practice trên staging",D-5 → D-1,0,0,0,0,0,0,2,4,6
+,,,,,,,,,,,,,,
+
+,PAYMENT & FINANCE SETUP,,,,,,,,,,,,,
+25,Payment & Finance,Payment Gateway Integration Test,"Test payment sandbox. Test scripts đã có sẵn — chỉ chạy lại với country config mới.","- Chạy existing test scripts với country mới
+- Test: bank transfer + e-wallet
+- Test: success + failure + webhook
+- Test: retry logic
+- Nếu gateway mới → cần thêm effort",D-6 → D-3,1,1,4,0,4,0,1,1,12
+26,,Reconciliation Process Setup & Test,"Test reconciliation workflow. Flow đã có — chỉ verify với country mới.","- Chạy recon test flow với country mới
+- Test: rate locking, approve, execute
+- Test: failed payment handling
+- Test: financial reports per country",D-6 → D-3,0,1,3,1,4,0,1,1,11
+,,,,,,,,,,,,,,
+
+,QA & LAUNCH,,,,,,,,,,,,,
+27,QA & Launch,E2E Testing per Country,"Chạy E2E test suite đã có với country mới. Fix nếu có issues.","- Chạy existing E2E test suite, thay country param
+- Creator flow: signup → KYC → campaign → content → earnings → payout
+- Admin + Finance + Brand flows
+- Fix issues nếu có
+- Test scripts có sẵn — giảm effort lớn",D-3 → D-1,0,0,4,4,12,0,1,1,22
+28,,Data Isolation Verification,"Chạy data isolation test suite. MANDATORY nhưng scripts đã có.","- Chạy existing isolation test scripts
+- Test: cross-country data không leak
+- Test: API rejection cho cross-country
+- MANDATORY — không skip
+- Scripts có sẵn — chỉ chạy + verify",D-3 → D-1,0,1,2,2,8,0,1,1,15
+29,,UAT + Soft Launch + Go-Live,"UAT → soft launch → monitor → go-live. Process đã có SOP.","- UAT: local team test trên production
+- Soft launch: 50-100 creators
+- Monitor: errors, latency, data integrity
+- Fix critical issues
+- Go-live: enable country
+- Post-launch monitoring (48h)",D-1 → D+3,1,1,4,2,4,0,1,2,15
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+
+,TỔNG HỢP PER COUNTRY (THỨ 2+),,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+Category,Phase,Tasks,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Cost ($),,
+,,,17$/h,17$/h,15$/h,15$/h,11$/h,11$/h,11$/h,17$/h,,,
+Legal & Compliance,D-30 → D-15,"Tax, KYC, Privacy, Legal Review, Business Compliance — dùng template có sẵn",0,2,0,0,0,0,18,10,30,"$402",,
+Platform Configuration,D-10 → D-6,"Country Config, Currency, Tax, KYC, Banks, OAuth, Flags, Secrets, Monitoring — CHỈ THAY VALUES",3,3,24,2,16,0,5,6,59,"$825",,
+Content & Localization,D-8 → D-3,"UI Translation, T&C, Notifications, Landing Page, Templates, Training — DÙNG TEMPLATE",0,0,7,13,13,3,14,6,56,"$732",,
+Local Ops Setup,D-20 → D-1,"Recruit Team, Create Accounts, Training — SOP có sẵn",0,0,1,0,2,0,4,6,13,"$183",,
+Payment & Finance,D-6 → D-3,"Payment Gateway Test, Reconciliation — test scripts có sẵn",1,2,7,1,6,0,2,2,21,"$293",,
+QA & Launch,D-3 → D+3,"E2E Test, Data Isolation, UAT, Soft Launch — test suite có sẵn",1,2,8,6,20,0,3,3,43,"$565",,
+,,,,,,,,,,,,,,
+,TOTAL PER NEW COUNTRY (THỨ 2+),,5,9,47,22,57,3,46,33,222,"$3,000",,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+
+,SO SÁNH: COUNTRY ĐẦU TIÊN vs COUNTRY THỨ 2+,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+Role,Country đầu tiên (h),Country 2+ (h),Giảm (h),% giảm,,,,,,,,
+DevOps,10,5,5,50%,,,,,,,,
+SA,28,9,19,68%,,,,,,,,
+BE,132,47,85,64%,,,,,,,,
+FE,66,22,44,67%,,,,,,,,
+QC,122,57,65,53%,,,,,,,,
+Design,6,3,3,50%,,,,,,,,
+BA,122,46,76,62%,,,,,,,,
+PM,88,33,55,63%,,,,,,,,
+TOTAL,574,222,352,~61%,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+
+,GHI CHÚ,,,,,,,,,,,,,
+,"1. Estimate này dành cho country THỨ 2 TRỞ ĐI — khi đã có ít nhất 1 country chạy production.",,,,,,,,,,,,,
+,"2. Giảm ~61% so với country đầu tiên nhờ: config đã có pattern, test scripts có sẵn, templates/SOPs reuse.",,,,,,,,,,,,,
+,"3. Dev effort (BE+FE) chỉ còn 69h (~8.5 ngày) — phần lớn là THAY VALUES, không viết logic mới.",,,,,,,,,,,,,
+,"4. Bottleneck vẫn là Legal/Compliance (2-4 tuần lead time) — không phải dev.",,,,,,,,,,,,,
+,"5. Timeline target: ~2 tuần dev effort (parallel). Tổng timeline phụ thuộc Legal (4 tuần nếu tính legal).",,,,,,,,,,,,,
+,"6. Nếu payment gateway KHÁC HOÀN TOÀN provider hiện có → +8-12h BE cho integration mới.",,,,,,,,,,,,,
+,"7. Nếu ngôn ngữ RTL (Arabic) hoặc CJK → +20-30h FE cho layout/font adjustments.",,,,,,,,,,,,,
+,"8. Country thứ 3, 4, 5... estimate giữ nguyên mức này (đã là mức tối ưu).",,,,,,,,,,,,,
+,"9. QC vẫn chiếm tỷ lệ cao (25%) vì E2E + Data Isolation test là MANDATORY cho mỗi country.",,,,,,,,,,,,,

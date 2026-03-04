@@ -126,6 +126,9 @@ Option,Team Size,BE,FE,Timeline,Ghi chú,,,,,,
 ,"(Chi tiết xem: VCreator-Global-NewCountry-BaoGia.csv)",,,,,,,,,,
 ,═══════════════════════════════════════,,,,,,,,,,
 ,,,,,,,,,,,,
+,,,,,,,,,,,,
+,--- COUNTRY ĐẦU TIÊN (574h) ---,,,,,,,,,,
+,,,,,,,,,,,,
 Category,Tasks,,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours)
 Legal & Compliance,5 tasks — Tax / KYC / Privacy / Legal Review / Business Compliance,,0,4,0,0,0,0,48,24,76
 Platform Configuration,9 tasks — Country Config / Currency / Tax / KYC / Bank / OAuth / Flags / Secrets / Monitoring,,6,16,72,10,28,0,14,18,164
@@ -134,7 +137,38 @@ Local Ops Setup,3 tasks — Recruit Team / Create Accounts / Training,,0,0,4,0,4
 Payment & Finance,2 tasks — Payment Gateway Test / Reconciliation Setup,,2,4,16,4,16,0,4,4,50
 QA & Launch,3 tasks — E2E Test / Data Isolation / UAT + Go-Live,,2,4,20,16,48,0,6,8,104
 ,,,,,,,,,,,,
-,TOTAL PER NEW COUNTRY (29 tasks),,10,28,132,66,122,6,122,88,574
+,TOTAL COUNTRY ĐẦU TIÊN (29 tasks),,10,28,132,66,122,6,122,88,574
 ,,,,,,,,,,,,
 ,"Timeline: ~4 tuần (parallel execution). Critical path: Legal Review (2-4 tuần lead time).",,,,,,,,,,
-,"Country thứ 3+ estimate ~70-80% nhờ experience + templates.",,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,--- COUNTRY THỨ 2+ (222h — $3,000 — giảm 61%) ---,,,,,,,,,,
+,"(Đã có 1 country chạy production. Config có pattern, test scripts + templates + SOPs reuse.)",,,,,,,,,,
+,"(Chi tiết xem: NewCountry2Plus.csv)",,,,,,,,,,
+,,,,,,,,,,,,
+Category,Tasks,,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours)
+Legal & Compliance,5 tasks — dùng template có sẵn,,0,2,0,0,0,0,18,10,30
+Platform Configuration,9 tasks — CHỈ THAY VALUES,,3,3,24,2,16,0,5,6,59
+Content & Localization,7 tasks — DÙNG TEMPLATE + fork content,,0,0,7,13,13,3,14,6,56
+Local Ops Setup,3 tasks — SOP có sẵn,,0,0,1,0,2,0,4,6,13
+Payment & Finance,2 tasks — test scripts có sẵn,,1,2,7,1,6,0,2,2,21
+QA & Launch,3 tasks — test suite có sẵn,,1,2,8,6,20,0,3,3,43
+,,,,,,,,,,,,
+,TOTAL COUNTRY THỨ 2+ (29 tasks),,5,9,47,22,57,3,46,33,222
+,,,,,,,,,,,,
+,"Timeline: ~2 tuần dev effort (parallel). Tổng ~4 tuần nếu tính Legal lead time.",,,,,,,,,,
+,"Dev effort (BE+FE) chỉ 69h (~8.5 ngày). Cost: $3,000/country. Bottleneck = Legal, không phải dev.",,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,SO SÁNH COUNTRY ĐẦU TIÊN vs COUNTRY THỨ 2+,,,,,,,,,,
+,,,,,,,,,,,,
+Role,Country đầu tiên (h),Country 2+ (h),Giảm (h),% giảm,,,,,,
+DevOps,10,5,5,50%,,,,,,
+SA,28,9,19,68%,,,,,,
+BE,132,47,85,64%,,,,,,
+FE,66,22,44,67%,,,,,,
+QC,122,57,65,53%,,,,,,
+Design,6,3,3,50%,,,,,,
+BA,122,46,76,62%,,,,,,
+PM,88,33,55,63%,,,,,,
+TOTAL,574,222,352,~61%,,,,,,
