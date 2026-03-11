@@ -197,23 +197,28 @@ const (
 0.3  ml_predicted       ML model predict
 ```
 
-**Service interface:**
+**Service interfaces:**
 
 ```go
+// ProfileServicer: Main profile CRUD & integration
 type ProfileServicer interface {
-    // CRUD
-    GetByID(ctx context.Context, id primitive.ObjectID) (*UnifiedProfile, error)
-    GetByPlatformID(ctx context.Context, platform, externalID string) (*UnifiedProfile, error)
-    List(ctx context.Context, opts ListOptions) ([]UnifiedProfile, int64, error)
+    HasIPClient() bool
+    GetProfile(ctx context.Context, platform Platform, externalID string) (*UnifiedProfile, error)
+    GetProfileByID(ctx context.Context, id string) (*UnifiedProfile, error)
+    ListProfiles(ctx context.Context, filter ListProfilesFilter) (*ListProfilesResult, error)
+    GetScoreFromIP(ctx context.Context, platform Platform, externalID string) (*ipclient.ScoreResponse, error)
+    RefreshProfile(ctx context.Context, platform Platform, externalID string) (*UnifiedProfile, error)
+    GetJobStatus(ctx context.Context, jobID string) (*ipclient.JobResponse, error)
+    OnJobCompleted(ctx context.Context, payload *ipclient.JobCallbackPayload) error
+}
 
-    // Ops override
+// ProfileHubServicer: Field-level updates, verification, change history
+type ProfileHubServicer interface {
     UpdateField(ctx context.Context, profileID primitive.ObjectID, field string,
         value interface{}, source FieldSource, reason string) error
     MarkVerified(ctx context.Context, profileID primitive.ObjectID, verifiedBy string) error
     GetChangeHistory(ctx context.Context, profileID primitive.ObjectID,
-        opts PaginationOptions) ([]ChangeRecord, int64, error)
-
-    // Quality
+        page, limit int) ([]ChangeRecord, int64, error)
     RecalculateCompleteness(ctx context.Context, profileID primitive.ObjectID) (float64, error)
 }
 ```
@@ -222,10 +227,11 @@ type ProfileServicer interface {
 
 **Indexes:**
 ```
-{ platform: 1, externalId: 1 }           unique
-{ visibility: 1, completenessScore: -1 }  pool search
-{ "profileData.categories": 1 }           category filter
-{ createdAt: -1 }                          sorting
+{ platform: 1, externalId: 1 }        unique
+{ visibility: 1 }                      pool search filter
+{ completenessScore: -1 }              quality sorting
+{ crawledAt: -1 }                      recent profiles
+{ createdAt: -1 }                      timeline sorting
 ```
 
 ### 4.3 Domain: `partnerdata`
@@ -565,44 +571,47 @@ at_core_db
 ### 5.3 Profile Change History
 
 ```go
-// profile_changes collection
+// profile_changes collection - append-only change audit trail
 type ChangeRecord struct {
     ID        primitive.ObjectID `bson:"_id,omitempty"`
     ProfileID primitive.ObjectID `bson:"profileId"`
-    Field     string             `bson:"field"`        // "profileData.categories"
+    Field     string             `bson:"field"`        // "data.name", "metrics.engagementRate"
     OldValue  interface{}        `bson:"oldValue,omitempty"`
     NewValue  interface{}        `bson:"newValue"`
-    OldSource *FieldSource       `bson:"oldSource,omitempty"`
-    NewSource FieldSource        `bson:"newSource"`
+    Source    FieldSource        `bson:"source"`       // Track source + confidence of new value
     Reason    string             `bson:"reason,omitempty"`
-    ChangedBy string             `bson:"changedBy"`    // admin email | "system" | "partner_tcb"
-    ChangedAt time.Time          `bson:"changedAt"`
+    CreatedAt time.Time          `bson:"createdAt"`
 }
+```
+
+**Indexes:**
+```
+{ profileId: 1, createdAt: -1 }  List changes per profile, newest first
+{ createdAt: -1 }                Global audit trail
 ```
 
 ### 5.4 Completeness Score
 
-```
-Required fields (60%):
-  platform + externalId          10%
-  name + handle                  10%
-  followers count                10%
-  engagement rate                10%
-  categories                     10%
-  avatar                         10%
+Calculated by RecalculateCompleteness(), stored on profile.CompletenessScore (0-100).
 
-Optional fields (30%):
-  contact email                   5%
-  contact phone                   5%
-  country                         5%
-  bio/description                 5%
-  recent content                  5%
-  demographics                    5%
-
-Quality bonus (10%):
-  has ops_verified fields          5%
-  freshness < 7 days               5%
 ```
+data.name                10
+data.handle              10
+data.description          5
+data.avatarUrl            5
+data.followersCount      10
+data.country              5
+data.categories           5
+metrics.engagementRate   15
+recentContent (len>0)    10
+scoreTotal (>0)          15
+contactEmail              5
+contactPhone              5
+─────────────────────────────
+Total max               100
+```
+
+**Used for:** Pool search ranking, profile quality filtering.
 
 ---
 
@@ -1015,13 +1024,25 @@ PUT /admin/profiles/{id}/fields
 
 1. AdminAuth middleware
 2. PermissionGuard (profiles:write)
-3. For each field to update:
-   a. Get current field value + source
-   b. Set new value
-   c. Set source = ops_verified, confidence = 0.9
-   d. Record ChangeRecord (old/new value, reason, admin email)
+3. Call HubService.UpdateField() for each field:
+   a. Get current field value
+   b. Set new value via setFieldValue()
+   c. Set FieldSource with new source + confidence
+   d. Update profile in MongoDB
+   e. Create ChangeRecord with old/new values, source, reason
 4. Log AdminActivityLog
-5. Recalculate completeness
+5. Optionally call RecalculateCompleteness()
+```
+
+**FieldSource confidence levels:**
+```
+1.0  platform_api      OAuth verified from platform
+0.9  ops_verified       Operations team verification
+0.8  partner_verified   Partner confirmed accuracy
+0.7  partner_submitted  Partner submission (unverified)
+0.6  crawl              Vendor IM crawl
+0.5  creator_self       Influencer self-reported
+0.3  ml_predicted       ML model prediction
 ```
 
 ### 10.4 Partner query: Scoped profile list
@@ -1109,6 +1130,7 @@ main.go (DI Container)
   │
   ├── Domain Layer (interfaces)
   │   ├── ProfileServicer
+  │   ├── ProfileHubServicer              ← Field updates, verification, change history
   │   ├── PartnerDataServicer
   │   ├── AccessServicer
   │   ├── EnrichmentServicer
@@ -1117,9 +1139,12 @@ main.go (DI Container)
   │   ├── QuotaServicer
   │   ├── AdminServicer
   │   ├── SessionServicer
-  │   └── WebhookServicer
+  │   ├── WebhookServicer
+  │   └── ChangeRepository                ← Append-only change audit trail
   │
   └── Infrastructure Layer (implementations)
+      ├── HubService (ProfileHubServicer impl, field updates + change tracking)
+      ├── MongoChangeRepository (ChangeRepository impl)
       ├── MongoDB repositories (all domain repos)
       ├── Redis client (cache, rate limit)
       ├── IMClient (vendor IM HTTP client)
