@@ -120,9 +120,7 @@ Hệ thống đã triển khai nhiều tính năng vượt yêu cầu gốc:
 | 11 | **Mã giới thiệu (Referral)** | Hệ thống referral code |
 | 12 | **Event Bonus** | Thưởng bổ sung ngoài hoa hồng cơ bản |
 | 13 | **Instagram & Threads support** | Mở rộng nền tảng MXH |
-| 14 | **Facebook OAuth login** | Thêm phương thức đăng nhập |
-| 15 | **Google OAuth cho Admin** | Đăng nhập admin bằng Google |
-| 16 | **Staff invite system** | Mời nhân viên qua email + bulk invite |
+| 14 | **Staff invite system** | Mời nhân viên qua email + bulk invite |
 
 ---
 
