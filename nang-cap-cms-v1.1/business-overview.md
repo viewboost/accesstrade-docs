@@ -1,6 +1,6 @@
 # Nâng Cấp CMS v1.1 — Tổng Quan & Giải Pháp
 
-**Ngày cập nhật:** 05/03/2026
+**Ngày cập nhật:** 13/03/2026
 **Đối tượng:** Ban Thương Hiệu (BTC), Vận hành, Quản lý cấp cao
 
 ---
@@ -9,9 +9,11 @@ Bản nâng cấp CMS v1.1 gồm 3 cải tiến, xếp theo mức độ ưu tiê
 
 | # | Cải tiến | Mức độ | Ước lượng |
 |---|---------|--------|-----------|
-| **1** | [Chuẩn hóa lý do từ chối content](#1-chuẩn-hóa-lý-do-từ-chối-content) | Nghiêm trọng — block analytics | 4-5 ngày |
-| **2** | [Hiển thị Event Code trên Dashboard](#2-hiển-thị-event-code-trên-dashboard) | Cao — gây friction vận hành | 0.5-1 ngày |
-| **3** | [Tag phân loại cho Thử thách](#3-tag-phân-loại-cho-thử-thách) | Trung bình — nâng cao UX filter | 2-3 ngày |
+| # | Cải tiến | Mức độ | Ước lượng | Trạng thái |
+|---|---------|--------|-----------|-----------|
+| **1** | [Chuẩn hóa lý do từ chối content](#1-chuẩn-hóa-lý-do-từ-chối-content) | Nghiêm trọng — block analytics | 4-5 ngày | Chưa bắt đầu |
+| **2** | [Hiển thị Event Code trên Dashboard](#2-hiển-thị-event-code-trên-dashboard) | Cao — gây friction vận hành | 0.5-1 ngày | ✅ Done |
+| **3** | [Tag phân loại cho Thử thách](#3-tag-phân-loại-cho-thử-thách) | Trung bình — nâng cao UX filter | 2-3 ngày | ✅ Done |
 
 **Tổng ước lượng: ~7-9 ngày** (nhiều phần chạy song song)
 
@@ -214,17 +216,34 @@ Admin có thể tạo thêm tags tùy ý (reuse TagRaw CRUD).
 - Autocomplete/search tags
 
 **Dashboard (Analytics):**
-- Thêm Tag filter vào FilterBar (multi-select, có màu)
-- Tag filter lọc events trong CampaignSelect (client-side)
+- Tag chips **nằm bên trong** CampaignSelect dropdown (không phải filter riêng)
+- Chọn tag → lọc danh sách events hiển thị trong dropdown (OR logic)
+- Event code hiện 2 màu: code (muted) + name (thường)
 - URL sync: `?tags=id1,id2`
+
+**Content Page (`/contents`):**
+- Tag chips tương tự nằm trong Event dropdown filter
+- Chọn tag → lọc events hiển thị (OR logic)
+- URL sync: `?eventTag=id1,id2`
 
 ### Architecture — Client-side filtering
 
 ```
-TagFilter (mới) → lọc events client-side → CampaignSelect (đã filter) → analytics API (không đổi)
+Tag chips (trong dropdown) → lọc events client-side → event list (đã filter) → analytics API (không đổi)
 ```
 
-Không cần thay đổi analytics backend. Tag filter chỉ thu hẹp danh sách events hiển thị.
+Không cần thay đổi analytics backend. Tag filter chỉ thu hẹp danh sách events hiển thị trong dropdown.
+
+### Trạng thái triển khai
+
+| Phần | Trạng thái |
+|------|-----------|
+| Backend: type `"event"` + EventTags field | ✅ Done |
+| Backend: seed 7 tags | ✅ Done |
+| Admin: multi-select Tags trong Event form | ✅ Done |
+| Dashboard: tag filter trong CampaignSelect | ✅ Done |
+| Content page: tag filter trong Event dropdown | ✅ Done |
+| Event code 2 màu (muted code + name) | ✅ Done |
 
 ### Effort
 
