@@ -1140,7 +1140,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/performance/batches?page=1&limit=10" \
         "filename": "performance_q1_2024.csv",
         "importedRows": 148,
         "skippedRows": 2,
-        "importedBy": "staff@techcombank.com",
+        "importedBy": "staff@example.com",
         "importedAt": "2024-03-20T10:30:00Z"
       },
       {
@@ -1148,7 +1148,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/performance/batches?page=1&limit=10" \
         "filename": "performance_feb_2024.csv",
         "importedRows": 95,
         "skippedRows": 0,
-        "importedBy": "staff@techcombank.com",
+        "importedBy": "staff@example.com",
         "importedAt": "2024-03-01T09:15:00Z"
       }
     ],

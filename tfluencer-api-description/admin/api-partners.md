@@ -35,7 +35,7 @@ Authorization: Bearer {{ADMIN_TOKEN}}
   "name": "Techcombank HCM",
   "slug": "techcombank-hcm",
   "desc": "Chi nhanh Techcombank khu vuc Ho Chi Minh",
-  "website": "https://techcombank.com",
+  "website": "https://example.com",
   "logo": {
     "_id": "64a1b2c3d4e5f6789012abcd",
     "name": "logo-techcombank.png",
@@ -89,7 +89,7 @@ curl -X POST "{{ADMIN_BASE_URL}}/partners" \
     "name": "Techcombank HCM",
     "slug": "techcombank-hcm",
     "desc": "Chi nhanh Techcombank khu vuc Ho Chi Minh",
-    "website": "https://techcombank.com",
+    "website": "https://example.com",
     "logo": null,
     "covers": []
   }'
@@ -104,7 +104,7 @@ curl -X POST "{{ADMIN_BASE_URL}}/partners" \
     "name": "Techcombank HCM",
     "slug": "techcombank-hcm",
     "desc": "Chi nhanh Techcombank khu vuc Ho Chi Minh",
-    "website": "https://techcombank.com",
+    "website": "https://example.com",
     "logo": null,
     "covers": [],
     "status": "inactive",
@@ -148,7 +148,7 @@ Tuong tu POST /partners (cung struct `PartnerUpsertBody`)
   "name": "Techcombank HCM - Updated",
   "slug": "techcombank-hcm",
   "desc": "Cap nhat mo ta chi nhanh Techcombank HCM",
-  "website": "https://techcombank.com.vn",
+  "website": "https://example.com.vn",
   "logo": null,
   "covers": []
 }
@@ -163,7 +163,7 @@ curl -X PUT "{{ADMIN_BASE_URL}}/partners/{{PARTNER_ID}}" \
     "name": "Techcombank HCM - Updated",
     "slug": "techcombank-hcm",
     "desc": "Cap nhat mo ta chi nhanh Techcombank HCM",
-    "website": "https://techcombank.com.vn",
+    "website": "https://example.com.vn",
     "logo": null,
     "covers": []
   }'
@@ -178,7 +178,7 @@ curl -X PUT "{{ADMIN_BASE_URL}}/partners/{{PARTNER_ID}}" \
     "name": "Techcombank HCM - Updated",
     "slug": "techcombank-hcm",
     "desc": "Cap nhat mo ta chi nhanh Techcombank HCM",
-    "website": "https://techcombank.com.vn",
+    "website": "https://example.com.vn",
     "status": "inactive",
     "updatedAt": "2026-03-20T09:00:00Z"
   },
@@ -291,7 +291,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/partners/{{PARTNER_ID}}" \
     "name": "Techcombank HCM",
     "slug": "techcombank-hcm",
     "desc": "Chi nhanh Techcombank khu vuc Ho Chi Minh",
-    "website": "https://techcombank.com",
+    "website": "https://example.com",
     "logo": {
       "_id": "64a1b2c3d4e5f6789012abcd",
       "name": "logo-techcombank.png",
@@ -358,7 +358,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/partners?page=1&limit=10&keyword=techcombank&sta
         "name": "Techcombank HCM",
         "slug": "techcombank-hcm",
         "status": "active",
-        "website": "https://techcombank.com",
+        "website": "https://example.com",
         "createdAt": "2026-03-20T08:00:00Z"
       },
       {
@@ -366,7 +366,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/partners?page=1&limit=10&keyword=techcombank&sta
         "name": "Techcombank HN",
         "slug": "techcombank-hn",
         "status": "active",
-        "website": "https://techcombank.com",
+        "website": "https://example.com",
         "createdAt": "2026-03-19T08:00:00Z"
       }
     ],
@@ -402,8 +402,8 @@ Authorization: Bearer {{ADMIN_TOKEN}}
 | `partner` | string | Khong | Filter theo partner ID |
 | `user` | string | Khong | Filter theo user ID |
 | `keyword` | string | Khong | Tim kiem theo ten/email |
-| `fromAt` | string | Khong | Tu ngay (ISO 8601, vd: `2026-01-01`) |
-| `toAt` | string | Khong | Den ngay (ISO 8601, vd: `2026-03-31`) |
+| `fromAt` | string | Khong | Tu ngay (ISO 8601 datetime, vd: `2026-01-01T00:00:00.000Z`) |
+| `toAt` | string | Khong | Den ngay (ISO 8601 datetime, vd: `2026-03-31T23:59:59.000Z`) |
 | `sort` | string | Khong | Sap xep (vd: `createdAt:-1`) |
 | `code` | string | Khong | Ma the mo |
 | `companyCode` | string | Khong | Ma cong ty |
@@ -419,7 +419,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/partners/users?page=1&limit=20&partner={{PARTNER
 
 ### cURL - Loc nang cao
 ```bash
-curl -X GET "{{ADMIN_BASE_URL}}/partners/users?page=1&limit=20&partner={{PARTNER_ID}}&fromAt=2026-01-01&toAt=2026-03-31&keyword=nguyen" \
+curl -X GET "{{ADMIN_BASE_URL}}/partners/users?page=1&limit=20&partner={{PARTNER_ID}}&fromAt=2026-01-01T00:00:00.000Z&toAt=2026-03-31T23:59:59.000Z&keyword=nguyen" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}"
 ```
 
@@ -432,8 +432,8 @@ curl -X GET "{{ADMIN_BASE_URL}}/partners/users?page=1&limit=20&partner={{PARTNER
       {
         "_id": "64b2c3d4e5f678901234abcd",
         "name": "Nguyen Van A",
-        "email": "nguyenvana@gmail.com",
-        "phone": "0912345678",
+        "email": "user1@example.com",
+        "phone": "0900000001",
         "partnerId": "64f3a1b2c3d4e5f678901234",
         "status": "active",
         "cash": 1500000,
@@ -484,8 +484,8 @@ curl -X GET "{{ADMIN_BASE_URL}}/partners/{{PARTNER_ID}}/users/{{USER_ID}}" \
     "user": {
       "_id": "64b2c3d4e5f678901234abcd",
       "name": "Nguyen Van A",
-      "email": "nguyenvana@gmail.com",
-      "phone": "0912345678",
+      "email": "user1@example.com",
+      "phone": "0900000001",
       "status": "active",
       "cash": 2500000,
       "totalWithdraw": 500000,

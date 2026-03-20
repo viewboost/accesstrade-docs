@@ -51,8 +51,8 @@ Tat ca cac API trong nhom nay yeu cau middleware `RequiredLogin` + `IsAdmin`.
 | `status` | string | Khong | Trang thai influencer | `approved` / `rejected` |
 | `source` | string | Khong | Nguon mang xa hoi | `youtube` / `tiktok` / `instagram` / `facebook` |
 | `userId` | string | Khong | Loc theo User ID cu the | `664a1f2e3c4b5d6e7f8a9b0c` |
-| `fromAt` | string | Khong | Ngay bat dau (ISO date) | `2024-01-01` |
-| `toAt` | string | Khong | Ngay ket thuc (ISO date) | `2024-12-31` |
+| `fromAt` | string | Khong | Ngay bat dau (ISO 8601 datetime) | `2024-01-01T00:00:00.000Z` |
+| `toAt` | string | Khong | Ngay ket thuc (ISO 8601 datetime) | `2024-12-31T23:59:59.000Z` |
 
 #### cURL
 
@@ -592,13 +592,13 @@ curl -X PATCH "{{ADMIN_BASE_URL}}/influencers/conditions/invalid/status" \
 | Param | Kieu | Bat buoc | Mo ta | Vi du |
 |---|---|---|---|---|
 | `partner` | string (ObjectID) | Khong | Loc theo partner | `664a1f2e3c4b5d6e7f8a9b02` |
-| `fromAt` | string | Khong | Ngay bat dau (ISO date) | `2024-01-01` |
-| `toAt` | string | Khong | Ngay ket thuc (ISO date) | `2024-12-31` |
+| `fromAt` | string | Khong | Ngay bat dau (ISO 8601 datetime) | `2024-01-01T00:00:00.000Z` |
+| `toAt` | string | Khong | Ngay ket thuc (ISO 8601 datetime) | `2024-12-31T23:59:59.000Z` |
 
 #### cURL
 
 ```bash
-curl -X GET "{{ADMIN_BASE_URL}}/influencers/statistic?partner=664a1f2e3c4b5d6e7f8a9b02&fromAt=2024-01-01&toAt=2024-12-31" \
+curl -X GET "{{ADMIN_BASE_URL}}/influencers/statistic?partner=664a1f2e3c4b5d6e7f8a9b02&fromAt=2024-01-01T00:00:00.000Z&toAt=2024-12-31T23:59:59.000Z" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}"
 ```
 
@@ -781,7 +781,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/profiles/{{PROFILE_ID}}" \
     "gender": "male",
     "city": "Ho Chi Minh",
     "country": "VN",
-    "email": "nguyenvana@gmail.com",
+    "email": "user@example.com",
     "dob": "1998-05-15T00:00:00Z",
     "scoreTotal": 82.5,
     "scoreCategory": "micro",
@@ -850,7 +850,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/influencers/{{INFLUENCER_ID}}" \
   "data": {
     "_id": "664a1f2e3c4b5d6e7f8a9b01",
     "name": "Nguyen Van A",
-    "email": "nguyenvana@gmail.com",
+    "email": "user@example.com",
     "phone": "0901234567",
     "status": "active",
     "partner": "664a1f2e3c4b5d6e7f8a9b02",

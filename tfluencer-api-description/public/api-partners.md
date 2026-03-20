@@ -58,7 +58,7 @@ curl -X GET "{{BASE_URL}}/partners" \
       },
       "slug": "techcombank",
       "desc": "Ngân hàng TMCP Kỹ Thương Việt Nam",
-      "website": "https://techcombank.com.vn",
+      "website": "https://example.com",
       "createdAt": "2025-01-01T00:00:00Z",
       "updatedAt": "2025-06-01T00:00:00Z"
     }
@@ -107,7 +107,7 @@ curl -X GET "{{BASE_URL}}/partners/by-slug?slug=techcombank" \
     "desc": "...",
     "logo": { "url": "..." },
     "covers": [{ "url": "...", "platform": "web" }],
-    "website": "https://techcombank.com.vn",
+    "website": "https://example.com",
     "createdAt": "2025-01-01T00:00:00Z",
     "updatedAt": "2025-06-01T00:00:00Z"
   },

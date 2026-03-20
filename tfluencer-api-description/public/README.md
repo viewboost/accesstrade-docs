@@ -7,7 +7,7 @@
 | Base URL | `{{BASE_URL}}` |
 | Content-Type | `application/json` |
 
-> Thay `{{BASE_URL}}` bằng URL server thực tế. VD: `https://api.viewboost.vn`
+> Thay `{{BASE_URL}}` bằng URL server thực tế. VD: `https://api.example.com`
 
 ---
 
@@ -97,8 +97,8 @@ Phân trang:
 
 | Biến | Mô tả | Ví dụ |
 |------|-------|-------|
-| `{{BASE_URL}}` | URL server | `https://api.viewboost.vn` |
-| `{{TOKEN}}` | JWT token (lấy từ API login) | `eyJhbGciOiJIUzI1NiIs...` |
+| `{{BASE_URL}}` | URL server | `https://api.example.com` |
+| `{{TOKEN}}` | JWT token (lấy từ API login) | `{{TOKEN}}` |
 | `{{DEVICE_ID}}` | Device ID (phải khớp `deviceId` trong token) | `device-abc-123-xyz` |
 
 ---

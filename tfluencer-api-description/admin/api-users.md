@@ -56,7 +56,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/users?page=1&limit=20&keyword=nguyen&status=acti
       {
         "_id": "664a1f2e3c4b5d6e7f8a9b0c",
         "name": "Nguyen Van A",
-        "email": "nguyenvana@gmail.com",
+        "email": "user@example.com",
         "staffCode": "TCB001",
         "companyCode": "TCB",
         "status": "active",
@@ -68,7 +68,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/users?page=1&limit=20&keyword=nguyen&status=acti
       {
         "_id": "664a1f2e3c4b5d6e7f8a9b0d",
         "name": "Tran Thi B",
-        "email": "tranthib@gmail.com",
+        "email": "user2@example.com",
         "staffCode": "TCB002",
         "companyCode": "TCB",
         "status": "active",
@@ -114,7 +114,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/users?page=1&limit=20&keyword=nguyen&status=acti
 |---|---|---|---|---|
 | `name` | string | Khong | Ho ten nguoi dung | `"Le Thi C"` |
 | `partner` | string | **Co** | ID partner | `"664a1f2e3c4b5d6e7f8a9b01"` |
-| `email` | string | Khong | Email | `"lethic@gmail.com"` |
+| `email` | string | Khong | Email | `"user3@example.com"` |
 | `staffCode` | string | Khong | Ma nhan vien | `"TCB003"` |
 | `companyCode` | string | Khong | Ma cong ty | `"TCB"` |
 
@@ -127,7 +127,7 @@ curl -X POST "{{ADMIN_BASE_URL}}/users" \
   -d '{
     "name": "Le Thi C",
     "partner": "664a1f2e3c4b5d6e7f8a9b01",
-    "email": "lethic@gmail.com",
+    "email": "user3@example.com",
     "staffCode": "TCB003",
     "companyCode": "TCB"
   }'
@@ -244,7 +244,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/users/{{USER_ID}}" \
     "data": {
       "_id": "664a1f2e3c4b5d6e7f8a9b0c",
       "name": "Nguyen Van A",
-      "email": "nguyenvana@gmail.com",
+      "email": "user@example.com",
       "staffCode": "TCB001",
       "companyCode": "TCB",
       "status": "active",
@@ -301,8 +301,8 @@ curl -X GET "{{ADMIN_BASE_URL}}/users/{{USER_ID}}" \
 | `page` | int | Khong | So trang | `1` |
 | `limit` | int | Khong | So ban ghi | `20` |
 | `source` | string | Khong | Loc theo nen tang | `"tiktok"` |
-| `fromAt` | string | Khong | Tu ngay (ISO date) | `"2024-01-01"` |
-| `toAt` | string | Khong | Den ngay (ISO date) | `"2024-03-31"` |
+| `fromAt` | string | Khong | Tu ngay (ISO 8601 datetime) | `"2024-01-01T00:00:00.000Z"` |
+| `toAt` | string | Khong | Den ngay (ISO 8601 datetime) | `"2024-03-31T23:59:59.000Z"` |
 
 ### cURL
 

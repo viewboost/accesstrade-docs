@@ -48,8 +48,8 @@ Base URL: `{{ADMIN_BASE_URL}}` (vd: `https://api.example.com/admin`)
 | `partner` | string | Khong | ID partner | `"664a...01"` |
 | `tag` | string | Khong | ID tag (co the nhieu, ngan cach dau phay) | `"664a...20"` |
 | `isEmployee` | string | Khong | Loc nhan vien | `"true"` / `"false"` |
-| `fromAt` | string | Khong | Tu ngay (ISO date) | `"2024-01-01"` |
-| `toAt` | string | Khong | Den ngay (ISO date) | `"2024-03-31"` |
+| `fromAt` | string | Khong | Tu ngay (ISO 8601 datetime) | `"2024-01-01T00:00:00.000Z"` |
+| `toAt` | string | Khong | Den ngay (ISO 8601 datetime) | `"2024-03-31T23:59:59.000Z"` |
 | `sort` | string | Khong | Sap xep | `"createdAt:desc"` |
 | `id` | string | Khong | Loc theo ObjectID bai dang cu the | `"664a...30"` |
 
@@ -161,7 +161,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/contents/{{CONTENT_ID}}" \
       "createdBy": {
         "_id": "664a1f2e3c4b5d6e7f8a9b0c",
         "name": "Nguyen Van A",
-        "email": "nguyenvana@gmail.com"
+        "email": "user@example.com"
       },
       "publishAt": "2024-03-15T10:00:00Z",
       "createdAt": "2024-03-15T11:30:00Z",
@@ -318,8 +318,8 @@ curl -X PATCH "{{ADMIN_BASE_URL}}/contents/batch-status" \
     "filter": {
       "status": "pending",
       "event": "664a1f2e3c4b5d6e7f8a9b01",
-      "fromAt": "2024-01-01",
-      "toAt": "2024-01-31"
+      "fromAt": "2024-01-01T00:00:00.000Z",
+      "toAt": "2024-01-31T23:59:59.000Z"
     }
   }'
 ```
@@ -467,13 +467,13 @@ curl -X PATCH "{{ADMIN_BASE_URL}}/contents/{{CONTENT_ID}}/pin" \
 | `event` | string | Khong | ID thu thach | `"664a1f2e3c4b5d6e7f8a9b01"` |
 | `partner` | string | Khong | ID partner | `"664a1f2e3c4b5d6e7f8a9b02"` |
 | `content` | string | Khong | ID bai dang cu the | `"664a1f2e3c4b5d6e7f8a9b30"` |
-| `fromAt` | string | Khong | Tu ngay | `"2024-01-01"` |
-| `toAt` | string | Khong | Den ngay | `"2024-03-31"` |
+| `fromAt` | string | Khong | Tu ngay (ISO 8601 datetime) | `"2024-01-01T00:00:00.000Z"` |
+| `toAt` | string | Khong | Den ngay (ISO 8601 datetime) | `"2024-03-31T23:59:59.000Z"` |
 
 ### cURL
 
 ```bash
-curl -X GET "{{ADMIN_BASE_URL}}/contents/statistic-chart?event=664a1f2e3c4b5d6e7f8a9b01&fromAt=2024-01-01&toAt=2024-03-31" \
+curl -X GET "{{ADMIN_BASE_URL}}/contents/statistic-chart?event=664a1f2e3c4b5d6e7f8a9b01&fromAt=2024-01-01T00:00:00.000Z&toAt=2024-03-31T23:59:59.000Z" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}"
 ```
 
@@ -545,7 +545,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/contents/statistic-chart?event=664a1f2e3c4b5d6e7
 | `contentId` | string | Khong | ID bai dang (co the bo qua, lay tu path param) | `"664a...30"` |
 | `cover` | string | Khong | URL anh bia | `"https://cdn.example.com/cover.jpg"` |
 | `author` | string | Khong | Ten tac gia | `"@nguyenvana"` |
-| `publishAt` | string | Khong | Ngay dang (ISO date) | `"2024-03-15T10:00:00Z"` |
+| `publishAt` | string | Khong | Ngay dang (ISO 8601 datetime) | `"2024-03-15T10:00:00Z"` |
 | `title` | string | Khong | Tieu de bai dang | `"Review the cao Techcombank"` |
 | `desc` | string | Khong | Mo ta | `"Trai nghiem chuyen tien sieu nhanh"` |
 | `view` | int | Khong | So luot xem | `52300` |
@@ -743,8 +743,8 @@ curl -X POST "{{ADMIN_BASE_URL}}/contents/import" \
 | `partner` | string | Khong | ID partner | `"664a1f2e3c4b5d6e7f8a9b02"` |
 | `user` | string | Khong | ID nguoi dung | `"664a1f2e3c4b5d6e7f8a9b0c"` |
 | `status` | string | Khong | Trang thai | `"success"` / `"failed"` / `"processing"` |
-| `fromAt` | string | Khong | Tu ngay | `"2024-03-01"` |
-| `toAt` | string | Khong | Den ngay | `"2024-03-31"` |
+| `fromAt` | string | Khong | Tu ngay (ISO 8601 datetime) | `"2024-03-01T00:00:00.000Z"` |
+| `toAt` | string | Khong | Den ngay (ISO 8601 datetime) | `"2024-03-31T23:59:59.000Z"` |
 
 ### cURL
 
@@ -875,8 +875,8 @@ curl -X POST "{{ADMIN_BASE_URL}}/contents/{{CONTENT_ID}}/crawl-info" \
 |---|---|---|---|---|
 | `event` | string | Khong | ID thu thach | `"664a1f2e3c4b5d6e7f8a9b01"` |
 | `id` | string | Khong | ID bai dang cu the | `"664a1f2e3c4b5d6e7f8a9b30"` |
-| `fromAt` | string | Khong | Tu ngay | `"2024-03-01"` |
-| `toAt` | string | Khong | Den ngay | `"2024-03-31"` |
+| `fromAt` | string | Khong | Tu ngay (ISO 8601 datetime) | `"2024-03-01T00:00:00.000Z"` |
+| `toAt` | string | Khong | Den ngay (ISO 8601 datetime) | `"2024-03-31T23:59:59.000Z"` |
 | `limit` | int | Khong | Gioi han so ban ghi xu ly | `100` |
 
 ### cURL
@@ -925,8 +925,8 @@ curl -X GET "{{ADMIN_BASE_URL}}/contents/update-status-data-contents?event=664a1
 | `event` | string | Khong | ID thu thach | `"664a1f2e3c4b5d6e7f8a9b01"` |
 | `id` | string | Khong | ID bai dang cu the | `"664a1f2e3c4b5d6e7f8a9b30"` |
 | `tag` | string | Khong | ID tag can cap nhat | `"664a1f2e3c4b5d6e7f8a9b50"` |
-| `fromAt` | string | Khong | Tu ngay | `"2024-03-01"` |
-| `toAt` | string | Khong | Den ngay | `"2024-03-31"` |
+| `fromAt` | string | Khong | Tu ngay (ISO 8601 datetime) | `"2024-03-01T00:00:00.000Z"` |
+| `toAt` | string | Khong | Den ngay (ISO 8601 datetime) | `"2024-03-31T23:59:59.000Z"` |
 
 ### cURL
 
@@ -980,8 +980,8 @@ curl -X GET "{{ADMIN_BASE_URL}}/contents/update-warning-tags-content?event=664a1
 | `actionType` | string | Khong | Loai hanh dong | `"add"` / `"subtract"` |
 | `type` | string | Khong | Loai luong | xem gia tri hop le |
 | `status` | string | Khong | Trang thai | `"pending"` / `"done"` |
-| `fromAt` | string | Khong | Tu ngay | `"2024-03-01"` |
-| `toAt` | string | Khong | Den ngay | `"2024-03-31"` |
+| `fromAt` | string | Khong | Tu ngay (ISO 8601 datetime) | `"2024-03-01T00:00:00.000Z"` |
+| `toAt` | string | Khong | Den ngay (ISO 8601 datetime) | `"2024-03-31T23:59:59.000Z"` |
 
 ### cURL
 

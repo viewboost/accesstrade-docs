@@ -1,6 +1,6 @@
 # API Campaigns - Admin
 
-Base URL: `{{ADMIN_BASE_URL}}` (vd: `https://admin-api.viewboost.vn`)
+Base URL: `{{ADMIN_BASE_URL}}` (vd: `https://admin-api.example.com`)
 
 ---
 
@@ -868,7 +868,7 @@ Budget Campaign la cau hinh canh bao ngan sach gan voi mot Campaign. He thong se
 | `campaignId` | string | **Co** | ObjectID cua Campaign gan kem | `"664a1f2e3c4b5d6e7f8a9b0c"` |
 | `threshold` | float | **Co** | Nguong chi phi canh bao (VND) | `40000000` |
 | `staffIds` | string[] | Khong | Danh sach ObjectID staff nhan canh bao | `["661b2c3d4e5f6a7b8c9d0e1f"]` |
-| `notificationForEmails` | string[] | Khong | Danh sach email nhan canh bao | `["manager@techcombank.com.vn"]` |
+| `notificationForEmails` | string[] | Khong | Danh sach email nhan canh bao | `["manager@example.com"]` |
 
 ### cURL
 
@@ -881,7 +881,7 @@ curl -X POST "{{ADMIN_BASE_URL}}/budget-campaigns" \
     "campaignId": "664a1f2e3c4b5d6e7f8a9b0c",
     "threshold": 40000000,
     "staffIds": ["661b2c3d4e5f6a7b8c9d0e1f"],
-    "notificationForEmails": ["manager@techcombank.com.vn"]
+    "notificationForEmails": ["manager@example.com"]
   }'
 ```
 
@@ -896,7 +896,7 @@ curl -X POST "{{ADMIN_BASE_URL}}/budget-campaigns" \
     "name": "Alert Q2 2025",
     "threshold": 40000000,
     "status": "active",
-    "notificationForEmails": ["manager@techcombank.com.vn"],
+    "notificationForEmails": ["manager@example.com"],
     "staffIds": ["661b2c3d4e5f6a7b8c9d0e1f"],
     "createdAt": "2025-03-20T08:00:00Z",
     "updatedAt": "2025-03-20T08:00:00Z"
@@ -941,7 +941,7 @@ curl -X POST "{{ADMIN_BASE_URL}}/budget-campaigns" \
 | `name` | string | **Co** | Ten budget campaign | `"Alert Q2 2025 - Updated"` |
 | `threshold` | float | **Co** | Nguong chi phi canh bao (VND) | `45000000` |
 | `staffIds` | string[] | Khong | Danh sach ObjectID staff nhan canh bao | `["661b2c3d4e5f6a7b8c9d0e1f"]` |
-| `notificationForEmails` | string[] | Khong | Danh sach email nhan canh bao | `["team@techcombank.com.vn"]` |
+| `notificationForEmails` | string[] | Khong | Danh sach email nhan canh bao | `["team@example.com"]` |
 
 > **Luu y:** `campaignId` khong the thay doi sau khi tao. Chi Update duoc `name`, `threshold`, `staffIds`, `notificationForEmails`.
 
@@ -955,7 +955,7 @@ curl -X PUT "{{ADMIN_BASE_URL}}/budget-campaigns/{{BUDGET_ID}}" \
     "name": "Alert Q2 2025 - Updated",
     "threshold": 45000000,
     "staffIds": ["661b2c3d4e5f6a7b8c9d0e1f"],
-    "notificationForEmails": ["team@techcombank.com.vn"]
+    "notificationForEmails": ["team@example.com"]
   }'
 ```
 
@@ -969,7 +969,7 @@ curl -X PUT "{{ADMIN_BASE_URL}}/budget-campaigns/{{BUDGET_ID}}" \
     "id": "667c3d4e5d6c7e8f9a0b1c2d",
     "name": "Alert Q2 2025 - Updated",
     "threshold": 45000000,
-    "notificationForEmails": ["team@techcombank.com.vn"],
+    "notificationForEmails": ["team@example.com"],
     "staffIds": ["661b2c3d4e5f6a7b8c9d0e1f"],
     "updatedAt": "2025-03-20T11:00:00Z"
   }
@@ -1087,7 +1087,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/budget-campaigns?page=0&limit=20&keyword=Alert" 
         "name": "Alert Q2 2025",
         "threshold": 40000000,
         "status": "active",
-        "notificationForEmails": ["manager@techcombank.com.vn"],
+        "notificationForEmails": ["manager@example.com"],
         "staffIds": ["661b2c3d4e5f6a7b8c9d0e1f"],
         "createdAt": "2025-03-20T08:00:00Z",
         "updatedAt": "2025-03-20T08:00:00Z"
@@ -1145,7 +1145,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/budget-campaigns/{{BUDGET_ID}}" \
     "searchString": "alert q2 2025",
     "threshold": 40000000,
     "status": "active",
-    "notificationForEmails": ["manager@techcombank.com.vn"],
+    "notificationForEmails": ["manager@example.com"],
     "staffIds": ["661b2c3d4e5f6a7b8c9d0e1f"],
     "completedAt": null,
     "createdAt": "2025-03-20T08:00:00Z",

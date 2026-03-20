@@ -106,10 +106,10 @@ Accept-Language: vi
 ```json
 {
   "name": "Nguyễn Văn A",
-  "email": "nguyenvana@gmail.com",
-  "phone": "0901234567",
-  "password": "matkhau123",
-  "confirmPassword": "matkhau123",
+  "email": "user1@example.com",
+  "phone": "0900000001",
+  "password": "P@ssw0rd123",
+  "confirmPassword": "P@ssw0rd123",
   "gender": "M",
   "city": 79,
   "ref": "REF_CODE"
@@ -136,10 +136,10 @@ curl -X POST "{{BASE_URL}}/users/register" \
   -H "Accept-Language: vi" \
   -d '{
     "name": "Nguyễn Văn A",
-    "email": "nguyenvana@gmail.com",
-    "phone": "0901234567",
-    "password": "matkhau123",
-    "confirmPassword": "matkhau123",
+    "email": "user1@example.com",
+    "phone": "0900000001",
+    "password": "P@ssw0rd123",
+    "confirmPassword": "P@ssw0rd123",
     "gender": "M"
   }'
 ```
@@ -167,13 +167,13 @@ curl -X POST "{{BASE_URL}}/users/register" \
 curl -X POST "{{BASE_URL}}/users/register" \
   -H "Content-Type: application/json" \
   -H "X-Device-ID: {{DEVICE_ID}}" \
-  -d '{"name": "Test", "phone": "0901234567", "password": "123456", "confirmPassword": "123456"}'
+  -d '{"name": "Test", "phone": "0900000001", "password": "123456", "confirmPassword": "123456"}'
 
 # Password không khớp → 400
 curl -X POST "{{BASE_URL}}/users/register" \
   -H "Content-Type: application/json" \
   -H "X-Device-ID: {{DEVICE_ID}}" \
-  -d '{"name": "Test", "email": "test@test.com", "phone": "0901234567", "password": "123456", "confirmPassword": "654321"}'
+  -d '{"name": "Test", "email": "test@test.com", "phone": "0900000001", "password": "123456", "confirmPassword": "654321"}'
 
 # Phone sai format → 400
 curl -X POST "{{BASE_URL}}/users/register" \
@@ -202,8 +202,8 @@ Accept-Language: vi
 
 ```json
 {
-  "email": "nguyenvana@gmail.com",
-  "password": "matkhau123"
+  "email": "user1@example.com",
+  "password": "P@ssw0rd123"
 }
 ```
 
@@ -220,8 +220,8 @@ curl -X POST "{{BASE_URL}}/users/login" \
   -H "X-Device-ID: {{DEVICE_ID}}" \
   -H "Accept-Language: vi" \
   -d '{
-    "email": "nguyenvana@gmail.com",
-    "password": "matkhau123"
+    "email": "user1@example.com",
+    "password": "P@ssw0rd123"
   }'
 ```
 
@@ -461,11 +461,11 @@ curl -X GET "{{BASE_URL}}/users/me" \
     "_id": "660a1b2c3d4e5f6a7b8c9d01",
     "name": "Nguyễn Văn A",
     "phone": {
-      "number": "0901234567",
+      "number": "0900000001",
       "isVerified": true
     },
     "info": {
-      "email": "nguyenvana@gmail.com",
+      "email": "user1@example.com",
       "cityCode": 79,
       "cityName": "Hồ Chí Minh",
       "gender": "M",
@@ -485,17 +485,17 @@ curl -X GET "{{BASE_URL}}/users/me" \
     "identification": {
       "_id": "id_001",
       "status": "approved",
-      "taxNumber": "0123456789",
-      "identificationNumber": "012345678901"
+      "taxNumber": "0000000000",
+      "identificationNumber": "000000000000"
     },
     "contract": {
-      "phone": "0901234567",
+      "phone": "0900000001",
       "name": "Nguyễn Văn A"
     },
     "totalNotificationUnseen": 3,
     "code": "REF_ABC123",
     "google": {
-      "email": "nguyenvana@gmail.com"
+      "email": "user1@example.com"
     },
     "tiktok": null,
     "facebook": null,
@@ -542,7 +542,7 @@ Accept-Language: vi
 {
   "name": "Nguyễn Văn B",
   "gender": "M",
-  "email": "nguyenvanb@gmail.com",
+  "email": "user2@example.com",
   "birthDay": "1995-01-15",
   "cityCode": 79,
   "occupation": "Marketing",
@@ -1010,7 +1010,7 @@ curl -X GET "{{BASE_URL}}/users/bank-cards" \
       },
       "branch": "branch_001",
       "branchName": "Chi nhánh HCM",
-      "cardNumber": "19012345678901",
+      "cardNumber": "0000000000000000",
       "cardHolderName": "NGUYEN VAN A",
       "isDefault": true
     }
@@ -1043,7 +1043,7 @@ Content-Type: application/json
 ```json
 {
   "bank": "bank_001",
-  "cardNumber": "19012345678901",
+  "cardNumber": "0000000000000000",
   "cardHolderName": "NGUYEN VAN A",
   "branch": "branch_001"
 }
@@ -1063,7 +1063,7 @@ curl -X POST "{{BASE_URL}}/users/bank-cards" \
   -H "Authorization: Bearer {{TOKEN}}" \
   -H "X-Device-ID: {{DEVICE_ID}}" \
   -H "Content-Type: application/json" \
-  -d '{"bank": "bank_001", "cardNumber": "19012345678901", "cardHolderName": "NGUYEN VAN A"}'
+  -d '{"bank": "bank_001", "cardNumber": "0000000000000000", "cardHolderName": "NGUYEN VAN A"}'
 ```
 
 **Test lỗi:**
@@ -1102,7 +1102,7 @@ curl -X PUT "{{BASE_URL}}/users/bank-cards/card_001" \
   -H "Authorization: Bearer {{TOKEN}}" \
   -H "X-Device-ID: {{DEVICE_ID}}" \
   -H "Content-Type: application/json" \
-  -d '{"bank": "bank_001", "cardNumber": "19012345678902", "cardHolderName": "NGUYEN VAN A"}'
+  -d '{"bank": "bank_001", "cardNumber": "0000000000000000", "cardHolderName": "NGUYEN VAN A"}'
 ```
 
 ---
@@ -1165,7 +1165,7 @@ Content-Type: application/json
   "identifications": [
     {
       "type": "CCCD",
-      "number": "012345678901",
+      "number": "000000000000",
       "name": "Nguyễn Văn A",
       "address": "123 Nguyễn Huệ, Q1, TP.HCM",
       "issuePlace": "Cục CS QLHC về TTXH",
@@ -1180,7 +1180,7 @@ Content-Type: application/json
     "backSide": { "url": "https://cdn.example.com/cmnd-back.jpg" },
     "type": "CCCD"
   },
-  "taxNumber": "0123456789"
+  "taxNumber": "0000000000"
 }
 ```
 
@@ -1207,8 +1207,8 @@ curl -X POST "{{BASE_URL}}/users/identification" \
   -H "X-Device-ID: {{DEVICE_ID}}" \
   -H "Content-Type: application/json" \
   -d '{
-    "identifications": [{"type": "CCCD", "number": "012345678901", "name": "Nguyễn Văn A", "issuePlace": "Cục CS QLHC về TTXH", "issueDate": "2020-06-15"}],
-    "taxNumber": "0123456789"
+    "identifications": [{"type": "CCCD", "number": "000000000000", "name": "Nguyễn Văn A", "issuePlace": "Cục CS QLHC về TTXH", "issueDate": "2020-06-15"}],
+    "taxNumber": "0000000000"
   }'
 ```
 
@@ -1237,8 +1237,8 @@ curl -X GET "{{BASE_URL}}/users/identification/me" \
   "data": {
     "_id": "id_001",
     "status": "approved",
-    "taxNumber": "0123456789",
-    "identificationNumber": "012345678901",
+    "taxNumber": "0000000000",
+    "identificationNumber": "000000000000",
     "completedAt": "2026-01-20T10:00:00Z",
     "note": ""
   },
@@ -1322,11 +1322,11 @@ POST {{BASE_URL}}/users/contract/info
 
 ```json
 {
-  "phone": "0901234567",
+  "phone": "0900000001",
   "name": "Nguyễn Văn A",
-  "identificationNumber": "012345678901",
-  "taxNumber": "0123456789",
-  "email": "nguyenvana@gmail.com",
+  "identificationNumber": "000000000000",
+  "taxNumber": "0000000000",
+  "email": "user1@example.com",
   "address": "123 Nguyễn Huệ, Q1, TP.HCM",
   "dob": "1995-01-15",
   "issue_date": "2020-06-15",
@@ -1357,7 +1357,7 @@ curl -X POST "{{BASE_URL}}/users/contract/info" \
   -H "Authorization: Bearer {{TOKEN}}" \
   -H "X-Device-ID: {{DEVICE_ID}}" \
   -H "Content-Type: application/json" \
-  -d '{"phone": "0901234567", "name": "Nguyễn Văn A", "identificationNumber": "012345678901"}'
+  -d '{"phone": "0900000001", "name": "Nguyễn Văn A", "identificationNumber": "000000000000"}'
 ```
 
 ---
@@ -1374,15 +1374,15 @@ POST {{BASE_URL}}/users/contract/estimate
 
 ```json
 {
-  "identificationNumber": "012345678901",
-  "bankCardNumber": "19012345678901",
+  "identificationNumber": "000000000000",
+  "bankCardNumber": "0000000000000000",
   "bankName": "Techcombank",
-  "phoneNumber": "0901234567",
-  "taxNumber": "0123456789",
+  "phoneNumber": "0900000001",
+  "taxNumber": "0000000000",
   "name": "Nguyễn Văn A",
   "bankAccountName": "NGUYEN VAN A",
   "bankBranch": "Chi nhánh HCM",
-  "email": "nguyenvana@gmail.com",
+  "email": "user1@example.com",
   "address": "123 Nguyễn Huệ, Q1, TP.HCM",
   "dob": "1995-01-15",
   "issue_date": "2020-06-15",

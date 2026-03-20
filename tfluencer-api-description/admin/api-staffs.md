@@ -56,7 +56,7 @@ Tai lieu API quan ly nhan vien (Staff) cho Admin Panel.
 ```json
 {
   "_id": "64a1b2c3d4e5f6a7b8c9d0e1",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token": "{{TOKEN}}",
   "inviteLink": "https://dashboard.example.com/vi/accept-invite?token=abc123"
 }
 ```
@@ -66,7 +66,7 @@ Tai lieu API quan ly nhan vien (Staff) cho Admin Panel.
 {
   "_id": "64a1b2c3d4e5f6a7b8c9d0e1",
   "name": "Nguyen Van An",
-  "email": "an.nguyen@viewboost.vn",
+  "email": "an.nguyen@example.com",
   "isRoot": false,
   "avatar": {
     "_id": "64a1b2c3d4e5f6a7b8c9d0e2",
@@ -93,7 +93,7 @@ Tai lieu API quan ly nhan vien (Staff) cho Admin Panel.
 {
   "_id": "64a1b2c3d4e5f6a7b8c9d0e1",
   "name": "Tran Thi Bich",
-  "email": "bich.tran@viewboost.vn",
+  "email": "bich.tran@example.com",
   "isRoot": false,
   "active": true,
   "avatar": { ... },
@@ -122,8 +122,8 @@ Tai lieu API quan ly nhan vien (Staff) cho Admin Panel.
 **Body mau:**
 ```json
 {
-  "email": "admin@viewboost.vn",
-  "password": "Admin@123456"
+  "email": "admin@example.com",
+  "password": "P@ssw0rd123"
 }
 ```
 
@@ -137,8 +137,8 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/login' \
   -H 'Content-Type: application/json' \
   -H 'x-device-id: device-web-001' \
   -d '{
-    "email": "admin@viewboost.vn",
-    "password": "Admin@123456"
+    "email": "admin@example.com",
+    "password": "P@ssw0rd123"
   }'
 ```
 
@@ -147,7 +147,7 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/login' \
 {
   "data": {
     "_id": "64a1b2c3d4e5f6a7b8c9d0e1",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGExYjJjM2Q0ZTVmNmE3YjhjOWQwZTEiLCJlbWFpbCI6ImFkbWluQHZpZXdib29zdC52biIsImV4cCI6MTcwNTMxMjAwMH0.xxxxx"
+    "token": "{{TOKEN}}"
   },
   "code": 200,
   "message": ""
@@ -157,7 +157,7 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/login' \
 **Test loi:**
 | Case | Cach test | Expected |
 |------|-----------|----------|
-| Email sai | `"email": "khong-ton-tai@viewboost.vn"` | 400, "Dang nhap that bai" |
+| Email sai | `"email": "khong-ton-tai@example.com"` | 400, "Dang nhap that bai" |
 | Mat khau sai | Email dung, password sai | 400, "Dang nhap that bai" |
 | Tai khoan inactive | Staff bi disable | 400, "Dang nhap that bai" |
 | Email rong | `"email": ""` | 400, validation error |
@@ -216,7 +216,7 @@ curl -X GET '{{ADMIN_BASE_URL}}/staffs/me' \
   "data": {
     "_id": "64a1b2c3d4e5f6a7b8c9d0e1",
     "name": "Nguyen Van An",
-    "email": "an.nguyen@viewboost.vn",
+    "email": "an.nguyen@example.com",
     "isRoot": false,
     "avatar": {
       "_id": "64a1b2c3d4e5f6a7b8c9d0e2",
@@ -296,7 +296,7 @@ curl -X GET '{{ADMIN_BASE_URL}}/staffs?page=1&limit=20&status=active' \
       {
         "_id": "64a1b2c3d4e5f6a7b8c9d0e1",
         "name": "Nguyen Van An",
-        "email": "an.nguyen@viewboost.vn",
+        "email": "an.nguyen@example.com",
         "isRoot": false,
         "active": true,
         "avatar": {
@@ -343,9 +343,9 @@ curl -X GET '{{ADMIN_BASE_URL}}/staffs?page=1&limit=20&status=active' \
 **Body mau:**
 ```json
 {
-  "currentPassword": "OldPass@123",
-  "password": "NewPass@456",
-  "confirmPassword": "NewPass@456"
+  "currentPassword": "OldP@ss123",
+  "password": "NewP@ss456",
+  "confirmPassword": "NewP@ss456"
 }
 ```
 
@@ -360,9 +360,9 @@ curl -X PUT '{{ADMIN_BASE_URL}}/staffs/me/update-password' \
   -H 'Authorization: Bearer {{ADMIN_TOKEN}}' \
   -H 'Content-Type: application/json' \
   -d '{
-    "currentPassword": "OldPass@123",
-    "password": "NewPass@456",
-    "confirmPassword": "NewPass@456"
+    "currentPassword": "OldP@ss123",
+    "password": "NewP@ss456",
+    "confirmPassword": "NewP@ss456"
   }'
 ```
 
@@ -468,7 +468,7 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/auth/exchange' \
 {
   "data": {
     "_id": "64a1b2c3d4e5f6a7b8c9d0e1",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGExYjJjM2Q0ZTVmNmE3YjhjOWQwZTEiLCJleHAiOjE3MDUzMTIwMDB9.xxxxx"
+    "token": "{{TOKEN}}"
   },
   "code": 200,
   "message": ""
@@ -522,7 +522,7 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/invite/verify' \
   "data": {
     "_id": "64a1b2c3d4e5f6a7b8c9d0e5",
     "name": "Le Thi Cam",
-    "email": "cam.le@viewboost.vn",
+    "email": "cam.le@example.com",
     "isRoot": false
   },
   "code": 200,
@@ -557,7 +557,7 @@ Chap nhan loi moi va thiet lap mat khau lan dau. Sau khi thanh cong, tai khoan d
 ```json
 {
   "token": "rawTokenFromEmailLink123456789012",
-  "password": "MyNewPass@789"
+  "password": "NewP@ss789"
 }
 ```
 
@@ -572,7 +572,7 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/invite/accept' \
   -H 'x-device-id: device-web-001' \
   -d '{
     "token": "rawTokenFromEmailLink123456789012",
-    "password": "MyNewPass@789"
+    "password": "NewP@ss789"
   }'
 ```
 
@@ -581,7 +581,7 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/invite/accept' \
 {
   "data": {
     "_id": "64a1b2c3d4e5f6a7b8c9d0e5",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGExYjJjM2Q0ZTVmNmE3YjhjOWQwZTUiLCJleHAiOjE3MDUzMTIwMDB9.xxxxx"
+    "token": "{{TOKEN}}"
   },
   "code": 200,
   "message": ""
@@ -615,7 +615,7 @@ Gui email dat lai mat khau. Link reset co hieu luc **60 phut**.
 **Body mau:**
 ```json
 {
-  "email": "an.nguyen@viewboost.vn"
+  "email": "an.nguyen@example.com"
 }
 ```
 
@@ -627,7 +627,7 @@ Gui email dat lai mat khau. Link reset co hieu luc **60 phut**.
 curl -X POST '{{ADMIN_BASE_URL}}/staffs/forgot-password' \
   -H 'Content-Type: application/json' \
   -d '{
-    "email": "an.nguyen@viewboost.vn"
+    "email": "an.nguyen@example.com"
   }'
 ```
 
@@ -666,7 +666,7 @@ Dat lai mat khau bang token trong email. Token het han sau **60 phut** ke tu khi
 ```json
 {
   "token": "rawResetTokenFromEmail12345678901",
-  "password": "ResetNewPass@123"
+  "password": "ResetP@ss123"
 }
 ```
 
@@ -680,7 +680,7 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/reset-password' \
   -H 'Content-Type: application/json' \
   -d '{
     "token": "rawResetTokenFromEmail12345678901",
-    "password": "ResetNewPass@123"
+    "password": "ResetP@ss123"
   }'
 ```
 
@@ -722,10 +722,10 @@ Tao nhan vien moi truc tiep voi mat khau (khong qua luong invite). Neu khong pha
 ```json
 {
   "name": "Pham Van Duc",
-  "email": "duc.pham@viewboost.vn",
-  "phone": "0901234567",
-  "password": "Duc@123456",
-  "confirmPassword": "Duc@123456",
+  "email": "duc.pham@example.com",
+  "phone": "0900000001",
+  "password": "P@ssw0rd456",
+  "confirmPassword": "P@ssw0rd456",
   "partner": "64a1b2c3d4e5f6a7b8c9d0e4",
   "role": "64a1b2c3d4e5f6a7b8c9d0e3",
   "isRoot": false,
@@ -756,10 +756,10 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/register' \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "Pham Van Duc",
-    "email": "duc.pham@viewboost.vn",
-    "phone": "0901234567",
-    "password": "Duc@123456",
-    "confirmPassword": "Duc@123456",
+    "email": "duc.pham@example.com",
+    "phone": "0900000001",
+    "password": "P@ssw0rd456",
+    "confirmPassword": "P@ssw0rd456",
     "partner": "64a1b2c3d4e5f6a7b8c9d0e4",
     "role": "64a1b2c3d4e5f6a7b8c9d0e3",
     "isRoot": false
@@ -812,8 +812,8 @@ Cap nhat thong tin ca nhan cua mot nhan vien bat ky.
 ```json
 {
   "name": "Pham Van Duc (Updated)",
-  "email": "duc.pham.new@viewboost.vn",
-  "phone": "0909876543",
+  "email": "duc.pham.new@example.com",
+  "phone": "0900000002",
   "partner": "64a1b2c3d4e5f6a7b8c9d0e4",
   "role": "64a1b2c3d4e5f6a7b8c9d0e3",
   "isRoot": false,
@@ -840,8 +840,8 @@ curl -X PUT '{{ADMIN_BASE_URL}}/staffs/64a1b2c3d4e5f6a7b8c9d0e7/update-info' \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "Pham Van Duc (Updated)",
-    "email": "duc.pham.new@viewboost.vn",
-    "phone": "0909876543",
+    "email": "duc.pham.new@example.com",
+    "phone": "0900000002",
     "partner": "64a1b2c3d4e5f6a7b8c9d0e4",
     "role": "64a1b2c3d4e5f6a7b8c9d0e3",
     "isRoot": false
@@ -890,8 +890,8 @@ Admin doi mat khau cho mot nhan vien bat ky. Admin khong can nhap `currentPasswo
 **Body mau:**
 ```json
 {
-  "password": "AdminSetPass@789",
-  "confirmPassword": "AdminSetPass@789"
+  "password": "SetP@ss789",
+  "confirmPassword": "SetP@ss789"
 }
 ```
 
@@ -906,8 +906,8 @@ curl -X PUT '{{ADMIN_BASE_URL}}/staffs/64a1b2c3d4e5f6a7b8c9d0e7/update-password'
   -H 'Authorization: Bearer {{ADMIN_TOKEN}}' \
   -H 'Content-Type: application/json' \
   -d '{
-    "password": "AdminSetPass@789",
-    "confirmPassword": "AdminSetPass@789"
+    "password": "SetP@ss789",
+    "confirmPassword": "SetP@ss789"
   }'
 ```
 
@@ -964,7 +964,7 @@ curl -X PATCH '{{ADMIN_BASE_URL}}/staffs/64a1b2c3d4e5f6a7b8c9d0e7/status' \
   "data": {
     "_id": "64a1b2c3d4e5f6a7b8c9d0e7",
     "name": "Pham Van Duc",
-    "email": "duc.pham@viewboost.vn",
+    "email": "duc.pham@example.com",
     "isRoot": false,
     "active": false,
     "avatar": {
@@ -1013,7 +1013,7 @@ Gui email moi nhan vien moi. He thong tao tai khoan voi trang thai `pending` va 
 ```json
 {
   "name": "Hoang Thi Mai",
-  "email": "mai.hoang@viewboost.vn",
+  "email": "mai.hoang@example.com",
   "role": "64a1b2c3d4e5f6a7b8c9d0e3",
   "partner": "64a1b2c3d4e5f6a7b8c9d0e4"
 }
@@ -1032,7 +1032,7 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/invite' \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "Hoang Thi Mai",
-    "email": "mai.hoang@viewboost.vn",
+    "email": "mai.hoang@example.com",
     "role": "64a1b2c3d4e5f6a7b8c9d0e3",
     "partner": "64a1b2c3d4e5f6a7b8c9d0e4"
   }'
@@ -1080,19 +1080,19 @@ Moi nhieu nhan vien cung mot luc. Toi da **50 nhan vien** moi lan. He thong xu l
   "items": [
     {
       "name": "Vo Thi Lan",
-      "email": "lan.vo@viewboost.vn",
+      "email": "lan.vo@example.com",
       "role": "64a1b2c3d4e5f6a7b8c9d0e3",
       "partner": "64a1b2c3d4e5f6a7b8c9d0e4"
     },
     {
       "name": "Dang Van Khoa",
-      "email": "khoa.dang@viewboost.vn",
+      "email": "khoa.dang@example.com",
       "role": "64a1b2c3d4e5f6a7b8c9d0e3",
       "partner": "64a1b2c3d4e5f6a7b8c9d0e4"
     },
     {
       "name": "Nguyen Thi Huong",
-      "email": "email-da-ton-tai@viewboost.vn",
+      "email": "email-da-ton-tai@example.com",
       "role": "64a1b2c3d4e5f6a7b8c9d0e3",
       "partner": "64a1b2c3d4e5f6a7b8c9d0e4"
     }
@@ -1112,13 +1112,13 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/bulk-invite' \
     "items": [
       {
         "name": "Vo Thi Lan",
-        "email": "lan.vo@viewboost.vn",
+        "email": "lan.vo@example.com",
         "role": "64a1b2c3d4e5f6a7b8c9d0e3",
         "partner": "64a1b2c3d4e5f6a7b8c9d0e4"
       },
       {
         "name": "Dang Van Khoa",
-        "email": "khoa.dang@viewboost.vn",
+        "email": "khoa.dang@example.com",
         "role": "64a1b2c3d4e5f6a7b8c9d0e3",
         "partner": "64a1b2c3d4e5f6a7b8c9d0e4"
       }
@@ -1132,15 +1132,15 @@ curl -X POST '{{ADMIN_BASE_URL}}/staffs/bulk-invite' \
   "data": {
     "results": [
       {
-        "email": "lan.vo@viewboost.vn",
+        "email": "lan.vo@example.com",
         "inviteLink": "https://dashboard.example.com/vi/accept-invite?token=token1xxxxxxxxxxxxx"
       },
       {
-        "email": "khoa.dang@viewboost.vn",
+        "email": "khoa.dang@example.com",
         "inviteLink": "https://dashboard.example.com/vi/accept-invite?token=token2xxxxxxxxxxxxx"
       },
       {
-        "email": "email-da-ton-tai@viewboost.vn",
+        "email": "email-da-ton-tai@example.com",
         "error": "Email da ton tai"
       }
     ],

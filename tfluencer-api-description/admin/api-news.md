@@ -45,7 +45,7 @@ Auth header: `Authorization: Bearer {{ADMIN_TOKEN}}`
 ```json
 {
   "type": "OPEN_URL",
-  "value": "https://techcombank.com/promotion",
+  "value": "https://example.com/promotion",
   "text": "Xem ngay"
 }
 ```
@@ -61,7 +61,7 @@ Auth header: `Authorization: Bearer {{ADMIN_TOKEN}}`
 ```json
 {
   "type": "open_url",
-  "value": "https://techcombank.com",
+  "value": "https://example.com",
   "text": "Xem chi tiet"
 }
 ```
@@ -182,7 +182,7 @@ Authorization: Bearer {{ADMIN_TOKEN}}
   "photoStretchSize": null,
   "action": {
     "type": "OPEN_URL",
-    "value": "https://techcombank.com/promotion-thang4",
+    "value": "https://example.com/promotion-thang4",
     "text": "Xem ngay"
   }
 }
@@ -379,7 +379,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/news/{{NEWS_ID}}" \
       "photoStretchSize": null,
       "action": {
         "type": "OPEN_URL",
-        "value": "https://techcombank.com/promotion",
+        "value": "https://example.com/promotion",
         "text": "Xem ngay"
       },
       "startAt": "2026-04-01T00:00:00Z",
@@ -610,7 +610,7 @@ Authorization: Bearer {{ADMIN_TOKEN}}
   ],
   "action": {
     "type": "open_url",
-    "value": "https://techcombank.com/challenge",
+    "value": "https://example.com/challenge",
     "text": "Tham gia ngay"
   }
 }

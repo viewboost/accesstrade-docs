@@ -14,8 +14,8 @@ Tai lieu nay bao gom 4 nhom endpoint:
 
 | Bien | Vi du |
 |------|-------|
-| `{{ADMIN_BASE_URL}}` | `https://admin-api.viewboost.vn` |
-| `{{ADMIN_TOKEN}}` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
+| `{{ADMIN_BASE_URL}}` | `https://admin-api.example.com` |
+| `{{ADMIN_TOKEN}}` | `{{TOKEN}}` |
 | `{{EVENT_ID}}` | `6507a1b2c3d4e5f6a7b8c9d0` |
 | `{{SCHEMA_ID}}` | `6507a1b2c3d4e5f6a7b8c9d1` |
 | `{{BONUS_ID}}` | `6507a1b2c3d4e5f6a7b8c9d2` |
@@ -31,8 +31,8 @@ Tai lieu nay bao gom 4 nhom endpoint:
   "_id": "6507a1b2c3d4e5f6a7b8c900",
   "name": "cover_tet2024.jpg",
   "dimensions": {
-    "sm": { "width": 375, "height": 130, "url": "https://cdn.viewboost.vn/sm_cover_tet2024.jpg" },
-    "md": { "width": 750, "height": 250, "url": "https://cdn.viewboost.vn/md_cover_tet2024.jpg" }
+    "sm": { "width": 375, "height": 130, "url": "https://cdn.example.com/sm_cover_tet2024.jpg" },
+    "md": { "width": 750, "height": 250, "url": "https://cdn.example.com/md_cover_tet2024.jpg" }
   }
 }
 ```
@@ -443,8 +443,8 @@ curl -X GET "{{ADMIN_BASE_URL}}/events/{{EVENT_ID}}" \
           "_id": "6507a1b2c3d4e5f6a7b8c900",
           "name": "cover_tet2024_mobile.jpg",
           "dimensions": {
-            "sm": { "width": 375, "height": 130, "url": "https://cdn.viewboost.vn/sm_cover_tet2024_mobile.jpg" },
-            "md": { "width": 750, "height": 250, "url": "https://cdn.viewboost.vn/md_cover_tet2024_mobile.jpg" }
+            "sm": { "width": 375, "height": 130, "url": "https://cdn.example.com/sm_cover_tet2024_mobile.jpg" },
+            "md": { "width": 750, "height": 250, "url": "https://cdn.example.com/md_cover_tet2024_mobile.jpg" }
           }
         }
       }
@@ -499,8 +499,8 @@ curl -X GET "{{ADMIN_BASE_URL}}/events/{{EVENT_ID}}" \
       "_id": "6507a1b2c3d4e5f6a7b8c905",
       "name": "icon_tet2024.png",
       "dimensions": {
-        "sm": { "width": 64, "height": 64, "url": "https://cdn.viewboost.vn/sm_icon_tet2024.png" },
-        "md": { "width": 128, "height": 128, "url": "https://cdn.viewboost.vn/md_icon_tet2024.png" }
+        "sm": { "width": 64, "height": 64, "url": "https://cdn.example.com/sm_icon_tet2024.png" },
+        "md": { "width": 128, "height": 128, "url": "https://cdn.example.com/md_icon_tet2024.png" }
       }
     },
     "createdAt": "2024-01-01T08:00:00Z",
@@ -633,13 +633,13 @@ curl -X GET "{{ADMIN_BASE_URL}}/events?partner=6507a1b2c3d4e5f6a7b8c903&categori
 |-------|------|----------|-------|
 | `event` | string | Khong | ID cua thu thach |
 | `partner` | string | Khong | ID partner |
-| `fromAt` | string (ISO date) | Khong | Tu ngay (YYYY-MM-DD) |
-| `toAt` | string (ISO date) | Khong | Den ngay (YYYY-MM-DD) |
+| `fromAt` | string (ISO 8601 datetime) | Khong | Tu ngay (YYYY-MM-DDT00:00:00.000Z) |
+| `toAt` | string (ISO 8601 datetime) | Khong | Den ngay (YYYY-MM-DDT23:59:59.000Z) |
 
 ### cURL
 
 ```bash
-curl -X GET "{{ADMIN_BASE_URL}}/events/statistic?event={{EVENT_ID}}&fromAt=2024-01-01&toAt=2024-02-15" \
+curl -X GET "{{ADMIN_BASE_URL}}/events/statistic?event={{EVENT_ID}}&fromAt=2024-01-01T00:00:00.000Z&toAt=2024-02-15T23:59:59.000Z" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}"
 ```
 
@@ -688,13 +688,13 @@ curl -X GET "{{ADMIN_BASE_URL}}/events/statistic?event={{EVENT_ID}}&fromAt=2024-
 |-------|------|----------|-------|
 | `event` | string | Khong | ID cua thu thach |
 | `partner` | string | Khong | ID partner |
-| `fromAt` | string (ISO date) | Khong | Tu ngay (YYYY-MM-DD) |
-| `toAt` | string (ISO date) | Khong | Den ngay (YYYY-MM-DD) |
+| `fromAt` | string (ISO 8601 datetime) | Khong | Tu ngay (YYYY-MM-DDT00:00:00.000Z) |
+| `toAt` | string (ISO 8601 datetime) | Khong | Den ngay (YYYY-MM-DDT23:59:59.000Z) |
 
 ### cURL
 
 ```bash
-curl -X GET "{{ADMIN_BASE_URL}}/events/chart?event={{EVENT_ID}}&fromAt=2024-01-01&toAt=2024-01-31" \
+curl -X GET "{{ADMIN_BASE_URL}}/events/chart?event={{EVENT_ID}}&fromAt=2024-01-01T00:00:00.000Z&toAt=2024-01-31T23:59:59.000Z" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}"
 ```
 
@@ -843,13 +843,13 @@ curl -X PATCH "{{ADMIN_BASE_URL}}/events/{{EVENT_ID}}/block-create-reward" \
 |-------|------|----------|-------|
 | `event` | string | Khong | ID cua thu thach |
 | `partner` | string | Khong | ID partner |
-| `fromAt` | string (ISO date) | Khong | Tu ngay (YYYY-MM-DD) |
-| `toAt` | string (ISO date) | Khong | Den ngay (YYYY-MM-DD) |
+| `fromAt` | string (ISO 8601 datetime) | Khong | Tu ngay (YYYY-MM-DDT00:00:00.000Z) |
+| `toAt` | string (ISO 8601 datetime) | Khong | Den ngay (YYYY-MM-DDT23:59:59.000Z) |
 
 ### cURL
 
 ```bash
-curl -X GET "{{ADMIN_BASE_URL}}/events/report-statistic?event={{EVENT_ID}}&fromAt=2024-01-01&toAt=2024-01-31" \
+curl -X GET "{{ADMIN_BASE_URL}}/events/report-statistic?event={{EVENT_ID}}&fromAt=2024-01-01T00:00:00.000Z&toAt=2024-01-31T23:59:59.000Z" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}"
 ```
 
@@ -1010,14 +1010,14 @@ Chay lai qua trinh tinh thuong dua tren du lieu Content Analytic Daily. Yeu cau 
 | `event` | string | Khong | ID thu thach can chay lai |
 | `partner` | string | Khong | ID partner |
 | `content` | string | Khong | ID content cu the |
-| `fromAt` | string (ISO date) | Khong | Tu ngay |
-| `toAt` | string (ISO date) | Khong | Den ngay |
+| `fromAt` | string (ISO 8601 datetime) | Khong | Tu ngay |
+| `toAt` | string (ISO 8601 datetime) | Khong | Den ngay |
 | `limit` | int | Khong | Gioi han so ban ghi xu ly |
 
 ### cURL
 
 ```bash
-curl -X GET "{{ADMIN_BASE_URL}}/events/rerun-reward-event-by-cad?key=177ac2b7-7bed-43c2-8757-5cff85dd5518&event={{EVENT_ID}}&fromAt=2024-01-01&toAt=2024-01-31" \
+curl -X GET "{{ADMIN_BASE_URL}}/events/rerun-reward-event-by-cad?key={{SECRET_KEY}}&event={{EVENT_ID}}&fromAt=2024-01-01T00:00:00.000Z&toAt=2024-01-31T23:59:59.000Z" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}"
 ```
 
@@ -1453,8 +1453,8 @@ curl -X GET "{{ADMIN_BASE_URL}}/event-schemas?event={{EVENT_ID}}&status=active&p
 | `partner` | string | Khong | ID partner |
 | `reconciliation` | string | Khong | ID doi soat |
 | `createdBy` | string | Khong | ID staff tao bonus |
-| `fromAt` | string (ISO date) | Khong | Tu ngay tao |
-| `toAt` | string (ISO date) | Khong | Den ngay tao |
+| `fromAt` | string (ISO 8601 datetime) | Khong | Tu ngay tao |
+| `toAt` | string (ISO 8601 datetime) | Khong | Den ngay tao |
 
 ### cURL
 
@@ -1466,7 +1466,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/event-bonus?event={{EVENT_ID}}&status=pending&pa
 ### cURL (loc theo ngay va partner)
 
 ```bash
-curl -X GET "{{ADMIN_BASE_URL}}/event-bonus?partner=6507a1b2c3d4e5f6a7b8c903&fromAt=2024-01-01&toAt=2024-01-31&status=approved" \
+curl -X GET "{{ADMIN_BASE_URL}}/event-bonus?partner=6507a1b2c3d4e5f6a7b8c903&fromAt=2024-01-01T00:00:00.000Z&toAt=2024-01-31T23:59:59.000Z&status=approved" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}"
 ```
 
@@ -1614,13 +1614,13 @@ Tao bonus thu cong cho mot Influencer trong mot thu thach cu the.
   "user": "6507a1b2c3d4e5f6a7b8c910",
   "partner": "6507a1b2c3d4e5f6a7b8c903",
   "amount": 500000,
-  "toAt": "2024-03-31",
+  "toAt": "2024-03-31T23:59:59.000Z",
   "note": "Bonus dac biet cho top Influencer Tet 2024 thang 1"
 }
 ```
 
 **Luu y validation:**
-- `toAt`: bat buoc, phai la ngay trong tuong lai (ISO date)
+- `toAt`: bat buoc, phai la ngay trong tuong lai (ISO 8601 datetime)
 - `event`: bat buoc (MongoID)
 - `user`: bat buoc (MongoID)
 - `partner`: bat buoc (MongoID)
@@ -1637,7 +1637,7 @@ curl -X POST "{{ADMIN_BASE_URL}}/event-bonus" \
     "user": "6507a1b2c3d4e5f6a7b8c910",
     "partner": "6507a1b2c3d4e5f6a7b8c903",
     "amount": 500000,
-    "toAt": "2024-03-31",
+    "toAt": "2024-03-31T23:59:59.000Z",
     "note": "Bonus dac biet cho top Influencer Tet 2024"
   }'
 ```
@@ -1687,7 +1687,7 @@ curl -X POST "{{ADMIN_BASE_URL}}/event-bonus" \
 
 ```json
 {
-  "toAt": "2024-04-30",
+  "toAt": "2024-04-30T23:59:59.000Z",
   "amount": 750000,
   "note": "Da cap nhat gia tri bonus sau doi soat lan 2"
 }
@@ -1704,7 +1704,7 @@ curl -X PUT "{{ADMIN_BASE_URL}}/event-bonus/{{BONUS_ID}}" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}" \
   -H "Content-Type: application/json" \
   -d '{
-    "toAt": "2024-04-30",
+    "toAt": "2024-04-30T23:59:59.000Z",
     "amount": 750000,
     "note": "Da cap nhat gia tri bonus sau doi soat lan 2"
   }'
@@ -1841,7 +1841,7 @@ Import hang loat bonus tu file Excel. File phai co dinh dang `.xlsx`.
 | Event ID | 1 | Co | MongoDB ID cua thu thach | `6507a1b2c3d4e5f6a7b8c9d0` |
 | User ID | 2 | Co | MongoDB ID cua nguoi dung | `6507a1b2c3d4e5f6a7b8c910` |
 | Amount | 3 | Co | So tien bonus (so) | `500000` |
-| Expired At | 4 | Co | Ngay het han bonus (ISO date) | `2024-03-31` |
+| Expired At | 4 | Co | Ngay het han bonus (ISO 8601 datetime) | `2024-03-31T23:59:59.000Z` |
 | Note | 5 | Khong | Ghi chu | `Bonus Tet 2024` |
 
 **Luu y:**
@@ -1931,8 +1931,8 @@ curl -X GET "{{ADMIN_BASE_URL}}/event-categories?keyword=Tai+chinh&limit=10" \
           "_id": "6507a1b2c3d4e5f6a7b8c940",
           "name": "icon_finance.png",
           "dimensions": {
-            "sm": { "width": 64, "height": 64, "url": "https://cdn.viewboost.vn/sm_icon_finance.png" },
-            "md": { "width": 128, "height": 128, "url": "https://cdn.viewboost.vn/md_icon_finance.png" }
+            "sm": { "width": 64, "height": 64, "url": "https://cdn.example.com/sm_icon_finance.png" },
+            "md": { "width": 128, "height": 128, "url": "https://cdn.example.com/md_icon_finance.png" }
           }
         },
         "createdAt": "2024-01-01T08:00:00Z",

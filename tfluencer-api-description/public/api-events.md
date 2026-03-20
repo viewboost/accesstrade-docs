@@ -7,7 +7,7 @@
 | Base URL | `{{BASE_URL}}/events` |
 | Content-Type | `application/json` |
 
-> Thay `{{BASE_URL}}` bằng URL server thực tế. VD: `https://api.viewboost.vn`
+> Thay `{{BASE_URL}}` bằng URL server thực tế. VD: `https://api.example.com`
 
 ---
 
@@ -1100,8 +1100,8 @@ Tạo các biến sau trong environment:
 
 | Biến | Mô tả | Ví dụ |
 |------|-------|-------|
-| `{{BASE_URL}}` | URL server | `https://api.viewboost.vn` |
-| `{{TOKEN}}` | JWT token (lấy sau khi gọi API login) | `eyJhbGciOiJIUzI1NiIs...` |
+| `{{BASE_URL}}` | URL server | `https://api.example.com` |
+| `{{TOKEN}}` | JWT token (lấy sau khi gọi API login) | `{{TOKEN}}` |
 | `{{DEVICE_ID}}` | Device ID (phải khớp với `deviceId` trong token) | `device-abc-123-xyz` |
 | `{{EVENT_ID}}` | ID event đang test | `6501abcd1234567890ef0001` |
 

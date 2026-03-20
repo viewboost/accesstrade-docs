@@ -160,8 +160,8 @@ Authorization: Bearer {{ADMIN_TOKEN}}
   "name": "Chi tra T-Fluencers Thang 4/2026",
   "partner": "64f3a1b2c3d4e5f678901234",
   "conditions": {
-    "startAt": "2026-04-01",
-    "endAt": "2026-04-30",
+    "startAt": "2026-04-01T00:00:00.000Z",
+    "endAt": "2026-04-30T23:59:59.000Z",
     "minValueCashRemaining": 100000,
     "maxCashWithdraw": 10000000
   }
@@ -173,8 +173,8 @@ Authorization: Bearer {{ADMIN_TOKEN}}
 |-------|----------|-------|
 | `name` | Co | Ten dot chi tra |
 | `partner` | Co | ID cua partner (MongoDB ObjectID) |
-| `conditions.startAt` | Khong | Ngay bat dau (ISO 8601 date string) |
-| `conditions.endAt` | Khong | Ngay ket thuc (ISO 8601 date string) |
+| `conditions.startAt` | Khong | Ngay bat dau (ISO 8601 datetime string) |
+| `conditions.endAt` | Khong | Ngay ket thuc (ISO 8601 datetime string) |
 | `conditions.minValueCashRemaining` | Khong | So du toi thieu de duoc rut (float) |
 | `conditions.maxCashWithdraw` | Khong | So tien toi da moi lenh rut (float) |
 
@@ -187,8 +187,8 @@ curl -X POST "{{ADMIN_BASE_URL}}/transfers" \
     "name": "Chi tra T-Fluencers Thang 4/2026",
     "partner": "64f3a1b2c3d4e5f678901234",
     "conditions": {
-      "startAt": "2026-04-01",
-      "endAt": "2026-04-30",
+      "startAt": "2026-04-01T00:00:00.000Z",
+      "endAt": "2026-04-30T23:59:59.000Z",
       "minValueCashRemaining": 100000,
       "maxCashWithdraw": 10000000
     }
@@ -262,8 +262,8 @@ Tuong tu POST /transfers (cung struct `TransferBody`)
   "name": "Chi tra T-Fluencers Thang 4/2026 - Cap nhat",
   "partner": "64f3a1b2c3d4e5f678901234",
   "conditions": {
-    "startAt": "2026-04-01",
-    "endAt": "2026-04-30",
+    "startAt": "2026-04-01T00:00:00.000Z",
+    "endAt": "2026-04-30T23:59:59.000Z",
     "minValueCashRemaining": 150000,
     "maxCashWithdraw": 15000000
   }
@@ -279,8 +279,8 @@ curl -X PUT "{{ADMIN_BASE_URL}}/transfers/{{TRANSFER_ID}}" \
     "name": "Chi tra T-Fluencers Thang 4/2026 - Cap nhat",
     "partner": "64f3a1b2c3d4e5f678901234",
     "conditions": {
-      "startAt": "2026-04-01",
-      "endAt": "2026-04-30",
+      "startAt": "2026-04-01T00:00:00.000Z",
+      "endAt": "2026-04-30T23:59:59.000Z",
       "minValueCashRemaining": 150000,
       "maxCashWithdraw": 15000000
     }
@@ -417,7 +417,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/transfers/{{TRANSFER_ID}}/withdraw-cashes?page=1
 
 ### cURL - Loc theo so the
 ```bash
-curl -X GET "{{ADMIN_BASE_URL}}/transfers/{{TRANSFER_ID}}/withdraw-cashes?page=1&limit=20&type=confirm&cardNumber=19001234567890" \
+curl -X GET "{{ADMIN_BASE_URL}}/transfers/{{TRANSFER_ID}}/withdraw-cashes?page=1&limit=20&type=confirm&cardNumber=0000000000000000" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}"
 ```
 
@@ -432,12 +432,12 @@ curl -X GET "{{ADMIN_BASE_URL}}/transfers/{{TRANSFER_ID}}/withdraw-cashes?page=1
         "user": {
           "_id": "64b2c3d4e5f678901234abcd",
           "name": "Nguyen Van A",
-          "email": "nguyenvana@gmail.com",
-          "phone": "0912345678"
+          "email": "user1@example.com",
+          "phone": "0900000001"
         },
         "amount": 500000,
         "status": "confirm",
-        "cardNumber": "19001234567890",
+        "cardNumber": "0000000000000000",
         "bankName": "Techcombank",
         "bankAccountName": "NGUYEN VAN A",
         "transferId": "64f8b9c0d1e2f3456789abcd",
@@ -449,12 +449,12 @@ curl -X GET "{{ADMIN_BASE_URL}}/transfers/{{TRANSFER_ID}}/withdraw-cashes?page=1
         "user": {
           "_id": "64b2c3d4e5f678901234abce",
           "name": "Tran Thi B",
-          "email": "tranthib@gmail.com",
-          "phone": "0987654321"
+          "email": "user2@example.com",
+          "phone": "0900000001"
         },
         "amount": 750000,
         "status": "confirm",
-        "cardNumber": "19009876543210",
+        "cardNumber": "0000000000000000",
         "bankName": "Techcombank",
         "bankAccountName": "TRAN THI B",
         "transferId": "64f8b9c0d1e2f3456789abcd",

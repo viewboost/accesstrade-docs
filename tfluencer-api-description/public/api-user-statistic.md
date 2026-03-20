@@ -24,8 +24,8 @@ Tất cả API trong nhóm này dùng chung bộ query params:
 | partner | string | Không | Partner ID/slug |
 | user | string | Không | User ID (hex string) |
 | event | string | Không | Event ID |
-| fromAt | string | Không | Ngày bắt đầu (ISO date). VD: `2026-01-01` |
-| toAt | string | Không | Ngày kết thúc (ISO date). VD: `2026-03-31` |
+| fromAt | string | Không | Ngày bắt đầu (ISO 8601 datetime). VD: `2026-01-01T00:00:00.000Z` |
+| toAt | string | Không | Ngày kết thúc (ISO 8601 datetime). VD: `2026-03-31T23:59:59.000Z` |
 | isSelf | string | Không | `all` / `true` / `false` |
 | page | number | Không | Số trang |
 | limit | number | Không | Số kết quả mỗi trang |
@@ -53,7 +53,7 @@ curl -X GET "{{BASE_URL}}/user-statistic?user=660a1b2c3d4e5f6a7b8c9d01&partner=t
 
 ```bash
 # Với khoảng thời gian
-curl -X GET "{{BASE_URL}}/user-statistic?user=660a1b2c3d4e5f6a7b8c9d01&fromAt=2026-01-01&toAt=2026-03-31" \
+curl -X GET "{{BASE_URL}}/user-statistic?user=660a1b2c3d4e5f6a7b8c9d01&fromAt=2026-01-01T00:00:00.000Z&toAt=2026-03-31T23:59:59.000Z" \
   -H "Accept-Language: vi"
 ```
 

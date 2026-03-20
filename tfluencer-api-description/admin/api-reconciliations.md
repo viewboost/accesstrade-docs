@@ -8,7 +8,7 @@
 | Content-Type | `application/json` |
 | Quyen | **IsAdmin** (tat ca endpoints) |
 
-> Thay `{{ADMIN_BASE_URL}}` bang URL server admin thuc te. VD: `https://admin-api.viewboost.vn`
+> Thay `{{ADMIN_BASE_URL}}` bang URL server admin thuc te. VD: `https://admin-api.example.com`
 
 ---
 
@@ -172,7 +172,7 @@ curl -X GET "{{ADMIN_BASE_URL}}/reconciliations?page=0&limit=20&status=pending&t
 | `title` | string | Co | Ten reconciliation | `Doi soat T-Fluencers Q3/2024` |
 | `type` | string | Co | Loai: `event-reward`, `event-reward-statistic`, `event-reward-milestone` | `event-reward` |
 | `condition` | object | Co | Dieu kien doi soat | |
-| `condition.toAt` | string | Co | Ngay ket thuc (ISO date) | `2024-09-30` |
+| `condition.toAt` | string | Co | Ngay ket thuc (ISO 8601 datetime) | `2024-09-30T23:59:59.000Z` |
 | `condition.event` | string | Khong | Event ID | `6650a1b2c3d4e5f6a7b8c9d1` |
 
 **cURL:**
@@ -185,7 +185,7 @@ curl -X POST "{{ADMIN_BASE_URL}}/reconciliations" \
     "title": "Doi soat T-Fluencers Thang 9/2024",
     "type": "event-reward",
     "condition": {
-      "toAt": "2024-09-30",
+      "toAt": "2024-09-30T23:59:59.000Z",
       "event": "{{EVENT_ID}}"
     }
   }'
@@ -261,7 +261,7 @@ curl -X PATCH "{{ADMIN_BASE_URL}}/reconciliations/{{RECONCILIATION_ID}}" \
     "title": "Doi soat T-Fluencers Thang 9/2024 (cap nhat)",
     "type": "event-reward",
     "condition": {
-      "toAt": "2024-10-05",
+      "toAt": "2024-10-05T23:59:59.000Z",
       "event": "{{EVENT_ID}}"
     }
   }'

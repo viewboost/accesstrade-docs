@@ -7,7 +7,7 @@
 | Base URL | `{{ADMIN_BASE_URL}}` |
 | Content-Type | `application/json` |
 
-> Thay `{{ADMIN_BASE_URL}}` bang URL server admin thuc te. VD: `https://admin-api.viewboost.vn`
+> Thay `{{ADMIN_BASE_URL}}` bang URL server admin thuc te. VD: `https://admin-api.example.com`
 
 ---
 
@@ -104,8 +104,8 @@ Admin API co nhieu cap do quyen, ap dung theo tung nhom API:
 
 | Bien | Mo ta | Vi du |
 |------|-------|-------|
-| `{{ADMIN_BASE_URL}}` | URL server admin | `https://admin-api.viewboost.vn` |
-| `{{ADMIN_TOKEN}}` | JWT token admin (lay tu API login) | `eyJhbGciOiJIUzI1NiIs...` |
+| `{{ADMIN_BASE_URL}}` | URL server admin | `https://admin-api.example.com` |
+| `{{ADMIN_TOKEN}}` | JWT token admin (lay tu API login) | `{{TOKEN}}` |
 
 ---
 

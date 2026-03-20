@@ -132,12 +132,12 @@ curl -X GET "{{ADMIN_BASE_URL}}/common/get-list-topics" \
 
 | Param | Kieu | Bat buoc | Mo ta |
 |---|---|---|---|
-| `key` | string | Co | Secret key kich hoat: `177ac2b7-7bed-43c2-8757-5cff85dd5518` |
+| `key` | string | Co | Secret key kich hoat: `{{SECRET_KEY}}` |
 
 #### cURL
 
 ```bash
-curl -X GET "{{ADMIN_BASE_URL}}/common/update-event-daily?key=177ac2b7-7bed-43c2-8757-5cff85dd5518" \
+curl -X GET "{{ADMIN_BASE_URL}}/common/update-event-daily?key={{SECRET_KEY}}" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}"
 ```
 
@@ -1560,15 +1560,15 @@ curl -X PATCH "{{ADMIN_BASE_URL}}/admin-notifications/{{NOTIFICATION_ID}}/reject
 | `page` | int | Khong | So trang | `1` |
 | `limit` | int | Khong | So ban ghi | `20` |
 | `status` | string | Khong | Trang thai xac minh | `"pending"` / `"approved"` / `"rejected"` |
-| `fromAt` | string | Khong | Ngay bat dau (ISO date) | `"2024-01-01"` |
-| `toAt` | string | Khong | Ngay ket thuc (ISO date) | `"2024-12-31"` |
+| `fromAt` | string | Khong | Ngay bat dau (ISO 8601 datetime) | `"2024-01-01T00:00:00.000Z"` |
+| `toAt` | string | Khong | Ngay ket thuc (ISO 8601 datetime) | `"2024-12-31T23:59:59.000Z"` |
 | `user` | string | Khong | ID user | `"664a1f2e3c4b5d6e7f8a9b0c"` |
 | `staff` | string | Khong | ID staff xu ly | `"664a1f2e3c4b5d6e7f8a9b05"` |
 
 #### cURL
 
 ```bash
-curl -X GET "{{ADMIN_BASE_URL}}/identifications?page=1&limit=20&status=pending&fromAt=2024-01-01&toAt=2024-12-31" \
+curl -X GET "{{ADMIN_BASE_URL}}/identifications?page=1&limit=20&status=pending&fromAt=2024-01-01T00:00:00.000Z&toAt=2024-12-31T23:59:59.000Z" \
   -H "Authorization: Bearer {{ADMIN_TOKEN}}"
 ```
 
@@ -2108,8 +2108,8 @@ curl -X GET "{{ADMIN_BASE_URL}}/quick-actions/{{QUICK_ACTION_ID}}" \
 | `emails` | string[] | Khong | Email nhan ket qua | `["admin@example.com"]` |
 | `isShowStatistic` | boolean | Khong | Co kem thong ke | `true` |
 | `condition` | object | Khong | Dieu kien loc du lieu | `{}` |
-| `condition.fromAt` | string | Khong | Ngay bat dau | `"2024-01-01"` |
-| `condition.toAt` | string | Khong | Ngay ket thuc | `"2024-03-31"` |
+| `condition.fromAt` | string | Khong | Ngay bat dau (ISO 8601 datetime) | `"2024-01-01T00:00:00.000Z"` |
+| `condition.toAt` | string | Khong | Ngay ket thuc (ISO 8601 datetime) | `"2024-03-31T23:59:59.000Z"` |
 | `condition.event` | string | Khong | ID su kien | `"664a1f2e3c4b5d6e7f8a9b02"` |
 | `condition.events` | string[] | Khong | Danh sach ID su kien | `["664a..."]` |
 | `condition.status` | string | Khong | Trang thai | `"approved"` |
@@ -2134,8 +2134,8 @@ curl -X POST "{{ADMIN_BASE_URL}}/data-exports" \
     "emails": ["admin@example.com"],
     "isShowStatistic": true,
     "condition": {
-      "fromAt": "2024-03-01",
-      "toAt": "2024-03-31",
+      "fromAt": "2024-03-01T00:00:00.000Z",
+      "toAt": "2024-03-31T23:59:59.000Z",
       "partner": "664a1f2e3c4b5d6e7f8a9b01"
     }
   }'
