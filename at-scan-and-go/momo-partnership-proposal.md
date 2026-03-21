@@ -1,0 +1,551 @@
+# Đề xuất hợp tác: Scan & Go - Deal tự động khi thanh toán QR
+
+**Từ:** [Tên công ty]
+**Gửi:** MoMo - Business Partnership
+**Ngày:** 2026-03-21
+
+---
+
+## 1. Một câu tóm tắt
+
+> Chúng tôi mang merchant deals đến cho MoMo. User MoMo thanh toán tại merchant → deal tự động ghi nhận → user nhận cashback → **MoMo tăng transaction volume + engagement mà không cần đầu tư BD**.
+
+---
+
+## 2. Mô hình Scan & Go
+
+### User experience
+
+```
+TRƯỚC (không có deal):
+  User đến cửa hàng → quét QR → thanh toán → xong.
+
+SAU (có Scan & Go):
+  User đến cửa hàng → quét QR → thanh toán → CASHBACK 5%! 🎉
+
+  User không cần làm gì khác. Hệ thống tự nhận diện deal.
+```
+
+### Ai làm gì?
+
+| Bên | Vai trò | Ví dụ |
+|---|---|---|
+| **Chúng tôi** | Deal với merchant, quản lý deal catalog, tính commission, trả reward | "Highland Coffee: cashback 3%, bill từ 100K" |
+| **MoMo** | Xử lý thanh toán, show deal cho user MoMo, notify giao dịch | Webhook khi user thanh toán tại merchant có deal |
+| **Merchant** | Tạo deal, set commission | "Tôi sẵn sàng trả 3% commission để có thêm khách" |
+| **User** | Thanh toán bình thường | Quét QR → pay → nhận cashback |
+
+### Chúng tôi KHÔNG touch tiền
+
+- Không nhận tiền từ user, không chuyển tiền cho merchant
+- MoMo xử lý toàn bộ payment
+- Chúng tôi chỉ nhận commission qua MoMo settlement
+
+---
+
+## 3. Cơ chế cốt lõi: Đăng ký nhận webhook giao dịch tại Merchant
+
+### Cách hoạt động
+
+Để Scan & Go hoạt động, chúng tôi cần đăng ký với MoMo để **nhận webhook mỗi khi có giao dịch tại merchant đã hợp tác**.
+
+```
+BƯỚC 1: Chúng tôi deal với Highland Coffee (đã có MoMo Merchant Account)
+
+BƯỚC 2: Đăng ký với MoMo:
+  → "Highland (HIGHLAND_001) đồng ý hợp tác. Cho tôi subscribe webhook
+     giao dịch tại merchant này."
+
+BƯỚC 3: Highland xác nhận trên MoMo Merchant Portal:
+  → "Tôi cho phép [AT-Scan-and-Go] nhận thông tin giao dịch"
+
+BƯỚC 4: MoMo kích hoạt:
+  → Mọi giao dịch tại HIGHLAND_001 → MoMo gửi webhook cho AT-Scan-and-Go
+```
+
+### Yêu cầu từ MoMo
+
+| # | Yêu cầu | Mô tả |
+|---|---|---|
+| 1 | **Merchant webhook subscription API** | AT-Scan-and-Go đăng ký listen giao dịch tại danh sách merchant |
+| 2 | **Merchant consent flow** | Merchant xác nhận cho phép AT-Scan-and-Go nhận webhook (qua MoMo Portal hoặc API key) |
+| 3 | **Webhook data** | Mỗi giao dịch gửi: `trans_id, merchant_id, amount, status, momo_user_id (hashed), payment_method, timestamp` |
+| 4 | **Refund webhook** | Notify khi giao dịch bị refund → AT-Scan-and-Go rollback commission |
+
+### Hai tình huống thanh toán & Giải pháp
+
+#### S1: Merchant CÓ MoMo Merchant Account (Best case, ~60% merchant)
+
+```
+User thanh toán tại MoMo Merchant (bằng MoMo wallet hoặc bank app)
+→ MoMo biết MERCHANT (có merchant_id)
+→ Webhook đầy đủ → AT-Scan-and-Go track được
+```
+
+**MoMo cần:** Gửi webhook với `merchant_id` + `amount` + `momo_user_id` (nếu có)
+**Kết quả:** ✅ Track hoàn hảo qua webhook (nếu user dùng MoMo) hoặc qua AT-Scan-and-Go QR (nếu user dùng bank app)
+
+#### S2: Merchant KHÔNG CÓ MoMo Merchant Account (chỉ có QR ngân hàng)
+
+```
+Merchant chỉ có QR bank (VietQR)
+→ User quét QR bank → tiền đi qua Napas → Bank
+→ MoMo KHÔNG biết merchant này → không có webhook
+→ NHƯNG: AT-Scan-and-Go QR tại cửa hàng giải quyết được!
+```
+
+**Kết quả:** ✅ Track được qua AT-Scan-and-Go QR
+
+#### Giải pháp chung cho cả S1 và S2: AT-Scan-and-Go QR
+
+Dù merchant có hay không có MoMo Merchant Account, **AT-Scan-and-Go QR đặt tại cửa hàng** là giải pháp xuyên suốt. QR này đưa user vào flow có tracking TRƯỚC KHI thanh toán.
+
+**Cách 1 (Best case): MoMo deeplink + tracking params**
+
+```
+QR tại cửa hàng chứa MoMo deeplink có thêm tracking params:
+
+  momo://pay?receiver=MOMO_HIGHLAND_001    ← S1: MoMo Merchant ID
+             &utm_source=at-scan-and-go
+             &utm_campaign=DEAL_001
+             &partner_ref=PLT_xxx
+
+  momo://pay?receiver=VCB_123456789        ← S2: Bank account number
+             &utm_source=at-scan-and-go
+             &utm_campaign=DEAL_001
+             &partner_ref=PLT_xxx
+
+User quét QR → MoMo mở trực tiếp → thanh toán → webhook có partner_ref → track!
+```
+
+**MoMo cần hỗ trợ:** Deeplink nhận thêm `utm_*` / `partner_ref` params và trả lại trong webhook.
+**Effort:** Thấp (chỉ thêm params vào deeplink scheme có sẵn)
+**UX:** Tốt nhất — user quét 1 lần → mở thẳng MoMo
+
+**Cách 2 (Fallback): AT-Scan-and-Go web redirect**
+
+```
+QR tại cửa hàng chứa AT-Scan-and-Go URL:
+
+  https://at-scan-and-go.com/pay/HIGHLAND?ref=PLT_xxx
+
+User quét QR → mở web AT-Scan-and-Go (biết user + merchant)
+→ "Highland Coffee • Cashback 5%"
+→ Bấm "Thanh toán qua MoMo"
+→ AT-Scan-and-Go gọi MoMo Payment Gateway (S1) hoặc redirect deeplink (S2)
+→ Thanh toán → webhook → track!
+```
+
+**MoMo cần hỗ trợ:** Không gì đặc biệt (dùng Payment Gateway / deeplink cơ bản)
+**UX:** Tốt, thêm 1 bước so với Cách 1
+
+**Cách 3 (Dài hạn, chỉ S2): Merchant mở MoMo Merchant Account**
+
+Chúng tôi hỗ trợ merchant đăng ký → chuyển S2 → S1. **MoMo được thêm merchant mới miễn phí BD cost.**
+
+#### Nâng cấp Phase 2: Linked Account (chỉ S1)
+
+```
+Với merchant CÓ MoMo Merchant Account:
+  User link MoMo ↔ AT-Scan-and-Go 1 lần (OAuth consent)
+  → Sau đó quét QR MoMo gốc, thanh toán bình thường
+  → MoMo auto webhook → AT-Scan-and-Go track → cashback!
+  → User KHÔNG CẦN quét QR AT-Scan-and-Go nữa = zero friction
+```
+
+**Lưu ý:** Linked Account chỉ hoạt động với S1 (MoMo Merchant). Với S2 (Bank Merchant), vẫn cần QR AT-Scan-and-Go.
+
+### Tóm tắt
+
+| Tình huống | Phase 1 (QR AT-Scan-and-Go) | Phase 2 (Linked Account) | MoMo effort |
+|---|---|---|---|
+| **S1** Merchant có MoMo | ✅ Deeplink/redirect → Payment Gateway | ✅ Quét QR gốc, auto track | Zero → Trung bình |
+| **S2** Merchant chỉ có bank | ✅ Deeplink/redirect → Napas | ❌ Không áp dụng (vẫn cần QR) | Thấp |
+
+**Kết luận:** AT-Scan-and-Go QR giải quyết được **cả 2 tình huống**. Merchant có hay không có MoMo Account đều onboard được. MoMo chỉ cần hỗ trợ 1 việc nhỏ: **cho phép thêm tracking params vào deeplink scheme.** Effort thấp, impact lớn.
+
+---
+
+## 4. Lợi ích cho MoMo
+
+### Lợi ích trực tiếp
+
+| # | Lợi ích | Chi tiết |
+|---|---|---|
+| 1 | **Tăng transaction volume** | User có lý do thanh toán qua MoMo thay vì tiền mặt/bank app: nhận cashback |
+| 2 | **Revenue từ commission** | MoMo nhận 15-35% commission mỗi giao dịch qua deal (tùy kênh) |
+| 3 | **Deal content miễn phí** | Chúng tôi cung cấp deal catalog → MoMo show trong app → tăng giá trị cho user |
+| 4 | **Thêm merchant** | Merchant chưa có MoMo Merchant Account → chúng tôi hỗ trợ onboard → MoMo thêm merchant |
+| 5 | **User engagement** | User mở MoMo thường xuyên hơn để check cashback, tìm deal |
+
+### MoMo nhận bao nhiêu?
+
+```
+Ví dụ: 1,000 giao dịch/ngày × 300K trung bình × commission 2.5%
+
+  Commission pool/ngày: 7,500,000đ
+  MoMo nhận (20-35%):  1,500,000 - 2,625,000đ/ngày
+                      = 45M - 79M/tháng
+
+  Scale lên 10,000 giao dịch/ngày:
+  MoMo nhận:          = 450M - 790M/tháng
+```
+
+### Chi phí cho MoMo
+
+**Phase 1: ZERO.**
+
+Chúng tôi sử dụng API MoMo có sẵn. MoMo chỉ cần cấp Partner Account.
+
+---
+
+## 5. Flow kỹ thuật theo từng tình huống
+
+### 5.1 S1: User MoMo → MoMo Merchant (Best case)
+
+**Điều kiện:** Merchant có MoMo Merchant Account + User dùng MoMo wallet
+
+**Có 2 cách vận hành:**
+
+**Cách A: AT-Scan-and-Go QR tại cửa hàng (Phase 1 — MoMo effort = ZERO)**
+
+```
+User đến Highland Coffee
+  → Quét QR sticker AT-Scan-and-Go tại quầy (camera/MoMo scan)
+  → Mở web AT-Scan-and-Go: "Highland Coffee • Cashback 5%"
+  → Bấm "Thanh toán qua MoMo"
+  → AT-Scan-and-Go gọi MoMo Payment Gateway API:
+    POST /v2/gateway/api/create
+    {partner_ref_id: "PLT_xxx", merchant_id, amount, extra_data}
+  → MoMo app mở → User xác nhận → Thanh toán
+  → MoMo webhook → AT-Scan-and-Go:
+    {trans_id, amount, status, partner_ref_id, momo_user_id}
+  → AT-Scan-and-Go match: partner_ref_id → biết user + merchant + deal
+  → Ghi nhận commission → User nhận cashback
+
+API MoMo: Payment Gateway (có sẵn)
+MoMo effort: ZERO
+```
+
+**Cách B: Linked Account — User quét QR MoMo gốc (Phase 2)**
+
+```
+SETUP 1 LẦN:
+  User liên kết MoMo ↔ AT-Scan-and-Go (OAuth consent)
+
+SAU ĐÓ:
+  User đến Highland Coffee
+    → Quét QR MoMo gốc (như bình thường, không cần QR AT-Scan-and-Go)
+    → Thanh toán bằng MoMo wallet
+    → MoMo nhận diện: user đã link + merchant có deal
+    → MoMo webhook → AT-Scan-and-Go:
+      {merchant_id, amount, hashed_momo_user_id}
+    → AT-Scan-and-Go match: hashed_momo_user_id → platform_user_id
+    → Ghi nhận commission → User nhận cashback
+
+API MoMo: OAuth + Transaction subscription + Webhook
+MoMo effort: Trung bình (cần cung cấp OAuth + subscription API)
+```
+
+**Tóm tắt S1:**
+
+| | Cách A (QR AT-Scan-and-Go) | Cách B (Linked Account) |
+|---|---|---|
+| User experience | Quét QR AT-Scan-and-Go → thêm 1 bước | Quét QR MoMo gốc → zero friction |
+| Track được | ✅ 100% (có partner_ref_id) | ✅ 100% (có hashed_user_id) |
+| MoMo effort | ZERO | Trung bình |
+| Phase | Phase 1 | Phase 2 |
+
+---
+
+### 5.2 S2: Merchant KHÔNG có MoMo Account (chỉ có QR ngân hàng)
+
+**Điều kiện:** Merchant chỉ có QR bank (VietQR). Không có momo_merchant_id → không đăng ký webhook thông thường được.
+
+**Giải pháp: AT-Scan-and-Go QR tại cửa hàng — cùng nguyên lý với S1 Cách A**
+
+**Cách 1 (Best case): MoMo deeplink + tracking params**
+
+```
+QR sticker AT-Scan-and-Go tại cửa hàng chứa MoMo deeplink:
+
+  momo://pay?receiver=VCB_123456789
+            &utm_source=at-scan-and-go
+            &utm_campaign=DEAL_001
+            &partner_ref=PLT_xxx
+
+User quét QR → MoMo app mở trực tiếp (1 bước!)
+  → Màn hình thanh toán: chuyển tới VCB_123456789
+  → User nhập số tiền → Xác nhận
+  → Thanh toán (MoMo → Napas → Bank merchant)
+  → MoMo webhook có partner_ref → AT-Scan-and-Go track!
+
+MoMo cần: Deeplink nhận thêm utm/partner params + trả lại trong webhook
+Effort: Thấp (chỉ thêm params vào deeplink scheme có sẵn)
+UX: Tốt nhất — user quét 1 lần → thẳng MoMo
+```
+
+**Cách 2 (Fallback): AT-Scan-and-Go web redirect — giống hệt S1 Cách A**
+
+```
+QR sticker AT-Scan-and-Go tại cửa hàng chứa URL:
+
+  https://at-scan-and-go.com/pay/HIGHLAND?ref=PLT_xxx
+
+User quét QR → Mở web AT-Scan-and-Go
+  → "Highland Coffee • Cashback 5%"
+  → AT-Scan-and-Go biết user (đã login) + biết merchant + biết deal
+  → Bấm "Thanh toán qua MoMo"
+  → AT-Scan-and-Go redirect → MoMo deeplink (chuyển tới bank account merchant)
+  → MoMo app mở → User thanh toán
+  → MoMo webhook → AT-Scan-and-Go track!
+
+MoMo cần: Không gì đặc biệt
+UX: Tốt, thêm 1 bước web so với Cách 1
+```
+
+**Cách 3 (Dài hạn): Hỗ trợ merchant mở MoMo Merchant Account**
+
+```
+AT-Scan-and-Go hỗ trợ merchant đăng ký MoMo Merchant Account
+  → Merchant chuyển từ S2 → S1
+  → MoMo được thêm merchant mới miễn phí BD cost
+```
+
+**Lưu ý:** Linked Account (Phase 2) KHÔNG áp dụng cho S2 vì không có momo_merchant_id để subscribe.
+
+---
+
+### 5.3 Tổng hợp: So sánh S1 vs S2
+
+| | S1 (MoMo Merchant) | S2 (Bank Merchant) |
+|---|---|---|
+| **Phase 1: QR AT-Scan-and-Go** | ✅ Web redirect → Payment Gateway | ✅ Deeplink/redirect → Napas |
+| **Phase 2: Linked Account** | ✅ Zero friction, auto track | ❌ Không áp dụng |
+| **Dài hạn** | — | Hỗ trợ merchant mở MoMo Account → chuyển thành S1 |
+| **API MoMo** | Payment Gateway (có sẵn) | Deeplink + webhook params |
+| **MoMo effort** | Zero (Phase 1) → Trung bình (Phase 2) | Thấp |
+
+**Điểm chung:** AT-Scan-and-Go QR là giải pháp xuyên suốt cả 2 tình huống:
+- User quét QR AT-Scan-and-Go → AT-Scan-and-Go biết user + merchant → chuyển qua MoMo thanh toán → webhook → track
+- Chỉ khác phía nhận tiền: S1 vào MoMo Merchant Account, S2 vào Bank Account qua Napas
+
+---
+
+### 5.5 Kênh bổ sung: Deal hiển thị trong app MoMo (Phase 2+)
+
+```
+MoMo app hiển thị deal từ AT-Scan-and-Go:
+
+  ┌─────────────────────────────┐
+  │  Deals gần bạn              │
+  │  ┌─────────────────────┐    │
+  │  │ Highland Coffee     │    │
+  │  │ Cashback 5%         │    │
+  │  │ Bill từ 100K        │    │
+  │  └─────────────────────┘    │
+  │  ┌─────────────────────┐    │
+  │  │ Pizza 4P's          │    │
+  │  │ Cashback 3%         │    │
+  │  └─────────────────────┘    │
+  └─────────────────────────────┘
+
+  User chọn deal → thanh toán → auto track (S1 flow)
+
+  API: AT-Scan-and-Go cung cấp Deal Catalog API
+  MoMo pull deal list → hiển thị trong app
+```
+
+---
+
+## 6. Mô hình commission
+
+### Chia sẻ commission
+
+```
+User thanh toán 500,000đ tại Highland Coffee
+Commission rate: 3%
+Commission pool: 500,000 × 3% = 15,000đ
+
+  ├── MoMo:      3,000đ  (20%)
+  ├── AT-Scan-and-Go:   7,500đ  (50%)
+  └── User:       4,500đ  (30%) ← cashback
+```
+
+### Tỷ lệ chia theo kênh
+
+| Kênh | Ai mang khách | MoMo nhận | AT-Scan-and-Go nhận | User nhận |
+|---|---|---|---|---|
+| Kênh AT-Scan-and-Go (QR AT-Scan-and-Go) | AT-Scan-and-Go | 15% | 55% | 30% |
+| Kênh MoMo (deal trong MoMo app) | MoMo | 35% | 35% | 30% |
+| Kênh MoMo (linked account, user quét QR gốc) | Shared | 25% | 45% | 30% |
+
+> Ai mang khách → nhận nhiều hơn. User luôn nhận 30%.
+> Tỷ lệ có thể thương lượng.
+
+### Settlement
+
+```
+T+0:   Giao dịch xảy ra     → Commission: PENDING
+T+1:   MoMo webhook         → Commission: CONFIRMED
+T+14:  Hết refund window    → Commission: FINALIZED
+T+15:  MoMo settlement      → chuyển commission cho AT-Scan-and-Go
+```
+
+---
+
+## 7. Tích hợp kỹ thuật
+
+### API MoMo chúng tôi sử dụng
+
+| # | API | Mục đích | Kênh |
+|---|---|---|---|
+| 1 | **Payment Gateway** - create order | Tạo payment request khi user quét QR AT-Scan-and-Go | Kênh AT-Scan-and-Go |
+| 2 | **Payment Gateway** - webhook/IPN | Nhận notification giao dịch thành công/thất bại/refund | Cả 2 kênh |
+| 3 | **Payment Gateway** - query status | Fallback check trạng thái giao dịch | Cả 2 kênh |
+| 4 | **OAuth / User consent** | User link tài khoản MoMo ↔ AT-Scan-and-Go | Kênh MoMo |
+| 5 | **Transaction subscription** | Đăng ký listen giao dịch tại merchant list | Kênh MoMo |
+| 6 | **Reconciliation** | Đối soát daily | Cả 2 kênh |
+| 7 | **Disbursement** | Chuyển cashback vào MoMo wallet user | Cả 2 kênh |
+| 8 | **Deep link** | Redirect user từ web → MoMo app thanh toán | Kênh AT-Scan-and-Go |
+
+### Data chúng tôi cần từ webhook
+
+```json
+{
+  "trans_id": "MoMo transaction ID",
+  "partner_ref_id": "PLT_tracking_xxx",
+  "merchant_id": "MOMO_MERCHANT_ID",
+  "amount": 500000,
+  "status": "SUCCESS | FAILED | REFUNDED",
+  "payment_method": "WALLET | BANK_TRANSFER",
+  "hashed_user_id": "hash_xxx",
+  "timestamp": "2026-03-21T10:30:00+07:00"
+}
+```
+
+**Lưu ý:** Chúng tôi KHÔNG cần thông tin cá nhân user (tên, SĐT, CCCD). Chỉ cần `hashed_user_id` để map với tài khoản AT-Scan-and-Go.
+
+### Data chúng tôi cung cấp cho MoMo
+
+```
+Deal Catalog API:
+GET /api/deals?city=HCM&category=fnb
+
+Response:
+[
+  {
+    "deal_id": "DEAL_001",
+    "merchant_name": "Highland Coffee",
+    "momo_merchant_id": "MOMO_HIGHLAND_001",
+    "cashback_percent": 5,
+    "min_amount": 100000,
+    "max_cashback": 50000,
+    "valid_until": "2026-06-30",
+    "locations": ["Q1", "Q3", "Q7"],
+    "category": "fnb"
+  }
+]
+```
+
+---
+
+## 8. Kế hoạch triển khai với MoMo
+
+### Phase 1: Pilot (Tháng 1-3)
+
+| Tuần | Đầu việc | MoMo hỗ trợ | Effort MoMo |
+|---|---|---|---|
+| 1 | Ký NDA + hợp tác | Ký NDA | Thấp |
+| 1-2 | Cấp Partner Account + API credentials | Cấp account sandbox + production | Thấp |
+| 2-3 | Technical alignment meeting | 1 buổi với MoMo API team | Thấp |
+| 3-8 | AT-Scan-and-Go build + tích hợp | Hỗ trợ kỹ thuật nếu có issue | Thấp |
+| 8-12 | Pilot 20 merchant | - | - |
+
+**MoMo effort Phase 1: < 1 tuần tổng cộng**
+
+### Phase 2: Scale (Tháng 4-6)
+
+| Đầu việc | MoMo hỗ trợ | Effort MoMo |
+|---|---|---|
+| Linked Account | Cung cấp OAuth consent flow + transaction subscription | Trung bình |
+| Deal trong MoMo app | Hiển thị deal từ AT-Scan-and-Go deal catalog API | Trung bình |
+| Disbursement | Cung cấp API chuyển cashback vào wallet user | Thấp |
+
+### Phase 3: MoMo Mini App (Tháng 7-12)
+
+| Đầu việc | MoMo hỗ trợ | Effort MoMo |
+|---|---|---|
+| Mini App access | Cấp quyền build Mini App trong MoMo ecosystem | Trung bình |
+| Auto-match engine | MoMo auto-match giao dịch linked user + merchant deal | Trung bình |
+| Push notification | Notify user khi nhận cashback | Thấp |
+
+---
+
+## 9. Tại sao hợp tác với chúng tôi?
+
+### Chúng tôi mang gì cho MoMo?
+
+| # | Giá trị | Chi tiết |
+|---|---|---|
+| 1 | **Merchant network** | Chúng tôi có BD team deal trực tiếp merchant. MoMo không cần đầu tư thêm BD |
+| 2 | **Deal content** | Deal catalog hấp dẫn → tăng giá trị app MoMo cho user |
+| 3 | **Transaction volume** | Mỗi deal = thêm giao dịch qua MoMo (thay vì tiền mặt/bank) |
+| 4 | **Merchant onboarding** | Merchant chưa có MoMo → chúng tôi hỗ trợ đăng ký → MoMo thêm merchant |
+| 5 | **Revenue share** | MoMo nhận 15-35% commission mỗi giao dịch, zero effort |
+
+### Chúng tôi KHÔNG cạnh tranh với MoMo
+
+- Không build ví điện tử
+- Không xử lý thanh toán
+- Không thu thập PII user
+- Chúng tôi là **deal layer bổ sung** trên hệ sinh thái MoMo
+
+### So sánh: MoMo tự build vs Hợp tác
+
+| Hạng mục | MoMo tự build | Hợp tác với chúng tôi |
+|---|---|---|
+| BD team deal merchant | Cần tuyển + train | Chúng tôi đã có sẵn |
+| Deal management system | Cần develop | Chúng tôi đã có sẵn |
+| Time to market | 6-12 tháng | 2-3 tháng |
+| Chi phí | Cao (team + dev + ops) | Thấp (revenue share) |
+| Risk | Cao (chưa chứng minh) | Thấp (pilot trước) |
+| Cross-platform potential | Không (chỉ MoMo) | Có (chúng tôi có thể mang merchant deal cho cả ZaloPay, VNPay → lợi thế cho merchant → dễ acquire) |
+
+---
+
+## 10. Anti-fraud & Bảo mật
+
+| Biện pháp | Mô tả | Ai chịu trách nhiệm |
+|---|---|---|
+| Settlement delay T+14 | Commission chỉ finalize sau 14 ngày (cover refund) | AT-Scan-and-Go |
+| Velocity check | Max N giao dịch/user/merchant/ngày | AT-Scan-and-Go |
+| Min amount | Deal chỉ apply cho giao dịch từ X đồng | AT-Scan-and-Go |
+| Refund webhook | MoMo notify khi refund → AT-Scan-and-Go rollback commission | MoMo (webhook) + AT-Scan-and-Go (rollback) |
+| Daily reconciliation | Đối soát giao dịch MoMo vs AT-Scan-and-Go records | AT-Scan-and-Go (chạy) + MoMo (data) |
+| User data privacy | Chỉ dùng hashed_user_id. Không lưu PII | AT-Scan-and-Go |
+| Scoped consent | Linked account chỉ track tại merchant có deal | MoMo (enforce) |
+
+---
+
+## 11. Bước tiếp theo
+
+| # | Action | Timeline |
+|---|---|---|
+| 1 | Meeting kick-off với MoMo Business Partnership | Tuần 1 |
+| 2 | Ký NDA | Tuần 1 |
+| 3 | MoMo cấp Sandbox Partner Account | Tuần 2 |
+| 4 | Technical alignment (AT-Scan-and-Go dev ↔ MoMo API team) | Tuần 2-3 |
+| 5 | AT-Scan-and-Go hoàn thành tích hợp sandbox | Tuần 4-6 |
+| 6 | MoMo cấp Production Account | Tuần 6 |
+| 7 | Pilot 20 merchant | Tuần 7-12 |
+| 8 | Review kết quả, quyết định Phase 2 | Tuần 12 |
+
+**Contact:**
+- [Tên] - CEO/BD Lead - [SĐT] - [Email]
+- [Tên] - CTO/Tech Lead - [SĐT] - [Email]
+
+---
+
+*Tài liệu chuẩn bị cho meeting với MoMo Business Partnership.*
+*Số liệu commission là đề xuất ban đầu, có thể thương lượng.*
