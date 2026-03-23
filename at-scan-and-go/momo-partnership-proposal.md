@@ -74,46 +74,47 @@ BƯỚC 4: MoMo kích hoạt:
 
 ### Hai tình huống thanh toán & Giải pháp
 
-#### S1: Merchant CÓ MoMo Merchant Account (Best case, ~60% merchant)
+#### S1: MoMo User + MoMo Merchant (Best case — TRACK TỰ ĐỘNG)
 
 ```
-User thanh toán tại MoMo Merchant (bằng MoMo wallet hoặc bank app)
-→ MoMo biết MERCHANT (có merchant_id)
-→ Webhook đầy đủ → AT-Scan-and-Go track được
+User dùng MoMo wallet thanh toán tại MoMo Merchant
+→ MoMo biết CẢ HAI BÊN: momo_user_id + merchant_id
+→ Webhook đầy đủ data → AT-Scan-and-Go track tự động 100%
+→ User KHÔNG CẦN quét QR AT-Scan-and-Go, không cần làm gì đặc biệt
 ```
 
-**MoMo cần:** Gửi webhook với `merchant_id` + `amount` + `momo_user_id` (nếu có)
-**Kết quả:** ✅ Track hoàn hảo qua webhook (nếu user dùng MoMo) hoặc qua AT-Scan-and-Go QR (nếu user dùng bank app)
+**MoMo cần:** Gửi webhook với `momo_user_id` (hashed) + `merchant_id` + `amount`
+**Kết quả:** ✅ Track tự động 100% — đúng tinh thần Scan & Go
 
-#### S2: Merchant KHÔNG CÓ MoMo Merchant Account (chỉ có QR ngân hàng)
+#### S2: Một bên KHÔNG dùng MoMo → CẦN QR AT-Scan-and-Go
+
+| Sub-case | Vấn đề | MoMo thiếu gì |
+|---|---|---|
+| **S2a** User dùng bank app | MoMo chỉ nhận tiền từ Napas | Thiếu **user_id** |
+| **S2b** Merchant chỉ có QR bank | Tiền đi thẳng qua Napas | Thiếu **merchant_id** |
 
 ```
-Merchant chỉ có QR bank (VietQR)
-→ User quét QR bank → tiền đi qua Napas → Bank
-→ MoMo KHÔNG biết merchant này → không có webhook
-→ NHƯNG: AT-Scan-and-Go QR tại cửa hàng giải quyết được!
+Cả 2 sub-case đều thiếu thông tin → không track tự động được
+→ Giải pháp: QR AT-Scan-and-Go tại cửa hàng
+→ Đưa user vào flow có tracking TRƯỚC KHI thanh toán
 ```
 
-**Kết quả:** ✅ Track được qua AT-Scan-and-Go QR
-
-#### Giải pháp chung cho cả S1 và S2: AT-Scan-and-Go QR
-
-Dù merchant có hay không có MoMo Merchant Account, **AT-Scan-and-Go QR đặt tại cửa hàng** là giải pháp xuyên suốt. QR này đưa user vào flow có tracking TRƯỚC KHI thanh toán.
+#### Giải pháp cho S2: AT-Scan-and-Go QR
 
 **Cách 1 (Best case): MoMo deeplink + tracking params**
 
 ```
 QR tại cửa hàng chứa MoMo deeplink có thêm tracking params:
 
-  momo://pay?receiver=MOMO_HIGHLAND_001    ← S1: MoMo Merchant ID
-             &utm_source=at-scan-and-go
-             &utm_campaign=DEAL_001
-             &partner_ref=PLT_xxx
+  S2a: momo://pay?receiver=MOMO_HIGHLAND_001    ← MoMo Merchant ID
+               &utm_source=at-scan-and-go
+               &utm_campaign=DEAL_001
+               &partner_ref=PLT_xxx
 
-  momo://pay?receiver=VCB_123456789        ← S2: Bank account number
-             &utm_source=at-scan-and-go
-             &utm_campaign=DEAL_001
-             &partner_ref=PLT_xxx
+  S2b: momo://pay?receiver=VCB_123456789        ← Bank account number
+               &utm_source=at-scan-and-go
+               &utm_campaign=DEAL_001
+               &partner_ref=PLT_xxx
 
 User quét QR → MoMo mở trực tiếp → thanh toán → webhook có partner_ref → track!
 ```
@@ -132,37 +133,39 @@ QR tại cửa hàng chứa AT-Scan-and-Go URL:
 User quét QR → mở web AT-Scan-and-Go (biết user + merchant)
 → "Highland Coffee • Cashback 5%"
 → Bấm "Thanh toán qua MoMo"
-→ AT-Scan-and-Go gọi MoMo Payment Gateway (S1) hoặc redirect deeplink (S2)
+→ AT-Scan-and-Go gọi MoMo Payment Gateway (S2a) hoặc redirect deeplink (S2b)
 → Thanh toán → webhook → track!
 ```
 
 **MoMo cần hỗ trợ:** Không gì đặc biệt (dùng Payment Gateway / deeplink cơ bản)
 **UX:** Tốt, thêm 1 bước so với Cách 1
 
-**Cách 3 (Dài hạn, chỉ S2): Merchant mở MoMo Merchant Account**
+**Cách 3 (Dài hạn, chỉ S2b): Merchant mở MoMo Merchant Account**
 
-Chúng tôi hỗ trợ merchant đăng ký → chuyển S2 → S1. **MoMo được thêm merchant mới miễn phí BD cost.**
+Chúng tôi hỗ trợ merchant đăng ký → chuyển S2b → S1. **MoMo được thêm merchant mới miễn phí BD cost.**
 
 #### Nâng cấp Phase 2: Linked Account (chỉ S1)
 
 ```
-Với merchant CÓ MoMo Merchant Account:
+Với S1 (MoMo User + MoMo Merchant):
   User link MoMo ↔ AT-Scan-and-Go 1 lần (OAuth consent)
   → Sau đó quét QR MoMo gốc, thanh toán bình thường
-  → MoMo auto webhook → AT-Scan-and-Go track → cashback!
-  → User KHÔNG CẦN quét QR AT-Scan-and-Go nữa = zero friction
+  → MoMo auto-match: user đã link + merchant có deal
+  → Webhook → AT-Scan-and-Go track → cashback!
+  → Zero friction hoàn toàn
 ```
 
-**Lưu ý:** Linked Account chỉ hoạt động với S1 (MoMo Merchant). Với S2 (Bank Merchant), vẫn cần QR AT-Scan-and-Go.
+**Lưu ý:** Linked Account chỉ hoạt động với S1. Với S2 (thiếu thông tin 1 phía), vẫn cần QR AT-Scan-and-Go.
 
 ### Tóm tắt
 
-| Tình huống | Phase 1 (QR AT-Scan-and-Go) | Phase 2 (Linked Account) | MoMo effort |
+| Tình huống | Tracking | QR AT-Scan-and-Go | MoMo effort |
 |---|---|---|---|
-| **S1** Merchant có MoMo | ✅ Deeplink/redirect → Payment Gateway | ✅ Quét QR gốc, auto track | Zero → Trung bình |
-| **S2** Merchant chỉ có bank | ✅ Deeplink/redirect → Napas | ❌ Không áp dụng (vẫn cần QR) | Thấp |
+| **S1** MoMo User + MoMo Merchant | ✅ Tự động qua webhook | Không bắt buộc | Zero (webhook có sẵn) |
+| **S2** Một bên không MoMo | ✅ Qua QR AT-Scan-and-Go | **Bắt buộc** | Thấp (deeplink params) |
+| **Linked Account** (Phase 2, chỉ S1) | ✅ Zero friction | Không cần | Trung bình |
 
-**Kết luận:** AT-Scan-and-Go QR giải quyết được **cả 2 tình huống**. Merchant có hay không có MoMo Account đều onboard được. MoMo chỉ cần hỗ trợ 1 việc nhỏ: **cho phép thêm tracking params vào deeplink scheme.** Effort thấp, impact lớn.
+**Kết luận:** S1 track **tự động** — user thanh toán bình thường, deal tự ghi nhận. S2 track qua **QR AT-Scan-and-Go** — chỉ thêm 1 bước. Merchant có hay không có MoMo Account đều onboard được. MoMo chỉ cần hỗ trợ 1 việc nhỏ cho S2: **cho phép thêm tracking params vào deeplink scheme.** Effort thấp, impact lớn.
 
 ---
 
@@ -201,91 +204,74 @@ Chúng tôi sử dụng API MoMo có sẵn. MoMo chỉ cần cấp Partner Accou
 
 ## 5. Flow kỹ thuật theo từng tình huống
 
-### 5.1 S1: User MoMo → MoMo Merchant (Best case)
+### 5.1 S1: MoMo User + MoMo Merchant (TRACK TỰ ĐỘNG — không cần QR)
 
-**Điều kiện:** Merchant có MoMo Merchant Account + User dùng MoMo wallet
+**Điều kiện:** Merchant có MoMo Merchant Account + User thanh toán bằng MoMo wallet
 
-**Có 2 cách vận hành:**
-
-**Cách A: AT-Scan-and-Go QR tại cửa hàng (Phase 1 — MoMo effort = ZERO)**
+**Phase 1: Webhook subscription — track tự động**
 
 ```
 User đến Highland Coffee
-  → Quét QR sticker AT-Scan-and-Go tại quầy (camera/MoMo scan)
-  → Mở web AT-Scan-and-Go: "Highland Coffee • Cashback 5%"
-  → Bấm "Thanh toán qua MoMo"
-  → AT-Scan-and-Go gọi MoMo Payment Gateway API:
-    POST /v2/gateway/api/create
-    {partner_ref_id: "PLT_xxx", merchant_id, amount, extra_data}
-  → MoMo app mở → User xác nhận → Thanh toán
+  → Quét QR MoMo gốc của merchant (như bình thường)
+  → Thanh toán bằng MoMo wallet
+  → MoMo biết CẢ HAI: momo_user_id + merchant_id
   → MoMo webhook → AT-Scan-and-Go:
-    {trans_id, amount, status, partner_ref_id, momo_user_id}
-  → AT-Scan-and-Go match: partner_ref_id → biết user + merchant + deal
-  → Ghi nhận commission → User nhận cashback
+    {trans_id, merchant_id, momo_user_id (hashed), amount, status}
+  → AT-Scan-and-Go match: merchant có deal + user đã đăng ký?
+  → Ghi nhận commission → User nhận notification cashback
 
-API MoMo: Payment Gateway (có sẵn)
-MoMo effort: ZERO
+User KHÔNG CẦN LÀM GÌ KHÁC ngoài thanh toán.
+API MoMo: Webhook subscription (đăng ký listen tại merchant)
+MoMo effort: Thấp
 ```
 
-**Cách B: Linked Account — User quét QR MoMo gốc (Phase 2)**
+**Phase 2: Linked Account — zero friction hoàn toàn**
 
 ```
 SETUP 1 LẦN:
   User liên kết MoMo ↔ AT-Scan-and-Go (OAuth consent)
 
 SAU ĐÓ:
-  User đến Highland Coffee
-    → Quét QR MoMo gốc (như bình thường, không cần QR AT-Scan-and-Go)
-    → Thanh toán bằng MoMo wallet
-    → MoMo nhận diện: user đã link + merchant có deal
-    → MoMo webhook → AT-Scan-and-Go:
-      {merchant_id, amount, hashed_momo_user_id}
-    → AT-Scan-and-Go match: hashed_momo_user_id → platform_user_id
-    → Ghi nhận commission → User nhận cashback
+  User thanh toán bình thường tại bất kỳ merchant có deal
+  → MoMo auto-match: user đã link + merchant có deal
+  → Webhook → AT-Scan-and-Go → cashback!
 
 API MoMo: OAuth + Transaction subscription + Webhook
 MoMo effort: Trung bình (cần cung cấp OAuth + subscription API)
 ```
 
-**Tóm tắt S1:**
-
-| | Cách A (QR AT-Scan-and-Go) | Cách B (Linked Account) |
-|---|---|---|
-| User experience | Quét QR AT-Scan-and-Go → thêm 1 bước | Quét QR MoMo gốc → zero friction |
-| Track được | ✅ 100% (có partner_ref_id) | ✅ 100% (có hashed_user_id) |
-| MoMo effort | ZERO | Trung bình |
-| Phase | Phase 1 | Phase 2 |
+**Lưu ý:** QR AT-Scan-and-Go vẫn có thể đặt tại cửa hàng S1 để quảng bá deal, nhưng KHÔNG bắt buộc cho tracking.
 
 ---
 
-### 5.2 S2: Merchant KHÔNG có MoMo Account (chỉ có QR ngân hàng)
+### 5.2 S2: Một bên KHÔNG dùng MoMo → CẦN QR AT-Scan-and-Go
 
-**Điều kiện:** Merchant chỉ có QR bank (VietQR). Không có momo_merchant_id → không đăng ký webhook thông thường được.
-
-**Giải pháp: AT-Scan-and-Go QR tại cửa hàng — cùng nguyên lý với S1 Cách A**
+**Điều kiện:** User dùng bank app (S2a) HOẶC merchant chỉ có QR bank (S2b). Thiếu thông tin 1 phía → cần QR AT-Scan-and-Go.
 
 **Cách 1 (Best case): MoMo deeplink + tracking params**
 
 ```
 QR sticker AT-Scan-and-Go tại cửa hàng chứa MoMo deeplink:
 
-  momo://pay?receiver=VCB_123456789
-            &utm_source=at-scan-and-go
-            &utm_campaign=DEAL_001
-            &partner_ref=PLT_xxx
+  S2a: momo://pay?receiver=MOMO_HIGHLAND_001
+              &utm_source=at-scan-and-go
+              &utm_campaign=DEAL_001
+              &partner_ref=PLT_xxx
+
+  S2b: momo://pay?receiver=VCB_123456789
+              &utm_source=at-scan-and-go
+              &utm_campaign=DEAL_001
+              &partner_ref=PLT_xxx
 
 User quét QR → MoMo app mở trực tiếp (1 bước!)
-  → Màn hình thanh toán: chuyển tới VCB_123456789
-  → User nhập số tiền → Xác nhận
-  → Thanh toán (MoMo → Napas → Bank merchant)
-  → MoMo webhook có partner_ref → AT-Scan-and-Go track!
+  → Thanh toán → MoMo webhook có partner_ref → AT-Scan-and-Go track!
 
 MoMo cần: Deeplink nhận thêm utm/partner params + trả lại trong webhook
 Effort: Thấp (chỉ thêm params vào deeplink scheme có sẵn)
 UX: Tốt nhất — user quét 1 lần → thẳng MoMo
 ```
 
-**Cách 2 (Fallback): AT-Scan-and-Go web redirect — giống hệt S1 Cách A**
+**Cách 2 (Fallback): AT-Scan-and-Go web redirect**
 
 ```
 QR sticker AT-Scan-and-Go tại cửa hàng chứa URL:
@@ -294,41 +280,40 @@ QR sticker AT-Scan-and-Go tại cửa hàng chứa URL:
 
 User quét QR → Mở web AT-Scan-and-Go
   → "Highland Coffee • Cashback 5%"
-  → AT-Scan-and-Go biết user (đã login) + biết merchant + biết deal
   → Bấm "Thanh toán qua MoMo"
-  → AT-Scan-and-Go redirect → MoMo deeplink (chuyển tới bank account merchant)
-  → MoMo app mở → User thanh toán
-  → MoMo webhook → AT-Scan-and-Go track!
+  → AT-Scan-and-Go gọi Payment Gateway (S2a) hoặc redirect deeplink (S2b)
+  → MoMo app mở → Thanh toán → Webhook → AT-Scan-and-Go track!
 
 MoMo cần: Không gì đặc biệt
 UX: Tốt, thêm 1 bước web so với Cách 1
 ```
 
-**Cách 3 (Dài hạn): Hỗ trợ merchant mở MoMo Merchant Account**
+**Cách 3 (Dài hạn, chỉ S2b): Hỗ trợ merchant mở MoMo Merchant Account**
 
 ```
 AT-Scan-and-Go hỗ trợ merchant đăng ký MoMo Merchant Account
-  → Merchant chuyển từ S2 → S1
+  → Merchant chuyển từ S2b → S1
   → MoMo được thêm merchant mới miễn phí BD cost
 ```
 
-**Lưu ý:** Linked Account (Phase 2) KHÔNG áp dụng cho S2 vì không có momo_merchant_id để subscribe.
+**Lưu ý:** Linked Account (Phase 2) KHÔNG áp dụng cho S2 vì thiếu thông tin 1 phía.
 
 ---
 
 ### 5.3 Tổng hợp: So sánh S1 vs S2
 
-| | S1 (MoMo Merchant) | S2 (Bank Merchant) |
+| | S1 (MoMo + MoMo) | S2 (Một bên không MoMo) |
 |---|---|---|
-| **Phase 1: QR AT-Scan-and-Go** | ✅ Web redirect → Payment Gateway | ✅ Deeplink/redirect → Napas |
-| **Phase 2: Linked Account** | ✅ Zero friction, auto track | ❌ Không áp dụng |
-| **Dài hạn** | — | Hỗ trợ merchant mở MoMo Account → chuyển thành S1 |
-| **API MoMo** | Payment Gateway (có sẵn) | Deeplink + webhook params |
-| **MoMo effort** | Zero (Phase 1) → Trung bình (Phase 2) | Thấp |
+| **Tracking** | ✅ Tự động qua webhook | ✅ Qua QR AT-Scan-and-Go |
+| **QR AT-Scan-and-Go** | Không bắt buộc (chỉ quảng bá) | **Bắt buộc** (tracking) |
+| **Phase 2: Linked Account** | ✅ Zero friction | ❌ Không áp dụng |
+| **API MoMo** | Webhook subscription (có sẵn) | Deeplink + webhook params |
+| **MoMo effort** | Thấp → Trung bình (Phase 2) | Thấp |
 
-**Điểm chung:** AT-Scan-and-Go QR là giải pháp xuyên suốt cả 2 tình huống:
-- User quét QR AT-Scan-and-Go → AT-Scan-and-Go biết user + merchant → chuyển qua MoMo thanh toán → webhook → track
-- Chỉ khác phía nhận tiền: S1 vào MoMo Merchant Account, S2 vào Bank Account qua Napas
+**Điểm mấu chốt:**
+- S1 = best case: user thanh toán bình thường → deal tự ghi nhận (đúng tinh thần Scan & Go)
+- S2 = cần QR AT-Scan-and-Go, nhưng vẫn đơn giản (chỉ thêm 1 bước quét QR)
+- Chiến lược: ưu tiên merchant có MoMo Account → tỷ lệ S1 cao → track tự động nhiều nhất
 
 ---
 
