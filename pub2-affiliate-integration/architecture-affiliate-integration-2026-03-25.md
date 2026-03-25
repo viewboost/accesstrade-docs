@@ -337,6 +337,7 @@ admin/src/pages/affiliate-campaign/
 ```javascript
 {
     _id: ObjectId,
+    partner: ObjectId,                // Partner (AppID/ObjectID) — required, immutable after creation
     title: String,                    // Tên campaign (do admin đặt)
     description: String,              // Mô tả (rich text)
     banner: String,                   // URL banner image
@@ -354,6 +355,7 @@ admin/src/pages/affiliate-campaign/
 }
 
 // Indexes
+{ partner: 1 }                      // scope by partner
 { pub2CampaignId: 1 }               // unique
 { status: 1, createdAt: -1 }        // list active campaigns
 { category: 1 }                      // filter by category
@@ -467,6 +469,12 @@ users (existing)
 | DELETE | `/admin/campaign-affiliate-mappings/:id` | Gỡ liên kết | FR-003 |
 | GET | `/admin/events/:id/affiliate-campaigns` | Danh sách affiliate campaigns liên kết với event | FR-003 |
 | GET | `/admin/affiliate-campaigns/:id/events` | Danh sách events liên kết với affiliate campaign | FR-003 |
+
+**Admin API Notes:**
+- **Partner Scoping**: Non-root staff see only campaigns for their partner. Root staff see all campaigns.
+- **POST /admin/affiliate-campaigns**: `partner` field is required in request body. Cannot be modified after creation.
+- **PUT /admin/affiliate-campaigns/:id**: `partner` field is ignored in update requests (immutable).
+- **GET /admin/affiliate-campaigns**: List is automatically filtered by staff's partner (or all if root).
 
 ### Public (Influencer) Endpoints
 
