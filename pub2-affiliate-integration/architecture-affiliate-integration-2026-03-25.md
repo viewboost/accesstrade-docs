@@ -170,15 +170,20 @@ type Pub2Client interface {
 ```
 
 **Config:**
+
+> **Lưu ý:** Đây là config riêng cho affiliate, KHÔNG dùng chung với `AccessTradePub2` (SSO). `AccessTradePub2` dùng cho liên kết tài khoản, `AffiliateConfig` dùng cho affiliate APIs.
+
 ```go
-type Pub2Config struct {
-    Endpoint     string // PUB2_ENDPOINT
-    ClientID     string // PUB2_CLIENT_ID
-    ClientSecret string // PUB2_CLIENT_SECRET
-    PartnerCode  string // PUB2_PARTNER_CODE (default: "PARTNER_1_POINT_5")
-    Timeout      time.Duration // PUB2_TIMEOUT (default: 10s)
-    MaxRetries   int    // PUB2_MAX_RETRIES (default: 3)
+// internal/config/env.go — struct MỚI, thêm vào ENV chính
+type AffiliateConfig struct {
+    Endpoint     string `env:"AFFILIATE_ENDPOINT"`
+    ClientID     string `env:"AFFILIATE_CLIENT_ID"`
+    ClientSecret string `env:"AFFILIATE_CLIENT_SECRET"`
+    PartnerCode  string `env:"AFFILIATE_PARTNER_CODE" envDefault:"PARTNER_1_POINT_5"`
+    Timeout      int    `env:"AFFILIATE_TIMEOUT" envDefault:"10"`
+    MaxRetries   int    `env:"AFFILIATE_MAX_RETRIES" envDefault:"3"`
 }
+```
 ```
 
 **FRs Addressed:** FR-014
