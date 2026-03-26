@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-25
 **Architect:** vinhnguyen
-**Version:** 1.0
+**Version:** 1.1
 **Project Type:** Feature Integration
 **Project Level:** Level 3
 **Status:** Draft
@@ -23,10 +23,10 @@ Tài liệu này định nghĩa system architecture cho việc tích hợp Pub2 
 
 Tích hợp Pub2 Affiliate vào Ambassador bằng cách:
 
-1. **Backend**: Thêm Go module `pub2` (HMAC client) + service/handler cho affiliate campaigns, links, reports
+1. **Backend**: Thêm Go module `pub2` (HMAC client) + service/handler cho affiliate campaigns, join campaign, links, reports
 2. **Frontend**: Thêm section "Affiliate Campaign" vào trang chi tiết campaign hiện tại
 3. **Admin**: Thêm trang quản lý affiliate campaigns + mapping với campaigns/events
-4. **Database**: Thêm 3 MongoDB collections mới (không sửa collections hiện tại)
+4. **Database**: Thêm 4 MongoDB collections mới (không sửa collections hiện tại)
 
 **Pattern**: Modular extension trên monolith hiện tại — thêm module mới, không thay đổi kiến trúc.
 
@@ -53,7 +53,7 @@ Tích hợp Pub2 Affiliate vào Ambassador bằng cách:
 │                        Pub2 (AccessTrade)                        │
 │                   core-aff.dev.accesstrade.me                    │
 │                                                                  │
-│  API 2: Link  │  API 3.x: Reports  │  API 8: Orders            │
+│  API 1.2: Join  │  API 2: Link  │  API 3.x: Reports  │  API 8  │
 └───────────────────────────┬──────────────────────────────────────┘
                             │ HMAC-SHA256
                             │
@@ -70,8 +70,8 @@ Tích hợp Pub2 Affiliate vào Ambassador bằng cách:
 │  └──────────────────┘  └───────────────────┘  └──────────────┘  │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐    │
-│  │                    MongoDB                                │    │
-│  │  affiliate_campaigns  │  affiliate_links  │  cam_aff_map │    │
+│  │                       MongoDB                                   │  │
+│  │  aff_campaigns │ aff_contracts │ aff_links │ cam_aff_map │  │
 │  └──────────────────────────────────────────────────────────┘    │
 └──────────────────────────────────────────────────────────────────┘
         │                                           │
@@ -121,7 +121,7 @@ Thêm:
 
 **Choice:** MongoDB (hiện tại)
 
-Thêm 3 collections mới. Không sửa collections hiện tại.
+Thêm 4 collections mới. Không sửa collections hiện tại.
 
 ### Third-Party Services
 
@@ -151,8 +151,8 @@ internal/module/pub2/
 
 **Responsibilities:**
 - Tạo HMAC signature per request
-- Gọi Pub2 APIs (link, reports, orders)
-- Parse response chuẩn (status/code/message)
+- Gọi Pub2 APIs (join campaign, link, reports, orders)
+- Parse response chuẩn (status/code/message cho hầu hết APIs, status/error_code/message cho API 1.2)
 - Retry logic (max 3, exponential backoff)
 - Timeout handling (10s default)
 - Logging request/response
@@ -160,6 +160,7 @@ internal/module/pub2/
 **Interface:**
 ```go
 type Pub2Client interface {
+    JoinCampaign(ctx context.Context, req JoinCampaignRequest) (*JoinCampaignResponse, error)
     GenerateAffiliateLink(ctx context.Context, req GenerateLinkRequest) (*GenerateLinkResponse, error)
     GetClickStats(ctx context.Context, req ReportRequest) (*ClickStatsResponse, error)
     GetConversionStats(ctx context.Context, req ReportRequest) (*ConversionStatsResponse, error)
@@ -220,7 +221,11 @@ type AffiliateService interface {
     GetAffiliateCampaignsByEvent(ctx context.Context, eventID string) ([]*AffiliateCampaign, error)
     GetEventsByAffiliateCampaign(ctx context.Context, affCampaignID string) ([]string, error)
 
-    // Affiliate Links
+    // Campaign Join (Contract)
+    JoinCampaign(ctx context.Context, userID string, campaignID string) (*AffiliateContract, error)
+    GetContract(ctx context.Context, userID string, campaignID string) (*AffiliateContract, error)
+
+    // Affiliate Links (requires contract APPROVED)
     GenerateLink(ctx context.Context, userID string, campaignID string) (*AffiliateLink, error)
     GetUserLinks(ctx context.Context, userID string, filter LinkFilter) (*LinkListResult, error)
 
@@ -233,7 +238,7 @@ type AffiliateService interface {
 }
 ```
 
-**FRs Addressed:** FR-001, FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-010, FR-011, FR-012
+**FRs Addressed:** FR-001, FR-002, FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-010, FR-011, FR-012, FR-017
 
 ---
 
@@ -261,8 +266,9 @@ type AffiliateService interface {
 ```
 frontend/src/pages/campaign-detail/components/affiliate-section/
 ├── index.tsx                    // Main section component
-├── affiliate-campaign-card.tsx  // Card hiển thị 1 affiliate campaign
-├── generate-link-modal.tsx      // Modal tạo link + copy
+├── affiliate-campaign-card.tsx  // Card hiển thị 1 affiliate campaign + join status
+├── join-campaign-button.tsx     // Nút "Tham gia chiến dịch" + status display
+├── generate-link-modal.tsx      // Modal tạo link + copy (enabled khi contract APPROVED)
 ├── link-accesstrade-banner.tsx  // Banner yêu cầu liên kết AT
 ├── link-accesstrade-popup.tsx   // Popup khi action mà chưa link
 └── styles.scss
@@ -274,9 +280,14 @@ frontend/src/pages/campaign-detail/components/affiliate-section/
 3. Nếu có → hiển thị section với:
    - Banner "Liên kết AccessTrade" nếu chưa link (check `user.accesstrade.id`)
    - Danh sách affiliate campaign cards
-   - CTA "Tạo link" → check AT linked → generate hoặc show popup
+   - Mỗi card hiển thị join status:
+     - Chưa join → CTA "Tham gia chiến dịch" → check AT linked → join hoặc show popup
+     - PENDING → "Đang chờ duyệt" (disabled)
+     - APPROVED → CTA "Tạo link affiliate" → generate link
+     - REJECTED → "Bị từ chối" (disabled)
+4. Gọi API `GET /affiliate-campaigns/:id/contract` để lấy contract status
 
-**FRs Addressed:** FR-004, FR-013
+**FRs Addressed:** FR-004, FR-013, FR-017
 
 ---
 
@@ -378,6 +389,29 @@ admin/src/pages/affiliate-campaign/
 { affiliateCampaignId: 1 }                // query by affiliate campaign
 ```
 
+#### Collection: `affiliate_contracts`
+
+```javascript
+{
+    _id: ObjectId,
+    userId: ObjectId,                 // Influencer user ID (ref: users)
+    affiliateCampaignId: ObjectId,    // Affiliate Campaign ID (ref: affiliate_campaigns)
+    ssoId: Number,                    // AccessTrade SSO user ID (từ user data)
+    contractNo: String,              // Mã liên kết từ Pub2 (contract_no)
+    contractStatus: String,          // "PENDING" | "APPROVED" | "REJECTED"
+    pub2CampaignId: String,          // Pub2 campaign ID (denormalized for quick lookup)
+    createdAt: Date,
+    updatedAt: Date
+}
+
+// Indexes
+{ userId: 1, affiliateCampaignId: 1 }   // unique compound — 1 user 1 contract per campaign
+{ userId: 1, contractStatus: 1 }        // query user's approved campaigns
+{ contractNo: 1 }                        // lookup by contract number
+```
+
+---
+
 #### Collection: `affiliate_links`
 
 ```javascript
@@ -405,6 +439,10 @@ admin/src/pages/affiliate-campaign/
 ```
 users (existing)
   │
+  ├── 1:N ──→ affiliate_contracts
+  │             │
+  │             └── N:1 ──→ affiliate_campaigns
+  │
   ├── 1:N ──→ affiliate_links
   │             │
   │             └── N:1 ──→ affiliate_campaigns
@@ -430,15 +468,25 @@ users (existing)
            → MongoDB:affiliate_campaigns (get details, filter status=active)
            → Return to frontend
 
-4. INFLUENCER: Tạo affiliate link
+4. INFLUENCER: Tham gia chiến dịch (Join Campaign)
+   Frontend → POST /affiliate-campaigns/:id/join
+   Backend → Validate user.accesstrade.id exists
+           → Get campaign.pub2CampaignId
+           → Check existing contract (userId + campaignId)
+           → If not exists: Pub2Client.JoinCampaign(sso_id, pub2CampaignId)
+           → Save contract_no + contract_status to MongoDB:affiliate_contracts
+           → Return contract status to frontend
+
+5. INFLUENCER: Tạo affiliate link (requires contract APPROVED)
    Frontend → POST /affiliate-campaigns/:id/generate-link
    Backend → Validate user.accesstrade.id exists
+           → Check contract status = APPROVED (from MongoDB:affiliate_contracts)
            → Get campaign.pub2CampaignId, campaign.pub2CampaignUrl
            → Pub2Client.GenerateAffiliateLink()
            → Save to MongoDB:affiliate_links
            → Return link to frontend
 
-5. INFLUENCER: Xem reports
+6. INFLUENCER: Xem reports
    Frontend → POST /affiliate-reports/clicks
    Backend → Get user.accesstrade.id (sso_user_id)
            → Pub2Client.GetClickStats(sso_user_id, ...)
@@ -482,7 +530,9 @@ users (existing)
 |--------|------|-------------|-----|
 | GET | `/events/:id/affiliate-campaigns` | Affiliate campaigns active liên kết với event | FR-004 |
 | GET | `/affiliate-campaigns/:id` | Chi tiết affiliate campaign | FR-004 |
-| POST | `/affiliate-campaigns/:id/generate-link` | Tạo affiliate link | FR-005 |
+| POST | `/affiliate-campaigns/:id/join` | Tham gia chiến dịch (proxy Pub2 API 1.2) | FR-017 |
+| GET | `/affiliate-campaigns/:id/contract` | Lấy trạng thái tham gia chiến dịch | FR-017 |
+| POST | `/affiliate-campaigns/:id/generate-link` | Tạo affiliate link (requires contract APPROVED) | FR-005 |
 | GET | `/affiliate-links` | Danh sách links đã tạo (pagination) | FR-006 |
 | POST | `/affiliate-reports/clicks` | Báo cáo click | FR-007 |
 | POST | `/affiliate-reports/conversions` | Báo cáo conversion | FR-008 |
@@ -491,6 +541,49 @@ users (existing)
 | POST | `/affiliate-reports/orders` | Danh sách đơn hàng | FR-011 |
 
 ### Key API Contracts
+
+#### POST `/affiliate-campaigns/:id/join`
+
+**Request:** (no body — campaign ID from URL, user from JWT)
+
+**Response:**
+```json
+{
+    "data": {
+        "_id": "contract_id",
+        "contractNo": "6826007805108298670",
+        "contractStatus": "APPROVED",
+        "affiliateCampaignId": "campaign_id",
+        "createdAt": "2026-03-26T10:00:00Z"
+    }
+}
+```
+
+**Logic:**
+1. Get user from JWT → check `user.accesstrade.id` exists → 403 if not
+2. Get affiliate campaign → check status = active → 404 if not
+3. Check existing contract (userId + campaignId) → if exists and status unchanged, return existing (idempotent)
+4. Call Pub2Client.JoinCampaign:
+   - `partner_code`: from config
+   - `sso_id`: user.accesstrade.id
+   - `partner_ref_campaign_id`: campaign.pub2CampaignId
+5. Parse response:
+   - `error_code` = 0 → save/update contract_no + contract_status to `affiliate_contracts`
+   - `error_code` != 0 → map to user-friendly error message
+6. Return contract status
+
+**Error Handling:**
+| error_code | HTTP Status | User Message |
+|---|---|---|
+| 0 | 200 | Thành công |
+| 1 | 400 | Publisher không tồn tại |
+| 2 | 404 | Chiến dịch không tồn tại |
+| 5 | 400 | Xác thực eKYC thất bại |
+| 7 | 400 | Chưa đăng ký campaign cha |
+| 10 | 403 | Không đủ điều kiện tham gia |
+| Khác | 500 | Lỗi hệ thống |
+
+---
 
 #### POST `/affiliate-campaigns/:id/generate-link`
 
@@ -512,16 +605,17 @@ users (existing)
 **Logic:**
 1. Get user from JWT → check `user.accesstrade.id` exists → 403 if not
 2. Get affiliate campaign → check status = active → 404 if not
-3. Check existing link (userId + campaignId) → return existing if found (idempotent)
-4. Call Pub2Client.GenerateAffiliateLink:
+3. **Check contract exists and status = APPROVED → 403 if not joined or not approved**
+4. Check existing link (userId + campaignId) → return existing if found (idempotent)
+5. Call Pub2Client.GenerateAffiliateLink:
    - `partner_code`: from config
    - `original_url`: campaign.pub2CampaignUrl
    - `partner_ref_campaign_id`: campaign.pub2CampaignId
    - `sso_user_id`: user.accesstrade.id
    - `sub1`: fmt.Sprintf("%d", user.accesstrade.id)
    - `sub2`: "ambassador"
-5. Save link to `affiliate_links`
-6. Return link
+6. Save link to `affiliate_links`
+7. Return link
 
 #### POST `/affiliate-reports/clicks`
 
@@ -657,7 +751,7 @@ type Pub2Client struct {
 ### NFR-007: Compatibility — Zero Regression
 
 **Architecture Solution:**
-- **3 collections mới** — không sửa bất kỳ collection hiện tại nào
+- **4 collections mới** — không sửa bất kỳ collection hiện tại nào
 - **Routes mới** với prefix riêng — không conflict:
   - Public: `/events/:id/affiliate-campaigns`, `/affiliate-campaigns/*`, `/affiliate-links`, `/affiliate-reports/*`
   - Admin: `/admin/affiliate-campaigns/*`, `/admin/campaign-affiliate-mappings/*`
@@ -733,8 +827,8 @@ backend/
 │   │   └── pub2/                     # [NEW] Pub2 API client
 │   │       ├── client.go             # HTTP client, retry, circuit breaker
 │   │       ├── hmac.go               # HMAC-SHA256 signature
-│   │       ├── models.go             # Request/Response types
-│   │       └── errors.go             # Error handling
+│   │       ├── models.go             # Request/Response types (incl. JoinCampaign)
+│   │       └── errors.go             # Error handling (incl. API 1.2 error codes)
 │   ├── model/mg/
 │   │   └── affiliate.go              # [NEW] MongoDB models
 │   └── service/
@@ -801,7 +895,8 @@ admin/
 | FR-002 | Admin quản lý danh sách | service/affiliate.go, handler (admin) | — | affiliate-campaign/index |
 | FR-003 | Admin liên kết campaign ↔ event | service/affiliate.go, handler (admin) | — | linked-events.tsx, affiliate-campaigns tab |
 | FR-004 | Influencer xem affiliate trong campaign detail | handler (public), GET /events/:id/affiliate-campaigns | affiliate-section/ | — |
-| FR-005 | Influencer tạo link | handler (public), pub2/client.go | generate-link-modal.tsx | — |
+| FR-017 | Influencer tham gia chiến dịch | handler (public), pub2/client.go, affiliate_contracts | join-campaign-button.tsx | — |
+| FR-005 | Influencer tạo link | handler (public), pub2/client.go (requires contract APPROVED) | generate-link-modal.tsx | — |
 | FR-006 | Influencer xem links | handler (public), service/affiliate.go | affiliate-links page hoặc section | — |
 | FR-007 | Báo cáo Click | handler (public), pub2/client.go | click-chart.tsx | — |
 | FR-008 | Báo cáo Conversion | handler (public), pub2/client.go | summary-cards.tsx | — |
@@ -890,7 +985,8 @@ admin/
 3. Admin middleware hiện tại phân quyền đúng
 4. Pub2 dev environment available cho testing
 5. `user.accesstrade.id` đã populated đúng sau SSO linking flow
-6. MongoDB instance hiện tại đủ capacity cho 3 collections mới
+6. MongoDB instance hiện tại đủ capacity cho 4 collections mới
+7. Pub2 API 1.2 (Join Campaign) trả về contract_status = APPROVED ngay lập tức cho hầu hết campaigns (một số có thể PENDING cần duyệt)
 
 ---
 
@@ -919,6 +1015,7 @@ admin/
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-03-25 | vinhnguyen | Initial architecture |
+| 1.1 | 2026-03-26 | vinhnguyen | Thêm Join Campaign flow (Pub2 API 1.2): Pub2Client.JoinCampaign, affiliate_contracts collection, POST /join + GET /contract endpoints, contract check trước generate-link, frontend join-campaign-button component. |
 
 ---
 
@@ -933,9 +1030,9 @@ Run `/sprint-planning` to:
 - Begin implementation following this architectural blueprint
 
 **Implementation Order gợi ý:**
-1. **Sprint 1**: Pub2 Client module + Admin CRUD affiliate campaigns
+1. **Sprint 1**: Pub2 Client module (incl. JoinCampaign) + Admin CRUD affiliate campaigns
 2. **Sprint 2**: Campaign-Event mapping + Frontend affiliate section trong campaign detail
-3. **Sprint 3**: Link generation + Reports APIs
+3. **Sprint 3**: Join Campaign flow + Link generation + Reports APIs
 4. **Sprint 4**: Frontend reports page + testing + polish
 
 ---

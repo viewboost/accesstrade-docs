@@ -5,6 +5,7 @@
 - [Security & Authentication](#security--authentication)
 - [Error Code](#error-code)
 - [API 1: Lấy thông tin Campaign (Optional)](#api-1-lấy-thông-tin-campaign-optional)
+- [API 1.2: Tham gia chiến dịch](#api-12-tham-gia-chiến-dịch)
 - [API 2: Lấy Link Affiliate](#api-2-lấy-link-affiliate)
 - [API 3.1: Báo cáo Click](#api-31-báo-cáo-click)
 - [API 3.2: Báo cáo Conversion](#api-32-báo-cáo-conversion)
@@ -67,6 +68,79 @@ Response chuẩn bao gồm 3 trường:
 > **Trạng thái:** Chưa cung cấp ở thời điểm hiện tại.
 >
 > Thông tin đã được tổ chức bên DISO, API này chỉ dùng để validate `campaign_id`.
+
+---
+
+## API 1.2: Tham gia chiến dịch
+
+Đăng ký tham gia chiến dịch (tạo affiliation/contract).
+
+- **Method:** `POST`
+- **URL:** `{{endpoint}}/pgw-api/campaign-service/api/v1/contracts`
+- **Security:** Xem [Security & Authentication](#security--authentication)
+
+### Request Body
+
+```json
+{
+    "partner_code": "PARTNER_1_POINT_5",
+    "sso_id": 504,
+    "partner_ref_campaign_id": "4751584435713464237"
+}
+```
+
+| Field | Type | Mô tả |
+|---|---|---|
+| `partner_code` | String | Để mặc định `"PARTNER_1_POINT_5"` |
+| `sso_id` | Number | Mã định danh người dùng (mã SSO) |
+| `partner_ref_campaign_id` | String | Mã định danh chiến dịch |
+
+### Response
+
+```json
+{
+    "status": "success",
+    "error_code": 0,
+    "message": "Affiliation already exist",
+    "data": {
+        "contract_no": "6826007805108298670",
+        "contract_status": "APPROVED"
+    }
+}
+```
+
+| Field | Type | Mô tả |
+|---|---|---|
+| `status` | String | Kết quả hành động |
+| `error_code` | Number | Mã lỗi trả về |
+| `message` | String | Nội dung lỗi trả về |
+| `data.contract_no` | String | Mã liên kết giữa publisher và campaign |
+| `data.contract_status` | String | Trạng thái mã liên kết (xem bảng bên dưới) |
+
+### Error Code
+
+| error_code | Mô tả |
+|---|---|
+| `0` | Thành công (Không lỗi) |
+| `1` | Publisher không tồn tại |
+| `2` | Campaign hoặc merchant không tồn tại |
+| `5` | Ekyc thất bại |
+| `7` | Chưa đăng ký campaign cha |
+| `8` | Lỗi tạo affiliation |
+| `9` | Đang trong quá trình đồng bộ tài khoản (Sync account) |
+| `10` | Không đủ điều kiện tham gia |
+| `11` | Campaign cha không tồn tại |
+| `12` | Đồng bộ người dùng thất bại (Sync user fail) |
+| `13` | Đang trong quá trình đồng bộ site (Sync site) |
+| Khác | Lỗi hệ thống không xác định |
+
+### Contract Status
+
+| Status | Mô tả |
+|---|---|
+| `PENDING` | Chờ duyệt |
+| `APPROVED` | Đã duyệt |
+| `REJECTED` | Từ chối |
 
 ---
 

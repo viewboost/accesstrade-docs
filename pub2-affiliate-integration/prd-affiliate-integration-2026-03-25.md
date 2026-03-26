@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-25
 **Author:** vinhnguyen
-**Version:** 1.1
+**Version:** 1.2
 **Project Type:** Feature Integration
 **Project Level:** Level 3
 **Status:** Draft
@@ -30,10 +30,11 @@ Ambassador hiện có hệ thống campaign nội bộ (event-based). Chức nă
 
 Influencer sẽ:
 1. Vào chi tiết campaign hiện tại → thấy affiliate campaign được liên kết
-2. Tạo affiliate link cho campaign
-3. Chia sẻ link → thu commission khi có conversion
-4. Xem báo cáo hiệu suất (click, conversion, sale amount, commission)
-5. Xem chi tiết danh sách đơn hàng
+2. **Tham gia chiến dịch** (join campaign) → hệ thống tạo contract với Pub2
+3. Tạo affiliate link cho campaign
+4. Chia sẻ link → thu commission khi có conversion
+5. Xem báo cáo hiệu suất (click, conversion, sale amount, commission)
+6. Xem chi tiết danh sách đơn hàng
 
 **Điểm quan trọng:**
 - **Affiliate campaign gắn vào campaign hiện tại** qua bảng quan hệ mapping (campaign ↔ affiliate campaign)
@@ -151,14 +152,45 @@ Influencer vào chi tiết campaign/event hiện tại → thấy section affili
 
 ---
 
+### FR-017: Influencer tham gia chiến dịch (Join Campaign)
+
+**Priority:** Must Have
+
+**Description:**
+Influencer phải tham gia (join) chiến dịch affiliate trước khi có thể tạo link. Backend gọi Pub2 API 1.2 (POST `/campaign-service/api/v1/contracts`) để tạo contract giữa publisher và campaign.
+
+**Acceptance Criteria:**
+- [ ] Chỉ cho phép tham gia khi đã liên kết tài khoản AccessTrade
+- [ ] Backend gọi Pub2 API 1.2 với: `partner_code`, `sso_id` (từ user AccessTrade data), `partner_ref_campaign_id` (pub2_campaign_id)
+- [ ] Xử lý response: lưu `contract_no` và `contract_status` vào database Ambassador
+- [ ] Hiển thị trạng thái tham gia cho influencer:
+  - `PENDING`: "Đang chờ duyệt" — disable nút tạo link
+  - `APPROVED`: "Đã được duyệt" — enable nút tạo link
+  - `REJECTED`: "Bị từ chối" — hiển thị thông báo, disable nút tạo link
+- [ ] Nếu đã tham gia (affiliation already exist, error_code=0) → cập nhật trạng thái từ response
+- [ ] Xử lý error codes từ Pub2 API 1.2:
+  - `1`: Publisher không tồn tại → thông báo lỗi
+  - `2`: Campaign không tồn tại → thông báo lỗi
+  - `5`: Ekyc thất bại → hướng dẫn user
+  - `7`: Chưa đăng ký campaign cha → thông báo lỗi
+  - `10`: Không đủ điều kiện tham gia → thông báo lỗi
+  - Khác: Lỗi hệ thống → thông báo chung
+- [ ] Nút "Tham gia chiến dịch" hiển thị trong affiliate campaign card khi chưa join
+- [ ] Sau khi join thành công (APPROVED) → tự động hiện nút "Tạo link affiliate"
+
+**Dependencies:** FR-004, FR-013, FR-014
+
+---
+
 ### FR-005: Influencer tạo Affiliate Link
 
 **Priority:** Must Have
 
 **Description:**
-Influencer tạo affiliate link cho một campaign. Backend gọi Pub2 API 2 (POST `/publisher/affiliate/link`) với HMAC authentication.
+Influencer tạo affiliate link cho một campaign. **Yêu cầu đã tham gia chiến dịch (contract_status = APPROVED) trước khi tạo link.** Backend gọi Pub2 API 2 (POST `/publisher/affiliate/link`) với HMAC authentication.
 
 **Acceptance Criteria:**
+- [ ] **Chỉ cho phép tạo link khi đã tham gia chiến dịch (contract_status = APPROVED)**
 - [ ] Chỉ cho phép tạo link khi đã liên kết tài khoản AccessTrade
 - [ ] Backend gọi Pub2 API với: `partner_code`, `original_url` (từ campaign), `partner_ref_campaign_id` (pub2_campaign_id), `sso_user_id` (từ user AccessTrade data)
 - [ ] Sử dụng sub parameters cho tracking: `sub1` = sso_user_id, `sub2` = ambassador platform identifier
@@ -167,7 +199,7 @@ Influencer tạo affiliate link cho một campaign. Backend gọi Pub2 API 2 (PO
 - [ ] Lưu lại link đã tạo trong database Ambassador để hiển thị lại
 - [ ] Xử lý lỗi: Pub2 API fail → hiện thông báo lỗi rõ ràng
 
-**Dependencies:** FR-003, FR-004
+**Dependencies:** FR-003, FR-004, **FR-017**
 
 ---
 
@@ -365,7 +397,9 @@ Backend APIs cho Admin CRUD affiliate campaigns, lưu trong MongoDB.
 Backend APIs cho influencer tạo link và xem báo cáo, proxy qua Pub2 APIs.
 
 **Acceptance Criteria:**
-- [ ] `POST /affiliate-campaigns/:id/generate-link` — Tạo affiliate link (proxy Pub2 API 2)
+- [ ] `POST /affiliate-campaigns/:id/join` — Tham gia chiến dịch (proxy Pub2 API 1.2)
+- [ ] `GET /affiliate-campaigns/:id/contract` — Lấy trạng thái tham gia chiến dịch
+- [ ] `POST /affiliate-campaigns/:id/generate-link` — Tạo affiliate link (proxy Pub2 API 2, yêu cầu contract APPROVED)
 - [ ] `GET /affiliate-links` — Danh sách links đã tạo (từ DB Ambassador)
 - [ ] `POST /affiliate-reports/clicks` — Báo cáo click (proxy Pub2 API 3.1)
 - [ ] `POST /affiliate-reports/conversions` — Báo cáo conversion (proxy Pub2 API 3.2)
@@ -541,15 +575,16 @@ Backend Go service tích hợp Pub2 APIs: HMAC client, link generation, reports 
 ### EPIC-003: Influencer Affiliate Campaign Experience
 
 **Description:**
-Influencer browse campaigns, xem chi tiết, tạo link, và quản lý links đã tạo.
+Influencer browse campaigns, tham gia chiến dịch, tạo link, và quản lý links đã tạo.
 
 **Functional Requirements:**
 - FR-004: Influencer xem Affiliate Campaign trong chi tiết Campaign
+- FR-017: Influencer tham gia chiến dịch (Join Campaign)
 - FR-005: Influencer tạo Affiliate Link
 - FR-006: Influencer xem danh sách Link đã tạo
 - FR-013: Điểm chạm liên kết AccessTrade tại Campaign Detail
 
-**Story Count Estimate:** 6-8
+**Story Count Estimate:** 7-9
 
 **Priority:** Must Have
 
@@ -593,8 +628,10 @@ Influencer xem báo cáo hiệu suất affiliate: clicks, conversions, sale amou
 
 ### EPIC-003: Influencer Campaign Experience
 - As an **Influencer**, I want to see affiliate campaigns inside a campaign detail page so that I can discover affiliate opportunities within campaigns I'm already participating in.
-- As an **Influencer**, I want to see a prompt to link my AccessTrade account when I try to create a link so that I know what's required.
-- As an **Influencer**, I want to generate and copy an affiliate link so that I can share it with my audience.
+- As an **Influencer**, I want to join an affiliate campaign so that I can get approved to generate affiliate links.
+- As an **Influencer**, I want to see my campaign join status (pending/approved/rejected) so that I know when I can start generating links.
+- As an **Influencer**, I want to see a prompt to link my AccessTrade account when I try to join or create a link so that I know what's required.
+- As an **Influencer**, I want to generate and copy an affiliate link (after being approved) so that I can share it with my audience.
 - As an **Influencer**, I want to see all my generated links so that I can reuse them.
 
 ### EPIC-004: Reports & Dashboard
@@ -631,8 +668,11 @@ Influencer đã liên kết AccessTrade
   → Scroll đến section "Affiliate Campaigns"
   → Thấy affiliate campaign(s) được liên kết
   → Xem chi tiết: commission, mô tả, điều kiện
+  → Click "Tham gia chiến dịch"
+  → Hệ thống gọi Pub2 API 1.2 → tạo contract
+  → Contract status = APPROVED → nút "Tạo link" được enable
   → Click "Tạo link affiliate"
-  → Hệ thống gọi Pub2 API → trả về link
+  → Hệ thống gọi Pub2 API 2 → trả về link
   → Copy link (ngắn hoặc dài)
   → Chia sẻ link trên social media / video
 ```
@@ -644,11 +684,23 @@ Influencer chưa liên kết
   → Vào chi tiết campaign/event hiện tại
   → Scroll đến section "Affiliate Campaigns"
   → Thấy banner: "Liên kết tài khoản AccessTrade để bắt đầu"
-  → Click "Tạo link affiliate"
+  → Click "Tham gia chiến dịch" hoặc "Tạo link affiliate"
   → Popup hiện: "Bạn cần liên kết tài khoản AccessTrade trước"
   → Click "Liên kết ngay" → redirect tới trang liên kết (SSO flow hiện tại)
   → Liên kết thành công → redirect về campaign detail đang xem
-  → Tạo link thành công
+  → Tham gia chiến dịch → Tạo link thành công
+```
+
+### Flow 2b: Influencer tham gia chiến dịch — chờ duyệt
+
+```
+Influencer đã liên kết AccessTrade
+  → Vào chi tiết campaign/event → section "Affiliate Campaigns"
+  → Click "Tham gia chiến dịch"
+  → Hệ thống gọi Pub2 API 1.2 → contract_status = PENDING
+  → Hiển thị: "Đang chờ duyệt tham gia chiến dịch"
+  → Nút "Tạo link" bị disable
+  → (Quay lại sau khi được duyệt → contract_status = APPROVED → tạo link bình thường)
 ```
 
 ### Flow 3: Admin tạo và liên kết Affiliate Campaign
@@ -686,7 +738,7 @@ Admin login Ambassador Admin
 
 | Dependency | Mô tả | Status |
 |-----------|--------|--------|
-| Pub2 API (AccessTrade) | 6 APIs đã cung cấp (link, click, conversion, sale-amount, commission, orders) | ✅ Sẵn sàng (dev env) |
+| Pub2 API (AccessTrade) | 7 APIs đã cung cấp (join campaign, link, click, conversion, sale-amount, commission, orders) | ✅ Sẵn sàng (dev env) |
 | Pub2 Credentials | `client_id` + `client_secret` cho HMAC authentication | ✅ Có (dev) |
 | Pub2 API — Campaign Info (API 1) | Chưa cung cấp | ⏳ Chưa có |
 | Pub2 API — Webhook (API 7) | Chưa cung cấp | ⏳ Chưa có |
@@ -760,6 +812,7 @@ Admin login Ambassador Admin
 |---------|------|--------|---------|
 | 1.0 | 2026-03-25 | vinhnguyen | Initial PRD |
 | 1.1 | 2026-03-25 | vinhnguyen | Thêm FR-003 mapping campaign ↔ affiliate campaign. Sửa FR-004: affiliate hiển thị trong campaign detail (không standalone). Cập nhật Epics, User Flows, Traceability Matrix. |
+| 1.2 | 2026-03-26 | vinhnguyen | Thêm FR-017: Tham gia chiến dịch (Join Campaign) — influencer phải join campaign (Pub2 API 1.2) trước khi tạo link. Cập nhật FR-005 dependency, FR-016 endpoints, User Flows (thêm Flow 2b), EPIC-003, User Stories, Traceability Matrix. |
 
 ---
 
@@ -797,10 +850,10 @@ After architecture is complete, run `/sprint-planning` to:
 |---------|-----------|-------------------------|-------------------|
 | EPIC-001 | Admin Campaign Management | FR-001, FR-002, FR-003, FR-015 | 6-8 |
 | EPIC-002 | Pub2 API Integration | FR-014, FR-016 | 5-7 |
-| EPIC-003 | Influencer Campaign Experience | FR-004, FR-005, FR-006, FR-013 | 5-7 |
+| EPIC-003 | Influencer Campaign Experience | FR-004, FR-017, FR-005, FR-006, FR-013 | 7-9 |
 | EPIC-004 | Reports & Dashboard | FR-007, FR-008, FR-009, FR-010, FR-011, FR-012 | 6-8 |
 
-**Total Estimated Stories:** 22-30
+**Total Estimated Stories:** 24-32
 
 ---
 
@@ -810,7 +863,7 @@ After architecture is complete, run `/sprint-planning` to:
 
 | Priority | Count | FRs |
 |----------|-------|-----|
-| **Must Have** | 14 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-007, FR-008, FR-010, FR-011, FR-013, FR-014, FR-015, FR-016 |
+| **Must Have** | 15 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-007, FR-008, FR-010, FR-011, FR-013, FR-014, FR-015, FR-016, FR-017 |
 | **Should Have** | 2 | FR-009, FR-012 |
 | **Could Have** | 0 | — |
 
@@ -828,6 +881,7 @@ After architecture is complete, run `/sprint-planning` to:
 | API | Method | Path | Status |
 |-----|--------|------|--------|
 | API 1: Campaign Info | - | - | ❌ Chưa có |
+| API 1.2: Tham gia chiến dịch | POST | `/pgw-api/campaign-service/api/v1/contracts` | ✅ |
 | API 2: Affiliate Link | POST | `/pgw-api/tracking-service/api/v1.0/publisher/affiliate/link` | ✅ |
 | API 3.1: Click Stats | POST | `/pgw-api/tracking-service/api/v1.0/publisher/affiliate/statistics/click` | ✅ |
 | API 3.2: Conversion Stats | POST | `/pgw-api/conversion-service/api/v1.0/publisher/affiliate/statistics/conversion` | ✅ |
