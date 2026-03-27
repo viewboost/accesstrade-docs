@@ -45,6 +45,35 @@
 └─────────────────────┘
 ```
 
+```mermaid
+graph TD
+    subgraph VAPP["V-App (Native)"]
+        subgraph WV["WebView Container"]
+            FE["VCreator Mini App<br/><i>UmiJS 3 + React + TypeScript</i>"]
+        end
+        BRIDGE["postMessage Bridge<br/><i>native ↔ web</i>"]
+    end
+
+    FE <-->|postMessage| BRIDGE
+
+    subgraph BACKEND["VCreator Backend (Go + Echo)"]
+        AUTH["V-App Auth Module<br/><b>MỚI</b>"]
+        MATCH["Account Matching Module<br/><b>MỚI</b>"]
+        EXISTING["Existing APIs<br/><i>59 endpoints</i>"]
+        subgraph DB["MongoDB (existing)"]
+            MAPPING["+ vapp_user_mappings<br/><b>MỚI</b>"]
+        end
+        AUTH --> DB
+        MATCH --> DB
+        EXISTING --> DB
+    end
+
+    BRIDGE -->|HTTPS| BACKEND
+
+    VAPP_SERVER["V-App Server<br/><i>Token verify</i>"]
+    AUTH -->|API callback| VAPP_SERVER
+```
+
 ## 2. Authentication Flow
 
 ```
@@ -72,13 +101,40 @@ V-App Native                 WebView/Frontend              VCreator Backend     
     │                              │<── JWT (new session) ───────│                        │
 ```
 
+```mermaid
+sequenceDiagram
+    participant Native as V-App Native
+    participant WebView as WebView/Frontend
+    participant Backend as VCreator Backend
+    participant VApp as V-App Server
+
+    Native->>WebView: Load WebView (URL: ?token=xxx)
+
+    WebView->>Backend: POST /vapp/auth/verify<br/>{vapp_token: "xxx"}
+    Backend->>VApp: Verify token
+    VApp-->>Backend: User info (phone, email, name)
+    Backend->>Backend: Check account match (phone/email)
+    Backend-->>WebView: JWT + match_result
+
+    alt Match found
+        WebView->>Backend: POST /vapp/account/merge<br/>{confirm: true}
+        Backend->>Backend: Link accounts
+        Backend-->>WebView: JWT (merged session)
+    else Không match
+        WebView->>Backend: POST /vapp/account/create-new
+        Backend->>Backend: Auto-create new account
+        Backend-->>WebView: JWT (new session)
+    end
+```
+
 ## 3. Account Matching Logic
 
 ### Tiêu chí match (theo thứ tự ưu tiên)
 
 1. **Phone number** — match chính xác (normalize format +84...)
 2. **Email** — match chính xác (lowercase, trim)
-3. **Social ID** — TikTok ID, Facebook ID, Google ID
+
+> **Ghi chú:** Social ID matching (TikTok, Facebook, Google) không nằm trong Phase 1 MVP.
 
 ### Quy tắc xử lý
 
@@ -233,18 +289,20 @@ V-App native team cần implement các bridge handler sau:
 | Clipboard | `navigator.clipboard` | Native bridge `copyToClipboard` |
 | Push notification | Firebase FCM trong browser | Native handle, bridge event |
 
-### Tính năng giữ nguyên (reuse ~70% code)
-- Dashboard, Events, Content posting
-- Bank management, Withdraw
-- KYC/Identification
-- Notifications
-- User statistics
-- Partner pages
+### Approach: Redesign + Rebuild cho mobile WebView
+
+V2 không clone trực tiếp từ frontend-green mà **thiết kế lại UI/UX cho mobile WebView** rồi rebuild. Business logic và API calls được tham khảo từ frontend-green, nhưng layout, components, navigation được thiết kế mới.
+
+### Trang core (rebuild theo design mới)
+- Dashboard
+- Events & Campaign + Content posting
+- Bank management + Withdraw
+- KYC/CCCD
 
 ### Tính năng bỏ/thay đổi
 - OAuth login pages → thay bằng V-App token auth
 - OAuth popup flow (TikTok, Google, Facebook) → bỏ hoàn toàn
-- Firebase FCM browser → bỏ, native handle
+- Firebase FCM browser → bỏ, native bridge handle
 - Cross-window storage events → bỏ
 - App download prompts → bỏ
 - Desktop layout → bỏ, chỉ giữ mobile
@@ -264,7 +322,7 @@ V-App native team cần implement các bridge handler sau:
 | GET | `/vapp/account/match` | Kiểm tra có account VCreator match không |
 | POST | `/vapp/account/merge` | Xác nhận merge với account cũ |
 | POST | `/vapp/account/create-new` | Tạo account mới (từ chối merge) |
-| DELETE | `/vapp/account/unlink` | Hủy liên kết V-App ↔ VCreator |
+| DELETE | `/vapp/account/unlink` | Hủy liên kết V-App ↔ VCreator *(Phase 2)* |
 
 ### WebView Config
 | Method | Endpoint | Mô tả |
@@ -294,7 +352,7 @@ V-App native team cần implement các bridge handler sau:
 
 ## 10. Rủi ro kỹ thuật: Node.js 14 & Tech Stack cũ
 
-> **Mục này cần đặc biệt lưu ý khi đánh giá dự án.**
+> **Mục này không nằm trong scope Phase 1 MVP.** Ghi nhận để xử lý ở phase sau.
 
 ### Hiện trạng source code frontend-green
 

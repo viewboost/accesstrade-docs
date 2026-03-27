@@ -1,54 +1,47 @@
-Module,Phase,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Cost ($)
+Mục,Giai đoạn,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Cost ($)
 
-,TỔNG HỢP THEO PHASE,,,,,,,,,,,,
-,"Phase 1 = MVP bắt buộc. Phase 2 = Tối ưu UX & vận hành. Phase 3 = Nâng cấp tech & advanced.",,,,,,,,,,,,
-,,,,,,,,,,,,
-
-,═══════════════════════════════════════,,,,,,,,,,,,
-,PHASE 1 — MVP (Bắt buộc để chạy),,,,,,,,,,,,
-,═══════════════════════════════════════,,,,,,,,,,,,
-,,,,,,,,,,,,
-
-Module,Phase,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Cost ($)
-V-App Authentication,Phase 1 (D+1~D+5),"Token Verify, Refresh, Session, V-App Server Integration",1,6,40,0,11,0,6,7,71,"$1,034"
-Account Matching (Core),Phase 1 (D+5~D+10),"Lookup (phone/email), Match UI, Merge, Create New",0,5,30,10,11,2,5,7,70,"$957"
-Frontend WebView (Core),Phase 1 (D+5~D+12),"Setup, Auth, Match UI, Navigation, Bridge Core (pickImage/back/close), Dashboard, Events, KYC, Bank",1,7,0,87,23,5,6,11,140,"$1,956"
-Backend Core,Phase 1 (D+1~D+5),"Config API, Middleware, DB Migration",1,3,14,0,6,0,3,3,30,"$419"
-QA & Go-Live MVP,Phase 1 (D+12~D+18),"Integration Test, UAT Round 1, Deploy, API Docs, Integration Guide",2,4,11,9,12,0,7,8,53,"$838"
-,,,,,,,,,,,,
-,PHASE 1 TOTAL,,5,25,95,106,63,7,27,36,364,"$5,204"
+,TỔNG HỢP BÁO GIÁ — PHASE 1 (MVP),,,,,,,,,,,,
+,"Tách 3 mục: A. Integration / B. Thay đổi thiết kế / C. Deploy & Tài liệu. QC tích hợp trong từng feature.",,,,,,,,,,,,
 ,,,,,,,,,,,,
 
 ,═══════════════════════════════════════,,,,,,,,,,,,
-,PHASE 2 — TỐI ƯU UX & VẬN HÀNH,,,,,,,,,,,,
+,MỤC A: INTEGRATION (Backend + API),,,,,,,,,,,,
 ,═══════════════════════════════════════,,,,,,,,,,,,
 ,,,,,,,,,,,,
 
-Module,Phase,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Cost ($)
-Account Matching (Advanced),Phase 2 (D+20~D+25),"Social ID Matching, Unlink, Edge Cases (multi-match, conflict)",0,4,20,10,8,0,4,4,50,"$716"
-Frontend Enhancement,Phase 2 (D+20~D+25),"Notification, Profile, Statistics, Bridge mở rộng (clipboard/share/download)",0,1,0,22,8,0,1,4,36,"$493"
-Backend Enhancement,Phase 2 (D+23~D+28),"Webhook, Admin V-App Users, Monitoring & Alerting",1,3,20,8,8,0,3,3,46,"$656"
-QA Deep + Docs,Phase 2 (D+25~D+30),"Matching QA Deep, Regression, UAT Round 2, Deployment Guide",1,1,7,8,18,0,4,4,43,"$596"
+Mục,Giai đoạn,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Cost ($)
+V-App Authentication & Integration,D+1~D+8,"Token Verify, Refresh, Session, V-App Server, Config API, Middleware, DB Migration, Bridge Protocol",2,9,54,0,21,0,9,10,105,"$1,497"
+Account Matching,D+5~D+10,"Lookup (phone/email), Merge, Create New",0,4,28,0,11,0,4,5,52,"$738"
 ,,,,,,,,,,,,
-,PHASE 2 TOTAL,,2,9,47,48,42,0,12,15,175,"$2,461"
+,MỤC A TỔNG,,2,13,82,0,32,0,13,15,157,"$2,235"
 ,,,,,,,,,,,,
 
 ,═══════════════════════════════════════,,,,,,,,,,,,
-,PHASE 3 — NÂNG CẤP TECH STACK & ADVANCED,,,,,,,,,,,,
+,MỤC B: THAY ĐỔI THIẾT KẾ (Design + FE Rebuild),,,,,,,,,,,,
 ,═══════════════════════════════════════,,,,,,,,,,,,
 ,,,,,,,,,,,,
 
-Module,Phase,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Cost ($)
-Node Upgrade,Phase 3 (D+33~D+38),"Upgrade Node 14 → 18 LTS, fix breaking changes, regression test",0,2,0,20,6,0,1,2,31,"$434"
-Performance,Phase 3 (D+35~D+40),"Bundle optimization, WebView deep testing (nhiều thiết bị/OS)",0,1,0,12,8,0,0,2,23,"$319"
-Advanced Features,Phase 3 (D+38~D+42),"Push notification bridge, Platform detection bridge",0,1,6,9,4,0,1,2,23,"$342"
+Mục,Giai đoạn,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Cost ($)
+Thay đổi thiết kế,D+3~D+16,"Project Setup, Design System & UI Kit, Navigation, Màn hình Auth/Matching/Dashboard/Events/KYC/Bank, Bridge đầy đủ, Push Notification, Design Review",1,12,6,138,40,45,19,18,279,"$3,831"
 ,,,,,,,,,,,,
-,PHASE 3 TOTAL,,0,4,6,41,18,0,2,6,77,"$1,095"
-,,,,,,,,,,,,
+,MỤC B TỔNG,,1,12,6,138,40,45,19,18,279,"$3,831"
 ,,,,,,,,,,,,
 
 ,═══════════════════════════════════════,,,,,,,,,,,,
-,GRAND TOTAL (3 PHASES),,7,38,148,195,123,7,41,57,616,"$8,760"
+,MỤC C: DEPLOY & TÀI LIỆU,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,
+,,,,,,,,,,,,
+
+Mục,Giai đoạn,Features,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Cost ($)
+Deployment,D+20,"Staging + Production deploy, DNS/CDN, Monitoring",2,1,2,2,2,0,1,2,12,"$178"
+Tài liệu,D+18~D+20,"API Docs, Integration Guide, Design Handoff",0,2,3,1,0,2,5,3,16,"$222"
+,,,,,,,,,,,,
+,MỤC C TỔNG,,2,3,5,3,2,2,6,5,28,"$400"
+,,,,,,,,,,,,
+
+,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,
+,TỔNG CỘNG (Phase 1 MVP),,5,28,93,141,74,47,38,38,464,"$6,466"
 ,═══════════════════════════════════════,,,,,,,,,,,,
 ,,,,,,,,,,,,
 ,,,,,,,,,,,,
@@ -67,85 +60,54 @@ PM,$17/h,,,,,,,,,,,
 ,,,,,,,,,,,,
 ,,,,,,,,,,,,
 
-,CHI PHÍ THEO PHASE,,,,,,,,,,,,
+,CHI PHÍ THEO MỤC,,,,,,,,,,,,
 ,,,,,,,,,,,,
-Phase,Total (hours),Cost ($),% of Total,Mục đích,Có thể bỏ?,,,,,,
-Phase 1 — MVP,364,"$5,204",59%,"Bắt buộc — mini app chạy được, user dùng được core features",KHÔNG,,,,,,
-Phase 2 — Enhancement,175,"$2,461",28%,"Tối ưu — UX tốt hơn, admin tools, xử lý edge cases",Có thể trì hoãn nhưng KHUYẾN NGHỊ làm,,,,,,
-Phase 3 — Advanced,77,"$1,095",13%,"Tech debt — giải quyết Node 14 EOL, performance, push notification","Có thể trì hoãn, nhưng Node 14 EOL là rủi ro bảo mật",,,,,,
+Mục,Total (hours),Cost ($),% of Total,Mục đích,,,,,,,,
+A — Integration (Backend + API),157,"$2,235",34%,"Xác thực V-App, account matching, middleware, bridge protocol.",,,,,,,,
+B — Thay đổi thiết kế (Design + FE),279,"$3,831",59%,"Thiết kế UI/UX mới + FE rebuild + bridge đầy đủ + push notification.",,,,,,,,
+C — Deploy & Tài liệu,28,$400,7%,"Deploy production, tài liệu kỹ thuật.",,,,,,,,
 ,,,,,,,,,,,,
-,GRAND TOTAL,616,"$8,760",,,,,,,,
-,,,,,,,,,,,,
-,,,,,,,,,,,,
-
-,PHÂN BỔ NHÂN SỰ THEO ROLE (TOÀN DỰ ÁN),,,,,,,,,,,,
-,,,,,,,,,,,,
-Role,Rate ($/h),Phase 1 (h),Phase 2 (h),Phase 3 (h),Total (h),Total Cost ($),% of Total,,,,
-DevOps,$17,5,2,0,7,$119,1.1%,,,,
-SA,$17,25,9,4,38,$646,6.2%,,,,
-BE,$15,95,47,6,148,"$2,220",24.0%,,,,
-FE,$15,106,48,41,195,"$2,925",31.7%,,,,
-QC,$11,63,42,18,123,"$1,353",20.0%,,,,
-Design,$11,7,0,0,7,$77,1.1%,,,,
-BA,$11,27,12,2,41,$451,6.7%,,,,
-PM,$17,36,15,6,57,$969,9.3%,,,,
-TOTAL,,364,175,77,616,"$8,760",100%,,,,
+,TỔNG CỘNG,464,"$6,466",,,,,,,,,,
 ,,,,,,,,,,,,
 ,,,,,,,,,,,,
 
-,TIMELINE & TEAM — THEO TỪNG PHASE,,,,,,,,,,,,
+,PHÂN BỔ NHÂN SỰ THEO ROLE,,,,,,,,,,,,
 ,,,,,,,,,,,,
-
-,--- PHASE 1 (MVP) ---,,,,,,,,,,,,
-,,,,,,,,,,,,
-Option,Team Size,BE,FE,Timeline,Ghi chú,,,,,,
-"A. Team tối thiểu","3 người","BE×1","FE×1","~D+20 (1 tháng)","Tight nhưng khả thi.",,,,,,
-"B. Khuyến nghị","4 người","BE×1","FE×1 + 0.5","~D+15 (3 tuần)","Thoải mái. FE có support.",,,,,,
-"C. Nhanh nhất","5 người","BE×1.5","FE×2","~D+12 (2.5 tuần)","Nhanh nhất.",,,,,,
-,,,,,,,,,,,,
-
-,--- PHASE 2 (Enhancement) ---,,,,,,,,,,,,
-,,,,,,,,,,,,
-,"Bắt đầu sau Phase 1 go-live. Team giữ nguyên hoặc giảm nhẹ.",,,,,,,,,,,,
-Option,Team Size,BE,FE,Timeline,Ghi chú,,,,,,
-"Khuyến nghị","3 người","BE×1","FE×1","~D+10 sau Phase 1","QC tập trung test.",,,,,,
-,,,,,,,,,,,,
-
-,--- PHASE 3 (Advanced) ---,,,,,,,,,,,,
-,,,,,,,,,,,,
-,"Có thể làm song song Phase 2 hoặc sau. FE-heavy (Node upgrade).",,,,,,,,,,,,
-Option,Team Size,BE,FE,Timeline,Ghi chú,,,,,,
-"Khuyến nghị","2 người","BE×0.5","FE×1","~D+10","Chủ yếu FE upgrade Node + test.",,,,,,
+Role,Rate ($/h),Mục A (h),Mục B (h),Mục C (h),Total (h),Total Cost ($),% of Total,,,,
+DevOps,$17,2,1,2,5,$85,1%,,,,
+SA,$17,13,12,3,28,$476,7%,,,,
+BE,$15,82,6,5,93,"$1,395",22%,,,,
+FE,$15,0,138,3,141,"$2,115",33%,,,,
+QC,$11,32,40,2,74,$814,13%,,,,
+Design,$11,0,45,2,47,$517,8%,,,,
+BA,$11,13,19,6,38,$418,6%,,,,
+PM,$17,15,18,5,38,$646,10%,,,,
+TOTAL,,157,279,28,464,"$6,466",100%,,,,
 ,,,,,,,,,,,,
 ,,,,,,,,,,,,
 
-,TIMELINE TỔNG HỢP (Team khuyến nghị 4 người),,,,,,,,,,,,
+,TIMELINE — PHASE 1,,,,,,,,,,,,
 ,,,,,,,,,,,,
-Phase,Bắt đầu,Kết thúc,Elapsed,Ghi chú,,,,,,,,
-Phase 1 — MVP,D+0,D+18,~3-4 tuần,Bắt buộc. Go-live mini app.,,,,,,,,
-Phase 2 — Enhancement,D+20,D+30,~2 tuần,"Sau Phase 1 go-live.",,,,,,,,
-Phase 3 — Advanced,D+33,D+42,~2 tuần,"Có thể overlap Phase 2. FE-heavy.",,,,,,,,
+
+Option,Team Size,Design,BE,FE,Timeline,Ghi chú,,,,,,
+"A. Tối thiểu","4 người","Design×1","BE×1","FE×1","~D+22 (4-5 tuần)","Design chạy trước 1 tuần, FE bắt đầu khi có UI Kit.",,,,,,
+"B. Khuyến nghị","5 người","Design×1","BE×1","FE×1.5","~D+18 (3-4 tuần)","Design + BE song song. FE có support.",,,,,,
+"C. Nhanh nhất","6 người","Design×1","BE×1.5","FE×2","~D+15 (3 tuần)","Design sprint 1 tuần đầu. FE team lớn.",,,,,,
 ,,,,,,,,,,,,
-,"TỔNG TIMELINE: ~D+42 (2 tháng). Nếu chỉ Phase 1: ~D+18 (3-4 tuần).",,,,,,,,,,,,
+
+,TIMELINE CHI TIẾT (Option B — Khuyến nghị),,,,,,,,,,,,
+,,,,,,,,,,,,
+Tuần,Bắt đầu,Kết thúc,Nội dung,,,,,,,,,,
+"Tuần 1: Design + BE","D+0","D+5","Design System + UI Kit | BE Auth + Core APIs",,,,,,,,,,
+"Tuần 2: Wireframe + BE + FE Setup","D+5","D+10","Wireframe/Mockup 6 trang + Auth flow | BE Account Matching | FE Setup + Design System impl",,,,,,,,,,
+"Tuần 3: FE Implementation","D+10","D+16","FE implement 6 trang theo design | Design review & iteration | QC test song song",,,,,,,,,,
+"Tuần 4: Hoàn thiện + Deploy","D+16","D+20","Push Notification + Bridge hoàn thiện | UAT | Deploy",,,,,,,,,,
 ,,,,,,,,,,,,
 ,,,,,,,,,,,,
 
 ,TECH STACK,,,,,,,,,,,,
-,"Frontend: UmiJS 3 + React 16 + TypeScript (fork từ frontend-green). Phase 3 upgrade Node 18 LTS.",,,,,,,,,,,,
+,"Frontend: UmiJS 3 + React 16 + TypeScript (rebuild từ frontend-green với design mới)",,,,,,,,,,,,
 ,"Backend: Go 1.22+ + Echo v4 (bổ sung trên vcreator/backend hiện tại)",,,,,,,,,,,,
+,"Design: Figma — UI Kit, Wireframe, Mockup, Design Handoff",,,,,,,,,,,,
 ,"Database: MongoDB (chung) + Redis (session cache)",,,,,,,,,,,,
 ,"Deployment: Docker + Nginx (chung infra VCreator)",,,,,,,,,,,,
-,,,,,,,,,,,,
-,,,,,,,,,,,,
-
-,GHI CHÚ,,,,,,,,,,,,
-,"1. Phase 1 (364h) là MVP bắt buộc: auth, account matching cơ bản, 6 trang core (dashboard, events, KYC, bank, content posting), bridge core (pickImage, back, close).",,,,,,,,,,,,
-,"2. Phase 1 CHƯA có: notifications, profile/settings, statistics, clipboard/share/download bridge, admin tools, monitoring.",,,,,,,,,,,,
-,"3. Phase 2 (175h) bổ sung UX đầy đủ + admin tools + edge cases. KHUYẾN NGHỊ làm sớm sau Phase 1.",,,,,,,,,,,,
-,"4. Phase 3 (77h) giải quyết Node 14 EOL — rủi ro bảo mật với app tài chính. Nên làm trong 3 tháng sau go-live.",,,,,,,,,,,,
-,"5. Auth module phụ thuộc V-App cung cấp API docs. Cần trước D+0 để không block.",,,,,,,,,,,,
-,"6. Bridge native side do V-App team implement — KHÔNG tính trong báo giá. Chỉ tính WebView (JS) side.",,,,,,,,,,,,
-,"7. Phase 1 bridge chỉ có 4 actions critical: pickImage (cho KYC + avatar), back, close, openExternal.",,,,,,,,,,,,
-,"8. Phase 2 bridge mở rộng: copyToClipboard (referral), share (events), downloadFile (hợp đồng).",,,,,,,,,,,,
-,"9. Phase 3 bridge: push notification, platform detection. Đây là nice-to-have, không block core flow.",,,,,,,,,,,,
-,"10. Tổng 3 phases: 616h / $8,760. Nếu chỉ Phase 1: 364h / $5,204. Phase 1+2: 539h / $7,665.",,,,,,,,,,,,

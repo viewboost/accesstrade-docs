@@ -1,245 +1,185 @@
-STT,Objective,Feature,Mô tả,Note,Deadline,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),Phase
-,,,,,,,,,,,,,,,,
-,VCREATOR V-APP MINI APP — BÁO GIÁ CHI TIẾT,,,,,,,,,,,,,,
-,"Phase 1 = MVP (bắt buộc để chạy). Phase 2 = Tối ưu UX & vận hành. Phase 3 = Nâng cấp tech stack & advanced.",,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
+STT,Mục,Module,Feature,Mô tả,Note,Deadline,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours)
+,,,,,,,,,,,,,,,
+,VCREATOR V-APP MINI APP — BÁO GIÁ CHI TIẾT (PHASE 1 MVP),,,,,,,,,,,,,,,
+,"Tách 3 mục: A. Integration / B. Thay đổi thiết kế / C. Deploy & Tài liệu. QC tích hợp trong từng feature.",,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
 
-,═══════════════════════════════════════,,,,,,,,,,,,,,
-,PHASE 1 — MVP (Bắt buộc để mini app hoạt động),,,,,,,,,,,,,,
-,═══════════════════════════════════════,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
+,MỤC A: INTEGRATION (Backend + API cho V-App),,,,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
 
-,MODULE 1: V-APP AUTHENTICATION,,,,,,,,,,,,,,
-,"Backend xác thực token từ V-App, tạo session VCreator.",,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-1,V-App Auth,Token Verification API,"POST /vapp/auth/verify — Nhận token từ URL, verify với V-App server, trả JWT.","- Gọi V-App API verify token
+,A,A1. V-APP AUTHENTICATION & INTEGRATION,,,,,,,,,,,,,,,
+,,"Backend xác thực token, quản lý session, middleware, config, database.",,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+1,A,A1,Token Verification API,"POST /vapp/auth/verify — Nhận token từ URL, verify với V-App server, trả JWT.","- Gọi V-App API verify token
 - Parse user info (phone, email, name, avatar)
 - Tạo hoặc lookup VCreator user
-- Trả JWT + account match status",D+5,,1,2,16,0,4,0,2,3,28,1
-2,,Token Refresh,"POST /vapp/auth/refresh — Refresh JWT khi sắp hết hạn.","- Check expiry, re-verify nếu cần
+- Trả JWT + account match status
+- QC: test verify flow e2e",D+5,1,2,16,0,5,0,2,3,29
+2,A,A1,Token Refresh,"POST /vapp/auth/refresh — Refresh JWT khi sắp hết hạn.","- Check expiry, re-verify nếu cần
 - Issue new JWT
-- Handle expired cases",D+5,,0,1,6,0,2,0,1,1,11,1
-3,,Session Management,"Redis session store, login state, logout cleanup.","- Session timeout config
+- Handle expired cases
+- QC: test refresh + expiry",D+5,0,1,6,0,2,0,1,1,11
+3,A,A1,Session Management,"Redis session store, login state, logout cleanup.","- Session timeout config
 - Logout cleanup
-- Basic device tracking",D+5,,0,1,8,0,2,0,1,1,13,1
-4,,V-App Server Integration,"HTTP client gọi V-App API: verify token, get user info.","- HTTP client + error handling
+- Basic device tracking
+- QC: test session lifecycle",D+5,0,1,8,0,3,0,1,1,14
+4,A,A1,V-App Server Integration,"HTTP client gọi V-App API: verify token, get user info.","- HTTP client + error handling
 - Timeout + retry logic
-- Basic logging",D+5,,0,2,10,0,3,0,2,2,19,1
-,,,,,,,,,,,,,,,,
-,Module 1 TOTAL,,,,,1,6,40,0,11,0,6,7,71,
+- Basic logging
+- QC: test error cases + timeout",D+5,0,2,10,0,4,0,2,2,20
+5,A,A1,V-App Config API,"GET /vapp/config — Config cho WebView: version, maintenance mode.","- Feature flags
+- Maintenance toggle
+- Config cache (Redis)
+- QC: test config responses",D+5,0,1,4,0,2,0,1,1,9
+6,A,A1,V-App Middleware,"Middleware xác thực V-App JWT trên mọi request.","- Verify JWT
+- Inject user context
+- Request logging
+- QC: test auth rejection + injection",D+5,0,1,6,0,3,0,1,1,12
+7,A,A1,Database Migration,"Tạo collection vapp_user_mappings + indexes.","- Migration script
+- Indexes
+- Rollback script
+- QC: verify indexes + rollback",D+5,1,1,4,0,2,0,1,1,10
+,,,,,,,,,,,,,,,
+,,Module A1 TOTAL,,,,2,9,54,0,21,0,9,10,105,
 
-,,,,,,,,,,,,,,,,
-,MODULE 2: ACCOUNT MATCHING (Core),,,,,,,,,,,,,,
-,"Phát hiện trùng tài khoản + merge/tạo mới. Chỉ tính core flow, chưa tính edge cases phức tạp.",,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-5,Account Matching,Account Lookup Service,"Tìm VCreator account match theo phone, email.","- Normalize phone (+84)
+,,,,,,,,,,,,,,,
+,A,A2. ACCOUNT MATCHING,,,,,,,,,,,,,,,
+,,"Phát hiện trùng tài khoản + merge/tạo mới.",,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+8,A,A2,Account Lookup Service,"Tìm VCreator account match theo phone, email.","- Normalize phone (+84)
 - Normalize email (lowercase)
 - Priority: phone > email
-- Trả kết quả match/no-match",D+8,,0,2,10,0,3,0,2,2,19,1
-6,,Match Confirmation UI,"Hiển thị kết quả match, user chọn Merge hoặc Tạo mới.","- Hiển thị info account cũ
-- Nút Merge / Tạo mới
-- Loading & error states",D+8,,0,1,2,10,3,2,1,2,21,1
-7,,Account Merge Logic,"POST /vapp/account/merge — Link V-App user vào VCreator account cũ.","- Link user ID vào mapping
+- Trả kết quả match/no-match
+- QC: test normalize + matching logic",D+8,0,2,10,0,4,0,2,2,20
+9,A,A2,Account Merge Logic,"POST /vapp/account/merge — Link V-App user vào VCreator account cũ.","- Link user ID vào mapping
 - Giữ nguyên data cũ
-- Tạo vapp_user_mappings record",D+8,,0,1,12,0,3,0,1,2,19,1
-8,,New Account Creation,"POST /vapp/account/create-new — Tạo VCreator account mới.","- Tạo user từ V-App info
+- Tạo vapp_user_mappings record
+- QC: test merge + data integrity",D+8,0,1,12,0,4,0,1,2,20
+10,A,A2,New Account Creation,"POST /vapp/account/create-new — Tạo VCreator account mới.","- Tạo user từ V-App info
 - Tạo mapping record
-- Set default settings",D+8,,0,1,6,0,2,0,1,1,11,1
-,,,,,,,,,,,,,,,,
-,Module 2 (Phase 1) TOTAL,,,,,0,5,30,10,11,2,5,7,70,
+- Set default settings
+- QC: test create + defaults",D+8,0,1,6,0,3,0,1,1,12
+,,,,,,,,,,,,,,,
+,,Module A2 TOTAL,,,,0,4,28,0,11,0,4,5,52,
 
-,,,,,,,,,,,,,,,,
-,MODULE 3: FRONTEND WEBVIEW (Core Pages),,,,,,,,,,,,,,
-,"Các trang BẮT BUỘC để user sử dụng được mini app.",,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-9,Frontend Setup,Project Setup & Config,"Fork frontend-green, config WebView build, xóa OAuth/desktop code.","- Fork & clean up
-- Update umi config
-- Remove OAuth pages
-- Environment config",D+5,,1,2,0,12,2,0,1,2,20,1
-10,,WebView Auth Integration,"Parse token từ URL, gọi verify API, store JWT, auto-refresh.","- Parse token từ URL params
-- Call /vapp/auth/verify
-- Setup axios interceptor
-- Handle auth errors",D+8,,0,1,0,12,3,0,1,1,18,1
-11,,Account Matching UI,"Trang match/merge khi user vào lần đầu.","- Match result display
-- Merge confirmation
-- Create new option",D+8,,0,1,0,10,3,2,1,1,18,1
-12,,Navigation & Layout,"Adapt layout mobile WebView: header, back button, safe area.","- Mobile-only header
-- Back button navigation
-- Safe area (notch, status bar)",D+8,,0,1,0,10,2,2,1,1,17,1
-13,,WebView ↔ Native Bridge (Core),"Bridge cho các chức năng CRITICAL: pickImage, back, close, openExternal.","- postMessage protocol
-- pickImage (camera/gallery) → cho KYC + avatar
+,,,,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
+,MỤC A TỔNG,,,,,,2,13,82,0,32,0,13,15,157,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
+
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
+,MỤC B: THAY ĐỔI THIẾT KẾ (Design + FE Rebuild),,,,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+11,B,,Project Setup & Config,"Fork frontend-green, cấu hình WebView build, xóa OAuth/desktop code.","- Fork & clean up codebase
+- Update umi config cho WebView
+- Remove OAuth pages & desktop code
+- Environment config (staging/prod)
+- QC: verify build + config",D+5,1,3,0,12,3,2,3,4,28
+12,B,,Design System & UI Kit,"Thiết kế + implement UI Kit mobile: typography, colors, spacing, components.","- Design: UI Kit (Button, Input, Card, Modal, Toast)
+- Design: Color palette, icon set, spacing & grid
+- Design: Loading skeleton, empty states, error states
+- Implement: React component library
+- Implement: Theme provider, layout components
+- QC: test components responsive trên mobile",D+8,0,2,0,16,3,13,3,2,39
+13,B,,Navigation & Layout,"Thiết kế + implement navigation, header, tab bar, safe area cho mobile WebView.","- Design: Mobile header, back button, tab navigation
+- Design: Safe area (notch, status bar), pull-to-refresh
+- Design: Page transition patterns
+- Implement: Header, tab nav, safe area components
+- Implement: Back button navigation + page transitions
+- QC: test navigation + safe area trên nhiều thiết bị",D+10,0,1,0,12,3,6,1,1,24
+14,B,,Màn hình Auth (Token Loading),"Thiết kế + implement màn hình loading verify token, error states, auto-refresh.","- Design: Token loading screen, verify progress
+- Design: Error screen (expired/invalid), retry UI
+- Implement: Parse token từ URL params
+- Implement: Call /vapp/auth/verify, store JWT
+- Implement: Axios interceptor, auto-refresh
+- Implement: Loading/error screens theo design
+- QC: test auth flow e2e",D+10,0,1,0,12,4,3,1,1,22
+15,B,,Màn hình Account Matching,"Thiết kế + implement flow match/merge/tạo mới tài khoản.","- Design: Match result display, account comparison
+- Design: Merge confirmation dialog, create new flow
+- Design: Success/error states
+- Implement: Match result + comparison view
+- Implement: Merge confirmation + create new option
+- Implement: Animations & transitions
+- QC: test match/merge flows",D+10,0,1,0,12,4,4,2,1,24
+16,B,,Màn hình Dashboard,"Thiết kế + implement Dashboard mobile.","- Design: Creator stats summary, recent activity
+- Design: Quick actions, mobile-optimized layout
+- Implement: Rebuild dashboard components
+- Implement: Loading skeleton, pull-to-refresh
+- QC: test layout + data loading",D+14,0,0,0,10,3,3,1,1,18
+17,B,,Màn hình Events & Campaign,"Thiết kế + implement Events list, detail, content posting.","- Design: Event list (card layout), detail page
+- Design: Content posting flow, status indicators
+- Implement: Event list + detail (new layout)
+- Implement: Content posting + image upload via bridge
+- QC: test posting + upload",D+14,0,0,0,14,4,4,1,1,24
+18,B,,Màn hình KYC/CCCD,"Thiết kế + implement KYC flow mobile (camera/upload via bridge).","- Design: CCCD upload flow (front/back)
+- Design: Personal info form, contract signing, status
+- Implement: CCCD upload (bridge pickImage)
+- Implement: Personal info form + contract signing
+- QC: test upload + form validation",D+16,0,0,0,12,4,3,1,1,21
+19,B,,Màn hình Bank & Withdraw,"Thiết kế + implement Bank CRUD + Withdraw flow.","- Design: Bank card list, add/edit form
+- Design: Withdraw flow, transaction history
+- Implement: Bank CRUD (new design)
+- Implement: Withdraw flow + cash flow history
+- QC: test CRUD + withdraw flow",D+16,0,0,0,10,3,3,1,1,18
+20,B,,WebView ↔ Native Bridge,"Bridge đầy đủ cho Mini App.","- postMessage protocol
+- pickImage (camera/gallery) → KYC, avatar, bài đăng
 - back event handler
 - close WebView
-- openExternal (link ngoài)",D+10,,0,2,0,12,3,0,2,2,21,1
-14,,Dashboard Page,"Trang chính tổng quan creator (reuse).","- Reuse dashboard components
-- Adapt responsive
-- Loading skeleton",D+10,,0,0,0,6,2,0,0,1,9,1
-15,,Events & Campaign Pages,"Danh sách events, chi tiết, đăng bài (reuse).","- Event list/detail
-- Content posting flow
-- Adapt cho WebView",D+12,,0,0,0,10,3,0,0,1,14,1
-16,,KYC & Identification Pages,"Upload CCCD, thông tin cá nhân, hợp đồng (reuse + bridge pickImage).","- Reuse KYC flow
-- Dùng bridge pickImage thay file input
-- Contract signing
-- Status tracking",D+12,,0,0,0,8,3,1,0,1,13,1
-17,,Bank & Finance Pages,"Quản lý thẻ ngân hàng, dòng tiền, rút tiền (reuse).","- Bank CRUD
-- Cash flow history
-- Withdraw flow",D+12,,0,0,0,7,2,0,0,1,10,1
-,,,,,,,,,,,,,,,,
-,Module 3 (Phase 1) TOTAL,,,,,1,7,0,87,23,5,6,11,140,
+- openExternal (link ngoài)
+- copyToClipboard (referral code, link)
+- share (native share sheet)
+- downloadFile (hợp đồng, receipt)
+- getDeviceInfo (OS, version, model)
+- Loading states cho bridge actions
+- QC: test từng bridge action trên Android & iOS",D+12,0,2,0,18,5,0,2,2,29
+21,B,,Push Notification & Deep Link,"FCM notification qua native bridge + deep link handling.","- Bridge onNotification event listener
+- Deep link routing (notification → page cụ thể)
+- Notification permission flow
+- Badge count sync
+- BE: device token registration API
+- BE: notification dispatch logic
+- QC: test notification + deep link",D+16,0,1,6,10,4,0,1,2,24
+22,B,,Design Review & Iteration,"Review với stakeholder, iterate 2 round.","- Review round 1 với PM/BA
+- Feedback incorporation
+- Review round 2 với client
+- Final sign-off",D+10,0,1,0,0,0,4,2,1,8
+,,,,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
+,MỤC B TỔNG,,,,,,1,12,6,138,40,45,19,18,279,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
 
-,,,,,,,,,,,,,,,,
-,MODULE 4: BACKEND BỔ SUNG (Core),,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-18,Backend Core,V-App Config API,"GET /vapp/config — Config cho WebView: version, maintenance mode.","- Feature flags
-- Maintenance toggle
-- Config cache (Redis)",D+5,,0,1,4,0,2,0,1,1,9,1
-19,,V-App Middleware,"Middleware xác thực V-App JWT trên mọi request.","- Verify JWT
-- Inject user context
-- Request logging",D+5,,0,1,6,0,2,0,1,1,11,1
-20,,Database Migration,"Tạo collection vapp_user_mappings + indexes.","- Migration script
-- Indexes
-- Rollback script",D+5,,1,1,4,0,2,0,1,1,10,1
-,,,,,,,,,,,,,,,,
-,Module 4 (Phase 1) TOTAL,,,,,1,3,14,0,6,0,3,3,30,
-
-,,,,,,,,,,,,,,,,
-,MODULE 5: QA & GO-LIVE (MVP),,,,,,,,,,,,,,
-,"Test đủ để go-live Phase 1.",,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-21,QA MVP,Integration Testing (Core),"Test auth flow + bridge core + basic pages trên Android & iOS.","- Auth end-to-end
-- Bridge: pickImage, back, close
-- Core pages smoke test",D+15,,0,1,2,2,6,0,1,2,14,1
-22,,UAT & Bug Fix (Round 1),"UAT với business + V-App team, fix critical bugs.","- UAT checklist
-- Bug fix (1 round)
-- Sign-off Phase 1",D+18,,0,0,4,4,4,0,1,2,15,1
-23,,Deployment MVP,"Deploy staging → production.","- Staging deploy
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
+,MỤC C: DEPLOY & TÀI LIỆU,,,,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+23,C,,Deployment MVP,"Deploy staging → production.","- Staging deploy
 - Production deploy
 - DNS/CDN config
-- Basic monitoring",D+18,,2,1,2,2,2,0,1,2,12,1
-24,,API Documentation (Core),"Swagger cho V-App auth + matching endpoints.","- OpenAPI spec
+- Basic monitoring",D+20,2,1,2,2,2,0,1,2,12
+24,C,,API Documentation,"Swagger cho V-App auth + matching endpoints.","- OpenAPI spec
 - Request/response examples
-- Auth guide",D+15,,0,1,2,0,0,0,2,1,6,1
-25,,V-App Integration Guide,"Hướng dẫn V-App team load WebView + bridge protocol.","- WebView URL format
+- Auth guide",D+18,0,1,2,0,0,0,2,1,6
+25,C,,V-App Integration Guide,"Hướng dẫn V-App team load WebView + bridge protocol.","- WebView URL format
 - Token spec
-- Bridge protocol reference",D+15,,0,1,1,1,0,0,2,1,6,1
-,,,,,,,,,,,,,,,,
-,Module 5 (Phase 1) TOTAL,,,,,2,4,11,9,12,0,7,8,53,
+- Bridge protocol reference",D+18,0,1,1,1,0,0,2,1,6
+26,C,,Design Handoff,"Tài liệu design: UI Kit, component specs, assets.","- Design file export (Figma)
+- Component specs
+- Icon & asset library
+- Style guide",D+18,0,0,0,0,0,2,1,1,4
+,,,,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
+,MỤC C TỔNG,,,,,,2,3,5,3,2,2,6,5,28,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
 
-,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-,═══════════════════════════════════════,,,,,,,,,,,,,,
-,"PHASE 1 TOTAL (MVP)",,,,,5,25,95,106,63,7,27,36,364,
-,═══════════════════════════════════════,,,,,,,,,,,,,,
-
-,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-,═══════════════════════════════════════,,,,,,,,,,,,,,
-,PHASE 2 — TỐI ƯU UX & VẬN HÀNH,,,,,,,,,,,,,,
-,═══════════════════════════════════════,,,,,,,,,,,,,,
-,"Sau khi Phase 1 go-live. Bổ sung trang phụ, admin tools, edge cases, QA sâu.",,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-
-,MODULE 2B: ACCOUNT MATCHING (Advanced),,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-26,Matching Advanced,Social ID Matching,"Mở rộng match thêm TikTok/Facebook/Google ID ngoài phone/email.","- Match by social account ID
-- Account linking flow",D+25,,0,1,6,0,2,0,1,1,11,2
-27,,Account Unlink,"DELETE /vapp/account/unlink — Hủy liên kết.","- Soft delete mapping
-- Revoke session
-- Audit log",D+25,,0,1,4,2,2,0,1,1,11,2
-28,,Edge Case Handling,"Multi-match, data conflict, re-link after unlink.","- Multiple match resolution UI
-- Data conflict detection
-- Re-link flow
-- Admin override",D+25,,0,2,10,8,4,0,2,2,28,2
-,,,,,,,,,,,,,,,,
-,Module 2B TOTAL,,,,,0,4,20,10,8,0,4,4,50,
-
-,,,,,,,,,,,,,,,,
-,MODULE 3B: FRONTEND (Trang phụ + Bridge mở rộng),,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-29,FE Enhancement,Notification Pages,"Danh sách thông báo, đánh dấu đã đọc (reuse).","- Notification list
-- Read/unread
-- Deep link from notification",D+23,,0,0,0,4,2,0,0,1,7,2
-30,,User Profile & Settings,"Trang cá nhân, cài đặt, referral (reuse + adapt).","- Profile page
-- V-App account info
-- Referral code",D+23,,0,0,0,6,2,0,0,1,9,2
-31,,Statistics Pages,"Thống kê content, invitees, earnings (reuse).","- Statistics components
-- Charts
-- Date range filter",D+23,,0,0,0,5,2,0,0,1,8,2
-32,,Bridge mở rộng: Clipboard + Share + Download,"Bổ sung bridge: copyToClipboard, share, downloadFile.","- copyToClipboard (referral code, link)
-- share (event, content)
-- downloadFile (hợp đồng, receipt)",D+25,,0,1,0,7,2,0,1,1,12,2
-,,,,,,,,,,,,,,,,
-,Module 3B TOTAL,,,,,0,1,0,22,8,0,1,4,36,
-
-,,,,,,,,,,,,,,,,
-,MODULE 4B: BACKEND (Vận hành),,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-33,BE Enhancement,V-App Webhook,"Webhook nhận event từ V-App: user update, deactivate.","- Webhook endpoint
-- Event validation
-- Deactivate → revoke session",D+25,,0,1,8,0,3,0,1,1,14,2
-34,,Admin: V-App User Management,"Admin panel xem V-App users, mapping status, manual link/unlink.","- Users list + filter
-- Manual link/unlink
-- Audit log viewer",D+25,,0,1,8,8,3,0,1,1,22,2
-35,,Monitoring & Alerting,"Error alerting, auth metrics, dashboard.","- Structured logging
-- Telegram/Slack alerts
-- Auth success/failure metrics",D+25,,1,1,4,0,2,0,1,1,10,2
-,,,,,,,,,,,,,,,,
-,Module 4B TOTAL,,,,,1,3,20,8,8,0,3,3,46,
-
-,,,,,,,,,,,,,,,,
-,MODULE 5B: QA DEEP + DOCS,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-36,QA Phase 2,Account Matching QA (Deep),"Test kỹ matching: multi-match, merge conflict, unlink, data integrity.","- Edge case test suite
-- Data integrity verification
-- Stress test matching",D+28,,0,0,2,2,8,0,1,1,14,2
-37,,Regression Testing,"Test VCreator hiện tại không bị ảnh hưởng.","- API regression
-- Frontend regression (vcreator.vn)
-- DB integrity check",D+28,,0,0,2,2,6,0,1,1,12,2
-38,,UAT & Bug Fix (Round 2),"UAT Phase 2 features, fix bugs.","- UAT round 2
-- Bug fix iteration
-- Final sign-off",D+28,,0,0,2,4,4,0,1,1,12,2
-39,,Deployment Guide,"Hướng dẫn deploy, monitoring cho ops team.","- Deploy procedure
-- Environment variables
-- Incident response",D+28,,1,1,1,0,0,0,1,1,5,2
-,,,,,,,,,,,,,,,,
-,Module 5B TOTAL,,,,,1,1,7,8,18,0,4,4,43,
-
-,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-,═══════════════════════════════════════,,,,,,,,,,,,,,
-,"PHASE 2 TOTAL (Enhancement)",,,,,2,9,47,48,42,0,12,15,175,
-,═══════════════════════════════════════,,,,,,,,,,,,,,
-
-,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-,═══════════════════════════════════════,,,,,,,,,,,,,,
-,PHASE 3 — NÂNG CẤP TECH STACK & ADVANCED,,,,,,,,,,,,,,
-,═══════════════════════════════════════,,,,,,,,,,,,,,
-,"Giải quyết nợ kỹ thuật Node 14 EOL, tối ưu performance sâu, tính năng nâng cao.",,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-
-40,Node Upgrade,Upgrade Node 14 → 18 LTS,"Upgrade runtime, fix breaking changes, test lại build + dependencies.","- Fix deprecated APIs (Node 14 → 18)
-- Update incompatible npm packages
-- Fix build toolchain issues
-- Regression test toàn bộ",D+38,,0,2,0,20,6,0,1,2,31,3
-41,Performance,Bundle Optimization,"Code splitting, tree shaking, lazy loading, bundle size reduction.","- Route-based code splitting
-- Image lazy loading
-- Bundle analysis
-- Caching strategy
-- First paint < 2s target",D+38,,0,1,0,8,2,0,0,1,12,3
-42,,WebView Deep Testing,"Test trên nhiều thiết bị cũ/mới, OS versions, WebView engines.","- Android 8+ WebView
-- iOS 14+ WKWebView
-- Low-end device testing
-- Performance profiling
-- Memory leak detection",D+40,,0,0,0,4,6,0,0,1,11,3
-43,Advanced Features,Bridge: Push Notification,"Native push notification integration qua bridge.","- V-App gửi device token
-- Bridge onNotification event
-- Deep link từ notification → page",D+40,,0,1,4,6,3,0,1,1,16,3
-44,,Bridge: Platform Detection,"getDeviceInfo bridge cho accurate OS/device reporting.","- Native bridge getDeviceInfo
-- Update request headers
-- Analytics improvement",D+40,,0,0,2,3,1,0,0,1,7,3
-,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,
-,═══════════════════════════════════════,,,,,,,,,,,,,,
-,"PHASE 3 TOTAL (Advanced)",,,,,0,4,6,41,18,0,2,6,77,
-,═══════════════════════════════════════,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
+,TỔNG CỘNG (Phase 1 MVP),,,,,,5,28,93,141,74,47,38,38,464,
+,═══════════════════════════════════════,,,,,,,,,,,,,,,
