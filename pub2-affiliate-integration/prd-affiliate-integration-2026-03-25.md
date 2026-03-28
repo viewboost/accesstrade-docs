@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-25
 **Author:** vinhnguyen
-**Version:** 1.2
+**Version:** 1.3
 **Project Type:** Feature Integration
 **Project Level:** Level 3
 **Status:** Draft
@@ -693,11 +693,12 @@ Influencer browse campaigns, tham gia chiến dịch, tạo link, và quản lý
 **Functional Requirements:**
 - FR-004: Influencer xem Affiliate Campaign trong chi tiết Campaign
 - FR-017: Influencer tham gia chiến dịch (Join Campaign)
+- FR-018: Trang chi tiết Affiliate Campaign (Campaign Detail Page)
 - FR-005: Influencer tạo Affiliate Link
 - FR-006: Influencer xem danh sách Link đã tạo
 - FR-013: Điểm chạm liên kết AccessTrade tại Campaign Detail
 
-**Story Count Estimate:** 7-9
+**Story Count Estimate:** 8-11
 
 **Priority:** Must Have
 
@@ -743,6 +744,7 @@ Influencer xem báo cáo hiệu suất affiliate: clicks, conversions, sale amou
 - As an **Influencer**, I want to see affiliate campaigns inside a campaign detail page so that I can discover affiliate opportunities within campaigns I'm already participating in.
 - As an **Influencer**, I want to join an affiliate campaign so that I can get approved to generate affiliate links.
 - As an **Influencer**, I want to see my campaign join status (pending/approved/rejected) so that I know when I can start generating links.
+- As an **Influencer**, I want to view a detailed affiliate campaign page with banner, info badges, description tabs, and accordion content so that I can understand the campaign before joining.
 - As an **Influencer**, I want to see a prompt to link my AccessTrade account when I try to join or create a link so that I know what's required.
 - As an **Influencer**, I want to generate and copy an affiliate link (after being approved) so that I can share it with my audience.
 - As an **Influencer**, I want to see all my generated links so that I can reuse them.
@@ -926,6 +928,7 @@ Admin login Ambassador Admin
 | 1.0 | 2026-03-25 | vinhnguyen | Initial PRD |
 | 1.1 | 2026-03-25 | vinhnguyen | Thêm FR-003 mapping campaign ↔ affiliate campaign. Sửa FR-004: affiliate hiển thị trong campaign detail (không standalone). Cập nhật Epics, User Flows, Traceability Matrix. |
 | 1.2 | 2026-03-26 | vinhnguyen | Thêm FR-017: Tham gia chiến dịch (Join Campaign) — influencer phải join campaign (Pub2 API 1.2) trước khi tạo link. Cập nhật FR-005 dependency, FR-016 endpoints, User Flows (thêm Flow 2b), EPIC-003, User Stories, Traceability Matrix. |
+| 1.3 | 2026-03-28 | vinhnguyen | Thêm FR-018: Trang chi tiết Affiliate Campaign (2 cột layout, tabs Thể lệ/Hướng dẫn, AT linking banner, accordion sections từ markdown desc). Cập nhật FR-001: thêm fields short_desc, bonus_info, đánh dấu banner/commission_info/pub2_campaign_url là required. Cập nhật FR-004: UI Design chi tiết cho Affiliate Item Card (Figma specs), grid layout, info badges (Hoa hồng/Thưởng thêm/Thời gian), CTA "Khám phá ngay" navigate đến detail page. Đổi tên section "Chiến Dịch Affiliate Liên Kết". Cập nhật EPIC-003, User Stories, Traceability Matrix, Prioritization. |
 
 ---
 
@@ -963,10 +966,10 @@ After architecture is complete, run `/sprint-planning` to:
 |---------|-----------|-------------------------|-------------------|
 | EPIC-001 | Admin Campaign Management | FR-001, FR-002, FR-003, FR-015 | 6-8 |
 | EPIC-002 | Pub2 API Integration | FR-014, FR-016 | 5-7 |
-| EPIC-003 | Influencer Campaign Experience | FR-004, FR-017, FR-005, FR-006, FR-013 | 7-9 |
+| EPIC-003 | Influencer Campaign Experience | FR-004, FR-017, FR-018, FR-005, FR-006, FR-013 | 8-11 |
 | EPIC-004 | Reports & Dashboard | FR-007, FR-008, FR-009, FR-010, FR-011, FR-012 | 6-8 |
 
-**Total Estimated Stories:** 24-32
+**Total Estimated Stories:** 25-34
 
 ---
 
@@ -976,7 +979,7 @@ After architecture is complete, run `/sprint-planning` to:
 
 | Priority | Count | FRs |
 |----------|-------|-----|
-| **Must Have** | 15 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-007, FR-008, FR-010, FR-011, FR-013, FR-014, FR-015, FR-016, FR-017 |
+| **Must Have** | 16 | FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-007, FR-008, FR-010, FR-011, FR-013, FR-014, FR-015, FR-016, FR-017, FR-018 |
 | **Should Have** | 2 | FR-009, FR-012 |
 | **Could Have** | 0 | — |
 

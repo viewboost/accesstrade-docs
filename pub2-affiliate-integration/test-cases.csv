@@ -1,0 +1,62 @@
+,,,,,Môi trường,Dev,Stag,Prod,,
+,KỊCH BẢN KIỂM THỬ ,,,,Tổng số trường hợp kiểm thử,14,0,0,,
+,Tên màn hình/Tên chức năng,Màn hình đăng nhập,,,Số trường hợp kiểm thử đạt (Pass),12,0,0,,
+,Link test,https://tfluencer-dev.scalef.com/techcombank,,,Số trường hợp kiểm thử không đạt (Fail),2,0,0,,
+,Mã trường hợp kiểm thử,TC,,,Số trường hợp kiểm thử đang xem xét (Pending),0,0,0,,
+,,,,,Số trường hợp kiểm thử chưa thực hiện(New),0,0,0,,
+,,,,,,,,,,
+Mã trường hợp kiểm thử,Mục đích kiểm thử,Độ ưu tiên,Điều kiện,Các bước thực hiện,Kết quả mong muốn,Enviroment,,,Dev verify,Dev note
+,,,,,,QA dev,QA stag,QA prod,,
+TC01,Kiểm tra quản trị viên tạo mới chiến dịch affiliate,Cao,Đã đăng nhập với quyền admin,"1. Vào trang ""chiến dịch affiliate'
+2. Nhấn nút 'Tạo chiến dịch mới'
+3. Nhập thông tin: tên chiến dịch, chọn đối tác, đặt trạng thái (draft)
+4. Nhấn 'Lưu chiến dịch'","Chiến dịch affiliate được tạo thành công với trạng thái draft, hiển thị trong danh sách quản lý",Pass,,,,
+TC02,Kiểm tra quản trị viên cập nhật thông tin chiến dịch affiliate trước khi công khai,Cao,Đã tạo chiến dịch ở trạng thái draft,"1. Chọn chiến dịch ở trạng thái draft
+2. Nhấn 'Chỉnh sửa'
+3. Cập nhật thông tin: tên, mô tả, điều kiện hoa hồng
+4. Nhấn 'Lưu thay đổi'","Thông tin chiến dịch được cập nhật thành công, hiển thị dữ liệu mới",Pass,,,,
+TC03,Kiểm tra không thể thay đổi đối tác sau khi tạo chiến dịch,Cao,Đã tạo chiến dịch affiliate,"1. Vào trang chỉnh sửa chiến dịch
+2. Kiểm tra trường 'Đối tác'
+3. Cố gắng thay đổi giá trị đối tác",Trường 'Đối tác' bị vô hiệu hóa (disabled) hoặc không cho phép thay đổi,Pass,,,,
+TC04,Kiểm tra quản trị viên công khai chiến dịch (chuyển từ draft sang active),Cao,Đã tạo chiến dịch ở trạng thái draft,"1. Chọn chỉnh sửa chiến dịch draft
+2.  chọn 'Chuyển sang Active'
+3. Nhấn 'Xác nhận'","Trạng thái chiến dịch chuyển thành 'Active', người dùng có thể thấy trên campaign detail",Pass,,,,
+TC05,Kiểm tra quản trị viên kết nối chiến dịch affiliate với campaign/sự kiện hiện có,Cao,Đã có chiến dịch active và campaign/sự kiện tồn tại,"1. Vào chiến dịch affiliate cần kết nối
+2. Nhấn 'Kết nối với campaign/sự kiện'
+3. Chọn một hoặc nhiều campaign/sự kiện
+4. Nhấn 'Lưu kết nối'",Chiến dịch affiliate được kết nối thành công với campaign/sự kiện đã chọn,Pass,,,,
+TC06,Kiểm tra người dùng xem chiến dịch affiliate trên trang chi tiết campaign,Cao,Đã đăng nhập và vào trang chi tiết campaign có chiến dịch affiliate kết nối,"1. Vào trang chi tiết campaign
+2. Cuộn xuống tìm phần 'Chiến dịch affiliate' 
+3. Quan sát danh sách chiến dịch affiliate có sẵn",Phần chiến dịch affiliate hiển thị chính xác trên trang chi tiết campaign ,Pass,,,,
+TC07,Kiểm tra người dùng tạo affiliate link từ chiến dịch,Cao,Đã xem chiến dịch affiliate trên campaign detail,"1. Nhấn nút 'Lấy link'
+2. Hệ thống gửi request tới Pub2 API
+3. Quan sát kết quả","Affiliate link được tạo thành công, hiển thị link rút gọn và link đầy đủ",Pass,,,,
+TC12,Kiểm tra banner nhắc nhở liên kết tài khoản AccessTrade,Cao,Người dùng chưa liên kết tài khoản AccessTrade,"1. Vào campaign detail có chiến dịch affiliate
+3. Show banner nhắc cần liên kết tài khoản AT trên TOP ",Banner hiển thị  nhắc nhở liên kết tài khoản AccessTrade,Pass,,,,
+TC13,Kiểm tra popup yêu cầu xác thực trước khi tạo affiliate link,Cao,Người dùng chưa liên kết AccessTrade ,"1. Nhấn 'Tạo link affiliate'
+2. Quan sát popup xuất hiện
+3. Nhấn 'Liên kết tài khoản'","Popup xác thực xuất hiện trước khi tạo link, chuyển hướng tới flow liên kết",Pass,,,,
+TC14,Kiểm tra flow xác thực ,Cao,Đã nhấn 'Liên kết tài khoản' từ popup,"1. Hoàn thành flow liên kết AccessTrade
+2. Kiểm tra URL sau khi hoàn thành
+3. Quan sát trang hiển thị","Liên kết thành công 
+Người dùng vẫn ở trang liên kết tài khoản",Pass,,,,
+TC15,Kiểm tra API tạo affiliate link phản hồi trong <3s,Cao,Đã sẵn sàng tạo link,"1. Ghi nhận thời gian bắt đầu
+2. Nhấn 'Tạo link affiliate'
+3. Ghi nhận thời gian nhận phản hồi",API phản hồi trong 3 giây hoặc ít hơn (phụ thuộc vào Pub2),Pass,,,,
+TC16,Kiểm tra lỗi khi tạo link thất bại (API Pub2 lỗi),Trung,Cố gắng tạo affiliate link trong điều kiện API lỗi,"1. Nhấn 'Tạo link affiliate'
+2. API Pub2 trả về lỗi
+3. Quan sát thông báo lỗi","Hệ thống hiển thị thông báo lỗi rõ ràng: 'Không thể tạo link, vui lòng thử lại sau'",Checking,,,,
+TC17,Kiểm tra quản trị viên lọc chiến dịch affiliate theo trạng thái,Cao,Đã có nhiều chiến dịch ở trạng thái khác nhau,"1. Vào trang quản lý chiến dịch
+2. Chọn bộ lọc 'Trạng thái'
+3. Chọn: Draft, Active, hoặc Inactive
+4. Quan sát kết quả",Danh sách chiến dịch được lọc chính xác theo trạng thái đã chọn,Fail,,,,lọc theo chờ duyệt đang lỗi
+TC18,Kiểm tra quản trị viên lọc chiến dịch affiliate theo danh mục/đối tác,Trung,Đã có nhiều chiến dịch từ các đối tác khác nhau,"1. Vào trang quản lý chiến dịch
+2. Chọn bộ lọc 'Danh mục' hoặc 'Đối tác'
+3. Chọn một danh mục/đối tác
+4. Quan sát kết quả",Danh sách chiến dịch được lọc chính xác theo danh mục/đối tác đã chọn,Fail,,,,
+TC23,Kiểm tra sao chép affiliate link (copy to clipboard),Cao,Đã tạo affiliate link thành công,"1. Vào danh sách link đã tạo
+2. Nhấn nút 'Sao chép' hoặc icon copy
+3. Kiểm tra clipboard","Link được sao chép đến clipboard, có thông báo 'Đã sao chép'",Pass,,,,
+TC24,Kiểm tra chia sẻ affiliate link qua mạng xã hội,Trung,Đã tạo affiliate link thành công,"1. Vào danh sách link đã tạo
+2. Nhấn nút 'Chia sẻ'
+3. Chọn nền tảng (Facebook, Instagram, TikTok, v.v.)",Hộp thoại chia sẻ mở ra với link affiliate được điền sẵn,Rejected,,,,k có nút chia sẻ
