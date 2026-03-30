@@ -357,7 +357,7 @@ admin/src/pages/affiliate-campaign/
     commissionRate: String,           // "250,000đ / thẻ approved"
     pub2CampaignId: String,           // Pub2 campaign ID (unique, required)
     pub2CampaignUrl: String,          // Original URL cho tracking (required)
-    status: String,                   // "draft" | "active" | "inactive"
+    status: String,                   // "active" | "inactive"
     startAt: Date,                    // Ngày bắt đầu
     endAt: Date,                      // Ngày kết thúc (nullable)
     createdBy: ObjectId,              // Admin user ID

@@ -82,9 +82,9 @@ Admin tạo affiliate campaign mới trên Ambassador Admin panel. Campaign bao 
 **Acceptance Criteria:**
 - [ ] Admin có thể tạo affiliate campaign với các trường: partner (required), title, description, short_desc (mô tả ngắn, hiển thị trên card listing và trang chi tiết thay cho desc), banner image (required), category, commission info (required), bonus_info, pub2_campaign_id, pub2_campaign_url (required), start_date, end_date
 - [ ] **Partner là required khi tạo và immutable sau khi tạo** (giống event). Root staff chọn partner, non-root staff tự động gán partner của mình
-- [ ] **Status mặc định là `draft` khi tạo** — admin không chọn status lúc tạo, chỉ thay đổi sau khi tạo
+- [ ] **Status mặc định là `inactive` khi tạo** — admin không chọn status lúc tạo, chỉ thay đổi sau khi tạo
 - [ ] Admin có thể chỉnh sửa và cập nhật campaign (trừ partner)
-- [ ] Admin có thể thay đổi status: draft / active / inactive
+- [ ] Admin có thể thay đổi status: active / inactive
 - [ ] Validate `pub2_campaign_id` là required và không trùng lặp
 - [ ] Campaign chỉ hiển thị cho influencer khi status = active
 
@@ -100,8 +100,8 @@ Admin tạo affiliate campaign mới trên Ambassador Admin panel. Campaign bao 
 Admin xem, tìm kiếm, lọc và quản lý danh sách affiliate campaigns đã tạo.
 
 **Acceptance Criteria:**
-- [ ] Hiển thị danh sách campaigns với: title, status, category, commission, ngày tạo
-- [ ] Lọc theo status (draft/active/inactive), category
+- [ ] Hiển thị danh sách campaigns với: title, status, commission, ngày tạo
+- [ ] Lọc theo status (active/inactive)
 - [ ] Tìm kiếm theo title
 - [ ] Sắp xếp theo ngày tạo, title
 - [ ] Bulk actions: activate / deactivate nhiều campaigns
@@ -827,7 +827,7 @@ Admin login Ambassador Admin
   → Nhập pub2_campaign_id (lấy từ Pub2 dashboard)
   → Nhập pub2_campaign_url (original_url cho tracking)
   → Nhập commission info
-  → Save (status = draft)
+  → Save (status = inactive)
   → Review → Activate (status = active)
   → Vào chi tiết campaign/event hiện tại (admin)
   → Click "Liên kết Affiliate Campaign"
