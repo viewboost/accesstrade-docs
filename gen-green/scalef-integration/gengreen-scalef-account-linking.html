@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Liên kết Tài khoản Scalef — Phía Gen-Green</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; line-height: 1.6; }
+  h1 { font-size: 24px; border-bottom: 2px solid #333; padding-bottom: 8px; }
+  h2 { font-size: 20px; color: #2c5282; margin-top: 32px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+  h3 { font-size: 16px; color: #4a5568; margin-top: 24px; }
+  blockquote { background: #f7fafc; border-left: 4px solid #4299e1; padding: 12px 16px; margin: 16px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+  th, td { border: 1px solid #cbd5e0; padding: 8px 12px; text-align: left; }
+  th { background: #edf2f7; font-weight: 600; }
+  .flow-box { background: #fff; border: 2px solid #4299e1; border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .flow-box.reject { border-color: #e53e3e; background: #fff5f5; }
+  .flow-box.success { border-color: #38a169; background: #f0fff4; }
+  .flow-box.check { border-color: #d69e2e; background: #fffff0; }
+  .flow-box h4 { margin: 0 0 8px 0; font-size: 14px; }
+  .flow-arrow { text-align: center; font-size: 20px; color: #718096; margin: 4px 0; }
+  .mockup { background: #f7fafc; border: 2px solid #a0aec0; border-radius: 12px; padding: 24px; margin: 16px 0; max-width: 400px; }
+  .mockup h4 { text-align: center; margin: 0 0 16px 0; font-size: 18px; }
+  .mockup-input { display: block; width: 90%; margin: 8px auto; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; background: #fff; color: #a0aec0; font-size: 14px; }
+  .mockup-btn { display: block; width: 90%; margin: 8px auto; padding: 10px; border: none; border-radius: 6px; font-size: 14px; text-align: center; cursor: pointer; }
+  .mockup-btn.primary { background: #4299e1; color: #fff; }
+  .mockup-btn.scalef { background: #805ad5; color: #fff; }
+  .mockup-btn.google { background: #fff; color: #333; border: 1px solid #cbd5e0; }
+  .mockup-divider { display: flex; align-items: center; margin: 16px 0; }
+  .mockup-divider hr { flex: 1; border: none; border-top: 1px solid #cbd5e0; }
+  .mockup-divider span { padding: 0 12px; color: #a0aec0; font-size: 13px; }
+  .mockup-footer { text-align: center; font-size: 13px; color: #718096; margin-top: 16px; }
+  .mockup-footer a { color: #4299e1; text-decoration: none; }
+  .code-field { font-family: 'Courier New', monospace; background: #edf2f7; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .tag.reject { background: #fed7d7; color: #c53030; }
+  .tag.pass { background: #c6f6d5; color: #276749; }
+  .tag.skip { background: #fefcbf; color: #975a16; }
+  .settings-row { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 8px; margin: 8px 0; }
+  .settings-row .label { font-weight: 600; min-width: 60px; }
+  .settings-row .status { flex: 1; }
+  .settings-row .action { }
+  .settings-row .action button { padding: 6px 16px; border-radius: 6px; border: 1px solid #4299e1; background: #fff; color: #4299e1; cursor: pointer; font-size: 13px; }
+  .settings-row.linked .status { color: #38a169; }
+  .settings-row.unlinked .status { color: #e53e3e; }
+  ul.rule-list { padding-left: 20px; }
+  ul.rule-list li { margin: 4px 0; }
+  .note { background: #ebf8ff; border-left: 4px solid #4299e1; padding: 8px 12px; margin: 12px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<h1>Liên kết Tài khoản Scalef — Phía Gen-Green</h1>
+
+<blockquote>
+  <strong>Dành cho:</strong> Team Gen-Green<br>
+  <strong>Ngày:</strong> 2026-04-01<br>
+  <strong>Liên quan:</strong> Tích hợp Scalef Affiliate
+</blockquote>
+
+<hr>
+
+<h2>1. Tổng quan</h2>
+
+<p>Creator trên Gen-Green cần liên kết tài khoản Scalef (1 lần) để tham gia chiến dịch affiliate.</p>
+
+<p><strong>Luồng cốt lõi:</strong></p>
+
+<div class="flow-box">
+  Creator bấm nút trên Gen-Green
+  <div class="flow-arrow">↓</div>
+  Sang SSO Scalef (đăng nhập hoặc đăng ký)
+  <div class="flow-arrow">↓</div>
+  Return về Gen-Green
+  <div class="flow-arrow">↓</div>
+  Hệ thống kiểm tra thông tin
+  <div class="flow-arrow">↓</div>
+  Liên kết thành công hoặc báo lỗi
+</div>
+
+<hr>
+
+<h2>2. Điểm chạm trên Gen-Green</h2>
+
+<p>Những nơi creator thấy nút dẫn sang SSO Scalef:</p>
+
+<table>
+  <thead>
+    <tr><th>Nơi</th><th>Loại</th><th>Mô tả</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Trang đăng nhập</td><td>Nút SSO</td><td>"Đăng nhập bằng Scalef" cạnh Google, Apple</td></tr>
+    <tr><td>Trang đăng ký</td><td>Nút SSO</td><td>"Đăng ký bằng Scalef"</td></tr>
+    <tr><td>Settings → Tài khoản liên kết</td><td>Gợi ý</td><td>Hiện trạng thái "Chưa liên kết" + nút [Liên kết]</td></tr>
+    <tr><td>Tab Affiliate trong dashboard</td><td>Gợi ý</td><td>Onboarding card giới thiệu affiliate</td></tr>
+    <tr><td>Chi tiết Campaign có affiliate</td><td>Gợi ý</td><td>Banner "Liên kết Scalef để tham gia"</td></tr>
+    <tr><td>Bấm "Tham gia chiến dịch"</td><td>Chặn</td><td>Popup "Cần liên kết tài khoản Scalef trước"</td></tr>
+    <tr><td>Bấm "Tạo link affiliate"</td><td>Chặn</td><td>Popup tương tự</td></tr>
+  </tbody>
+</table>
+
+<p>Tất cả đều dẫn tới cùng 1 đích: <strong>redirect sang SSO Scalef</strong>.</p>
+
+<h3>Mockup</h3>
+
+<p><strong>Trang đăng nhập:</strong></p>
+
+<div class="mockup">
+  <h4>Đăng nhập Gen-Green</h4>
+  <div class="mockup-input">SĐT / Email</div>
+  <div class="mockup-input">Mật khẩu</div>
+  <div class="mockup-btn primary">Đăng nhập</div>
+  <div class="mockup-divider"><hr><span>hoặc</span><hr></div>
+  <div class="mockup-btn scalef">Đăng nhập bằng Scalef</div>
+  <div class="mockup-btn google">Đăng nhập bằng Google</div>
+  <div class="mockup-footer">Chưa có tài khoản? <a href="#">Đăng ký</a></div>
+</div>
+
+<p><strong>Popup chặn khi bấm "Tham gia chiến dịch":</strong></p>
+
+<div class="mockup" style="max-width: 450px;">
+  <h4>Cần liên kết tài khoản Scalef</h4>
+  <p style="text-align: center; font-size: 14px; color: #4a5568;">
+    Để tham gia chiến dịch affiliate, bạn cần liên kết tài khoản Scalef trước.
+  </p>
+  <div style="display: flex; gap: 12px; justify-content: center; margin-top: 16px;">
+    <button style="padding: 10px 24px; background: #4299e1; color: #fff; border: none; border-radius: 6px; cursor: pointer;">Liên kết ngay</button>
+    <button style="padding: 10px 24px; background: #fff; color: #718096; border: 1px solid #cbd5e0; border-radius: 6px; cursor: pointer;">Để sau</button>
+  </div>
+</div>
+
+<p><strong>Settings — Tài khoản liên kết:</strong></p>
+
+<div class="settings-row unlinked">
+  <div class="label">Scalef</div>
+  <div class="status">Chưa liên kết</div>
+  <div class="action"><button>Liên kết</button></div>
+</div>
+<div class="settings-row linked">
+  <div class="label">Scalef</div>
+  <div class="status">publisher@email.com — 01/04/2026</div>
+</div>
+
+<p><em>Không có nút gỡ — chỉ admin mới gỡ được.</em></p>
+
+<hr>
+
+<h2>3. Luồng liên kết (user đã đăng nhập Gen-Green)</h2>
+
+<p>Áp dụng khi creator đã đăng nhập Gen-Green, bấm nút liên kết từ Settings / Campaign / Affiliate tab / popup chặn.</p>
+
+<div class="flow-box">
+  <strong>Creator bấm "Liên kết Scalef"</strong>
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box check">
+  <h4>Kiểm tra trước SSO</h4>
+  Gen-Green user đã liên kết Scalef user khác rồi?<br>
+  • <span class="tag reject">CÓ → REJECT</span> ngay (không cần sang Scalef)<br>
+  • <span class="tag pass">CHƯA → tiếp</span>
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box" style="border-color: #805ad5; background: #faf5ff;">
+  <h4>🔗 SANG SCALEF (SSO)</h4>
+  Redirect sang SSO Scalef.<br><br>
+  Bên Scalef:<br>
+  • Đã có tài khoản → đăng nhập bình thường<br>
+  • Chưa có tài khoản → Scalef hiện màn xác nhận:
+  <em>"Đăng ký bằng tài khoản Gen-Green?"</em>
+  (hiển thị tên, SĐT, email từ Gen-Green)<br>
+  → User bấm xác nhận → Scalef tự tạo tài khoản (không cần điền form — xem mục 5 Bảo mật)<br><br>
+  Scalef xử lý xong → redirect về Gen-Green kèm authorization code.
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box">
+  Gen-Green backend đổi code → gọi Scalef API <span class="code-field">/userinfo</span><br>
+  → nhận: Scalef User ID, CCCD, SĐT, Email, Tên<br>
+  <em>(backend-to-backend, không qua browser)</em>
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box check">
+  <h4>CHECK 1: Scalef user đã liên kết Gen-Green user khác?</h4>
+  • <span class="tag reject">CÓ → REJECT</span>
+  • <span class="tag pass">CHƯA → tiếp</span>
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box check">
+  <h4>CHECK 2: Thông tin 2 bên có mâu thuẫn không?</h4>
+  So sánh từng trường giữa Scalef và Gen-Green user:<br><br>
+  • <strong>CCCD:</strong> cả 2 bên đều có mà khác nhau? → <span class="tag reject">REJECT</span><br>
+  • <strong>SĐT:</strong> cả 2 bên đều có mà khác nhau? → <span class="tag reject">REJECT</span><br>
+  • <strong>Email:</strong> cả 2 bên đều có mà khác nhau? → <span class="tag reject">REJECT</span><br><br>
+  Nếu 1 bên không có → <span class="tag skip">bỏ qua trường đó, cho qua</span>
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box check">
+  <h4>CHECK 3: Thông tin Scalef đã thuộc Gen-Green user khác chưa?</h4>
+  Với mỗi thông tin Scalef trả về, tìm trong toàn bộ Gen-Green user (trừ user hiện tại):<br><br>
+  • <strong>CCCD</strong> đã thuộc Gen-Green user khác? → <span class="tag reject">REJECT</span><br>
+  • <strong>SĐT</strong> đã thuộc Gen-Green user khác? → <span class="tag reject">REJECT</span><br>
+  • <strong>Email</strong> đã thuộc Gen-Green user khác? → <span class="tag reject">REJECT</span><br><br>
+  Chỉ check trường mà Scalef <strong>CÓ</strong> trả về.
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box success">
+  <h4>✅ LIÊN KẾT THÀNH CÔNG</h4>
+</div>
+
+<h3>Ví dụ minh họa</h3>
+
+<p><strong>Ví dụ 1 — Happy path:</strong></p>
+
+<table>
+  <thead><tr><th></th><th>Scalef</th><th>Gen-Green user hiện tại</th></tr></thead>
+  <tbody>
+    <tr><td>CCCD</td><td>012345678901</td><td>012345678901</td></tr>
+    <tr><td>SĐT</td><td>+84912345678</td><td>+84912345678</td></tr>
+    <tr><td>Email</td><td>a@gmail.com</td><td>a@gmail.com</td></tr>
+  </tbody>
+</table>
+
+<p>Check 1: chưa ai liên kết ✓ → Check 2: tất cả khớp ✓ → Check 3: không trùng ai khác ✓ → <strong>Thành công</strong></p>
+
+<p><strong>Ví dụ 2 — Gen-Green thiếu thông tin:</strong></p>
+
+<table>
+  <thead><tr><th></th><th>Scalef</th><th>Gen-Green user hiện tại</th></tr></thead>
+  <tbody>
+    <tr><td>CCCD</td><td>012345678901</td><td>012345678901</td></tr>
+    <tr><td>SĐT</td><td>+84912345678</td><td><em>(trống)</em></td></tr>
+    <tr><td>Email</td><td>a@gmail.com</td><td><em>(trống)</em></td></tr>
+  </tbody>
+</table>
+
+<p>Check 2: CCCD khớp ✓, SĐT bỏ qua (Gen-Green trống) ✓, Email bỏ qua ✓<br>
+Check 3: SĐT +84912345678 đã thuộc Gen-Green user khác? Email a@gmail.com đã thuộc Gen-Green user khác?</p>
+<ul>
+  <li>Không trùng ai → <strong>Thành công</strong></li>
+  <li>SĐT đã thuộc user khác → <strong>REJECT</strong></li>
+</ul>
+
+<p><strong>Ví dụ 3 — Thông tin mâu thuẫn:</strong></p>
+
+<table>
+  <thead><tr><th></th><th>Scalef</th><th>Gen-Green user hiện tại</th></tr></thead>
+  <tbody>
+    <tr><td>CCCD</td><td>012345678901</td><td>999999999999</td></tr>
+  </tbody>
+</table>
+
+<p>Check 2: CCCD cả 2 bên đều có nhưng khác nhau → <strong>REJECT</strong></p>
+
+<hr>
+
+<h2>4. Luồng "Đăng nhập bằng Scalef" (user chưa đăng nhập)</h2>
+
+<p>Áp dụng khi user bấm "Đăng nhập bằng Scalef" hoặc "Đăng ký bằng Scalef" trên trang login/register. User chưa đăng nhập Gen-Green → cần tìm hoặc tạo Gen-Green user.</p>
+
+<div class="flow-box">
+  <strong>Bấm "Đăng nhập bằng Scalef"</strong>
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box" style="border-color: #805ad5; background: #faf5ff;">
+  Sang SSO Scalef → đăng nhập hoặc đăng ký
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box">
+  Return về Gen-Green, backend lấy thông tin từ Scalef:<br>
+  Scalef User ID, CCCD, SĐT, Email, Tên
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box check">
+  <h4>BƯỚC 1: Scalef user đã liên kết Gen-Green user chưa?</h4>
+  • <span class="tag pass">CÓ → Đăng nhập vào Gen-Green user đó. Xong.</span><br>
+  • CHƯA → tiếp Bước 2
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box check">
+  <h4>BƯỚC 2: Thông tin Scalef đã thuộc Gen-Green user nào chưa? (CCCD, SĐT, Email)</h4>
+  • <span class="tag reject">CÓ → REJECT</span><br>
+  <em>"Đã tồn tại tài khoản Gen-Green với thông tin này. Vui lòng đăng nhập Gen-Green rồi liên kết Scalef trong phần Cài đặt."</em><br><br>
+  • KHÔNG → tiếp Bước 3
+</div>
+<div class="flow-arrow">↓</div>
+
+<div class="flow-box success">
+  <h4>BƯỚC 3: Tạo tài khoản Gen-Green mới</h4>
+  Điền sẵn từ Scalef: tên, SĐT, email, CCCD<br>
+  Thiếu thông tin thì tạo luôn, bổ sung sau.<br><br>
+  Tạo xong → liên kết Scalef luôn → đăng nhập
+</div>
+
+<h3>Ví dụ</h3>
+
+<p><strong>Ví dụ 1 — Đã liên kết trước đó (Bước 1):</strong></p>
+<p>Publisher Minh đã liên kết Scalef với Gen-Green tuần trước. Hôm nay mở gen-green.global, bấm "Đăng nhập bằng Scalef".</p>
+<p>→ Bước 1: Scalef user của Minh đã liên kết Gen-Green user → đăng nhập luôn. Xong.</p>
+
+<p><strong>Ví dụ 2 — Đã có tài khoản Gen-Green nhưng chưa liên kết (Bước 2 → reject):</strong></p>
+<p>Publisher Lan có tài khoản Scalef (SĐT 0912345678). Lan cũng đã đăng ký Gen-Green trước đó bằng cùng SĐT 0912345678, nhưng chưa liên kết Scalef.</p>
+<p>Lan vào gen-green.global, bấm "Đăng nhập bằng Scalef".</p>
+<p>→ Bước 1: Scalef user chưa liên kết ai → tiếp<br>
+→ Bước 2: SĐT 0912345678 đã thuộc Gen-Green user (chính Lan) → <strong>REJECT</strong><br>
+→ Hiển thị: "Đã tồn tại tài khoản Gen-Green với SĐT này. Vui lòng đăng nhập gen-green.global rồi liên kết Scalef trong phần Cài đặt."</p>
+<p>Lan đăng nhập Gen-Green bằng SĐT → vào Settings → bấm "Liên kết Scalef" → chạy luồng mục 3 → thành công.</p>
+
+<p><strong>Ví dụ 3 — Chưa có tài khoản Gen-Green (Bước 3):</strong></p>
+<p>Publisher Hùng có tài khoản Scalef (SĐT 0987654321, email hung@gmail.com). Hùng chưa từng dùng Gen-Green.</p>
+<p>Hùng vào gen-green.global, bấm "Đăng ký bằng Scalef".</p>
+<p>→ Bước 1: Scalef user chưa liên kết ai → tiếp<br>
+→ Bước 2: SĐT 0987654321 chưa thuộc ai, email hung@gmail.com chưa thuộc ai → tiếp<br>
+→ Bước 3: Tạo Gen-Green user mới (tên: Hùng, SĐT: 0987654321, email: hung@gmail.com) + liên kết Scalef luôn → đăng nhập.</p>
+
+<hr>
+
+<h2>5. Bảo mật</h2>
+
+<p>Thông tin nhạy cảm (CCCD, SĐT, email) <strong>không bao giờ đi qua browser</strong>. Chỉ truyền backend-to-backend.</p>
+
+<h3>Chiều đi: Gen-Green → Scalef (tạo tài khoản nhanh)</h3>
+
+<p>Khi user chưa có tài khoản Scalef, Scalef cần thông tin Gen-Green để tạo tài khoản. Thông tin truyền qua prefill token (backend-to-backend), không qua URL.</p>
+
+<div class="flow-box">
+  <strong>1.</strong> Gen-Green backend tạo prefill token (1 lần, hết hạn 5 phút)
+</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-box">
+  <strong>2.</strong> Redirect browser kèm token:<br>
+  <span class="code-field">scalef.vn/oauth/authorize?client_id=gengreen&amp;prefill_token=xxx</span><br>
+  <em>(token là chuỗi random, KHÔNG chứa thông tin user)</em>
+</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-box">
+  <strong>3.</strong> Scalef backend gọi API Gen-Green để đổi token → thông tin:<br>
+  <span class="code-field">GET gengreen.vn/api/prefill/{token}</span> → {tên, SĐT, email, CCCD}<br>
+  <em>Token bị xóa ngay sau khi dùng</em>
+</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-box">
+  <strong>4.</strong> Scalef hiện màn xác nhận: "Đăng ký bằng tài khoản Gen-Green?"<br>
+  (hiển thị tên, SĐT, email — KHÔNG hiện CCCD)<br>
+  User bấm xác nhận → Scalef tự tạo tài khoản
+</div>
+
+<h3>Chiều về: Scalef → Gen-Green (trả kết quả)</h3>
+
+<div class="flow-box">
+  <strong>1.</strong> Scalef redirect browser kèm authorization code:<br>
+  <span class="code-field">gengreen.vn/callback?code=abc123</span><br>
+  <em>(code là chuỗi random, KHÔNG chứa thông tin user)</em>
+</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-box">
+  <strong>2.</strong> Gen-Green backend đổi code → access token (backend-to-backend)
+</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-box">
+  <strong>3.</strong> Gen-Green backend gọi Scalef API <span class="code-field">/userinfo</span><br>
+  → nhận: Scalef User ID, CCCD, SĐT, Email, Tên
+</div>
+
+<hr>
+
+<h2>6. Khi bị reject</h2>
+
+<p>Mọi trường hợp reject đều hiển thị cùng 1 màn hình:</p>
+
+<div class="mockup" style="max-width: 500px;">
+  <h4>Không thể liên kết tài khoản</h4>
+  <p style="text-align: center; font-size: 14px; color: #e53e3e;"><strong>Lý do:</strong> {xem bảng bên dưới}</p>
+  <p style="text-align: center; font-size: 13px; color: #4a5568;">
+    Nếu đây là nhầm lẫn, chúng tôi sẽ phản hồi qua email trong 3 ngày làm việc.
+  </p>
+  <div style="display: flex; gap: 12px; justify-content: center; margin-top: 16px;">
+    <button style="padding: 10px 24px; background: #4299e1; color: #fff; border: none; border-radius: 6px; cursor: pointer;">Gửi yêu cầu hỗ trợ</button>
+    <button style="padding: 10px 24px; background: #fff; color: #718096; border: 1px solid #cbd5e0; border-radius: 6px; cursor: pointer;">Đóng</button>
+  </div>
+</div>
+
+<p>Bấm "Gửi yêu cầu hỗ trợ" → hệ thống <strong>tự động tạo ticket</strong> (Gen-Green User ID, Scalef User ID, lý do reject, timestamp). User không cần nhập gì. Email thông báo gửi về admin.</p>
+
+<h3>Bảng lý do reject</h3>
+
+<table>
+  <thead><tr><th>Check</th><th>Điều kiện</th><th>User thấy</th></tr></thead>
+  <tbody>
+    <tr><td>Trước SSO</td><td>Gen-Green user đã liên kết Scalef user khác</td><td>"Tài khoản Gen-Green của bạn đã liên kết với tài khoản Scalef khác."</td></tr>
+    <tr><td>1</td><td>Scalef user đã liên kết Gen-Green user khác</td><td>"Tài khoản Scalef này đã liên kết với tài khoản Gen-Green khác."</td></tr>
+    <tr><td>2</td><td>CCCD 2 bên khác nhau</td><td>"Thông tin CCCD không khớp giữa 2 tài khoản."</td></tr>
+    <tr><td>2</td><td>SĐT 2 bên khác nhau</td><td>"Số điện thoại không khớp giữa 2 tài khoản."</td></tr>
+    <tr><td>2</td><td>Email 2 bên khác nhau</td><td>"Email không khớp giữa 2 tài khoản."</td></tr>
+    <tr><td>3</td><td>CCCD Scalef đã thuộc Gen-Green user khác</td><td>"CCCD này đã được sử dụng bởi tài khoản Gen-Green khác."</td></tr>
+    <tr><td>3</td><td>SĐT Scalef đã thuộc Gen-Green user khác</td><td>"Số điện thoại này đã được sử dụng bởi tài khoản Gen-Green khác."</td></tr>
+    <tr><td>3</td><td>Email Scalef đã thuộc Gen-Green user khác</td><td>"Email này đã được sử dụng bởi tài khoản Gen-Green khác."</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>7. Quy tắc nghiệp vụ</h2>
+
+<table>
+  <thead><tr><th>Quy tắc</th><th>Chi tiết</th></tr></thead>
+  <tbody>
+    <tr><td><strong>1-đối-1</strong></td><td>1 Gen-Green user ↔ 1 Scalef user</td></tr>
+    <tr><td><strong>Thông tin khác → reject</strong></td><td>CCCD, SĐT, Email: cả 2 bên đều có mà khác nhau → reject. 1 bên thiếu → bỏ qua, cho qua</td></tr>
+    <tr><td><strong>Trùng user khác → reject</strong></td><td>CCCD/SĐT/Email Scalef đã thuộc Gen-Green user khác → reject</td></tr>
+    <tr><td><strong>Không tự gỡ</strong></td><td>Chỉ admin gỡ liên kết</td></tr>
+    <tr><td><strong>Scalef ID từ backend</strong></td><td>Frontend không gửi Scalef ID, backend tự inject khi gọi API Scalef</td></tr>
+    <tr><td><strong>Reject → ticket tự động</strong></td><td>Hệ thống tự tạo ticket, user không nhập gì. Hẹn phản hồi 3 ngày</td></tr>
+    <tr><td><strong>Ghi log mọi thứ</strong></td><td>Liên kết, reject, gỡ đều lưu lịch sử</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>8. Chuẩn hóa dữ liệu trước khi so sánh</h2>
+
+<table>
+  <thead><tr><th>Trường</th><th>Chuẩn hóa</th><th>Ví dụ</th></tr></thead>
+  <tbody>
+    <tr><td>CCCD</td><td>Bỏ khoảng trắng, chỉ giữ số</td><td>"012 345 678 901" → "012345678901"</td></tr>
+    <tr><td>SĐT</td><td>Đưa về +84, bỏ khoảng trắng</td><td>"0912 345 678" → "+84912345678"</td></tr>
+    <tr><td>Email</td><td>Viết thường, bỏ khoảng trắng</td><td>"User@Gmail.COM " → "user@gmail.com"</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>9. Dữ liệu lưu trữ</h2>
+
+<h3>User model — thêm fields</h3>
+
+<table>
+  <thead><tr><th>Trường</th><th>Kiểu</th><th>Mô tả</th></tr></thead>
+  <tbody>
+    <tr><td><span class="code-field">scalef_user_id</span></td><td>string, nullable</td><td>ID tài khoản Scalef đã liên kết</td></tr>
+    <tr><td><span class="code-field">scalef_linked_at</span></td><td>datetime, nullable</td><td>Thời điểm liên kết</td></tr>
+    <tr><td><span class="code-field">scalef_link_method</span></td><td>enum, nullable</td><td>"oauth" / "batch" / "auto_create"</td></tr>
+  </tbody>
+</table>
+
+<h3>Bảng lịch sử liên kết</h3>
+
+<table>
+  <thead><tr><th>Trường</th><th>Kiểu</th><th>Mô tả</th></tr></thead>
+  <tbody>
+    <tr><td><span class="code-field">id</span></td><td>ObjectId</td><td></td></tr>
+    <tr><td><span class="code-field">gen_green_user_id</span></td><td>string</td><td></td></tr>
+    <tr><td><span class="code-field">scalef_user_id</span></td><td>string</td><td></td></tr>
+    <tr><td><span class="code-field">action</span></td><td>enum</td><td>"linked" / "unlinked" / "rejected"</td></tr>
+    <tr><td><span class="code-field">method</span></td><td>enum</td><td>"oauth" / "batch" / "admin"</td></tr>
+    <tr><td><span class="code-field">reject_reason</span></td><td>string, nullable</td><td>Lý do reject</td></tr>
+    <tr><td><span class="code-field">performed_by</span></td><td>string</td><td>User ID hoặc Admin ID</td></tr>
+    <tr><td><span class="code-field">timestamp</span></td><td>datetime</td><td></td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<p><em>Tham chiếu: Tích hợp Scalef Affiliate vào Gen-Green · Brainstorm 2026-04-01</em></p>
+
+</body>
+</html>
