@@ -287,11 +287,23 @@ Influencer tham gia chiến dịch affiliate. Backend gọi Pub2 API 1.2 tạo c
 - [x] Xử lý error codes từ Pub2 API 1.2
 - [x] Nút "Tham gia chiến dịch" trong affiliate campaign card
 - [x] Sau join APPROVED → hiện nút "Tạo link affiliate"
+- [x] **Retry mechanism cho PENDING/REJECTED:**
+  - PENDING: Banner vàng "Yêu cầu tham gia đang được xử lý" + "Thử lại sau X giờ"
+  - REJECTED: Banner đỏ "Bạn không đủ điều kiện" + "Thử lại sau X ngày"
+  - Backend tính `canRetry` (bool) + `retryAfter` (timestamp) từ `updatedAt` + ENV config
+  - ENV: `AFFILIATE_RETRY_PENDING_SECONDS` (default: 86400 = 24h), `AFFILIATE_RETRY_REJECTED_SECONDS` (default: 1209600 = 14 ngày)
+  - `canRetry = true` → hiện nút "Thử lại", backend gọi lại Pub2 API
+  - `canRetry = false` → hiện countdown "Thử lại sau X giờ/ngày"
 
 **Implementation:**
 - Backend: `pkg/public/handler/affiliate.go` → `JoinCampaign()`, `GetContract()`
+- Backend: `pkg/public/service/affiliate.go` → `contractRetryInfo()`, `buildContractDetail()`
+- Backend: `internal/service/affiliate.go` → retry logic cho PENDING/REJECTED
+- Config: `internal/config/env.go` → `RetryPendingSeconds`, `RetryRejectedSeconds`
+- Response: `pkg/public/model/response/affiliate.go` → `canRetry`, `retryAfter` fields
 - Pub2: `internal/module/pub2/client.go` → `JoinCampaign()`
 - Model: `internal/model/mg/affiliate.go` → `AffiliateContractRaw`
+- Frontend: `frontend/src/pages/affiliate-campaign-detail/index.tsx` → retry UI states
 - Collection: `affiliate-contracts`
 
 ---
