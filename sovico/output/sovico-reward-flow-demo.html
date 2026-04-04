@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sovico — Luồng Tính Thưởng Tương Tác</title>
+<style>
+  /* ===== RESET & BASE ===== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0a0a1a; color: #fff; }
+
+  /* ===== SLIDE SYSTEM ===== */
+  .deck { position: relative; width: 100vw; height: 100vh; }
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px 60px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    transform: translateX(60px);
+  }
+  .slide.active {
+    opacity: 1; pointer-events: auto; transform: translateX(0);
+  }
+  .slide.prev {
+    opacity: 0; transform: translateX(-60px);
+  }
+
+  /* ===== NAVIGATION ===== */
+  .nav { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+  .nav button {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+    color: #fff; padding: 10px 24px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; backdrop-filter: blur(10px); transition: all 0.3s;
+  }
+  .nav button:hover { background: rgba(255,255,255,0.25); }
+  .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .slide-counter { position: fixed; bottom: 35px; right: 40px; font-size: 13px; color: rgba(255,255,255,0.4); z-index: 100; }
+
+  /* ===== PROGRESS BAR ===== */
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #E30613, #ff6b35); z-index: 100; transition: width 0.4s ease; }
+
+  /* ===== COMMON ELEMENTS ===== */
+  h1 { font-size: 42px; font-weight: 700; margin-bottom: 12px; line-height: 1.2; }
+  h2 { font-size: 32px; font-weight: 600; margin-bottom: 20px; }
+  h3 { font-size: 22px; font-weight: 500; color: rgba(255,255,255,0.7); margin-bottom: 30px; }
+  .accent { color: #E30613; }
+  .accent-gold { color: #FFD700; }
+  .tag { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+  .tag-vietjet { background: rgba(227,6,19,0.2); color: #E30613; border: 1px solid rgba(227,6,19,0.3); }
+
+  /* ===== SLIDE 1: RESULT (Reverse storytelling) ===== */
+  .result-card {
+    background: linear-gradient(135deg, #1a1a3e 0%, #2d1a4e 100%);
+    border-radius: 20px; padding: 40px; width: 520px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    margin-bottom: 30px;
+  }
+  .result-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+  .avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #E30613, #ff6b35); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }
+  .result-name { font-size: 20px; font-weight: 600; }
+  .result-dept { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .result-points {
+    text-align: center; padding: 24px 0; border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08); margin: 16px 0;
+  }
+  .points-number { font-size: 72px; font-weight: 800; color: #FFD700; line-height: 1; }
+  .points-label { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 8px; }
+  .result-breakdown { display: flex; gap: 16px; justify-content: center; }
+  .breakdown-item { text-align: center; flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; }
+  .breakdown-icon { font-size: 20px; margin-bottom: 4px; }
+  .breakdown-count { font-size: 20px; font-weight: 700; }
+  .breakdown-label { font-size: 11px; color: rgba(255,255,255,0.4); }
+  .result-subtitle { text-align: center; font-size: 18px; color: rgba(255,255,255,0.6); margin-top: 10px; }
+
+  /* ===== SLIDE 2: OVERVIEW FLOW ===== */
+  .flow-container { display: flex; align-items: center; gap: 0; margin: 20px 0; flex-wrap: wrap; justify-content: center; }
+  .flow-step {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    width: 120px; opacity: 0; transform: translateY(20px);
+    transition: all 0.5s ease;
+  }
+  .flow-step.visible { opacity: 1; transform: translateY(0); }
+  .flow-icon {
+    width: 72px; height: 72px; border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; margin-bottom: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .flow-icon-1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .flow-icon-2 { background: linear-gradient(135deg, #E30613, #ff6b35); }
+  .flow-icon-3 { background: linear-gradient(135deg, #1877F2, #42a5f5); }
+  .flow-icon-4 { background: linear-gradient(135deg, #00b894, #00cec9); }
+  .flow-icon-5 { background: linear-gradient(135deg, #FFD700, #ff9800); }
+  .flow-label { font-size: 13px; font-weight: 600; line-height: 1.4; }
+  .flow-arrow { font-size: 24px; color: rgba(255,255,255,0.25); margin: 0 4px; padding-top: 0; }
+
+  /* ===== SLIDE 3: NOTIFICATION ===== */
+  .phone-frame {
+    width: 280px; height: 500px; background: #1a1a2e;
+    border-radius: 36px; border: 3px solid #333;
+    padding: 40px 16px 20px; position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .phone-notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 100px; height: 24px; background: #000; border-radius: 12px; }
+  .phone-time { text-align: center; font-size: 42px; font-weight: 300; margin-top: 20px; }
+  .phone-date { text-align: center; font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 20px; }
+  .notification {
+    background: rgba(255,255,255,0.12); backdrop-filter: blur(20px);
+    border-radius: 16px; padding: 14px; margin-top: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    opacity: 0; transform: translateY(-20px);
+    animation: notifSlide 0.6s ease 1s forwards;
+  }
+  .notif-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .notif-app-icon { width: 20px; height: 20px; border-radius: 5px; background: #E30613; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .notif-app-name { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; }
+  .notif-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .notif-body { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.4; }
+  @keyframes notifSlide {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .slide-text-right { max-width: 400px; margin-left: 40px; }
+
+  /* ===== SLIDE 4: PARTICIPATE ===== */
+  .app-screens { display: flex; gap: 24px; align-items: flex-start; }
+  .app-screen {
+    width: 240px; background: #1a1a2e; border-radius: 20px;
+    border: 2px solid #333; overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    opacity: 0; transform: scale(0.9);
+    transition: all 0.5s ease;
+  }
+  .app-screen.visible { opacity: 1; transform: scale(1); }
+  .screen-header { background: #E30613; padding: 12px 16px; font-size: 13px; font-weight: 600; }
+  .screen-body { padding: 16px; }
+  .campaign-card-mini {
+    background: rgba(255,255,255,0.06); border-radius: 12px; padding: 14px;
+    margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.08);
+  }
+  .campaign-title-mini { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .campaign-brand { font-size: 11px; color: #E30613; margin-bottom: 8px; }
+  .campaign-reward-mini { display: flex; gap: 8px; }
+  .reward-chip { font-size: 10px; background: rgba(255,215,0,0.15); color: #FFD700; padding: 3px 8px; border-radius: 6px; }
+  .btn-join {
+    width: 100%; padding: 10px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #E30613, #ff6b35);
+    color: #fff; font-weight: 600; font-size: 13px; cursor: pointer;
+    margin-top: 8px;
+  }
+  .fb-link-section { margin-top: 12px; }
+  .fb-link-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px;
+    background: rgba(24,119,242,0.1); border-radius: 10px;
+    border: 1px solid rgba(24,119,242,0.2); margin-bottom: 8px;
+  }
+  .fb-icon { width: 28px; height: 28px; border-radius: 50%; background: #1877F2; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+  .fb-name { font-size: 12px; font-weight: 500; }
+  .fb-status { font-size: 10px; color: #00b894; }
+  .step-arrow { font-size: 36px; color: rgba(255,255,255,0.2); align-self: center; }
+
+  /* ===== SLIDE 5: CRAWLING ===== */
+  .crawl-visual { width: 100%; max-width: 800px; position: relative; }
+  .timeline-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.05); border-radius: 30px; padding: 8px 24px;
+    margin-bottom: 30px; position: relative;
+  }
+  .timeline-dot {
+    display: flex; flex-direction: column; align-items: center; gap: 4px; z-index: 1;
+  }
+  .dot { width: 16px; height: 16px; border-radius: 50%; }
+  .dot-inactive { background: rgba(255,255,255,0.2); }
+  .dot-active { background: #00b894; box-shadow: 0 0 12px rgba(0,184,148,0.5); animation: pulse 2s infinite; }
+  .dot-label { font-size: 11px; color: rgba(255,255,255,0.5); }
+  .dot-sublabel { font-size: 10px; color: rgba(255,255,255,0.3); }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 12px rgba(0,184,148,0.5); } 50% { box-shadow: 0 0 24px rgba(0,184,148,0.8); } }
+
+  .crawl-data-flow { display: flex; align-items: center; justify-content: center; gap: 16px; }
+  .data-source {
+    width: 200px; padding: 20px; background: rgba(24,119,242,0.1);
+    border: 1px solid rgba(24,119,242,0.2); border-radius: 16px; text-align: center;
+  }
+  .data-source-icon { font-size: 36px; margin-bottom: 8px; }
+  .data-source-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .data-source-desc { font-size: 11px; color: rgba(255,255,255,0.5); }
+  .data-arrow {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .data-arrow-line {
+    width: 80px; height: 2px; background: linear-gradient(90deg, rgba(0,184,148,0.3), #00b894);
+    position: relative;
+  }
+  .data-arrow-line::after {
+    content: '▶'; position: absolute; right: -8px; top: -7px; color: #00b894; font-size: 12px;
+  }
+  .data-packets {
+    display: flex; gap: 6px;
+  }
+  .data-packet {
+    width: 8px; height: 8px; border-radius: 50%; background: #00b894;
+    animation: movePacket 1.5s ease infinite;
+  }
+  .data-packet:nth-child(2) { animation-delay: 0.3s; }
+  .data-packet:nth-child(3) { animation-delay: 0.6s; }
+  @keyframes movePacket {
+    0% { opacity: 0; transform: translateX(-20px); }
+    50% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(20px); }
+  }
+  .data-dest {
+    width: 200px; padding: 20px; background: rgba(0,184,148,0.1);
+    border: 1px solid rgba(0,184,148,0.2); border-radius: 16px; text-align: center;
+  }
+  .data-sample {
+    margin-top: 24px; background: rgba(255,255,255,0.05);
+    border-radius: 12px; padding: 16px; font-family: 'Fira Code', monospace;
+    font-size: 12px; text-align: left; max-width: 500px; margin-left: auto; margin-right: auto;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .data-sample .key { color: #42a5f5; }
+  .data-sample .val { color: #FFD700; }
+  .data-sample .str { color: #00b894; }
+
+  /* ===== SLIDE 6: MAPPING ===== */
+  .mapping-flow { width: 100%; max-width: 1000px; display: flex; gap: 24px; align-items: flex-start; }
+  .mapping-steps { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; }
+  .mapping-step {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.04); border-radius: 12px; padding: 12px 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+    opacity: 0; transform: translateX(-30px);
+    transition: all 0.5s ease;
+  }
+  .mapping-step.visible { opacity: 1; transform: translateX(0); }
+  .mapping-num {
+    width: 32px; height: 32px; border-radius: 8px; display: flex;
+    align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+    flex-shrink: 0;
+  }
+  .num-blue { background: rgba(24,119,242,0.2); color: #42a5f5; }
+  .num-purple { background: rgba(118,75,162,0.2); color: #b39ddb; }
+  .num-green { background: rgba(0,184,148,0.2); color: #00b894; }
+  .num-gold { background: rgba(255,215,0,0.2); color: #FFD700; }
+  .mapping-content { flex: 1; }
+  .mapping-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .mapping-desc { font-size: 11px; color: rgba(255,255,255,0.5); }
+  .mapping-visual {
+    font-family: 'Fira Code', monospace; font-size: 11px;
+    background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;
+    color: rgba(255,255,255,0.6); flex-shrink: 0;
+  }
+  .mapping-visual .match { color: #00b894; font-weight: 600; }
+  .mapping-visual .warn { color: #ff9800; }
+
+  /* ===== SLIDE 7: SUMMARY ===== */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 700px; margin: 20px 0; }
+  .summary-card {
+    background: rgba(255,255,255,0.05); border-radius: 16px; padding: 24px;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: transform 0.3s; cursor: default;
+  }
+  .summary-card:hover { transform: translateY(-4px); }
+  .summary-icon { font-size: 28px; margin-bottom: 10px; }
+  .summary-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .summary-desc { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5; }
+  .faq-section { max-width: 700px; margin-top: 16px; }
+  .faq-section { max-width: 700px; margin-top: 16px; }
+  .faq-item {
+    background: rgba(255,255,255,0.03); border-radius: 10px; padding: 14px 20px;
+    margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer;
+    transition: background 0.3s;
+  }
+  .faq-item:hover { background: rgba(255,255,255,0.06); }
+  .faq-q { font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .faq-a { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, margin 0.3s ease; margin-top: 0; }
+  .faq-item.open .faq-a { max-height: 80px; margin-top: 8px; }
+  .faq-item.open .faq-toggle { transform: rotate(45deg); }
+  .faq-toggle { transition: transform 0.3s; font-size: 18px; color: rgba(255,255,255,0.3); }
+
+  /* ===== POINT CONFIG TABLE ===== */
+  .point-table {
+    margin: 16px 0; border-collapse: collapse; width: 100%; max-width: 400px;
+  }
+  .point-table th, .point-table td {
+    padding: 8px 16px; text-align: left; font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .point-table th { color: rgba(255,255,255,0.4); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .point-table .pts { color: #FFD700; font-weight: 700; }
+
+  /* ===== BALANCE WIDGET ===== */
+  .balance-widget { display: flex; justify-content: center; width: 320px; flex-shrink: 0; }
+  .balance-card {
+    width: 100%; background: linear-gradient(135deg, #1a1a3e 0%, #0d1b2a 100%);
+    border-radius: 16px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+  }
+  .balance-user {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .balance-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #E30613, #ff6b35);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; flex-shrink: 0;
+  }
+  .balance-main { padding: 14px 16px; text-align: center; }
+  .balance-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
+  .balance-number { font-size: 36px; font-weight: 800; color: #FFD700; line-height: 1; }
+  .balance-unit { font-size: 14px; font-weight: 400; color: rgba(255,215,0,0.6); margin-left: 4px; }
+  .balance-bar-wrap {
+    margin-top: 12px; height: 6px; background: rgba(255,255,255,0.06);
+    border-radius: 3px; overflow: hidden;
+  }
+  .balance-bar {
+    height: 100%; width: 0%; border-radius: 3px;
+    background: linear-gradient(90deg, #00b894, #FFD700);
+    transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .balance-transactions { padding: 0 16px 4px; }
+  .txn-header {
+    font-size: 11px; color: rgba(255,255,255,0.3); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 8px; padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .txn-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0; opacity: 0; transform: translateX(-16px);
+    transition: all 0.4s ease;
+  }
+  .txn-item.visible { opacity: 1; transform: translateX(0); }
+  .txn-left { display: flex; align-items: center; gap: 10px; }
+  .txn-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .txn-icon-like { background: rgba(66,165,245,0.15); }
+  .txn-icon-comment { background: rgba(0,184,148,0.15); }
+  .txn-icon-share { background: rgba(118,75,162,0.15); }
+  .txn-action { font-size: 12px; font-weight: 500; }
+  .txn-detail { font-size: 10px; color: rgba(255,255,255,0.35); }
+  .txn-points {
+    font-size: 14px; font-weight: 700; color: #00b894;
+    transition: transform 0.3s;
+  }
+  .txn-points.pop { transform: scale(1.3); }
+  .balance-total {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 16px; background: rgba(255,215,0,0.06);
+    border-top: 1px solid rgba(255,215,0,0.1);
+  }
+  .balance-total-label { font-size: 11px; color: rgba(255,255,255,0.4); }
+  .balance-total-value { font-size: 16px; font-weight: 800; color: #FFD700; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .slide { padding: 24px 20px; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 24px; }
+    .flow-container { gap: 8px; }
+    .flow-step { width: 100px; }
+    .flow-icon { width: 52px; height: 52px; font-size: 22px; }
+    .flow-label { font-size: 11px; }
+    .app-screens { flex-direction: column; align-items: center; }
+    .step-arrow { transform: rotate(90deg); }
+    .crawl-data-flow { flex-direction: column; }
+    .data-arrow-line { width: 2px; height: 40px; }
+    .summary-grid { grid-template-columns: 1fr; }
+    .phone-frame { width: 240px; height: 420px; }
+    .result-card { width: 100%; max-width: 400px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="deck" id="deck">
+
+  <!-- ==================== SLIDE 1: KẾT QUẢ (Reverse storytelling) ==================== -->
+  <div class="slide active" data-index="0">
+    <span class="tag tag-vietjet">Vietjet Air × Sovico</span>
+    <h1 style="margin-top:16px">Tương tác <span class="accent">cũng được thưởng</span></h1>
+    <h3>Luồng tính thưởng tự động cho CBNV</h3>
+
+    <div class="result-card">
+      <div class="result-header">
+        <div class="avatar">L</div>
+        <div>
+          <div class="result-name">Nguyễn Thị Lan</div>
+          <div class="result-dept">Phòng Marketing · HDBank</div>
+        </div>
+      </div>
+      <div class="result-points">
+        <div class="points-number" id="pointCounter">0</div>
+        <div class="points-label">tổng điểm hiện tại</div>
+      </div>
+      <div class="result-breakdown">
+        <div class="breakdown-item">
+          <div class="breakdown-icon">👍</div>
+          <div class="breakdown-count">3 Like</div>
+          <div class="breakdown-label">3 × 1đ = +3đ</div>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-icon">💬</div>
+          <div class="breakdown-count">2 Comment</div>
+          <div class="breakdown-label">2 × 3đ = +6đ</div>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-icon">🔄</div>
+          <div class="breakdown-count">1 Share</div>
+          <div class="breakdown-label">1 × 5đ = +5đ</div>
+        </div>
+      </div>
+    </div>
+    <div class="result-subtitle">Chị Lan đã tích lũy 140 điểm — hôm nay +14 điểm từ tương tác trên Facebook Vietjet.<br>Vậy hệ thống hoạt động như thế nào?</div>
+  </div>
+
+  <!-- ==================== SLIDE 2: TỔNG QUAN 5 BƯỚC ==================== -->
+  <div class="slide" data-index="1">
+    <h2>Luồng hoạt động <span class="accent">6 bước</span></h2>
+    <h3>Từ thông báo đến nhận thưởng — hoàn toàn tự động</h3>
+    <div class="flow-container" id="flowSteps">
+      <div class="flow-step" data-delay="0">
+        <div class="flow-icon flow-icon-1">🔔</div>
+        <div class="flow-label">Nhận<br>thông báo</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-delay="150">
+        <div class="flow-icon flow-icon-2">✋</div>
+        <div class="flow-label">Tham gia<br>& link FB</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-delay="300">
+        <div class="flow-icon flow-icon-3" style="background:linear-gradient(135deg,#1877F2,#42a5f5)">👍💬🔄</div>
+        <div class="flow-label">Tương tác<br>trên Facebook</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-delay="450">
+        <div class="flow-icon flow-icon-4">🤖</div>
+        <div class="flow-label">Hệ thống<br>thu thập</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-delay="600">
+        <div class="flow-icon" style="background:linear-gradient(135deg,#00b894,#00cec9)">🎯</div>
+        <div class="flow-label">Nhận diện<br>& tính điểm</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-delay="750">
+        <div class="flow-icon flow-icon-5">🎁</div>
+        <div class="flow-label">Nhận<br>thưởng</div>
+      </div>
+    </div>
+
+    <table class="point-table">
+      <tr><th>Hành động</th><th>Điểm thưởng</th><th>Ghi chú</th></tr>
+      <tr><td>👍 Like bài viết</td><td class="pts">+1 điểm</td><td style="font-size:11px;color:rgba(255,255,255,0.4)">Mỗi bài</td></tr>
+      <tr><td>💬 Comment bài viết</td><td class="pts">+3 điểm</td><td style="font-size:11px;color:rgba(255,255,255,0.4)">Comment hợp lệ</td></tr>
+      <tr><td>🔄 Share bài viết</td><td class="pts">+5 điểm</td><td style="font-size:11px;color:rgba(255,255,255,0.4)">Share công khai</td></tr>
+    </table>
+    <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:4px">* Quy tắc điểm do Admin cấu hình linh hoạt</div>
+  </div>
+
+  <!-- ==================== SLIDE 3: THÔNG BÁO ==================== -->
+  <div class="slide" data-index="2">
+    <h2>Bước 1 · <span class="accent">Nhận thông báo</span></h2>
+    <div style="display:flex;align-items:center;gap:40px;flex-wrap:wrap;justify-content:center">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-time">09:41</div>
+        <div class="phone-date">Thứ Hai, 7 tháng 4</div>
+        <div class="notification" id="notif1">
+          <div class="notif-header">
+            <div class="notif-app-icon">S</div>
+            <div class="notif-app-name">Sovico KOC</div>
+          </div>
+          <div class="notif-title">🎉 Campaign mới từ Vietjet!</div>
+          <div class="notif-body">"Chia sẻ niềm vui bay" — Tương tác ngay trên Facebook Vietjet để nhận điểm thưởng!</div>
+        </div>
+        <div class="notification" id="notif2" style="animation-delay:1.8s">
+          <div class="notif-header">
+            <div class="notif-app-icon">S</div>
+            <div class="notif-app-name">Sovico KOC</div>
+          </div>
+          <div class="notif-title">💰 Like + Comment = Điểm thưởng</div>
+          <div class="notif-body">Mỗi comment hợp lệ được +3 điểm. Tham gia ngay!</div>
+        </div>
+      </div>
+
+      <div class="slide-text-right">
+        <div style="font-size:15px;font-weight:600;margin-bottom:12px;color:#E30613">Admin tạo campaign</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.8">
+          ✓ Chọn brand: <strong>Vietjet Air</strong><br>
+          ✓ Đặt tên: "Chia sẻ niềm vui bay"<br>
+          ✓ Chọn bài viết target trên fanpage<br>
+          ✓ Cấu hình điểm thưởng<br>
+          ✓ Đặt thời gian: 7/4 → 21/4/2026<br>
+          ✓ Hệ thống <strong>tự động gửi thông báo</strong> cho toàn bộ CBNV
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 4: THAM GIA + LINK FB ==================== -->
+  <div class="slide" data-index="3">
+    <h2>Bước 2 · <span class="accent">Tham gia & Khai báo kênh</span></h2>
+    <div class="app-screens" id="appScreens">
+      <div class="app-screen" data-delay="0">
+        <div class="screen-header">📋 Danh sách Campaign</div>
+        <div class="screen-body">
+          <div class="campaign-card-mini" style="border-left:3px solid #E30613">
+            <div class="campaign-brand">✈️ Vietjet Air</div>
+            <div class="campaign-title-mini">Chia sẻ niềm vui bay</div>
+            <div class="campaign-reward-mini">
+              <span class="reward-chip">👍 +1đ</span>
+              <span class="reward-chip">💬 +3đ</span>
+              <span class="reward-chip">🔄 +5đ</span>
+            </div>
+            <button class="btn-join">Tham gia ngay</button>
+          </div>
+          <div class="campaign-card-mini" style="opacity:0.5">
+            <div class="campaign-brand" style="color:#42a5f5">🏦 HDBank</div>
+            <div class="campaign-title-mini">Happy Banking cùng HDBank</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.4)">Sắp diễn ra · 15/4</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-arrow">→</div>
+
+      <div class="app-screen" data-delay="400">
+        <div class="screen-header">🔗 Kết nối Facebook</div>
+        <div class="screen-body">
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:12px;line-height:1.5">
+            Kết nối tài khoản Facebook để hệ thống tự động nhận diện tương tác của bạn
+          </div>
+          <div class="fb-link-section">
+            <div class="fb-link-item">
+              <div class="fb-icon">f</div>
+              <div>
+                <div class="fb-name">Nguyễn Thị Lan</div>
+                <div class="fb-status">✓ Đã kết nối</div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center;margin-top:16px">
+            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:8px">Hệ thống lưu mã định danh Facebook</div>
+            <div style="font-family:monospace;font-size:12px;background:rgba(0,0,0,0.3);padding:8px;border-radius:8px;color:#42a5f5">
+              FB_ID: <span style="color:#FFD700">100048xxxxxx</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 5: TƯƠNG TÁC TRÊN FACEBOOK ==================== -->
+  <div class="slide" data-index="4">
+    <h2>Bước 3 · <span class="accent">Tương tác trên Facebook</span></h2>
+    <h3>CBNV vào fanpage Vietjet — Like, Comment, Share bài viết campaign</h3>
+
+    <div style="display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;justify-content:center">
+      <!-- Facebook Post Mockup (lớn hơn) -->
+      <div style="width:340px;background:#1a1a2e;border-radius:20px;border:2px solid #333;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.5)">
+        <div style="background:#1877F2;padding:12px 16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px">
+          <span>📱</span> Facebook · Fanpage Vietjet Air
+        </div>
+        <div style="padding:16px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="width:40px;height:40px;border-radius:50%;background:#E30613;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">VJ</div>
+            <div>
+              <div style="font-weight:600;font-size:14px">Vietjet Air</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.4)">2 giờ trước · 🌐</div>
+            </div>
+          </div>
+          <div style="color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:12px;font-size:13px">
+            ✈️ <strong>Bay vui cùng Vietjet!</strong><br>
+            Khám phá loạt đường bay mới mùa hè 2026. Đặt vé ngay hôm nay để nhận ưu đãi đặc biệt! 🌴☀️
+          </div>
+          <div style="height:120px;background:linear-gradient(135deg,#E30613,#ff6b35);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:12px">✈️🌴☀️</div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:11px;color:rgba(255,255,255,0.35);border-bottom:1px solid rgba(255,255,255,0.08)">
+            <span>👍 1.2K</span><span>💬 348 comments · 🔄 89 shares</span>
+          </div>
+          <!-- Action buttons - highlighted -->
+          <div id="fbActions" style="display:flex;justify-content:space-around;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
+            <div class="fb-action-btn" data-delay="400" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;cursor:pointer;transition:all 0.3s;font-size:13px;color:rgba(255,255,255,0.5)">
+              👍 <span>Like</span>
+            </div>
+            <div class="fb-action-btn" data-delay="800" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;cursor:pointer;transition:all 0.3s;font-size:13px;color:rgba(255,255,255,0.5)">
+              💬 <span>Comment</span>
+            </div>
+            <div class="fb-action-btn" data-delay="1200" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;cursor:pointer;transition:all 0.3s;font-size:13px;color:rgba(255,255,255,0.5)">
+              🔄 <span>Share</span>
+            </div>
+          </div>
+          <!-- Comment mockup -->
+          <div id="fbComment" style="margin-top:10px;opacity:0;transition:opacity 0.5s">
+            <div style="display:flex;gap:8px;align-items:flex-start">
+              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#E30613,#ff6b35);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">L</div>
+              <div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:8px 12px;flex:1">
+                <div style="font-size:11px;font-weight:600">Nguyễn Thị Lan</div>
+                <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:2px">Bay vui quá! Đặt vé cho cả nhà luôn nè 🎉✈️</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Giải thích bên phải -->
+      <div style="max-width:340px">
+        <div style="font-size:15px;font-weight:600;margin-bottom:16px;color:#1877F2">CBNV tương tác trên fanpage</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div id="act1" class="action-explain" style="display:flex;gap:12px;padding:14px;background:rgba(66,165,245,0.08);border-radius:12px;border:1px solid rgba(66,165,245,0.15);opacity:0;transform:translateX(20px);transition:all 0.5s">
+            <div style="font-size:24px">👍</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">Like bài viết</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px">Nhấn Like trên bài viết campaign</div>
+              <div style="font-size:13px;color:#FFD700;font-weight:700;margin-top:4px">+1 điểm</div>
+            </div>
+          </div>
+          <div id="act2" class="action-explain" style="display:flex;gap:12px;padding:14px;background:rgba(0,184,148,0.08);border-radius:12px;border:1px solid rgba(0,184,148,0.15);opacity:0;transform:translateX(20px);transition:all 0.5s">
+            <div style="font-size:24px">💬</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">Comment bài viết</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px">Viết bình luận có nội dung (không spam)</div>
+              <div style="font-size:13px;color:#FFD700;font-weight:700;margin-top:4px">+3 điểm</div>
+            </div>
+          </div>
+          <div id="act3" class="action-explain" style="display:flex;gap:12px;padding:14px;background:rgba(118,75,162,0.08);border-radius:12px;border:1px solid rgba(118,75,162,0.15);opacity:0;transform:translateX(20px);transition:all 0.5s">
+            <div style="font-size:24px">🔄</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">Share bài viết</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px">Chia sẻ công khai trên trang cá nhân</div>
+              <div style="font-size:13px;color:#FFD700;font-weight:700;margin-top:4px">+5 điểm</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06)">
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6">
+            💡 CBNV tương tác bình thường trên Facebook — <strong style="color:rgba(255,255,255,0.6)">không cần thao tác gì thêm trên app</strong>. Hệ thống sẽ tự động nhận diện ở bước tiếp theo.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 6: HỆ THỐNG THU THẬP ==================== -->
+  <div class="slide" data-index="5">
+    <h2>Bước 4 · <span class="accent">Thu thập tự động</span></h2>
+    <h3>Hệ thống quét fanpage 2 lần/ngày — không cần CBNV thao tác gì thêm</h3>
+
+    <div class="crawl-visual">
+      <div class="timeline-bar">
+        <div class="timeline-dot">
+          <div class="dot dot-inactive"></div>
+          <div class="dot-label">0:00</div>
+        </div>
+        <div class="timeline-dot">
+          <div class="dot dot-active"></div>
+          <div class="dot-label" style="color:#00b894;font-weight:600">9:00</div>
+          <div class="dot-sublabel">Lần 1</div>
+        </div>
+        <div class="timeline-dot">
+          <div class="dot dot-inactive"></div>
+          <div class="dot-label">12:00</div>
+        </div>
+        <div class="timeline-dot">
+          <div class="dot dot-inactive"></div>
+          <div class="dot-label">15:00</div>
+        </div>
+        <div class="timeline-dot">
+          <div class="dot dot-active"></div>
+          <div class="dot-label" style="color:#00b894;font-weight:600">21:00</div>
+          <div class="dot-sublabel">Lần 2</div>
+        </div>
+        <div class="timeline-dot">
+          <div class="dot dot-inactive"></div>
+          <div class="dot-label">24:00</div>
+        </div>
+      </div>
+
+      <div class="crawl-data-flow">
+        <div class="data-source">
+          <div class="data-source-icon">📱</div>
+          <div class="data-source-title">Fanpage Vietjet</div>
+          <div class="data-source-desc">Quét bài viết target<br>của campaign</div>
+        </div>
+
+        <div class="data-arrow">
+          <div class="data-packets">
+            <div class="data-packet"></div>
+            <div class="data-packet"></div>
+            <div class="data-packet"></div>
+          </div>
+          <div class="data-arrow-line"></div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px">Truyền dữ liệu</div>
+        </div>
+
+        <div class="data-dest">
+          <div class="data-source-icon">🗄️</div>
+          <div class="data-source-title">Backend</div>
+          <div class="data-source-desc">Nhận & lưu trữ<br>dữ liệu tương tác</div>
+        </div>
+      </div>
+
+      <div class="data-sample">
+        <div style="color:rgba(255,255,255,0.3);margin-bottom:8px">// Dữ liệu hệ thống nhận được</div>
+        {<br>
+        &nbsp;&nbsp;<span class="key">"facebook_user_id"</span>: <span class="str">"100048xxxxxx"</span>,<br>
+        &nbsp;&nbsp;<span class="key">"action"</span>: <span class="str">"comment"</span>,<br>
+        &nbsp;&nbsp;<span class="key">"post_id"</span>: <span class="str">"vietjet_post_1234"</span>,<br>
+        &nbsp;&nbsp;<span class="key">"content"</span>: <span class="str">"Bay vui quá! Đặt vé ngay..."</span>,<br>
+        &nbsp;&nbsp;<span class="key">"timestamp"</span>: <span class="str">"2026-04-07T14:23:00"</span><br>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 7: TÍNH THƯỞNG ==================== -->
+  <div class="slide" data-index="6">
+    <h2>Bước 5 · <span class="accent">Nhận diện & Tính thưởng</span></h2>
+    <h3>Backend tự động xử lý — từ dữ liệu thô đến cộng điểm</h3>
+
+    <div class="mapping-flow">
+      <div class="mapping-steps" id="mappingSteps">
+        <div class="mapping-step" data-delay="0">
+          <div class="mapping-num num-blue">1</div>
+          <div class="mapping-content">
+            <div class="mapping-title">Nhận dữ liệu từ hệ thống thu thập</div>
+            <div class="mapping-desc">Danh sách ai đã like, comment, share trên bài viết target</div>
+          </div>
+          <div class="mapping-visual">
+            FB_ID: <span class="match">100048xx</span>
+          </div>
+        </div>
+
+        <div class="mapping-step" data-delay="200">
+          <div class="mapping-num num-purple">2</div>
+          <div class="mapping-content">
+            <div class="mapping-title">Nhận diện nhân viên tự động</div>
+            <div class="mapping-desc">Đối chiếu mã Facebook → tìm đúng CBNV đã đăng ký</div>
+          </div>
+          <div class="mapping-visual">
+            100048xx → <span class="match">Nguyễn Thị Lan</span>
+          </div>
+        </div>
+
+        <div class="mapping-step" data-delay="400">
+          <div class="mapping-num num-green">3</div>
+          <div class="mapping-content">
+            <div class="mapping-title">Kiểm tra tính hợp lệ</div>
+            <div class="mapping-desc">Comment có nội dung? Không spam? Không trùng lặp?</div>
+          </div>
+          <div class="mapping-visual">
+            "Bay vui quá!" → <span class="match">✓ Hợp lệ</span>
+          </div>
+        </div>
+
+        <div class="mapping-step" data-delay="600">
+          <div class="mapping-num num-gold">4</div>
+          <div class="mapping-content">
+            <div class="mapping-title">Cộng điểm thưởng</div>
+            <div class="mapping-desc">Tính theo quy tắc campaign → cộng vào tài khoản CBNV</div>
+          </div>
+          <div class="mapping-visual">
+            Comment × 1 = <span class="match">+3 điểm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Balance Animation -->
+      <div class="balance-widget" id="balanceWidget">
+        <div class="balance-card">
+          <div class="balance-user">
+            <div class="balance-avatar">L</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">Nguyễn Thị Lan</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.4)">Phòng Marketing · HDBank</div>
+            </div>
+          </div>
+          <div class="balance-main">
+            <div class="balance-label">Số dư hiện tại</div>
+            <div class="balance-number">
+              <span id="balanceCounter">126</span>
+              <span class="balance-unit">điểm</span>
+            </div>
+            <div class="balance-bar-wrap">
+              <div class="balance-bar" id="balanceBar"></div>
+            </div>
+          </div>
+          <div class="balance-transactions" id="balanceTxns">
+            <div class="txn-header">Hôm nay · 7/4/2026</div>
+          </div>
+          <div class="balance-total" id="balanceTotal">
+            <span class="balance-total-label">Tổng thưởng hôm nay</span>
+            <span class="balance-total-value" id="balanceTotalValue">+0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 8: TỔNG KẾT ==================== -->
+  <div class="slide" data-index="7" style="justify-content:flex-start;padding-top:60px">
+    <h2>Lợi ích <span class="accent">nổi bật</span></h2>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-icon">🤖</div>
+        <div class="summary-title">Hoàn toàn tự động</div>
+        <div class="summary-desc">CBNV chỉ cần link Facebook 1 lần. Hệ thống tự thu thập, nhận diện, và cộng điểm.</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">🎯</div>
+        <div class="summary-title">Chính xác 100%</div>
+        <div class="summary-desc">Nhận diện bằng mã định danh Facebook — không nhầm lẫn, không bỏ sót.</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">⚡</div>
+        <div class="summary-title">Cập nhật trong ngày</div>
+        <div class="summary-desc">Thu thập 2 lần/ngày. CBNV thấy điểm cộng ngay trong ngày.</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">🛡️</div>
+        <div class="summary-title">Chống gian lận</div>
+        <div class="summary-desc">Kiểm tra comment hợp lệ, phát hiện spam, chống trùng lặp tự động.</div>
+      </div>
+    </div>
+
+    <div class="faq-section">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px;color:rgba(255,255,255,0.4)">Câu hỏi thường gặp</div>
+
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Tại sao thu thập 2 lần/ngày thay vì realtime? <span class="faq-toggle">+</span></div>
+        <div class="faq-a">Facebook giới hạn số lần truy vấn. Thu thập 2 lần/ngày (9h, 21h) là tối ưu giữa tốc độ cập nhật và độ ổn định. Nếu cần, có thể tăng tần suất.</div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Nếu CBNV comment spam thì sao? <span class="faq-toggle">+</span></div>
+        <div class="faq-a">Hệ thống kiểm tra: comment phải có nội dung (tối thiểu vài từ), không trùng lặp, không copy-paste. Comment spam bị loại tự động.</div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Nếu hệ thống bỏ sót tương tác? <span class="faq-toggle">+</span></div>
+        <div class="faq-a">Cuối ngày có cơ chế đối soát (reconciliation) tự động. Nếu phát hiện thiếu sót, hệ thống bổ sung và cộng điểm bù.</div>
+      </div>
+      <div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">Điểm quy đổi có linh hoạt không? <span class="faq-toggle">+</span></div>
+        <div class="faq-a">Hoàn toàn. Admin cấu hình quy tắc điểm per campaign: mỗi campaign có thể có mức thưởng khác nhau, bonus theo thời gian, v.v.</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:20px;font-size:13px;color:rgba(255,255,255,0.3)">
+      Nền tảng đã vận hành production · Phục vụ 10+ thương hiệu lớn · Sẵn sàng triển khai
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="btnPrev" onclick="navigate(-1)" disabled>← Trước</button>
+  <button id="btnNext" onclick="navigate(1)">Tiếp →</button>
+</div>
+<div class="slide-counter" id="slideCounter">1 / 8</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+
+  function navigate(dir) {
+    const next = current + dir;
+    if (next < 0 || next >= total) return;
+    // Current slide exits: going forward → slide goes left (prev), going back → slide goes right (default)
+    slides[current].className = dir > 0 ? 'slide prev' : 'slide';
+    current = next;
+    slides[current].className = 'slide active';
+    // Mark all slides before current as prev, all after as default
+    for (let i = 0; i < total; i++) {
+      if (i === current) continue;
+      slides[i].className = i < current ? 'slide prev' : 'slide';
+    }
+    updateUI();
+    onSlideEnter(current);
+  }
+
+  function updateUI() {
+    document.getElementById('btnPrev').disabled = current === 0;
+    document.getElementById('btnNext').disabled = current === total - 1;
+    document.getElementById('slideCounter').textContent = (current + 1) + ' / ' + total;
+    document.getElementById('progress').style.width = ((current + 1) / total * 100) + '%';
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); navigate(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); navigate(-1); }
+  });
+
+  // Touch swipe
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) navigate(diff > 0 ? 1 : -1);
+  });
+
+  // Slide-specific animations
+  function onSlideEnter(index) {
+    if (index === 0) animateCounter();
+    if (index === 1) animateFlow();
+    if (index === 3) animateScreens();
+    if (index === 4) animateFbActions();
+    if (index === 6) { animateMapping(); animateBalance(); }
+  }
+
+  function animateCounter() {
+    const el = document.getElementById('pointCounter');
+    animateNumber(el, 0, 140, 1200);
+  }
+
+  function animateFlow() {
+    document.querySelectorAll('#flowSteps .flow-step').forEach((s, i) => {
+      setTimeout(() => s.classList.add('visible'), parseInt(s.dataset.delay) + 300);
+    });
+  }
+
+  function animateScreens() {
+    document.querySelectorAll('#appScreens .app-screen').forEach(s => {
+      setTimeout(() => s.classList.add('visible'), parseInt(s.dataset.delay) + 300);
+    });
+  }
+
+  function animateMapping() {
+    document.querySelectorAll('#mappingSteps .mapping-step').forEach(s => {
+      setTimeout(() => s.classList.add('visible'), parseInt(s.dataset.delay) + 300);
+    });
+  }
+
+  // Facebook actions animation
+  function animateFbActions() {
+    const actions = document.querySelectorAll('.fb-action-btn');
+    const explains = [document.getElementById('act1'), document.getElementById('act2'), document.getElementById('act3')];
+    const comment = document.getElementById('fbComment');
+
+    // Reset
+    actions.forEach(a => { a.style.background = ''; a.style.color = 'rgba(255,255,255,0.5)'; });
+    explains.forEach(e => { if(e) { e.style.opacity = '0'; e.style.transform = 'translateX(20px)'; } });
+    if(comment) comment.style.opacity = '0';
+
+    // Animate each action
+    actions.forEach((btn, i) => {
+      const delay = parseInt(btn.dataset.delay) + 500;
+      setTimeout(() => {
+        // Highlight button
+        const colors = ['rgba(66,165,245,0.2)', 'rgba(0,184,148,0.2)', 'rgba(118,75,162,0.2)'];
+        const textColors = ['#42a5f5', '#00b894', '#b39ddb'];
+        btn.style.background = colors[i];
+        btn.style.color = textColors[i];
+        // Show explain card
+        if (explains[i]) {
+          explains[i].style.opacity = '1';
+          explains[i].style.transform = 'translateX(0)';
+        }
+        // Show comment after Comment action
+        if (i === 1 && comment) {
+          setTimeout(() => { comment.style.opacity = '1'; }, 400);
+        }
+      }, delay);
+    });
+  }
+
+  // Balance animation data — gộp cùng loại thành 1 dòng
+  const transactions = [
+    { icon: '👍', cls: 'txn-icon-like', action: 'Like × 3 bài viết', detail: '3 bài trên fanpage Vietjet', pts: 3 },
+    { icon: '💬', cls: 'txn-icon-comment', action: 'Comment × 2 hợp lệ', detail: '"Bay vui quá!", "Tuyệt vời!"', pts: 6 },
+    { icon: '🔄', cls: 'txn-icon-share', action: 'Share × 1 bài viết', detail: 'Chia sẻ công khai', pts: 5 },
+  ];
+
+  function animateBalance() {
+    const container = document.getElementById('balanceTxns');
+    const counter = document.getElementById('balanceCounter');
+    const bar = document.getElementById('balanceBar');
+    const totalVal = document.getElementById('balanceTotalValue');
+
+    // Reset
+    container.innerHTML = '<div class="txn-header">Hôm nay · 7/4/2026</div>';
+    counter.textContent = '126';
+    bar.style.width = '0%';
+    totalVal.textContent = '+0';
+
+    let balance = 126;
+    let totalPts = 0;
+
+    transactions.forEach((txn, i) => {
+      setTimeout(() => {
+        // Add transaction row
+        const row = document.createElement('div');
+        row.className = 'txn-item';
+        row.innerHTML = `
+          <div class="txn-left">
+            <div class="txn-icon ${txn.cls}">${txn.icon}</div>
+            <div>
+              <div class="txn-action">${txn.action}</div>
+              <div class="txn-detail">${txn.detail}</div>
+            </div>
+          </div>
+          <div class="txn-points" id="txnPts${i}">+${txn.pts}</div>
+        `;
+        container.appendChild(row);
+        // Trigger animation
+        requestAnimationFrame(() => {
+          row.classList.add('visible');
+          setTimeout(() => {
+            const ptsEl = document.getElementById('txnPts' + i);
+            if (ptsEl) { ptsEl.classList.add('pop'); setTimeout(() => ptsEl.classList.remove('pop'), 300); }
+          }, 200);
+        });
+
+        // Update balance counter
+        balance += txn.pts;
+        totalPts += txn.pts;
+        animateNumber(counter, balance - txn.pts, balance, 400);
+        bar.style.width = ((totalPts / 14) * 100) + '%';
+        totalVal.textContent = '+' + totalPts;
+      }, 800 + i * 600);
+    });
+  }
+
+  function animateNumber(el, from, to, duration) {
+    const start = performance.now();
+    const step = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      el.textContent = Math.round(from + (to - from) * progress);
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  // Init
+  updateUI();
+  setTimeout(() => onSlideEnter(0), 300);
+</script>
+
+</body>
+</html>
