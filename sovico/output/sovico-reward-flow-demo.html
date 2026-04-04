@@ -743,7 +743,7 @@
 
   <!-- ==================== SLIDE 2: TỔNG QUAN 5 BƯỚC ==================== -->
   <div class="slide" data-index="1">
-    <h2>Luồng hoạt động <span class="accent">6 bước</span></h2>
+    <h2>Luồng hoạt động <span class="accent">7 bước</span></h2>
     <h3>Từ thông báo đến nhận thưởng — hoàn toàn tự động</h3>
     <div class="flow-container" id="flowSteps">
       <div class="flow-step" data-delay="0">
@@ -786,126 +786,8 @@
     <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:4px">* Quy tắc điểm do Admin cấu hình linh hoạt</div>
   </div>
 
-  <!-- ==================== SLIDE 2B: AMBASSADOR — CAMPAIGN DASHBOARD ==================== -->
+  <!-- ==================== SLIDE 2: THÔNG BÁO ==================== -->
   <div class="slide" data-index="2">
-    <span class="tag tag-vietjet" style="margin-bottom:8px">Giao diện App thật</span>
-    <h2>Bước 2 · <span class="accent">Chọn Campaign tham gia</span></h2>
-    <h3>CBNV mở app → thấy ngay danh sách campaign đang chạy</h3>
-
-    <div style="display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;justify-content:center">
-      <!-- Ambassador App Mockup -->
-      <div class="amb-app" id="ambCampaigns">
-        <div class="amb-app-header">
-          <div class="amb-app-header-logo">S</div>
-          <div>
-            <div class="amb-app-header-title">Sovico KOC</div>
-            <div class="amb-app-header-sub">Chiến dịch đang mở</div>
-          </div>
-        </div>
-        <div class="amb-app-body">
-          <!-- Campaign 1: Vietjet - highlighted -->
-          <div class="amb-campaign-card" style="border: 2px solid #E30613;">
-            <div class="amb-campaign-banner">
-              <div class="amb-campaign-banner-overlay">✈️ 🌴 ☀️</div>
-            </div>
-            <div class="amb-campaign-content">
-              <div class="amb-campaign-brand">
-                <div class="amb-campaign-brand-icon" style="background:#E30613">VJ</div>
-                <span class="amb-campaign-brand-name">Vietjet Air</span>
-                <span class="amb-campaign-brand-badge">Đang chạy</span>
-              </div>
-              <div class="amb-campaign-title">Chia sẻ niềm vui bay ✈️</div>
-              <div class="amb-campaign-desc">Tương tác với bài viết trên fanpage Vietjet — Like, Comment, Share để nhận điểm thưởng!</div>
-              <div class="amb-campaign-rewards">
-                <span class="amb-reward-chip">👍 +1đ / Like</span>
-                <span class="amb-reward-chip">💬 +3đ / Comment</span>
-                <span class="amb-reward-chip">🔄 +5đ / Share</span>
-              </div>
-              <div class="amb-campaign-budget">
-                <span>📊 Budget:</span>
-                <div class="amb-budget-bar"><div class="amb-budget-fill" style="width:35%"></div></div>
-                <span style="color:#EF4444;font-weight:600">35%</span>
-              </div>
-              <div class="amb-campaign-footer">
-                <span class="amb-campaign-time">7/4 → 21/4/2026</span>
-                <button class="amb-btn-join">Tham gia ngay</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Campaign 2: HDBank -->
-          <div class="amb-campaign-card">
-            <div class="amb-campaign-banner">
-              <div class="amb-campaign-banner-overlay hdbank">🏦 💚 ✨</div>
-            </div>
-            <div class="amb-campaign-content">
-              <div class="amb-campaign-brand">
-                <div class="amb-campaign-brand-icon" style="background:#E2001A">HD</div>
-                <span class="amb-campaign-brand-name">HDBank</span>
-                <span class="amb-campaign-brand-badge">Đang chạy</span>
-              </div>
-              <div class="amb-campaign-title">Happy Banking cùng HDBank</div>
-              <div class="amb-campaign-desc">Chia sẻ trải nghiệm dịch vụ HDBank trên mạng xã hội — nhận điểm thưởng mỗi tuần.</div>
-              <div class="amb-campaign-rewards">
-                <span class="amb-reward-chip">👍 +1đ</span>
-                <span class="amb-reward-chip">💬 +2đ</span>
-                <span class="amb-reward-chip">⭐ +10đ / Review</span>
-              </div>
-              <div class="amb-campaign-footer">
-                <span class="amb-campaign-time">1/4 → 30/4/2026</span>
-                <button class="amb-btn-join">Tham gia</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Campaign 3: Vikki - upcoming -->
-          <div class="amb-campaign-card" style="opacity:0.6">
-            <div class="amb-campaign-banner">
-              <div class="amb-campaign-banner-overlay vikki">🛍️ 💜</div>
-            </div>
-            <div class="amb-campaign-content">
-              <div class="amb-campaign-brand">
-                <div class="amb-campaign-brand-icon" style="background:#663399">Vi</div>
-                <span class="amb-campaign-brand-name">Vikki</span>
-                <span style="font-size:9px;background:#f3f4f6;color:#6b7280;padding:2px 6px;border-radius:4px;font-weight:600">Sắp diễn ra</span>
-              </div>
-              <div class="amb-campaign-title">Vikki Shopping Festival</div>
-              <div class="amb-campaign-desc">Mua sắm & chia sẻ deal hot — check-in nhận điểm.</div>
-              <div class="amb-campaign-footer">
-                <span class="amb-campaign-time">Bắt đầu 15/4/2026</span>
-                <button class="amb-btn-join" style="opacity:0.5;cursor:default">Sắp mở</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Explain panel -->
-      <div class="amb-explain">
-        <div class="amb-explain-title">📱 Giao diện Campaign trên Ambassador App</div>
-        <div class="amb-explain-item">
-          <div class="amb-explain-num">1</div>
-          <div class="amb-explain-text"><strong>Multi-brand:</strong> Mỗi thương hiệu Sovico (Vietjet, HDBank, Vikki) có campaign riêng, CBNV chọn tham gia theo ý muốn.</div>
-        </div>
-        <div class="amb-explain-item">
-          <div class="amb-explain-num">2</div>
-          <div class="amb-explain-text"><strong>Điểm thưởng rõ ràng:</strong> CBNV thấy ngay mức thưởng cho từng hành động trước khi tham gia.</div>
-        </div>
-        <div class="amb-explain-item">
-          <div class="amb-explain-num">3</div>
-          <div class="amb-explain-text"><strong>Budget tracking:</strong> Thanh tiến trình hiển thị ngân sách còn lại — tạo urgency cho CBNV.</div>
-        </div>
-        <div class="amb-explain-item">
-          <div class="amb-explain-num">4</div>
-          <div class="amb-explain-text"><strong>Timeline:</strong> Ngày bắt đầu/kết thúc rõ ràng. Campaign sắp mở hiển thị mờ.</div>
-        </div>
-        <div class="amb-prod-badge">● Production app — phục vụ 10+ thương hiệu</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== SLIDE 3: THÔNG BÁO ==================== -->
-  <div class="slide" data-index="3">
     <h2>Bước 1 · <span class="accent">Nhận thông báo</span></h2>
     <div style="display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;justify-content:center">
       <!-- Ambassador Notification Screen -->
@@ -990,11 +872,94 @@
     </div>
   </div>
 
+  <!-- ==================== SLIDE 3: CHI TIẾT CAMPAIGN ==================== -->
+  <div class="slide" data-index="3">
+    <h2>Bước 2 · <span class="accent">Xem chi tiết & Tham gia</span></h2>
+    <h3>CBNV nhấn thông báo → vào chi tiết campaign → nhấn tham gia</h3>
+
+    <div style="display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;justify-content:center">
+      <!-- Ambassador Campaign Detail Screen -->
+      <div class="amb-app" id="ambCampaignDetail">
+        <div class="amb-app-header" style="padding:12px 16px">
+          <div style="font-size:11px;opacity:0.7">← Chiến dịch</div>
+          <div style="margin-left:auto;font-size:11px;opacity:0.7">✈️ Vietjet Air</div>
+        </div>
+        <div class="amb-app-body" style="padding:0">
+          <!-- Banner -->
+          <div style="height:110px;background:linear-gradient(135deg,#E30613,#ff6b35);display:flex;align-items:center;justify-content:center;font-size:32px;letter-spacing:6px">✈️ 🌴 ☀️</div>
+          <div style="padding:16px">
+            <div class="amb-campaign-brand" style="margin-bottom:8px">
+              <div class="amb-campaign-brand-icon" style="background:#E30613">VJ</div>
+              <span class="amb-campaign-brand-name">Vietjet Air</span>
+              <span class="amb-campaign-brand-badge">Đang chạy</span>
+            </div>
+            <div style="font-size:17px;font-weight:700;color:#111827;margin-bottom:8px;line-height:1.3">Chia sẻ niềm vui bay ✈️</div>
+            <div style="font-size:12px;color:#6b7280;line-height:1.6;margin-bottom:14px">Tương tác với bài viết trên fanpage Vietjet Air — Like, Comment, Share để nhận điểm thưởng tự động!</div>
+
+            <!-- Reward rules -->
+            <div style="background:#f9fafb;border-radius:12px;padding:12px;margin-bottom:14px;border:1px solid #f3f4f6">
+              <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:10px">🎁 Cơ chế thưởng</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+                  <span style="color:#4b5563">👍 Like bài viết</span>
+                  <span style="color:#b45309;font-weight:700;background:rgba(255,215,0,0.12);padding:3px 10px;border-radius:10px">+1 điểm</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+                  <span style="color:#4b5563">💬 Comment hợp lệ</span>
+                  <span style="color:#b45309;font-weight:700;background:rgba(255,215,0,0.12);padding:3px 10px;border-radius:10px">+3 điểm</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+                  <span style="color:#4b5563">🔄 Share công khai</span>
+                  <span style="color:#b45309;font-weight:700;background:rgba(255,215,0,0.12);padding:3px 10px;border-radius:10px">+5 điểm</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Budget -->
+            <div class="amb-campaign-budget" style="margin-bottom:14px">
+              <span>📊 Budget:</span>
+              <div class="amb-budget-bar"><div class="amb-budget-fill" style="width:35%"></div></div>
+              <span style="color:#EF4444;font-weight:600">35%</span>
+            </div>
+
+            <!-- Timeline -->
+            <div style="font-size:11px;color:#9ca3af;margin-bottom:14px">📅 7/4 → 21/4/2026 · Còn 14 ngày</div>
+
+            <!-- Join button -->
+            <button class="amb-btn-join" style="width:100%;padding:12px;font-size:14px">✋ Tham gia campaign này</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explain panel -->
+      <div class="amb-explain">
+        <div class="amb-explain-title">📋 Chi tiết Campaign trên App</div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">1</div>
+          <div class="amb-explain-text"><strong>Thông tin rõ ràng:</strong> CBNV thấy ngay mức thưởng cho từng hành động trước khi quyết định tham gia.</div>
+        </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">2</div>
+          <div class="amb-explain-text"><strong>Budget tracking:</strong> Thanh tiến trình hiển thị ngân sách còn lại — tạo urgency.</div>
+        </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">3</div>
+          <div class="amb-explain-text"><strong>1 nút tham gia:</strong> Nhấn "Tham gia" → hệ thống ghi nhận, bắt đầu track tương tác.</div>
+        </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">4</div>
+          <div class="amb-explain-text"><strong>Multi-brand:</strong> Mỗi thương hiệu Sovico (Vietjet, HDBank, Vikki) có campaign riêng.</div>
+        </div>
+        <div class="amb-prod-badge">● Production app — phục vụ 10+ thương hiệu</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== SLIDE 4: AMBASSADOR — KẾT NỐI TÀI KHOẢN ==================== -->
   <div class="slide" data-index="4">
 
-    <span class="tag tag-vietjet" style="margin-bottom:8px">Giao diện App thật</span>
-    <h2>Bước 3 · <span class="accent">Khai báo kênh MXH</span></h2>
+
+    <h2>Bước 3 · <span class="accent">Kết nối tài khoản MXH</span></h2>
     <h3>CBNV liên kết mạng xã hội chỉ 1 lần — hệ thống tự track mãi mãi</h3>
 
     <div style="display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;justify-content:center">
@@ -1090,7 +1055,7 @@
 
   <!-- ==================== SLIDE 5: TƯƠNG TÁC TRÊN FACEBOOK ==================== -->
   <div class="slide" data-index="5">
-    <h2>Bước 3 · <span class="accent">Tương tác trên Facebook</span></h2>
+    <h2>Bước 4 · <span class="accent">Tương tác trên Facebook</span></h2>
     <h3>CBNV vào fanpage Vietjet — Like, Comment, Share bài viết campaign</h3>
 
     <div style="display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;justify-content:center">
@@ -1180,7 +1145,7 @@
 
   <!-- ==================== SLIDE 6: HỆ THỐNG THU THẬP ==================== -->
   <div class="slide" data-index="6">
-    <h2>Bước 4 · <span class="accent">Thu thập tự động</span></h2>
+    <h2>Bước 5 · <span class="accent">Thu thập tự động</span></h2>
     <h3>Hệ thống quét fanpage 2 lần/ngày — không cần CBNV thao tác gì thêm</h3>
 
     <div class="crawl-visual">
@@ -1252,7 +1217,7 @@
 
   <!-- ==================== SLIDE 7: TÍNH THƯỞNG ==================== -->
   <div class="slide" data-index="7">
-    <h2>Bước 5 · <span class="accent">Nhận diện & Tính thưởng</span></h2>
+    <h2>Bước 6 · <span class="accent">Nhận diện & Tính thưởng</span></h2>
     <h3>Backend tự động xử lý — từ dữ liệu thô đến cộng điểm</h3>
 
     <div class="mapping-flow">
@@ -1357,8 +1322,8 @@
   <!-- ==================== SLIDE 8B: AMBASSADOR — LEADERBOARD & THỐNG KÊ ==================== -->
   <div class="slide" data-index="8">
 
-    <span class="tag tag-vietjet" style="margin-bottom:8px">Giao diện App thật</span>
-    <h2>Bước 6 · <span class="accent">Xem thống kê & Bảng xếp hạng</span></h2>
+
+    <h2>Bước 7 · <span class="accent">Xem thống kê & Bảng xếp hạng</span></h2>
     <h3>CBNV theo dõi điểm realtime — so sánh với đồng nghiệp → tạo động lực</h3>
 
     <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center">
@@ -1380,7 +1345,7 @@
             </div>
             <div>
               <span class="amb-stats-amount" id="ambPointCounter">140</span>
-              <span class="amb-stats-unit">đi��m</span>
+              <span class="amb-stats-unit">điểm</span>
             </div>
             <div class="amb-stats-grid">
               <div class="amb-stats-item">
@@ -1532,7 +1497,7 @@
               </div>
               <div class="amb-lb-pts">
                 <div class="amb-lb-pts-num">198</div>
-                <div class="amb-lb-pts-label">đi���m</div>
+                <div class="amb-lb-pts-label">điểm</div>
               </div>
             </div>
             <div class="amb-lb-item">
@@ -1677,7 +1642,7 @@
   function onSlideEnter(index) {
     if (index === 0) animateCounter();
     if (index === 1) animateFlow();
-    if (index === 3) animateAmbNotif();
+    if (index === 2) animateAmbNotif();
     if (index === 5) animateFbActions();
     if (index === 7) { animateMapping(); animateBalance(); }
   }
