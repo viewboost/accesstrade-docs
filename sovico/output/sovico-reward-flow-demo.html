@@ -36,6 +36,7 @@
   .nav button:hover { background: rgba(255,255,255,0.25); }
   .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
   .slide-counter { position: fixed; bottom: 35px; right: 40px; font-size: 13px; color: rgba(255,255,255,0.4); z-index: 100; }
+  .slide-counter-mobile { display: none; font-size: 12px; color: rgba(255,255,255,0.4); white-space: nowrap; }
 
   /* ===== PROGRESS BAR ===== */
   .progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #E30613, #ff6b35); z-index: 100; transition: width 0.4s ease; }
@@ -254,6 +255,187 @@
   .mapping-visual .match { color: #00b894; font-weight: 600; }
   .mapping-visual .warn { color: #ff9800; }
 
+  /* ===== AMBASSADOR APP MOCKUP SLIDES ===== */
+  .amb-app {
+    width: 340px; background: #fff; border-radius: 24px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5); color: #111827;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  }
+  .amb-app-header {
+    background: linear-gradient(135deg, #7A5AF8 0%, #EC4899 100%);
+    padding: 16px 20px; color: #fff; display: flex; align-items: center; gap: 12px;
+  }
+  .amb-app-header-logo { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+  .amb-app-header-title { font-size: 15px; font-weight: 600; }
+  .amb-app-header-sub { font-size: 11px; opacity: 0.8; }
+  .amb-app-body { padding: 16px; max-height: 480px; overflow-y: auto; }
+  .amb-app-body::-webkit-scrollbar { width: 0; }
+
+  /* Ambassador Campaign Cards */
+  .amb-campaign-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+    overflow: hidden; margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .amb-campaign-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  .amb-campaign-banner {
+    height: 100px; background-size: cover; background-position: center; position: relative;
+  }
+  .amb-campaign-banner-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(227,6,19,0.85), rgba(255,107,53,0.7));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; letter-spacing: 4px;
+  }
+  .amb-campaign-banner-overlay.hdbank {
+    background: linear-gradient(135deg, rgba(226,0,26,0.85), rgba(0,82,155,0.7));
+  }
+  .amb-campaign-banner-overlay.vikki {
+    background: linear-gradient(135deg, rgba(102,51,153,0.85), rgba(200,100,200,0.7));
+  }
+  .amb-campaign-content { padding: 14px 16px; }
+  .amb-campaign-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .amb-campaign-brand-icon {
+    width: 28px; height: 28px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .amb-campaign-brand-name { font-size: 12px; color: #6b7280; font-weight: 500; }
+  .amb-campaign-brand-badge { font-size: 9px; background: #ecfdf5; color: #059669; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+  .amb-campaign-title { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 6px; line-height: 1.3; }
+  .amb-campaign-desc { font-size: 12px; color: #6b7280; line-height: 1.5; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .amb-campaign-rewards { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .amb-reward-chip {
+    font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 600;
+    background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,152,0,0.1));
+    color: #b45309; border: 1px solid rgba(255,215,0,0.25);
+  }
+  .amb-campaign-footer { display: flex; align-items: center; justify-content: space-between; }
+  .amb-campaign-time { font-size: 10px; color: #9ca3af; }
+  .amb-btn-join {
+    padding: 8px 20px; border: none; border-radius: 999px; font-size: 12px; font-weight: 600;
+    color: #fff; cursor: pointer;
+    background: linear-gradient(135deg, #7A5AF8, #EC4899);
+    box-shadow: 0 2px 8px rgba(122,90,248,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .amb-btn-join:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(122,90,248,0.4); }
+  .amb-campaign-budget {
+    display: flex; align-items: center; gap: 6px; padding: 8px 12px;
+    background: #f9fafb; border-radius: 8px; margin-bottom: 10px; font-size: 11px; color: #4b5563;
+  }
+  .amb-budget-bar { flex: 1; height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
+  .amb-budget-fill { height: 100%; background: linear-gradient(90deg, #7A5AF8, #EC4899); border-radius: 2px; }
+
+  /* Ambassador Account Linking */
+  .amb-link-section { margin-bottom: 14px; }
+  .amb-link-label { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .amb-link-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;
+    margin-bottom: 8px; transition: background 0.2s;
+  }
+  .amb-link-item:hover { background: #f3f4f6; }
+  .amb-link-icon {
+    width: 36px; height: 36px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0;
+  }
+  .amb-link-icon-fb { background: #1877F2; color: #fff; }
+  .amb-link-icon-tt { background: #000; color: #fff; }
+  .amb-link-icon-th { background: linear-gradient(135deg, #833AB4, #E1306C); color: #fff; }
+  .amb-link-icon-yt { background: #FF0000; color: #fff; }
+  .amb-link-info { flex: 1; min-width: 0; }
+  .amb-link-name { font-size: 13px; font-weight: 600; color: #111827; }
+  .amb-link-url { font-size: 10px; color: #9ca3af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .amb-link-badge {
+    font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 600; white-space: nowrap;
+  }
+  .amb-badge-active { background: #ecfdf5; color: #059669; }
+  .amb-badge-pending { background: #fffbeb; color: #b45309; }
+  .amb-btn-add {
+    width: 100%; padding: 10px; border: 2px dashed #d1d5db; border-radius: 12px;
+    background: transparent; color: #7A5AF8; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .amb-btn-add:hover { border-color: #7A5AF8; background: rgba(122,90,248,0.04); }
+
+  /* Ambassador Leaderboard */
+  .amb-leaderboard { margin-bottom: 14px; }
+  .amb-lb-title { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .amb-lb-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: 12px; margin-bottom: 6px; transition: background 0.2s;
+  }
+  .amb-lb-item:hover { background: #f9fafb; }
+  .amb-lb-item-1 { background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,152,0,0.05)); }
+  .amb-lb-item-2 { background: rgba(192,192,192,0.06); }
+  .amb-lb-item-3 { background: rgba(205,127,50,0.06); }
+  .amb-lb-rank {
+    width: 28px; height: 28px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .amb-rank-1 { background: linear-gradient(135deg, #FFD700, #FFA500); color: #fff; }
+  .amb-rank-2 { background: linear-gradient(135deg, #C0C0C0, #A0A0A0); color: #fff; }
+  .amb-rank-3 { background: linear-gradient(135deg, #CD7F32, #A0522D); color: #fff; }
+  .amb-rank-n { background: #f3f4f6; color: #6b7280; }
+  .amb-lb-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #E30613, #ff6b35);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .amb-lb-name { font-size: 13px; font-weight: 600; color: #111827; }
+  .amb-lb-dept { font-size: 10px; color: #9ca3af; }
+  .amb-lb-pts { margin-left: auto; text-align: right; }
+  .amb-lb-pts-num { font-size: 14px; font-weight: 700; color: #7A5AF8; }
+  .amb-lb-pts-label { font-size: 9px; color: #9ca3af; }
+
+  /* Ambassador Stats Card */
+  .amb-stats-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .amb-stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .amb-stats-title { font-size: 12px; font-weight: 600; color: #6b7280; }
+  .amb-stats-amount { font-size: 28px; font-weight: 800; color: #111827; }
+  .amb-stats-unit { font-size: 14px; font-weight: 400; color: #9ca3af; }
+  .amb-stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .amb-stats-item {
+    text-align: center; padding: 10px 6px; background: #f9fafb;
+    border-radius: 10px; border: 1px solid #f3f4f6;
+  }
+  .amb-stats-item-icon { font-size: 16px; margin-bottom: 2px; }
+  .amb-stats-item-val { font-size: 16px; font-weight: 700; color: #111827; }
+  .amb-stats-item-label { font-size: 9px; color: #9ca3af; margin-top: 1px; }
+  .amb-stats-item-sub { font-size: 9px; color: #059669; font-weight: 600; }
+
+  /* Production badge */
+  .amb-prod-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 20px; font-size: 10px;
+    background: rgba(0,184,148,0.1); color: #00b894;
+    border: 1px solid rgba(0,184,148,0.2); font-weight: 600;
+    margin-top: 8px;
+  }
+
+  /* Slide explain panels */
+  .amb-explain {
+    max-width: 380px; margin-left: 40px;
+  }
+  .amb-explain-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #fff; }
+  .amb-explain-item {
+    display: flex; gap: 10px; margin-bottom: 14px; padding: 12px 14px;
+    background: rgba(255,255,255,0.04); border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .amb-explain-num {
+    width: 24px; height: 24px; border-radius: 6px; display: flex;
+    align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+    background: rgba(122,90,248,0.2); color: #A78BFA; flex-shrink: 0;
+  }
+  .amb-explain-text { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+  .amb-explain-text strong { color: #fff; font-weight: 600; }
+
   /* ===== SLIDE 7: SUMMARY ===== */
   .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 700px; margin: 20px 0; }
   .summary-card {
@@ -356,22 +538,144 @@
   .balance-total-label { font-size: 11px; color: rgba(255,255,255,0.4); }
   .balance-total-value { font-size: 16px; font-weight: 800; color: #FFD700; }
 
-  /* ===== RESPONSIVE ===== */
+  /* ===== RESPONSIVE: TABLET ===== */
+  @media (max-width: 1024px) {
+    .slide { padding: 30px 30px; }
+    h1 { font-size: 34px; }
+    h2 { font-size: 28px; }
+    .mapping-flow { flex-direction: column; align-items: center; }
+    .balance-widget { width: 100%; max-width: 400px; }
+    .result-card { width: 100%; max-width: 460px; }
+  }
+
+  /* ===== RESPONSIVE: MOBILE ===== */
   @media (max-width: 768px) {
-    .slide { padding: 24px 20px; }
-    h1 { font-size: 28px; }
-    h2 { font-size: 24px; }
-    .flow-container { gap: 8px; }
-    .flow-step { width: 100px; }
-    .flow-icon { width: 52px; height: 52px; font-size: 22px; }
-    .flow-label { font-size: 11px; }
-    .app-screens { flex-direction: column; align-items: center; }
-    .step-arrow { transform: rotate(90deg); }
-    .crawl-data-flow { flex-direction: column; }
-    .data-arrow-line { width: 2px; height: 40px; }
-    .summary-grid { grid-template-columns: 1fr; }
-    .phone-frame { width: 240px; height: 420px; }
-    .result-card { width: 100%; max-width: 400px; }
+    html, body { overflow-y: auto; overflow-x: hidden; }
+    .deck { height: auto; min-height: 100vh; }
+    .slide {
+      padding: 20px 16px 100px;
+      position: relative; inset: auto;
+      min-height: 100vh;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: flex-start;
+      padding-top: 40px;
+      opacity: 1; pointer-events: auto;
+      transform: none; transition: none;
+    }
+    .slide.active { display: flex; }
+    .slide.prev { display: none; }
+
+    h1 { font-size: 24px; text-align: center; }
+    h2 { font-size: 22px; text-align: center; margin-bottom: 12px; }
+    h3 { font-size: 15px; text-align: center; margin-bottom: 20px; }
+    .tag { font-size: 10px; padding: 3px 10px; }
+
+    /* Navigation mobile */
+    .nav { bottom: 16px; gap: 8px; width: calc(100% - 32px); left: 16px; transform: none; }
+    .nav button { flex: 1; padding: 12px 16px; font-size: 14px; border-radius: 10px; }
+    .slide-counter { display: none; }
+    .slide-counter-mobile { display: block; }
+    .progress { height: 4px; }
+
+    /* Slide 1: Result */
+    .result-card { width: 100%; max-width: 100%; padding: 24px 20px; border-radius: 16px; }
+    .result-header { gap: 12px; margin-bottom: 16px; }
+    .avatar { width: 44px; height: 44px; font-size: 18px; }
+    .result-name { font-size: 17px; }
+    .points-number { font-size: 52px; }
+    .result-breakdown { flex-direction: row; gap: 8px; }
+    .breakdown-item { padding: 10px 8px; }
+    .breakdown-count { font-size: 16px; }
+    .result-subtitle { font-size: 14px; line-height: 1.6; }
+
+    /* Slide 2: Flow */
+    .flow-container { flex-direction: column; gap: 6px; align-items: center; }
+    .flow-step { width: auto; flex-direction: row; gap: 12px; text-align: left; }
+    .flow-icon { width: 48px; height: 48px; min-width: 48px; font-size: 22px; border-radius: 14px; margin-bottom: 0; }
+    .flow-label { font-size: 13px; }
+    .flow-arrow { transform: rotate(90deg); font-size: 18px; margin: 0; }
+    .point-table { max-width: 100%; }
+    .point-table th, .point-table td { padding: 8px 10px; font-size: 12px; }
+
+    /* Slide 3: Notification */
+    .phone-frame { width: 260px; height: 440px; padding: 36px 14px 16px; }
+    .phone-time { font-size: 36px; }
+    .slide-text-right { margin-left: 0; margin-top: 20px; max-width: 100%; }
+
+    /* Slide 4: Participate */
+    .app-screens { flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+    .app-screen { width: 100%; max-width: 320px; }
+    .step-arrow { transform: rotate(90deg); font-size: 28px; }
+
+    /* Slide 5: Facebook interaction */
+    .slide[data-index="5"] > div { flex-direction: column !important; align-items: center !important; gap: 20px !important; width: 100%; }
+    .slide[data-index="5"] > div > div:first-child { width: 100% !important; max-width: 340px; }
+    .slide[data-index="5"] > div > div:last-child { max-width: 100% !important; }
+
+    /* Slide 6: Crawling */
+    .crawl-visual { max-width: 100%; }
+    .timeline-bar { padding: 8px 12px; flex-wrap: wrap; gap: 4px; justify-content: center; }
+    .timeline-dot { min-width: 40px; }
+    .dot-label { font-size: 10px; }
+    .crawl-data-flow { flex-direction: column; align-items: center; gap: 12px; }
+    .data-source, .data-dest { width: 100%; max-width: 280px; padding: 16px; }
+    .data-arrow { transform: rotate(90deg); }
+    .data-arrow-line { width: 40px; height: 2px; }
+    .data-sample { font-size: 11px; padding: 12px; overflow-x: auto; max-width: 100%; }
+
+    /* Slide 7: Mapping + Balance */
+    .mapping-flow { flex-direction: column; gap: 20px; }
+    .mapping-steps { width: 100%; }
+    .mapping-step { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
+    .mapping-visual { font-size: 10px; width: 100%; margin-top: 4px; }
+    .mapping-title { font-size: 12px; }
+    .mapping-desc { font-size: 10px; }
+    .balance-widget { width: 100%; max-width: 100%; }
+    .balance-card { width: 100%; }
+    .balance-number { font-size: 28px; }
+
+    /* Ambassador app mockups mobile */
+    .amb-app { width: 100% !important; max-width: 340px; }
+    .amb-explain { margin-left: 0; margin-top: 20px; max-width: 100%; }
+    .amb-explain-title { font-size: 14px; }
+    .amb-explain-item { padding: 10px 12px; margin-bottom: 10px; }
+    .amb-explain-text { font-size: 12px; }
+    .amb-campaign-banner { height: 80px; }
+    .amb-campaign-title { font-size: 14px; }
+    .amb-campaign-desc { font-size: 11px; }
+    .amb-reward-chip { font-size: 10px; padding: 3px 8px; }
+    .amb-stats-amount { font-size: 24px; }
+    .amb-stats-grid { gap: 6px; }
+    .amb-stats-item { padding: 8px 4px; }
+    .amb-stats-item-val { font-size: 14px; }
+    .amb-lb-avatar { width: 30px; height: 30px; font-size: 11px; }
+    .amb-lb-name { font-size: 12px; }
+    .amb-lb-pts-num { font-size: 13px; }
+
+    /* Slide 8: Summary */
+    .summary-grid { grid-template-columns: 1fr; gap: 12px; max-width: 100%; }
+    .summary-card { padding: 18px; }
+    .summary-icon { font-size: 24px; margin-bottom: 6px; }
+    .summary-title { font-size: 14px; }
+    .summary-desc { font-size: 11px; }
+    .faq-section { max-width: 100%; }
+    .faq-q { font-size: 12px; }
+    .faq-a { font-size: 11px; }
+  }
+
+  /* ===== RESPONSIVE: SMALL MOBILE ===== */
+  @media (max-width: 380px) {
+    .slide { padding: 16px 12px 100px; padding-top: 32px; }
+    h1 { font-size: 20px; }
+    h2 { font-size: 19px; }
+    h3 { font-size: 13px; }
+    .points-number { font-size: 42px; }
+    .result-card { padding: 18px 14px; }
+    .breakdown-item { padding: 8px 4px; }
+    .breakdown-count { font-size: 14px; }
+    .phone-frame { width: 230px; height: 400px; }
+    .flow-icon { width: 40px; height: 40px; min-width: 40px; font-size: 18px; }
+    .balance-number { font-size: 24px; }
   }
 </style>
 </head>
@@ -387,33 +691,50 @@
     <h1 style="margin-top:16px">Tương tác <span class="accent">cũng được thưởng</span></h1>
     <h3>Luồng tính thưởng tự động cho CBNV</h3>
 
-    <div class="result-card">
-      <div class="result-header">
-        <div class="avatar">L</div>
+    <!-- Ambassador-style Profile Card -->
+    <div class="amb-app" style="width:420px;border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,0.5)">
+      <div class="amb-app-header" style="padding:18px 24px;border-radius:20px 20px 0 0">
+        <div class="amb-app-header-logo">S</div>
         <div>
-          <div class="result-name">Nguyễn Thị Lan</div>
-          <div class="result-dept">Phòng Marketing · HDBank</div>
+          <div class="amb-app-header-title">Sovico KOC</div>
+          <div class="amb-app-header-sub">Trang cá nhân</div>
         </div>
       </div>
-      <div class="result-points">
-        <div class="points-number" id="pointCounter">0</div>
-        <div class="points-label">tổng điểm hiện tại</div>
-      </div>
-      <div class="result-breakdown">
-        <div class="breakdown-item">
-          <div class="breakdown-icon">👍</div>
-          <div class="breakdown-count">3 Like</div>
-          <div class="breakdown-label">3 × 1đ = +3đ</div>
+      <div class="amb-app-body" style="padding:20px">
+        <!-- User -->
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#E30613,#ff6b35);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0">L</div>
+          <div>
+            <div style="font-size:17px;font-weight:700;color:#111827">Nguyễn Thị Lan</div>
+            <div style="font-size:12px;color:#6b7280">Phòng Marketing · HDBank</div>
+          </div>
         </div>
-        <div class="breakdown-item">
-          <div class="breakdown-icon">💬</div>
-          <div class="breakdown-count">2 Comment</div>
-          <div class="breakdown-label">2 × 3đ = +6đ</div>
+        <!-- Divider -->
+        <div style="height:1px;background:#e5e7eb;margin-bottom:18px"></div>
+        <!-- Points -->
+        <div style="text-align:center;margin-bottom:18px">
+          <div style="font-size:64px;font-weight:800;color:#7c3aed;line-height:1" id="pointCounter">0</div>
+          <div style="font-size:13px;color:#9ca3af;margin-top:6px">tổng điểm hiện tại</div>
         </div>
-        <div class="breakdown-item">
-          <div class="breakdown-icon">🔄</div>
-          <div class="breakdown-count">1 Share</div>
-          <div class="breakdown-label">1 × 5đ = +5đ</div>
+        <!-- Divider -->
+        <div style="height:1px;background:#e5e7eb;margin-bottom:14px"></div>
+        <!-- Breakdown -->
+        <div style="display:flex;gap:10px">
+          <div style="flex:1;text-align:center;padding:12px 8px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6">
+            <div style="font-size:22px;margin-bottom:4px">👍</div>
+            <div style="font-size:16px;font-weight:700;color:#111827">3 Like</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:2px">3 × 1đ = +3đ</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:12px 8px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6">
+            <div style="font-size:22px;margin-bottom:4px">💬</div>
+            <div style="font-size:16px;font-weight:700;color:#111827">2 Comment</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:2px">2 × 3đ = +6đ</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:12px 8px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6">
+            <div style="font-size:22px;margin-bottom:4px">🔄</div>
+            <div style="font-size:16px;font-weight:700;color:#111827">1 Share</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:2px">1 × 5đ = +5đ</div>
+          </div>
         </div>
       </div>
     </div>
@@ -465,102 +786,310 @@
     <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:4px">* Quy tắc điểm do Admin cấu hình linh hoạt</div>
   </div>
 
-  <!-- ==================== SLIDE 3: THÔNG BÁO ==================== -->
+  <!-- ==================== SLIDE 2B: AMBASSADOR — CAMPAIGN DASHBOARD ==================== -->
   <div class="slide" data-index="2">
-    <h2>Bước 1 · <span class="accent">Nhận thông báo</span></h2>
-    <div style="display:flex;align-items:center;gap:40px;flex-wrap:wrap;justify-content:center">
-      <div class="phone-frame">
-        <div class="phone-notch"></div>
-        <div class="phone-time">09:41</div>
-        <div class="phone-date">Thứ Hai, 7 tháng 4</div>
-        <div class="notification" id="notif1">
-          <div class="notif-header">
-            <div class="notif-app-icon">S</div>
-            <div class="notif-app-name">Sovico KOC</div>
+    <span class="tag tag-vietjet" style="margin-bottom:8px">Giao diện App thật</span>
+    <h2>Bước 2 · <span class="accent">Chọn Campaign tham gia</span></h2>
+    <h3>CBNV mở app → thấy ngay danh sách campaign đang chạy</h3>
+
+    <div style="display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;justify-content:center">
+      <!-- Ambassador App Mockup -->
+      <div class="amb-app" id="ambCampaigns">
+        <div class="amb-app-header">
+          <div class="amb-app-header-logo">S</div>
+          <div>
+            <div class="amb-app-header-title">Sovico KOC</div>
+            <div class="amb-app-header-sub">Chiến dịch đang mở</div>
           </div>
-          <div class="notif-title">🎉 Campaign mới từ Vietjet!</div>
-          <div class="notif-body">"Chia sẻ niềm vui bay" — Tương tác ngay trên Facebook Vietjet để nhận điểm thưởng!</div>
         </div>
-        <div class="notification" id="notif2" style="animation-delay:1.8s">
-          <div class="notif-header">
-            <div class="notif-app-icon">S</div>
-            <div class="notif-app-name">Sovico KOC</div>
+        <div class="amb-app-body">
+          <!-- Campaign 1: Vietjet - highlighted -->
+          <div class="amb-campaign-card" style="border: 2px solid #E30613;">
+            <div class="amb-campaign-banner">
+              <div class="amb-campaign-banner-overlay">✈️ 🌴 ☀️</div>
+            </div>
+            <div class="amb-campaign-content">
+              <div class="amb-campaign-brand">
+                <div class="amb-campaign-brand-icon" style="background:#E30613">VJ</div>
+                <span class="amb-campaign-brand-name">Vietjet Air</span>
+                <span class="amb-campaign-brand-badge">Đang chạy</span>
+              </div>
+              <div class="amb-campaign-title">Chia sẻ niềm vui bay ✈️</div>
+              <div class="amb-campaign-desc">Tương tác với bài viết trên fanpage Vietjet — Like, Comment, Share để nhận điểm thưởng!</div>
+              <div class="amb-campaign-rewards">
+                <span class="amb-reward-chip">👍 +1đ / Like</span>
+                <span class="amb-reward-chip">💬 +3đ / Comment</span>
+                <span class="amb-reward-chip">🔄 +5đ / Share</span>
+              </div>
+              <div class="amb-campaign-budget">
+                <span>📊 Budget:</span>
+                <div class="amb-budget-bar"><div class="amb-budget-fill" style="width:35%"></div></div>
+                <span style="color:#EF4444;font-weight:600">35%</span>
+              </div>
+              <div class="amb-campaign-footer">
+                <span class="amb-campaign-time">7/4 → 21/4/2026</span>
+                <button class="amb-btn-join">Tham gia ngay</button>
+              </div>
+            </div>
           </div>
-          <div class="notif-title">💰 Like + Comment = Điểm thưởng</div>
-          <div class="notif-body">Mỗi comment hợp lệ được +3 điểm. Tham gia ngay!</div>
+
+          <!-- Campaign 2: HDBank -->
+          <div class="amb-campaign-card">
+            <div class="amb-campaign-banner">
+              <div class="amb-campaign-banner-overlay hdbank">🏦 💚 ✨</div>
+            </div>
+            <div class="amb-campaign-content">
+              <div class="amb-campaign-brand">
+                <div class="amb-campaign-brand-icon" style="background:#E2001A">HD</div>
+                <span class="amb-campaign-brand-name">HDBank</span>
+                <span class="amb-campaign-brand-badge">Đang chạy</span>
+              </div>
+              <div class="amb-campaign-title">Happy Banking cùng HDBank</div>
+              <div class="amb-campaign-desc">Chia sẻ trải nghiệm dịch vụ HDBank trên mạng xã hội — nhận điểm thưởng mỗi tuần.</div>
+              <div class="amb-campaign-rewards">
+                <span class="amb-reward-chip">👍 +1đ</span>
+                <span class="amb-reward-chip">💬 +2đ</span>
+                <span class="amb-reward-chip">⭐ +10đ / Review</span>
+              </div>
+              <div class="amb-campaign-footer">
+                <span class="amb-campaign-time">1/4 → 30/4/2026</span>
+                <button class="amb-btn-join">Tham gia</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campaign 3: Vikki - upcoming -->
+          <div class="amb-campaign-card" style="opacity:0.6">
+            <div class="amb-campaign-banner">
+              <div class="amb-campaign-banner-overlay vikki">🛍️ 💜</div>
+            </div>
+            <div class="amb-campaign-content">
+              <div class="amb-campaign-brand">
+                <div class="amb-campaign-brand-icon" style="background:#663399">Vi</div>
+                <span class="amb-campaign-brand-name">Vikki</span>
+                <span style="font-size:9px;background:#f3f4f6;color:#6b7280;padding:2px 6px;border-radius:4px;font-weight:600">Sắp diễn ra</span>
+              </div>
+              <div class="amb-campaign-title">Vikki Shopping Festival</div>
+              <div class="amb-campaign-desc">Mua sắm & chia sẻ deal hot — check-in nhận điểm.</div>
+              <div class="amb-campaign-footer">
+                <span class="amb-campaign-time">Bắt đầu 15/4/2026</span>
+                <button class="amb-btn-join" style="opacity:0.5;cursor:default">Sắp mở</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="slide-text-right">
-        <div style="font-size:15px;font-weight:600;margin-bottom:12px;color:#E30613">Admin tạo campaign</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.8">
-          ✓ Chọn brand: <strong>Vietjet Air</strong><br>
-          ✓ Đặt tên: "Chia sẻ niềm vui bay"<br>
-          ✓ Chọn bài viết target trên fanpage<br>
-          ✓ Cấu hình điểm thưởng<br>
-          ✓ Đặt thời gian: 7/4 → 21/4/2026<br>
-          ✓ Hệ thống <strong>tự động gửi thông báo</strong> cho toàn bộ CBNV
+      <!-- Explain panel -->
+      <div class="amb-explain">
+        <div class="amb-explain-title">📱 Giao diện Campaign trên Ambassador App</div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">1</div>
+          <div class="amb-explain-text"><strong>Multi-brand:</strong> Mỗi thương hiệu Sovico (Vietjet, HDBank, Vikki) có campaign riêng, CBNV chọn tham gia theo ý muốn.</div>
         </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">2</div>
+          <div class="amb-explain-text"><strong>Điểm thưởng rõ ràng:</strong> CBNV thấy ngay mức thưởng cho từng hành động trước khi tham gia.</div>
+        </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">3</div>
+          <div class="amb-explain-text"><strong>Budget tracking:</strong> Thanh tiến trình hiển thị ngân sách còn lại — tạo urgency cho CBNV.</div>
+        </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">4</div>
+          <div class="amb-explain-text"><strong>Timeline:</strong> Ngày bắt đầu/kết thúc rõ ràng. Campaign sắp mở hiển thị mờ.</div>
+        </div>
+        <div class="amb-prod-badge">● Production app — phục vụ 10+ thương hiệu</div>
       </div>
     </div>
   </div>
 
-  <!-- ==================== SLIDE 4: THAM GIA + LINK FB ==================== -->
+  <!-- ==================== SLIDE 3: THÔNG BÁO ==================== -->
   <div class="slide" data-index="3">
-    <h2>Bước 2 · <span class="accent">Tham gia & Khai báo kênh</span></h2>
-    <div class="app-screens" id="appScreens">
-      <div class="app-screen" data-delay="0">
-        <div class="screen-header">📋 Danh sách Campaign</div>
-        <div class="screen-body">
-          <div class="campaign-card-mini" style="border-left:3px solid #E30613">
-            <div class="campaign-brand">✈️ Vietjet Air</div>
-            <div class="campaign-title-mini">Chia sẻ niềm vui bay</div>
-            <div class="campaign-reward-mini">
-              <span class="reward-chip">👍 +1đ</span>
-              <span class="reward-chip">💬 +3đ</span>
-              <span class="reward-chip">🔄 +5đ</span>
-            </div>
-            <button class="btn-join">Tham gia ngay</button>
+    <h2>Bước 1 · <span class="accent">Nhận thông báo</span></h2>
+    <div style="display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;justify-content:center">
+      <!-- Ambassador Notification Screen -->
+      <div class="amb-app" id="ambNotif">
+        <div class="amb-app-header">
+          <div class="amb-app-header-logo">S</div>
+          <div>
+            <div class="amb-app-header-title">Thông báo</div>
+            <div class="amb-app-header-sub">2 thông báo mới</div>
           </div>
-          <div class="campaign-card-mini" style="opacity:0.5">
-            <div class="campaign-brand" style="color:#42a5f5">🏦 HDBank</div>
-            <div class="campaign-title-mini">Happy Banking cùng HDBank</div>
-            <div style="font-size:10px;color:rgba(255,255,255,0.4)">Sắp diễn ra · 15/4</div>
-          </div>
+          <div style="margin-left:auto;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:11px">🔔</div>
         </div>
-      </div>
-
-      <div class="step-arrow">→</div>
-
-      <div class="app-screen" data-delay="400">
-        <div class="screen-header">🔗 Kết nối Facebook</div>
-        <div class="screen-body">
-          <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:12px;line-height:1.5">
-            Kết nối tài khoản Facebook để hệ thống tự động nhận diện tương tác của bạn
-          </div>
-          <div class="fb-link-section">
-            <div class="fb-link-item">
-              <div class="fb-icon">f</div>
-              <div>
-                <div class="fb-name">Nguyễn Thị Lan</div>
-                <div class="fb-status">✓ Đã kết nối</div>
+        <div class="amb-app-body">
+          <!-- Notification 1 -->
+          <div id="ambNotif1" class="amb-notif-item" style="display:flex;gap:12px;padding:14px;background:#f0f7ff;border-radius:12px;border:1px solid #bfdbfe;margin-bottom:10px;opacity:0;transform:translateY(-16px);transition:all 0.5s ease">
+            <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#E30613,#ff6b35);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🎉</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <span style="font-size:12px;font-weight:700;color:#111827">Campaign mới từ Vietjet!</span>
+                <span style="font-size:9px;color:#9ca3af;white-space:nowrap">2 phút trước</span>
+              </div>
+              <div style="font-size:12px;color:#4b5563;line-height:1.5">"Chia sẻ niềm vui bay" — Tương tác trên Facebook Vietjet để nhận điểm!</div>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <span style="font-size:10px;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,#7A5AF8,#EC4899);color:#fff;font-weight:600;cursor:pointer">Tham gia ngay</span>
+                <span style="font-size:10px;padding:3px 10px;border-radius:20px;background:#f3f4f6;color:#6b7280;cursor:pointer">Xem chi tiết</span>
               </div>
             </div>
           </div>
-          <div style="text-align:center;margin-top:16px">
-            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:8px">Hệ thống lưu mã định danh Facebook</div>
-            <div style="font-family:monospace;font-size:12px;background:rgba(0,0,0,0.3);padding:8px;border-radius:8px;color:#42a5f5">
-              FB_ID: <span style="color:#FFD700">100048xxxxxx</span>
+          <!-- Notification 2 -->
+          <div id="ambNotif2" class="amb-notif-item" style="display:flex;gap:12px;padding:14px;background:#f0f7ff;border-radius:12px;border:1px solid #bfdbfe;margin-bottom:10px;opacity:0;transform:translateY(-16px);transition:all 0.5s ease">
+            <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#FFD700,#FFA500);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">💰</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <span style="font-size:12px;font-weight:700;color:#111827">Like + Comment = Điểm</span>
+                <span style="font-size:9px;color:#9ca3af;white-space:nowrap">5 phút trước</span>
+              </div>
+              <div style="font-size:12px;color:#4b5563;line-height:1.5">Mỗi comment hợp lệ +3 điểm. Tham gia ngay!</div>
+            </div>
+          </div>
+          <!-- Older notification - read -->
+          <div style="display:flex;gap:12px;padding:14px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;margin-bottom:10px;opacity:0.5">
+            <div style="width:40px;height:40px;border-radius:12px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📊</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <span style="font-size:12px;font-weight:600;color:#6b7280">Báo cáo tuần</span>
+                <span style="font-size:9px;color:#9ca3af">3 ngày trước</span>
+              </div>
+              <div style="font-size:12px;color:#9ca3af;line-height:1.5">Bạn đạt 126 điểm tuần này. Xếp hạng #7.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;padding:14px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;opacity:0.5">
+            <div style="width:40px;height:40px;border-radius:12px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">✅</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;color:#6b7280;margin-bottom:4px">Kết nối Facebook thành công</div>
+              <div style="font-size:12px;color:#9ca3af;line-height:1.5">Tài khoản FB đã được liên kết.</div>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Explain panel -->
+      <div class="amb-explain">
+        <div class="amb-explain-title" style="color:#E30613">Admin tạo campaign → CBNV nhận thông báo</div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">1</div>
+          <div class="amb-explain-text">Admin chọn brand <strong>Vietjet Air</strong>, đặt tên campaign, chọn bài viết target trên fanpage</div>
+        </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">2</div>
+          <div class="amb-explain-text">Cấu hình <strong>điểm thưởng</strong> & thời gian: 7/4 → 21/4/2026</div>
+        </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">3</div>
+          <div class="amb-explain-text">Hệ thống <strong>tự động push notification</strong> cho toàn bộ CBNV qua app</div>
+        </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">4</div>
+          <div class="amb-explain-text">CBNV nhấn <strong>"Tham gia ngay"</strong> ngay từ thông báo → vào campaign detail</div>
+        </div>
+        <div class="amb-prod-badge">● Push notification qua Firebase</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 4: AMBASSADOR — KẾT NỐI TÀI KHOẢN ==================== -->
+  <div class="slide" data-index="4">
+
+    <span class="tag tag-vietjet" style="margin-bottom:8px">Giao diện App thật</span>
+    <h2>Bước 3 · <span class="accent">Khai báo kênh MXH</span></h2>
+    <h3>CBNV liên kết mạng xã hội chỉ 1 lần — hệ thống tự track mãi mãi</h3>
+
+    <div style="display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap;justify-content:center">
+      <!-- Ambassador App Mockup - Account Linking -->
+      <div class="amb-app" id="ambLinking">
+        <div class="amb-app-header">
+          <div class="amb-app-header-logo">S</div>
+          <div>
+            <div class="amb-app-header-title">Liên kết tài khoản</div>
+            <div class="amb-app-header-sub">Quản lý kênh mạng xã hội</div>
+          </div>
+        </div>
+        <div class="amb-app-body">
+          <!-- User info -->
+          <div style="display:flex;align-items:center;gap:12px;padding:14px;background:#f9fafb;border-radius:14px;margin-bottom:16px;border:1px solid #e5e7eb">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#E30613,#ff6b35);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0">L</div>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#111827">Nguyễn Thị Lan</div>
+              <div style="font-size:11px;color:#6b7280">Phòng Marketing · HDBank</div>
+              <div style="font-size:10px;color:#9ca3af;margin-top:2px">Mã NV: NV-2024-0847</div>
+            </div>
+          </div>
+
+          <!-- Facebook - Connected -->
+          <div class="amb-link-section">
+            <div class="amb-link-label">📱 Mạng xã hội đã kết nối</div>
+            <div class="amb-link-item" style="border-color:#1877F2;border-width:1.5px">
+              <div class="amb-link-icon amb-link-icon-fb">f</div>
+              <div class="amb-link-info">
+                <div class="amb-link-name">Nguyễn Thị Lan</div>
+                <div class="amb-link-url">fb.com/nguyenthilan.official</div>
+              </div>
+              <span class="amb-link-badge amb-badge-active">✓ Active</span>
+            </div>
+            <div class="amb-link-item">
+              <div class="amb-link-icon amb-link-icon-tt">T</div>
+              <div class="amb-link-info">
+                <div class="amb-link-name">@lannguyen_vj</div>
+                <div class="amb-link-url">tiktok.com/@lannguyen_vj</div>
+              </div>
+              <span class="amb-link-badge amb-badge-active">✓ Active</span>
+            </div>
+            <div class="amb-link-item">
+              <div class="amb-link-icon amb-link-icon-th">◉</div>
+              <div class="amb-link-info">
+                <div class="amb-link-name">@lan.nguyen</div>
+                <div class="amb-link-url">threads.net/@lan.nguyen</div>
+              </div>
+              <span class="amb-link-badge amb-badge-pending">Chờ duyệt</span>
+            </div>
+          </div>
+
+          <!-- Chưa kết nối -->
+          <div class="amb-link-section">
+            <div class="amb-link-label">➕ Thêm kênh mới</div>
+            <button class="amb-btn-add">+ Kết nối YouTube</button>
+            <div style="height:8px"></div>
+            <button class="amb-btn-add">+ Kết nối Google Maps</button>
+          </div>
+
+          <!-- FB ID display -->
+          <div style="margin-top:12px;padding:12px;background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe">
+            <div style="font-size:10px;color:#3b82f6;font-weight:600;margin-bottom:4px">🔗 Facebook ID đã lưu</div>
+            <div style="font-family:monospace;font-size:12px;color:#1e40af;background:#fff;padding:6px 10px;border-radius:6px">100048xxxxxx</div>
+            <div style="font-size:10px;color:#6b7280;margin-top:4px">Dùng để nhận diện tương tác tự động</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explain panel -->
+      <div class="amb-explain">
+        <div class="amb-explain-title">🔗 Liên kết tài khoản trên Ambassador App</div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">1</div>
+          <div class="amb-explain-text"><strong>Multi-platform:</strong> Hỗ trợ Facebook, TikTok, Threads, YouTube, Google Maps — sẵn sàng cho mọi loại campaign.</div>
+        </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">2</div>
+          <div class="amb-explain-text"><strong>Kết nối 1 lần:</strong> CBNV chỉ cần link tài khoản 1 lần. Sau đó hệ thống tự động nhận diện qua <strong>Facebook ID</strong>.</div>
+        </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">3</div>
+          <div class="amb-explain-text"><strong>Trạng thái rõ ràng:</strong> Badge Active/Chờ duyệt giúp CBNV biết tình trạng kết nối của mình.</div>
+        </div>
+        <div class="amb-explain-item">
+          <div class="amb-explain-num">4</div>
+          <div class="amb-explain-text"><strong>Bảo mật:</strong> Chỉ lưu mã định danh (ID), không truy cập nội dung cá nhân hay mật khẩu.</div>
+        </div>
+        <div class="amb-prod-badge">● Production app — đã xác minh 50,000+ tài khoản</div>
+      </div>
     </div>
   </div>
 
   <!-- ==================== SLIDE 5: TƯƠNG TÁC TRÊN FACEBOOK ==================== -->
-  <div class="slide" data-index="4">
+  <div class="slide" data-index="5">
     <h2>Bước 3 · <span class="accent">Tương tác trên Facebook</span></h2>
     <h3>CBNV vào fanpage Vietjet — Like, Comment, Share bài viết campaign</h3>
 
@@ -650,7 +1179,7 @@
   </div>
 
   <!-- ==================== SLIDE 6: HỆ THỐNG THU THẬP ==================== -->
-  <div class="slide" data-index="5">
+  <div class="slide" data-index="6">
     <h2>Bước 4 · <span class="accent">Thu thập tự động</span></h2>
     <h3>Hệ thống quét fanpage 2 lần/ngày — không cần CBNV thao tác gì thêm</h3>
 
@@ -722,7 +1251,7 @@
   </div>
 
   <!-- ==================== SLIDE 7: TÍNH THƯỞNG ==================== -->
-  <div class="slide" data-index="6">
+  <div class="slide" data-index="7">
     <h2>Bước 5 · <span class="accent">Nhận diện & Tính thưởng</span></h2>
     <h3>Backend tự động xử lý — từ dữ liệu thô đến cộng điểm</h3>
 
@@ -773,40 +1302,273 @@
         </div>
       </div>
 
-      <!-- Balance Animation -->
-      <div class="balance-widget" id="balanceWidget">
-        <div class="balance-card">
-          <div class="balance-user">
-            <div class="balance-avatar">L</div>
+      <!-- Ambassador Profile / Stats Card -->
+      <div class="amb-app" id="balanceWidget" style="width:320px;">
+        <div class="amb-app-header">
+          <div class="amb-app-header-logo">S</div>
+          <div>
+            <div class="amb-app-header-title">Trang cá nhân</div>
+            <div class="amb-app-header-sub">Chia sẻ niềm vui bay</div>
+          </div>
+        </div>
+        <div class="amb-app-body">
+          <!-- User info -->
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#E30613,#ff6b35);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0">L</div>
             <div>
-              <div style="font-size:14px;font-weight:600">Nguyễn Thị Lan</div>
-              <div style="font-size:11px;color:rgba(255,255,255,0.4)">Phòng Marketing · HDBank</div>
+              <div style="font-size:14px;font-weight:700;color:#111827">Nguyễn Thị Lan</div>
+              <div style="font-size:11px;color:#6b7280">Phòng Marketing · HDBank</div>
             </div>
           </div>
-          <div class="balance-main">
-            <div class="balance-label">Số dư hiện tại</div>
-            <div class="balance-number">
-              <span id="balanceCounter">126</span>
-              <span class="balance-unit">điểm</span>
+
+          <!-- Total points card -->
+          <div class="amb-stats-card" style="background:linear-gradient(135deg,#faf5ff,#fdf2f8);border-color:#e9d5ff">
+            <div class="amb-stats-header">
+              <span class="amb-stats-title" style="color:#7c3aed">Số dư hiện tại</span>
+              <span style="font-size:10px;color:#059669;background:#ecfdf5;padding:2px 8px;border-radius:10px;font-weight:600" id="balanceTodayBadge">↑ +0 hôm nay</span>
             </div>
-            <div class="balance-bar-wrap">
-              <div class="balance-bar" id="balanceBar"></div>
+            <div>
+              <span class="amb-stats-amount" style="color:#7c3aed" id="balanceCounter">126</span>
+              <span class="amb-stats-unit">điểm</span>
+            </div>
+            <!-- Progress bar -->
+            <div style="margin-top:10px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden">
+              <div id="balanceBar" style="height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,#7A5AF8,#EC4899);transition:width 1.5s cubic-bezier(0.4,0,0.2,1)"></div>
             </div>
           </div>
-          <div class="balance-transactions" id="balanceTxns">
-            <div class="txn-header">Hôm nay · 7/4/2026</div>
+
+          <!-- Transactions -->
+          <div id="balanceTxns" style="margin-bottom:10px">
+            <div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+              <span>Hôm nay · 7/4/2026</span>
+            </div>
           </div>
-          <div class="balance-total" id="balanceTotal">
-            <span class="balance-total-label">Tổng thưởng hôm nay</span>
-            <span class="balance-total-value" id="balanceTotalValue">+0</span>
+
+          <!-- Total row -->
+          <div id="balanceTotal" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,rgba(122,90,248,0.06),rgba(236,72,153,0.04));border-radius:10px;border:1px solid rgba(122,90,248,0.12)">
+            <span style="font-size:11px;color:#6b7280">Tổng thưởng hôm nay</span>
+            <span style="font-size:15px;font-weight:800;color:#7c3aed" id="balanceTotalValue">+0</span>
           </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- ==================== SLIDE 8B: AMBASSADOR — LEADERBOARD & THỐNG KÊ ==================== -->
+  <div class="slide" data-index="8">
+
+    <span class="tag tag-vietjet" style="margin-bottom:8px">Giao diện App thật</span>
+    <h2>Bước 6 · <span class="accent">Xem thống kê & Bảng xếp hạng</span></h2>
+    <h3>CBNV theo dõi điểm realtime — so sánh với đồng nghiệp → tạo động lực</h3>
+
+    <div style="display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;justify-content:center">
+      <!-- App 1: Stats -->
+      <div class="amb-app" id="ambStats" style="width:300px">
+        <div class="amb-app-header">
+          <div class="amb-app-header-logo">S</div>
+          <div>
+            <div class="amb-app-header-title">Thống kê của tôi</div>
+            <div class="amb-app-header-sub">Campaign: Chia sẻ niềm vui bay</div>
+          </div>
+        </div>
+        <div class="amb-app-body">
+          <!-- Total points -->
+          <div class="amb-stats-card">
+            <div class="amb-stats-header">
+              <span class="amb-stats-title">Tổng điểm tích lũy</span>
+              <span style="font-size:10px;color:#059669;background:#ecfdf5;padding:2px 8px;border-radius:10px;font-weight:600">↑ +14 hôm nay</span>
+            </div>
+            <div>
+              <span class="amb-stats-amount" id="ambPointCounter">140</span>
+              <span class="amb-stats-unit">đi��m</span>
+            </div>
+            <div class="amb-stats-grid">
+              <div class="amb-stats-item">
+                <div class="amb-stats-item-icon">👍</div>
+                <div class="amb-stats-item-val">47</div>
+                <div class="amb-stats-item-label">Lượt Like</div>
+                <div class="amb-stats-item-sub">+47đ</div>
+              </div>
+              <div class="amb-stats-item">
+                <div class="amb-stats-item-icon">💬</div>
+                <div class="amb-stats-item-val">22</div>
+                <div class="amb-stats-item-label">Comment</div>
+                <div class="amb-stats-item-sub">+66đ</div>
+              </div>
+              <div class="amb-stats-item">
+                <div class="amb-stats-item-icon">🔄</div>
+                <div class="amb-stats-item-val">5</div>
+                <div class="amb-stats-item-label">Lượt Share</div>
+                <div class="amb-stats-item-sub">+25đ</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weekly chart mini -->
+          <div class="amb-stats-card">
+            <div class="amb-stats-title" style="margin-bottom:10px">📊 Điểm 7 ngày gần nhất</div>
+            <div style="display:flex;align-items:flex-end;gap:6px;height:60px;padding:0 4px">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                <div style="width:100%;background:linear-gradient(180deg,#7A5AF8,#EC4899);border-radius:4px;height:18px"></div>
+                <span style="font-size:8px;color:#9ca3af">T2</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                <div style="width:100%;background:linear-gradient(180deg,#7A5AF8,#EC4899);border-radius:4px;height:32px"></div>
+                <span style="font-size:8px;color:#9ca3af">T3</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                <div style="width:100%;background:linear-gradient(180deg,#7A5AF8,#EC4899);border-radius:4px;height:24px"></div>
+                <span style="font-size:8px;color:#9ca3af">T4</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                <div style="width:100%;background:linear-gradient(180deg,#7A5AF8,#EC4899);border-radius:4px;height:42px"></div>
+                <span style="font-size:8px;color:#9ca3af">T5</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                <div style="width:100%;background:linear-gradient(180deg,#7A5AF8,#EC4899);border-radius:4px;height:28px"></div>
+                <span style="font-size:8px;color:#9ca3af">T6</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                <div style="width:100%;background:linear-gradient(180deg,#7A5AF8,#EC4899);border-radius:4px;height:50px"></div>
+                <span style="font-size:8px;color:#9ca3af">T7</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                <div style="width:100%;background:linear-gradient(180deg,#FFD700,#FFA500);border-radius:4px;height:38px;border:1.5px solid #FFD700"></div>
+                <span style="font-size:8px;color:#FFD700;font-weight:600">CN</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status breakdown -->
+          <div style="display:flex;gap:6px">
+            <div style="flex:1;text-align:center;padding:8px;background:#ecfdf5;border-radius:8px">
+              <div style="font-size:14px;font-weight:700;color:#059669">138</div>
+              <div style="font-size:9px;color:#6b7280">Đã duyệt</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:8px;background:#fffbeb;border-radius:8px">
+              <div style="font-size:14px;font-weight:700;color:#b45309">2</div>
+              <div style="font-size:9px;color:#6b7280">Chờ duyệt</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:8px;background:#fef2f2;border-radius:8px">
+              <div style="font-size:14px;font-weight:700;color:#dc2626">0</div>
+              <div style="font-size:9px;color:#6b7280">Từ chối</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App 2: Leaderboard -->
+      <div class="amb-app" id="ambLeaderboard" style="width:300px">
+        <div class="amb-app-header" style="background:linear-gradient(135deg,#FFD700,#FFA500)">
+          <div class="amb-app-header-logo" style="background:rgba(0,0,0,0.15)">🏆</div>
+          <div>
+            <div class="amb-app-header-title">Bảng xếp hạng</div>
+            <div class="amb-app-header-sub">Chia sẻ niềm vui bay · Top CBNV</div>
+          </div>
+        </div>
+        <div class="amb-app-body">
+          <div class="amb-leaderboard">
+            <!-- Top 1 -->
+            <div class="amb-lb-item amb-lb-item-1">
+              <div class="amb-lb-rank amb-rank-1">1</div>
+              <div class="amb-lb-avatar" style="background:linear-gradient(135deg,#1877F2,#42a5f5)">TH</div>
+              <div>
+                <div class="amb-lb-name">Trần Hoàng</div>
+                <div class="amb-lb-dept">IT · Vietjet Air</div>
+              </div>
+              <div class="amb-lb-pts">
+                <div class="amb-lb-pts-num">312</div>
+                <div class="amb-lb-pts-label">điểm</div>
+              </div>
+            </div>
+            <!-- Top 2 -->
+            <div class="amb-lb-item amb-lb-item-2">
+              <div class="amb-lb-rank amb-rank-2">2</div>
+              <div class="amb-lb-avatar" style="background:linear-gradient(135deg,#00b894,#00cec9)">PM</div>
+              <div>
+                <div class="amb-lb-name">Phạm Minh</div>
+                <div class="amb-lb-dept">Sales · HDBank</div>
+              </div>
+              <div class="amb-lb-pts">
+                <div class="amb-lb-pts-num">287</div>
+                <div class="amb-lb-pts-label">điểm</div>
+              </div>
+            </div>
+            <!-- Top 3 -->
+            <div class="amb-lb-item amb-lb-item-3">
+              <div class="amb-lb-rank amb-rank-3">3</div>
+              <div class="amb-lb-avatar" style="background:linear-gradient(135deg,#764ba2,#667eea)">LH</div>
+              <div>
+                <div class="amb-lb-name">Lê Hương</div>
+                <div class="amb-lb-dept">Marketing · Vikki</div>
+              </div>
+              <div class="amb-lb-pts">
+                <div class="amb-lb-pts-num">245</div>
+                <div class="amb-lb-pts-label">điểm</div>
+              </div>
+            </div>
+            <!-- Highlight current user -->
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
+            <div style="font-size:10px;color:#9ca3af;margin-bottom:4px;padding-left:4px">Vị trí của bạn</div>
+            <div class="amb-lb-item" style="background:linear-gradient(135deg,rgba(227,6,19,0.06),rgba(255,107,53,0.04));border:1.5px solid rgba(227,6,19,0.15);border-radius:12px">
+              <div class="amb-lb-rank amb-rank-n" style="background:#E30613;color:#fff">#7</div>
+              <div class="amb-lb-avatar">L</div>
+              <div>
+                <div class="amb-lb-name">Nguyễn Thị Lan</div>
+                <div class="amb-lb-dept">Marketing · HDBank</div>
+              </div>
+              <div class="amb-lb-pts">
+                <div class="amb-lb-pts-num" style="color:#E30613">140</div>
+                <div class="amb-lb-pts-label">điểm</div>
+              </div>
+            </div>
+            <!-- More items -->
+            <div class="amb-lb-item">
+              <div class="amb-lb-rank amb-rank-n">4</div>
+              <div class="amb-lb-avatar" style="background:linear-gradient(135deg,#ff9800,#ff5722)">NT</div>
+              <div>
+                <div class="amb-lb-name">Ngô Tuấn</div>
+                <div class="amb-lb-dept">Operations · Vietjet</div>
+              </div>
+              <div class="amb-lb-pts">
+                <div class="amb-lb-pts-num">198</div>
+                <div class="amb-lb-pts-label">đi���m</div>
+              </div>
+            </div>
+            <div class="amb-lb-item">
+              <div class="amb-lb-rank amb-rank-n">5</div>
+              <div class="amb-lb-avatar" style="background:linear-gradient(135deg,#e91e63,#f06292)">HA</div>
+              <div>
+                <div class="amb-lb-name">Hoàng Anh</div>
+                <div class="amb-lb-dept">HR · HDBank</div>
+              </div>
+              <div class="amb-lb-pts">
+                <div class="amb-lb-pts-num">176</div>
+                <div class="amb-lb-pts-label">điểm</div>
+              </div>
+            </div>
+            <div class="amb-lb-item">
+              <div class="amb-lb-rank amb-rank-n">6</div>
+              <div class="amb-lb-avatar" style="background:linear-gradient(135deg,#009688,#4db6ac)">DL</div>
+              <div>
+                <div class="amb-lb-name">Đỗ Linh</div>
+                <div class="amb-lb-dept">CS · Vikki</div>
+              </div>
+              <div class="amb-lb-pts">
+                <div class="amb-lb-pts-num">152</div>
+                <div class="amb-lb-pts-label">điểm</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="amb-prod-badge" style="margin-top:4px">● Xếp hạng cập nhật 2 lần/ngày</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== SLIDE 8: TỔNG KẾT ==================== -->
-  <div class="slide" data-index="7" style="justify-content:flex-start;padding-top:60px">
+  <div class="slide" data-index="9" style="justify-content:flex-start;padding-top:60px">
     <h2>Lợi ích <span class="accent">nổi bật</span></h2>
 
     <div class="summary-grid">
@@ -863,9 +1625,10 @@
 <!-- Navigation -->
 <div class="nav">
   <button id="btnPrev" onclick="navigate(-1)" disabled>← Trước</button>
+  <div class="slide-counter-mobile" id="slideCounterMobile">1 / 10</div>
   <button id="btnNext" onclick="navigate(1)">Tiếp →</button>
 </div>
-<div class="slide-counter" id="slideCounter">1 / 8</div>
+<div class="slide-counter" id="slideCounter">1 / 10</div>
 
 <script>
   let current = 0;
@@ -875,15 +1638,15 @@
   function navigate(dir) {
     const next = current + dir;
     if (next < 0 || next >= total) return;
-    // Current slide exits: going forward → slide goes left (prev), going back → slide goes right (default)
     slides[current].className = dir > 0 ? 'slide prev' : 'slide';
     current = next;
     slides[current].className = 'slide active';
-    // Mark all slides before current as prev, all after as default
     for (let i = 0; i < total; i++) {
       if (i === current) continue;
       slides[i].className = i < current ? 'slide prev' : 'slide';
     }
+    // Scroll to top on mobile
+    window.scrollTo(0, 0);
     updateUI();
     onSlideEnter(current);
   }
@@ -892,6 +1655,7 @@
     document.getElementById('btnPrev').disabled = current === 0;
     document.getElementById('btnNext').disabled = current === total - 1;
     document.getElementById('slideCounter').textContent = (current + 1) + ' / ' + total;
+    document.getElementById('slideCounterMobile').textContent = (current + 1) + ' / ' + total;
     document.getElementById('progress').style.width = ((current + 1) / total * 100) + '%';
   }
 
@@ -913,9 +1677,18 @@
   function onSlideEnter(index) {
     if (index === 0) animateCounter();
     if (index === 1) animateFlow();
-    if (index === 3) animateScreens();
-    if (index === 4) animateFbActions();
-    if (index === 6) { animateMapping(); animateBalance(); }
+    if (index === 3) animateAmbNotif();
+    if (index === 5) animateFbActions();
+    if (index === 7) { animateMapping(); animateBalance(); }
+  }
+
+  function animateAmbNotif() {
+    const n1 = document.getElementById('ambNotif1');
+    const n2 = document.getElementById('ambNotif2');
+    if (n1) { n1.style.opacity = '0'; n1.style.transform = 'translateY(-16px)'; }
+    if (n2) { n2.style.opacity = '0'; n2.style.transform = 'translateY(-16px)'; }
+    setTimeout(() => { if (n1) { n1.style.opacity = '1'; n1.style.transform = 'translateY(0)'; } }, 500);
+    setTimeout(() => { if (n2) { n2.style.opacity = '1'; n2.style.transform = 'translateY(0)'; } }, 1200);
   }
 
   function animateCounter() {
@@ -925,12 +1698,6 @@
 
   function animateFlow() {
     document.querySelectorAll('#flowSteps .flow-step').forEach((s, i) => {
-      setTimeout(() => s.classList.add('visible'), parseInt(s.dataset.delay) + 300);
-    });
-  }
-
-  function animateScreens() {
-    document.querySelectorAll('#appScreens .app-screen').forEach(s => {
       setTimeout(() => s.classList.add('visible'), parseInt(s.dataset.delay) + 300);
     });
   }
@@ -986,47 +1753,53 @@
     const counter = document.getElementById('balanceCounter');
     const bar = document.getElementById('balanceBar');
     const totalVal = document.getElementById('balanceTotalValue');
+    const todayBadge = document.getElementById('balanceTodayBadge');
 
     // Reset
-    container.innerHTML = '<div class="txn-header">Hôm nay · 7/4/2026</div>';
+    container.innerHTML = '<div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:8px">Hôm nay · 7/4/2026</div>';
     counter.textContent = '126';
     bar.style.width = '0%';
     totalVal.textContent = '+0';
+    if (todayBadge) todayBadge.textContent = '↑ +0 hôm nay';
 
     let balance = 126;
     let totalPts = 0;
 
+    const txnColors = [
+      { bg: 'rgba(66,165,245,0.1)', border: 'rgba(66,165,245,0.15)', ptColor: '#2563eb' },
+      { bg: 'rgba(0,184,148,0.1)', border: 'rgba(0,184,148,0.15)', ptColor: '#059669' },
+      { bg: 'rgba(118,75,162,0.1)', border: 'rgba(118,75,162,0.15)', ptColor: '#7c3aed' },
+    ];
+
     transactions.forEach((txn, i) => {
       setTimeout(() => {
-        // Add transaction row
+        const c = txnColors[i];
         const row = document.createElement('div');
-        row.className = 'txn-item';
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;background:'+c.bg+';border-radius:10px;border:1px solid '+c.border+';margin-bottom:6px;opacity:0;transform:translateX(-12px);transition:all 0.4s ease';
         row.innerHTML = `
-          <div class="txn-left">
-            <div class="txn-icon ${txn.cls}">${txn.icon}</div>
-            <div>
-              <div class="txn-action">${txn.action}</div>
-              <div class="txn-detail">${txn.detail}</div>
-            </div>
+          <div style="width:32px;height:32px;border-radius:8px;background:${c.bg};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${txn.icon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:#111827">${txn.action}</div>
+            <div style="font-size:10px;color:#9ca3af">${txn.detail}</div>
           </div>
-          <div class="txn-points" id="txnPts${i}">+${txn.pts}</div>
+          <div id="txnPts${i}" style="font-size:14px;font-weight:700;color:${c.ptColor};transition:transform 0.3s">+${txn.pts}</div>
         `;
         container.appendChild(row);
-        // Trigger animation
         requestAnimationFrame(() => {
-          row.classList.add('visible');
+          row.style.opacity = '1';
+          row.style.transform = 'translateX(0)';
           setTimeout(() => {
             const ptsEl = document.getElementById('txnPts' + i);
-            if (ptsEl) { ptsEl.classList.add('pop'); setTimeout(() => ptsEl.classList.remove('pop'), 300); }
+            if (ptsEl) { ptsEl.style.transform = 'scale(1.3)'; setTimeout(() => ptsEl.style.transform = 'scale(1)', 300); }
           }, 200);
         });
 
-        // Update balance counter
         balance += txn.pts;
         totalPts += txn.pts;
         animateNumber(counter, balance - txn.pts, balance, 400);
         bar.style.width = ((totalPts / 14) * 100) + '%';
         totalVal.textContent = '+' + totalPts;
+        if (todayBadge) todayBadge.textContent = '↑ +' + totalPts + ' hôm nay';
       }, 800 + i * 600);
     });
   }
