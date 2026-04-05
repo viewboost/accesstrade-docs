@@ -38,8 +38,37 @@ OpsHub là nền tảng quản lý việc duyệt video và social profile với
 Partner push content → OpsHub xử lý & duyệt → Trả verdict về Partner
 ```
 
+**Pipeline xử lý chi tiết:**
+
+```
+Push Content (POST /external/videos)
+  │
+  ├─ Normalize data (field aliases, source → platform+media_type)
+  ├─ Upsert SyncEntity (dedup by source_id)
+  ├─ Resolve Campaign (by ObjectId hoặc source_campaign_id)
+  ├─ Match ReviewTemplate (active, latest version)
+  │
+  ├─ Tier 1: Auto Checks
+  │   ├─ A1: Platform validation
+  │   ├─ A2: Format validation
+  │   ├─ A3–A12: Custom rules từ ReviewTemplate
+  │   │
+  │   ├─ Critical fail → auto_rejected (HTTP 200) ✅ Done
+  │   ├─ All pass + auto_approve enabled + no AI checks → auto_approved (HTTP 200) ✅ Done
+  │   └─ Otherwise → tạo Task
+  │
+  ├─ Tier 2: AI Agent Review (nếu có AI checks configured)
+  │   ├─ outcome = "ai_processing" (HTTP 202)
+  │   ├─ Task assigned to AI Agent qua BullMQ
+  │   └─ Kết quả → webhook verdict.approved/rejected
+  │
+  └─ Human Review (nếu không có AI checks hoặc AI uncertain)
+      ├─ outcome = "needs_review" (HTTP 202)
+      └─ Kết quả → webhook verdict.approved/rejected/request_edit
+```
+
 - Content gửi vào sẽ được OpsHub kiểm tra, đánh giá, và đưa ra kết quả duyệt (**approved** / **rejected**).
-- Một số content có thể được quyết định ngay lập tức (trả kết quả trong response). Một số khác cần thời gian xử lý — kết quả sẽ gửi về qua webhook hoặc có thể polling.
+- Một số content có thể được quyết định ngay lập tức (trả kết quả trong response — HTTP 200). Một số khác cần thời gian xử lý (HTTP 202) — kết quả sẽ gửi về qua webhook hoặc có thể polling.
 - Mỗi partner được cấp **project code** và **API key** riêng biệt.
 
 ---
@@ -294,15 +323,15 @@ Khi OpsHub có thể quyết định ngay lập tức:
 
 #### Response: Cần xử lý thêm (202)
 
-Khi content cần thời gian đánh giá:
+Khi content cần AI review hoặc human review:
 
 ```json
 {
   "data": {
     "sync_entity_id": "661a2b3c4d5e6f7a8b9c0d1e",
     "processing_record_id": "661a2b3c4d5e6f7a8b9c0d2f",
-    "outcome": "needs_review",
-    "outcome_reason": "Content is being reviewed",
+    "outcome": "ai_processing",
+    "outcome_reason": "AI review dispatched",
     "task_id": "661a2b3c4d5e6f7a8b9c0d3g",
     "auto_checks_count": 8,
     "duration_ms": 120
@@ -310,13 +339,17 @@ Khi content cần thời gian đánh giá:
 }
 ```
 
+> **Lưu ý:** `outcome` có thể là `"ai_processing"` (đang chờ AI Agent review) hoặc `"needs_review"` (cần human review). Cả hai đều trả HTTP 202.
+```
+
 #### Các kịch bản outcome
 
 | `outcome` | HTTP | Ý nghĩa | Hành động tiếp theo |
 |-----------|------|----------|---------------------|
-| `auto_approved` | 200 | Content được duyệt ngay | **Xong.** |
-| `auto_rejected` | 200 | Content bị từ chối ngay (không đạt tiêu chí cơ bản) | **Xong.** |
-| `needs_review` | 202 | Content đang được đánh giá | Đợi webhook callback hoặc poll `GET /verdicts/:id` |
+| `auto_approved` | 200 | Content pass tất cả auto checks, được duyệt tự động | **Xong.** Webhook `pipeline.auto_approved` sẽ được gửi. |
+| `auto_rejected` | 200 | Content bị từ chối ngay (sai platform/format, không đạt tiêu chí) | **Xong.** Webhook `pipeline.auto_rejected` sẽ được gửi. |
+| `ai_processing` | 202 | Content pass auto checks, đang được AI Agent review (Tier 2) | Đợi webhook `verdict.*` hoặc poll `GET /verdicts/:id` |
+| `needs_review` | 202 | Content cần human review (AI checks không được bật hoặc auto_approve bị tắt) | Đợi webhook `verdict.*` hoặc poll `GET /verdicts/:id` |
 
 #### Idempotency
 
@@ -343,10 +376,10 @@ GET /api/v1/external/verdicts/:id
 {
   "data": {
     "processing_record_id": "661a2b3c4d5e6f7a8b9c0d2f",
-    "outcome": "needs_review",
-    "outcome_reason": "Content is being reviewed",
+    "outcome": "ai_processing",
+    "outcome_reason": "AI review dispatched",
     "task_id": "661a2b3c4d5e6f7a8b9c0d3g",
-    "task_status": "in_progress",
+    "task_status": "assigned",
     "verdict": null
   }
 }
@@ -408,8 +441,8 @@ Webhook được đăng ký bởi OpsHub admin. Liên hệ OpsHub admin để cu
 
 | Event | Khi nào | Ghi chú |
 |-------|---------|---------|
-| `pipeline.auto_approved` | Content pass tất cả auto checks, được duyệt t��� động | Không có `verdict` object, có `outcome` + `outcome_reason` |
-| `pipeline.auto_rejected` | Content fail auto check critical (sai platform, format, hashtag...) | Không có `task_id` (task chưa được tạo) |
+| `pipeline.auto_approved` | Content pass tất cả auto checks, được duyệt tự động | Không có `verdict` object, có `outcome` + `outcome_reason` |
+| `pipeline.auto_rejected` | Content fail auto check critical (sai platform, format...) | Không có `task_id` (task chưa được tạo vì bị reject ngay ở Tier 1) |
 | `verdict.approved` | Content được duyệt bởi human reviewer hoặc AI agent | Có đầy đủ `verdict` object |
 | `verdict.rejected` | Content bị từ chối bởi human reviewer hoặc AI agent | Có đầy đủ `verdict` object |
 | `verdict.request_edit` | Reviewer yêu cầu creator sửa content | Có `verdict` với `reason` + `feedback_to_creator` |
@@ -428,6 +461,7 @@ POST https://your-system.example.com/webhooks/opshub
 | Header | Mô tả |
 |--------|-------|
 | `Content-Type` | `application/json` |
+| `X-Api-Key` | API key của webhook (nếu đã cấu hình trong webhook config — optional) |
 | `X-Project-ID` | Project code của partner |
 | `X-OpsHub-Event` | Event type (e.g. `verdict.approved`) |
 | `X-OpsHub-Timestamp` | Unix timestamp (seconds) |
@@ -468,8 +502,10 @@ POST https://your-system.example.com/webhooks/opshub
 | `verdict.feedback_to_creator` | `string?` | Feedback gửi cho creator (nếu có) |
 | `verdict.decided_at` | `string` | Thời điểm quyết định (ISO 8601) |
 | `timestamp` | `string` | Thời điểm tạo webhook event (ISO 8601) |
-| `project` | `string` | Project code |
-| `delivered_at` | `string` | Thời điểm delivery (ISO 8601) |
+| `project` | `string` | Project code (OpsHub tự thêm lúc delivery) |
+| `delivered_at` | `string` | Thời điểm delivery (ISO 8601, OpsHub tự thêm lúc delivery) |
+
+> **Lưu ý:** `project` và `delivered_at` được OpsHub tự động thêm vào payload khi delivery. Tất cả webhook event types đều có 2 fields này.
 
 #### Body — Pipeline events (`pipeline.auto_approved`, `pipeline.auto_rejected`)
 
@@ -496,8 +532,10 @@ POST https://your-system.example.com/webhooks/opshub
 | `source_id` | `string` | ID content gốc của partner |
 | `campaign_id` | `string` | Campaign ID |
 | `outcome` | `string` | `"auto_approved"` hoặc `"auto_rejected"` |
-| `outcome_reason` | `string` | Lý do (e.g. `"Wrong platform: snapchat"`, `"All auto checks passed"`) |
+| `outcome_reason` | `string` | Lý do (e.g. `"Wrong platform: snapchat"`, `"All auto checks passed, auto-approve enabled"`) |
 | `timestamp` | `string` | ISO 8601 |
+| `project` | `string` | Project code (OpsHub tự thêm lúc delivery) |
+| `delivered_at` | `string` | Thời điểm delivery (ISO 8601, OpsHub tự thêm lúc delivery) |
 
 > **Lưu ý:** Pipeline events **không có** `task_id` và `verdict` object vì task chưa được tạo ở giai đoạn auto check.
 
@@ -527,9 +565,10 @@ POST https://your-system.example.com/webhooks/opshub
 
 | Setting | Giá trị |
 |---------|---------|
-| Timeout | 10 giây |
-| Max retries | 5 (production), 3 (staging/dev) |
-| Backoff | Exponential: ~1m → ~2m → ~4m → ~8m → ~16m |
+| Timeout | 10 giây (per request) |
+| Max attempts | 5 (production), 3 (staging/dev) |
+| Backoff | Exponential với base delay 60s: ~1m → ~2m → ~4m → ~8m → ~16m |
+| Queue | BullMQ — jobs thất bại được giữ lại để debug (`removeOnFail: false`) |
 
 Webhook delivery là **at-least-once** — hệ thống partner cần handle duplicate deliveries (dùng `X-OpsHub-Delivery-ID` để dedup).
 

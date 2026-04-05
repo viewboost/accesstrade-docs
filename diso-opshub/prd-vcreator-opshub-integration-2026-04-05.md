@@ -3,7 +3,7 @@
 **Ngày:** 2026-04-05
 **Phiên bản:** 1.0
 **Tác giả:** Product Manager (AI-assisted)
-**Trạng thái:** Draft
+**Trạng thái:** Draft (Cập nhật 2026-04-05 — đồng bộ với code thực tế)
 
 ---
 
@@ -520,12 +520,13 @@ Implement catch-up sync, health check, audit logging, và alerting để đảm 
 
 | Dependency | Mô tả | Status |
 |-----------|-------|--------|
-| vCreator ContentRaw model | Cần thêm fields mới cho OpsHub | Cần implement |
-| vCreator Event model | Field `isEnableOpsHub` đã tồn tại | Done |
-| vCreator OpsHub module | Client + model + helper đã có cơ bản | Cần mở rộng |
+| vCreator ContentRaw model | Cần thêm fields mới cho OpsHub | Chưa implement |
+| vCreator Event model | Field `isEnableOpsHub` cần thêm vào Event Options | Chưa implement |
+| vCreator OpsHub module | Client + model + helper — toàn bộ module mới | Chưa implement |
+| vCreator Webhook handler | Route + handler cho nhận verdict từ OpsHub | Chưa implement |
 | vCreator Audit service | Ghi audit log | Có sẵn |
 | vCreator Telegram module | Gửi alert | Có sẵn |
-| vCreator Scheduled jobs | Infrastructure cho catch-up sync, polling | Có sẵn |
+| vCreator Scheduled jobs | Infrastructure cho catch-up sync, polling (pattern có sẵn từ Transcript) | Có sẵn |
 
 ### External
 
@@ -573,31 +574,58 @@ Implement catch-up sync, health check, audit logging, và alerting để đảm 
 
 ---
 
-## 15. Phụ lục: Existing Code Reference
+## 15. Phụ lục: Code Reference
 
-### vCreator — Đã có
+### OpsHub Backend (đã triển khai)
+
+> **Repo:** `influencer-platform/opshub/` — NestJS/Express backend
 
 | File | Mô tả |
 |------|-------|
-| `backend/internal/module/opshub/client.go` | HTTP client gọi OpsHub API |
-| `backend/internal/module/opshub/model.go` | Request/Response models |
-| `backend/internal/module/opshub/helper.go` | `SendVideoForContent()` — map ContentRaw → payload |
-| `backend/internal/config/env.go` | Config: `OPSHUB_IS_ENABLE`, `OPSHUB_BASE_URL`, `OPSHUB_PROJECT_ID`, `OPSHUB_API_KEY` |
-| `backend/internal/model/mg/event.go` | `IsEnableOpsHub` field trên Event Options |
-| `backend/internal/model/mg/content.go` | `IsSendOpsHub` field trên ContentRaw |
-| `backend/pkg/public/service/content.go` | Gọi `SendVideoForContent` sau crawl |
-| `backend/pkg/public/service/schedule.go` | `SyncOpsHubContents()` — catch-up job |
+| `backend/src/routes/external.routes.ts` | External API endpoints: health, push video, query verdict |
+| `backend/src/services/content-pipeline.ts` | Pipeline xử lý: normalize data → auto checks → AI/human review |
+| `backend/src/services/webhook.service.ts` | Webhook dispatch + delivery (BullMQ) |
+| `backend/src/services/webhook-payload.ts` | Payload builder cho pipeline/verdict/SLA events |
+| `backend/src/services/auto-engine.ts` | Tier 1 auto check engine (A1–A12) |
+| `backend/src/middleware/apikey.middleware.ts` | API key authentication (X-Project-ID + X-API-Key) |
+| `backend/src/middleware/rate-limit.ts` | Rate limiting (100 req/min per project, Redis sliding window) |
+| `backend/src/services/apikey.service.ts` | API key generation, hashing (SHA256), validation |
+| `backend/src/models/sync-entity.ts` | SyncEntity model (dedup by source_id) |
+| `backend/src/models/processing-record.ts` | ProcessingRecord model (auto/AI results, outcome) |
+| `backend/src/models/webhook-delivery.ts` | Webhook delivery tracking |
+| `backend/src/lib/constants.ts` | VCREATOR_SOURCE_MAP, PLATFORMS, MEDIA_TYPES |
+| `backend/src/lib/validation.ts` | WEBHOOK_EVENT_TYPES |
 
-### vCreator — Cần thêm/sửa
+### vCreator Backend (cần triển khai)
 
-| Component | Thay đổi |
-|-----------|----------|
-| `model/mg/content.go` | Thêm fields: `opsHubProcessingId`, `opsHubTaskId`, `opsHubOutcome`, `opsHubVerdict`, `opsHubVerdictAt`, `opsHubFeedback`, `opsHubConfidence`, `opsHubSendError` |
-| `module/opshub/client.go` | Thêm `QueryVerdict()` method |
-| `module/opshub/model.go` | Thêm response models cho verdict, webhook payload |
-| Webhook handler (mới) | Route + handler cho `POST /api/v1/webhooks/opshub/verdict` |
-| Scheduled jobs | Thêm polling job, update catch-up job |
-| Alert module | Thêm OpsHub health check alert |
+> **Repo:** `accesstrade-projects/techcombank/` — Go backend
+>
+> **Lưu ý:** Tại thời điểm viết PRD (2026-04-05), codebase vCreator **chưa có** OpsHub integration code. Các file paths dưới đây là **plan/proposal**, chưa tồn tại trong repo.
+
+| Component | File path dự kiến | Mô tả |
+|-----------|-------------------|-------|
+| OpsHub Client | `backend/internal/module/opshub/client.go` | HTTP client gọi OpsHub API (`SendVideo`, `QueryVerdict`) |
+| Request/Response Models | `backend/internal/module/opshub/model.go` | `SendVideoRequest`, `SendVideoResponse`, `VerdictResponse` |
+| Webhook Models | `backend/internal/module/opshub/webhook_model.go` | `WebhookPayload`, `VerdictWebhook`, `VerdictDetail` |
+| Data Mapping Helper | `backend/internal/module/opshub/helper.go` | `SendVideoForContent()` — map ContentRaw → OpsHub payload |
+| Config | `backend/internal/config/env.go` | `OPSHUB_IS_ENABLE`, `OPSHUB_BASE_URL`, `OPSHUB_PROJECT_ID`, `OPSHUB_API_KEY` |
+| ContentRaw Model | `backend/internal/model/mg/content.go` | Thêm fields: `opsHubProcessingId`, `opsHubTaskId`, `opsHubOutcome`, `opsHubVerdict`, `opsHubVerdictAt`, `opsHubFeedback`, `opsHubConfidence`, `opsHubSendError` |
+| Event Model | `backend/internal/model/mg/event.go` | `IsEnableOpsHub` field trên Event Options (cần thêm) |
+| Content Service | `backend/pkg/public/service/content.go` | Gọi `SendVideoForContent` sau crawl |
+| Webhook Handler | `backend/pkg/public/handler/` + `router/` | Route + handler cho `POST /api/v1/webhooks/opshub/verdict` |
+| Schedule Jobs | `backend/pkg/public/service/schedule.go` | `SyncOpsHubContents()` catch-up job + polling fallback |
+
+### Existing vCreator Integrations (tham khảo pattern)
+
+vCreator đã có integration pattern tương tự với **Transcript Service** qua Partner Integration module:
+
+| File | Mô tả | Tham khảo cho |
+|------|-------|---------------|
+| `backend/internal/module/partner_integration/client.go` | HTTP client gọi Partner API | Pattern cho OpsHub client |
+| `backend/pkg/public/router/content_callback.go` | Webhook routes (`/content-callback/*`) | Pattern cho OpsHub webhook route |
+| `backend/pkg/public/handler/content_callback.go` | Webhook handlers (TOS, Transcript) | Pattern cho OpsHub webhook handler |
+| `backend/pkg/public/service/content_callback.go` | Webhook processing logic | Pattern cho verdict processing |
+| `backend/pkg/public/service/schedule.go` | `ProcessPendingTranscript()` | Pattern cho OpsHub scheduled jobs |
 
 ### OpsHub External API Reference
 
