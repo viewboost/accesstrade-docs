@@ -398,7 +398,7 @@ GET /api/v1/external/verdicts/:id
 
 ## 6. Webhook Events (OpsHub → Partner)
 
-Khi có kết quả duyệt, OpsHub gọi webhook về URL mà partner đã đăng ký.
+Khi có kết quả xử lý, OpsHub gọi webhook về URL mà partner đã đăng ký. Webhook được gửi cho cả kết quả tự động (auto checks) lẫn kết quả duyệt thủ công/AI.
 
 ### Đăng ký webhook
 
@@ -406,10 +406,14 @@ Webhook được đăng ký bởi OpsHub admin. Liên hệ OpsHub admin để cu
 
 **Event types có thể đăng ký:**
 
-| Event | Khi nào |
-|-------|---------|
-| `verdict.approved` | Content được duyệt |
-| `verdict.rejected` | Content bị từ chối |
+| Event | Khi nào | Ghi chú |
+|-------|---------|---------|
+| `pipeline.auto_approved` | Content pass tất cả auto checks, được duyệt t��� động | Không có `verdict` object, có `outcome` + `outcome_reason` |
+| `pipeline.auto_rejected` | Content fail auto check critical (sai platform, format, hashtag...) | Không có `task_id` (task chưa được tạo) |
+| `verdict.approved` | Content được duyệt bởi human reviewer hoặc AI agent | Có đầy đủ `verdict` object |
+| `verdict.rejected` | Content bị từ chối bởi human reviewer hoặc AI agent | Có đầy đủ `verdict` object |
+| `verdict.request_edit` | Reviewer yêu cầu creator sửa content | Có `verdict` với `reason` + `feedback_to_creator` |
+| `task.sla_violated` | Task review quá hạn SLA | Có `sla_deadline` + `breached_at` |
 
 ### Webhook Request Format
 
@@ -426,10 +430,10 @@ POST https://your-system.example.com/webhooks/opshub
 | `Content-Type` | `application/json` |
 | `X-Project-ID` | Project code của partner |
 | `X-OpsHub-Event` | Event type (e.g. `verdict.approved`) |
-| `X-OpsHub-Timestamp` | Unix timestamp |
+| `X-OpsHub-Timestamp` | Unix timestamp (seconds) |
 | `X-OpsHub-Delivery-ID` | ID duy nhất của lần delivery (dùng để dedup) |
 
-#### Body
+#### Body — Verdict events (`verdict.approved`, `verdict.rejected`, `verdict.request_edit`)
 
 ```json
 {
@@ -445,18 +449,87 @@ POST https://your-system.example.com/webhooks/opshub
     "feedback_to_creator": "Good content quality.",
     "decided_at": "2026-04-05T11:45:00.000Z"
   },
+  "timestamp": "2026-04-05T11:45:01.000Z",
   "project": "your-project",
   "delivered_at": "2026-04-05T11:45:02.000Z"
 }
 ```
+
+| Field | Type | Mô tả |
+|-------|------|-------|
+| `event` | `string` | Event type |
+| `task_id` | `string` | Task ID (ObjectId) |
+| `processing_record_id` | `string` | Processing record ID |
+| `sync_entity_id` | `string` | SyncEntity ID |
+| `source_id` | `string` | ID content gốc của partner (đã push qua `POST /external/videos`) |
+| `verdict.final_decision` | `string` | `"approved"` hoặc `"rejected"` |
+| `verdict.confidence` | `number` | Độ tin cậy 0-1 (chủ yếu từ AI review) |
+| `verdict.reason` | `string` | Lý do quyết định |
+| `verdict.feedback_to_creator` | `string?` | Feedback gửi cho creator (nếu có) |
+| `verdict.decided_at` | `string` | Thời điểm quyết định (ISO 8601) |
+| `timestamp` | `string` | Thời điểm tạo webhook event (ISO 8601) |
+| `project` | `string` | Project code |
+| `delivered_at` | `string` | Thời điểm delivery (ISO 8601) |
+
+#### Body — Pipeline events (`pipeline.auto_approved`, `pipeline.auto_rejected`)
+
+```json
+{
+  "event": "pipeline.auto_rejected",
+  "sync_entity_id": "661a2b3c4d5e6f7a8b9c0d1e",
+  "processing_record_id": "661a2b3c4d5e6f7a8b9c0d2f",
+  "source_id": "video-12345",
+  "campaign_id": "661a2b3c4d5e6f7a8b9c0e4h",
+  "outcome": "auto_rejected",
+  "outcome_reason": "Wrong platform: snapchat",
+  "timestamp": "2026-04-05T10:30:00.000Z",
+  "project": "your-project",
+  "delivered_at": "2026-04-05T10:30:01.000Z"
+}
+```
+
+| Field | Type | Mô tả |
+|-------|------|-------|
+| `event` | `string` | `pipeline.auto_approved` hoặc `pipeline.auto_rejected` |
+| `sync_entity_id` | `string` | SyncEntity ID |
+| `processing_record_id` | `string` | Processing record ID |
+| `source_id` | `string` | ID content gốc của partner |
+| `campaign_id` | `string` | Campaign ID |
+| `outcome` | `string` | `"auto_approved"` hoặc `"auto_rejected"` |
+| `outcome_reason` | `string` | Lý do (e.g. `"Wrong platform: snapchat"`, `"All auto checks passed"`) |
+| `timestamp` | `string` | ISO 8601 |
+
+> **Lưu ý:** Pipeline events **không có** `task_id` và `verdict` object vì task chưa được tạo ở giai đoạn auto check.
+
+#### Body — SLA event (`task.sla_violated`)
+
+```json
+{
+  "event": "task.sla_violated",
+  "task_id": "661a2b3c4d5e6f7a8b9c0d3g",
+  "processing_record_id": "661a2b3c4d5e6f7a8b9c0d2f",
+  "sync_entity_id": "661a2b3c4d5e6f7a8b9c0d1e",
+  "source_id": "video-12345",
+  "sla_deadline": "2026-04-05T10:00:00.000Z",
+  "breached_at": "2026-04-05T10:00:00.000Z",
+  "timestamp": "2026-04-05T10:05:00.000Z",
+  "project": "your-project",
+  "delivered_at": "2026-04-05T10:05:01.000Z"
+}
+```
+
+| Field | Type | Mô tả |
+|-------|------|-------|
+| `sla_deadline` | `string` | H��n SLA đã quá (ISO 8601) |
+| `breached_at` | `string` | Thời điểm SLA bị vi phạm (= `sla_deadline`) |
 
 ### Retry Policy
 
 | Setting | Giá trị |
 |---------|---------|
 | Timeout | 10 giây |
-| Max retries | 5 |
-| Backoff | Exponential, bắt đầu từ 60s |
+| Max retries | 5 (production), 3 (staging/dev) |
+| Backoff | Exponential: ~1m → ~2m → ~4m → ~8m → ~16m |
 
 Webhook delivery là **at-least-once** — hệ thống partner cần handle duplicate deliveries (dùng `X-OpsHub-Delivery-ID` để dedup).
 
