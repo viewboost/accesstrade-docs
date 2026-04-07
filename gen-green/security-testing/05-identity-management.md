@@ -1,0 +1,20 @@
+# 05 - Identity Management Testing
+
+**Service:** Public API (:3000), Admin API (:3001)
+**Tester:** <!-- Điền tên -->
+**Date:** 2026-04-XX
+
+---
+
+| TC ID | WSTG Ref | Tên Test Case | Các bước thực hiện | Kết quả mong đợi | Status | Note |
+|-------|----------|--------------|-------------------|------------------|--------|------|
+| TC-IDNT-01 | WSTG-IDNT-01 | Kiểm tra Role Definitions | 1. Liệt kê tất cả roles: Root, Admin, Collaborator, User<br>2. Map permissions mỗi role từ router middleware<br>3. Kiểm tra `roles` collection trong MongoDB | - Roles định nghĩa rõ ràng<br>- Mỗi role có permission set riêng<br>- Không có overlap không mong muốn | | Root > Admin > Collaborator > User |
+| TC-IDNT-02 | WSTG-IDNT-02 | Kiểm tra User Registration Process | 1. Đăng ký user mới (OAuth Google / TikTok)<br>2. Kiểm tra validation: email format, tên chứa script tag<br>3. Thử đăng ký duplicate account<br>4. Xem user data sau khi tạo (có hash password?) | - Input validated (email format, name sanitized)<br>- Duplicate account rejected<br>- Password hashed (nếu có password-based auth) | | VCreator chủ yếu dùng OAuth |
+| TC-IDNT-03 | WSTG-IDNT-03 | Kiểm tra Account Provisioning (Admin) | 1. Admin tạo staff account<br>2. Kiểm tra default password strength<br>3. Kiểm tra có force change password lần đầu không<br>4. Thử tạo account với role cao hơn mình | - Staff account có password mạnh mặc định<br>- Force change on first login<br>- Không thể tạo role cao hơn mình | | |
+| TC-IDNT-04 | WSTG-IDNT-04 | Kiểm tra Account Enumeration (Login) | 1. Thử login với email tồn tại + sai password<br>2. Thử login với email không tồn tại<br>3. So sánh response: khác nhau? timing khác? | - Response message giống nhau cho cả 2 trường hợp<br>- Response time tương đương (no timing leak)<br>- Không tiết lộ email nào đã đăng ký | | |
+| TC-IDNT-05 | WSTG-IDNT-05 | Kiểm tra Account Enumeration (Registration) | 1. Đăng ký với email đã tồn tại<br>2. So sánh response với email mới<br>3. Kiểm tra OAuth callback: có tiết lộ "email đã liên kết" không | - Không phân biệt "email đã tồn tại" vs "đăng ký thành công"<br>- Hoặc: accepted behavior nếu OAuth (email từ provider) | | |
+| TC-IDNT-06 | WSTG-IDNT-06 | Kiểm tra User Profile Exposure | 1. `GET /users/:id` với ID user khác → trả gì?<br>2. Kiểm tra fields trả về: có email, phone, bank info không?<br>3. Xem Admin API `/users/:id` trả thêm fields gì | - Public API chỉ trả public fields (name, avatar)<br>- PII (email, phone, bank) không exposed cho user khác<br>- Admin API trả thêm nhưng chỉ cho authorized roles | | |
+| TC-IDNT-07 | WSTG-IDNT-07 | Kiểm tra User Social Account Linking | 1. Link TikTok account<br>2. Thử link TikTok account đã link user khác<br>3. Thử unlink rồi link lại sang user khác | - Mỗi social account chỉ link 1 user<br>- Không thể hijack social account link của user khác | | Collection: user-socials |
+| TC-IDNT-08 | WSTG-IDNT-08 | Kiểm tra User Deletion / Deactivation | 1. Deactivate/delete account<br>2. Thử login lại<br>3. Thử dùng token cũ<br>4. Kiểm tra data residual (content, bank info vẫn còn?) | - Account deleted/deactivated không login được<br>- Old tokens rejected<br>- PII được xóa hoặc anonymize | | |
+| TC-IDNT-09 | WSTG-IDNT-09 | Kiểm tra Identification (CCCD) Flow | 1. Submit CCCD verification<br>2. Kiểm tra data lưu có encrypted không<br>3. Thử xem CCCD của user khác qua Admin API<br>4. Kiểm tra CCCD images stored ở đâu (MinIO private bucket?) | - CCCD data encrypted at rest<br>- Chỉ authorized admin xem được<br>- Images lưu private bucket, presigned URL only | | Collection: identifications, Service riêng cho OCR |
+| TC-IDNT-10 | WSTG-IDNT-10 | Kiểm tra Bank Card Information | 1. Thêm bank card info<br>2. Kiểm tra data stored: có mask/encrypt không<br>3. API response có trả full bank account number không<br>4. Thử xem bank card user khác | - Bank account number masked trong response (chỉ show last 4 digits)<br>- Data encrypted at rest<br>- Không access được bank info user khác | | Collection: user-bank-cards |
