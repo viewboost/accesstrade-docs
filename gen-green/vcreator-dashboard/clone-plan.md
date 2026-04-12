@@ -51,10 +51,11 @@ Clone TCB Dashboard (Next.js 16 + TailwindCSS 4 + TanStack Query/Table + shadcn/
 | Matching session logic | Không cần |
 | Feature flag `FEATURE_CAMPAIGNS` | Không cần |
 
-### C. Thêm mới (từ meeting 0410)
+### C. Thêm mới (từ meeting 0410 + business context)
 
 | Feature | Route/Component | Mô tả | Người yêu cầu |
 |---|---|---|---|
+| **Filter ADV (Partner)** | Analytics + Contents + Creators | **Filter trục chính** — thay thế Campaign select của TCB. Gen-Green vận hành theo partner/ADV (advertiser), mọi data đều gắn với partner. Khi chọn partner → reset filter Event, Creator, Tag | Core |
 | **Tab Creator** | `/creators` | Bảng creator: Tên, Hashtag, Phân loại, Nơi LV, Tổng view, Tổng tiền, Đã rút, Số video, Ngày tham gia | Bình |
 | **Filter Phân loại** | Analytics + Contents + Creators | Dropdown: Tất cả / CBNV / Bên ngoài | Bình, Hạnh |
 | **Filter Cơ sở làm việc** | Analytics + Contents + Creators | Grouped dropdown (6 nhóm, 57 cơ sở) | Bình |
@@ -62,6 +63,31 @@ Clone TCB Dashboard (Next.js 16 + TailwindCSS 4 + TanStack Query/Table + shadcn/
 | **Cột Cơ sở làm việc** | Contents table + Creators table + Export | Tên cơ sở tại mỗi row | Bình |
 | **Cột Hashtag cá nhân** | Contents table + Creators table + Export | Hashtag cá nhân creator | Bình |
 | **Export chọn cột** | Export dialog | Checkbox list khi bấm "Xuất dữ liệu", default preset bỏ tick cột thừa | Quân đề xuất, Bình đồng ý |
+
+### D. Khác biệt trục filter chính: TCB (Campaign) → Gen-Green (Partner/ADV)
+
+TCB Dashboard dùng **Campaign** làm trục filter chính — tất cả data analytics, contents, performance đều filter theo campaign.
+
+Gen-Green dùng **Partner (ADV/Advertiser)** làm trục filter chính:
+- Mỗi partner (VinPearl, VinWonders, VinHome...) là 1 đơn vị quản lý riêng
+- Dưới mỗi partner có nhiều **Event** (tương đương campaign)
+- Khi chọn partner → cascade reset: Event, Creator, Warning Tag
+- Admin cũ đã có logic này (xem `content/components/filter.tsx` — thay đổi partner reset createdBy & tag)
+
+**Hierarchy filter:**
+```
+Partner (ADV) ← trục chính, tương đương Campaign của TCB
+  └── Event (thử thách) ← filter con
+      └── Creator (người tạo)
+          └── Warning Tag
+```
+
+**Ảnh hưởng đến clone:**
+- Thay `CampaignSelect` component → `PartnerSelect` (searchable, dynamic)
+- Filter sidebar: Partner đứng đầu tiên, Event phụ thuộc partner
+- Analytics KPIs: group theo partner thay vì campaign
+- API: `?partner=xxx` thay vì `?campaign=xxx`
+- Bảng thử thách: filter theo partner đang chọn
 
 ---
 
@@ -144,13 +170,16 @@ src/app/[locale]/
 
 ### 5.1 Filter sidebar (bên trái)
 
-| Filter | Nguồn TCB | Gen-Green | Thay đổi |
-|---|---|---|---|
-| Thử thách | ✅ (Campaign select) | ✅ (Event select) | Đổi tên |
-| Khoảng thời gian | ✅ (Period select) | ✅ | Giữ |
-| Từ ngày — Đến ngày | ✅ (Date range) | ✅ | Giữ |
-| **Phân loại** | ❌ | ✅ | **MỚI** — CBNV / Bên ngoài |
-| **Cơ sở làm việc** | ❌ | ✅ | **MỚI** — Grouped dropdown 57 cơ sở |
+| # | Filter | Nguồn TCB | Gen-Green | Thay đổi |
+|---|---|---|---|---|
+| 1 | **Partner (ADV)** | ❌ | ✅ | **TRỤC CHÍNH** — Searchable select, dynamic. Chọn partner → cascade reset Event, Creator, Tag |
+| 2 | Thử thách (Event) | ✅ (Campaign select) | ✅ | Đổi tên, **phụ thuộc Partner** — chỉ hiện event thuộc partner đang chọn |
+| 3 | Khoảng thời gian | ✅ (Period select) | ✅ | Giữ |
+| 4 | Từ ngày — Đến ngày | ✅ (Date range) | ✅ | Giữ |
+| 5 | **Phân loại** | ❌ | ✅ | **MỚI** — CBNV / Bên ngoài |
+| 6 | **Cơ sở làm việc** | ❌ | ✅ | **MỚI** — Grouped dropdown 57 cơ sở |
+
+> **Quan trọng:** Partner (ADV) là filter khác biệt lớn nhất so với TCB. TCB dùng Campaign làm trục, Gen-Green dùng Partner. Cascade logic: chọn Partner → reset Event + Creator + Tag (giống admin cũ `filter.tsx`).
 
 ### 5.2 Tổng quan Nền tảng (4 KPI cards + trend)
 
