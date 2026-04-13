@@ -220,25 +220,160 @@ Từ meeting note 0410, yêu cầu admin:
 
 ---
 
-## 8. Edge cases
+## 8. Import mã nhân viên (Employee Registry)
+
+### Vấn đề hiện tại
+
+Hệ thống chưa có "danh sách nhân viên chính thức" để validate. Hoàn toàn dựa vào user tự khai mã NV + admin manual verify. → Chậm, dễ sai, không scale.
+
+### Giải pháp: Bảng Employee Registry
+
+Tạo bảng `employee_registry` riêng biệt với user model — đây là **nguồn sự thật từ HR** về danh sách nhân viên. User model chỉ reference tới registry qua `employee_code`.
+
+| Field | Type | Mô tả |
+|-------|------|-------|
+| `employee_code` | string, unique | Khóa chính |
+| `full_name` | string | Họ tên theo HR |
+| `cccd` | string, nullable | Để match identity |
+| `phone` | string, nullable | Để match identity |
+| `email` | string, nullable | Để match identity |
+| `workplace_group` | string | VinPalace / Vinpearl / VinWonders / Golf / GreenSM / Khác |
+| `workplace_name` | string | Tên cơ sở cụ thể |
+| `department` | string, nullable | Phòng ban |
+| `status` | enum | `active` / `inactive` / `terminated` |
+| `gen_green_user_id` | string, nullable | Linked Gen-Green user (nếu đã match) |
+| `imported_at` | datetime | Lần import gần nhất |
+| `import_id` | string | ID batch import |
+
+### 4 luồng import — cùng 1 pipeline
+
+Cả 4 scenario đi qua cùng 1 pipeline: **Upload → Parse → Validate → Update Registry → Match Users → Action → Notify → Log**. Chỉ khác ở bước Action.
+
+#### Luồng 1: Import TRƯỚC khi user đăng ký
+
+```
+HR upload danh sách nhân viên (Excel)
+  → Lưu vào employee_registry
+  → Chưa match ai (chỉ là registry)
+
+Sau đó user đăng ký + khai mã NV
+  → Lookup registry WHERE employee_code = mã NV
+    → Found + match identity (CCCD/SĐT/email) → auto-verify
+    → Found + identity mismatch → pending + flag admin
+    → Not found → pending (mã không trong registry)
+```
+
+#### Luồng 2: Import SAU khi user đã đăng ký
+
+```
+User đã tự khai mã NV (staff_status = pending)
+HR upload danh sách nhân viên
+  → Update employee_registry
+  → Batch match: tất cả user pending vs registry
+    → Match + identity OK → auto-verify
+    → Match + identity mismatch → flag admin
+    → No match → giữ pending
+  → Email summary cho admin: N verified, M flagged, K unchanged
+```
+
+#### Luồng 3: Import khi ĐIỀU CHUYỂN công tác
+
+```
+HR upload delta file (nhân viên thay đổi cơ sở/phòng ban)
+  → Update employee_registry: workplace_group, workplace_name
+  → Tìm Gen-Green user đã link → update user profile
+  → KHÔNG reset staff_status (vẫn verified)
+  → Notify user: "Thông tin nơi làm việc đã cập nhật: [Cơ sở mới]"
+  → Ghi log: "Điều chuyển từ X sang Y"
+```
+
+#### Luồng 4: Import khi NGHỈ VIỆC
+
+```
+HR upload delta file (nhân viên nghỉ)
+  → Update employee_registry: status = "terminated"
+  → Tìm Gen-Green user đã link:
+    → account_type → "creator" (gỡ staff)
+    → staff_status → null
+    → workplace → null
+  → Notify user: "Tài khoản chuyển về dạng Creator từ ngày X"
+  → Grace period 7 ngày trước khi mất quyền chiến dịch nội bộ
+  → Ghi log: "Nghỉ việc, gỡ staff tag"
+```
+
+### Match logic
+
+1. **employee_code** exact match (bắt buộc)
+2. Cross-check ít nhất 1 identity field: CCCD, SĐT, hoặc email
+3. Mã NV match + identity mismatch → flag admin (có thể user khai mã người khác)
+
+### Import format
+
+Excel (.xlsx) — HR quen dùng. Columns:
+
+| Cột | Bắt buộc | Mô tả |
+|-----|----------|-------|
+| employee_code | ✅ | Mã nhân viên |
+| full_name | ✅ | Họ tên |
+| cccd | Nên có | CCCD |
+| phone | Nên có | SĐT |
+| email | Nên có | Email |
+| workplace_group | ✅ | Nhóm cơ sở |
+| workplace_name | ✅ | Tên cơ sở |
+| department | Optional | Phòng ban |
+| status | ✅ | active / terminated |
+
+### Quy tắc import
+
+| Quy tắc | Chi tiết |
+|---------|---------|
+| **Dry-run bắt buộc** | Preview kết quả trước khi commit: "12 verified, 3 conflict, 5 new, 2 terminated" |
+| **employee_code unique** | Trùng mã → update record (không tạo mới) |
+| **Validate format trước** | Check header, data types, required fields. Reject file nếu format sai |
+| **Async processing** | File lớn (>1000 records) → background job → email kết quả |
+| **Rollback** | Mỗi import có import_id. Rollback = revert tất cả changes thuộc import_id |
+| **1 queue** | Chỉ 1 import chạy tại 1 thời điểm |
+| **Notify trước thay đổi** | Đặc biệt nghỉ việc: grace period 7 ngày |
+| **Audit đầy đủ** | import_id, file_name, uploaded_by, timestamp, records_affected |
+
+### Ai thực hiện?
+
+- **V1:** HR Vin gửi file → Admin AT upload vào hệ thống
+- **V2:** HR Vin có quyền upload trực tiếp (nếu cần)
+- **V3:** API sync tự động từ hệ thống HR Vin (periodic)
+
+### Frequency
+
+- **V1:** Ad-hoc — khi HR gửi file (điều chuyển, nghỉ việc, nhân viên mới)
+- **V2:** Monthly — HR gửi full dump đầu mỗi tháng
+
+---
+
+## 9. Edge cases
 
 | Case | Xử lý |
 |------|-------|
-| Mã NV sai / không tồn tại | Nhận form, tag `staff_pending`, admin reject sau |
-| Nhân viên nghỉ việc | Admin gỡ staff tag → `account_type = creator` |
-| Đổi nơi làm việc | Settings → sửa được, reset `staff_status` → pending |
+| Mã NV sai / không tồn tại | Nếu có registry → not found → pending. Nếu chưa có registry → pending + admin verify manual |
+| Mã NV đúng nhưng identity mismatch | Flag admin review — có thể user khai mã người khác |
+| Nhân viên nghỉ việc | Import luồng 4 → gỡ staff tag, grace period 7 ngày |
+| Đổi nơi làm việc (user tự đổi) | Settings → sửa được, reset `staff_status` → pending |
+| Đổi nơi làm việc (HR import) | Import luồng 3 → auto-update, giữ verified |
 | SĐT trùng user khác | Inline error "SĐT đã được sử dụng" |
 | Email trùng user khác | Inline error tương tự |
 | Social login không trả email | Field email trống, bắt buộc điền |
 | User chọn nhân viên rồi đổi ý | Toggle OFF → clear employee fields |
 | Nhiều nơi làm việc (kiêm nhiệm) | V1: chọn 1 nơi chính |
 | Nơi LV không trong list | Chọn nhóm "Khác" |
+| HR upload sai file / file cũ | Dry-run mode bắt buộc + dedup bằng import_id |
+| Nhân viên có nhiều mã NV (cũ/mới) | employee_code unique, mã cũ → terminated, mã mới → active |
+| Import file lớn (>1000 records) | Async background job, email kết quả khi xong |
 
 ---
 
-## 9. Mở cho version sau
+## 10. Mở cho version sau
 
 - Chuyển form đăng ký truyền thống (tên + SĐT + email trước social login) — cần redesign auth flow
 - Multi-select nơi làm việc cho trường hợp kiêm nhiệm
-- HR sync tự động: periodic check mã NV còn active không
+- HR Vin upload trực tiếp (không qua admin AT)
+- API sync tự động từ hệ thống HR Vin (periodic monthly)
 - Staff benefits: chiến dịch nội bộ riêng, commission rate khác
