@@ -16,7 +16,7 @@
 Thiết kế luồng **đăng ký + thu thập thông tin + phân nhóm tài khoản** cho Gen-Green (greenfield — chưa có implementation). Hệ thống phải:
 
 1. Thu thập đủ **Họ tên, SĐT, Email** cho 100% creator (required cho mọi người), có xác minh OTP.
-2. Phân loại creator thành **CBNV** (cán bộ nhân viên hệ sinh thái Vin) và **Creator bên ngoài**.
+2. Phân loại creator thành **CBNV** (cán bộ nhân viên hệ sinh thái Vin) và **Không phải CBNV**.
 3. Cho CBNV khai **nơi làm việc theo cấu trúc 3 layer** (Thương hiệu → Công ty → Cơ sở/Bộ phận) + **mã nhân viên**, admin verify async.
 4. Cho admin **filter, hiển thị và export** theo phân nhóm + nơi làm việc trên admin dashboard (Tab Nội dung, Tab Creator, Analytics).
 
@@ -29,7 +29,7 @@ V1 tập trung vào **user tự khai + admin manual verify**. V1 CHƯA có emplo
 | # | Objective | Success Metric |
 |---|-----------|----------------|
 | 1 | Thu thập đủ SĐT + Email verified cho tất cả creator | > 80% creator có đầy đủ SĐT + Email verified trong 30 ngày |
-| 2 | Phân loại CBNV vs Bên ngoài | 100% creator có `account_type` sau 30 ngày; admin filter được |
+| 2 | Phân loại CBNV vs Không phải CBNV | 100% creator có `account_type` sau 30 ngày; admin filter được |
 | 3 | Thu thập nơi làm việc cho CBNV theo 3 layer | Admin filter được theo Thương hiệu / Công ty / Cơ sở |
 | 4 | Không ảnh hưởng conversion đăng ký | Tỷ lệ hoàn tất form > 70% |
 | 5 | Admin vận hành trả lời nhanh câu hỏi phân khúc | Thời gian tạo report "bao nhiêu CBNV cơ sở X tham gia chương trình Y" < 1 phút (thay cho ~30 phút export + Excel) |
@@ -67,7 +67,7 @@ V1 tập trung vào **user tự khai + admin manual verify**. V1 CHƯA có emplo
 
 **Admin Dashboard — Filter & Hiển thị phân nhóm** *(gộp từ `admin-dashboard-upgrade`)*
 - Tab Nội dung: filter cơ sở làm việc (3 layer), cột Phân loại, Cơ sở, Hashtag cá nhân
-- Tab Creator: filter Nơi làm việc (3 layer), filter Phân loại (CBNV/Bên ngoài), cột Hashtag cá nhân, ẩn Ngày tạo
+- Tab Creator: filter Nơi làm việc (3 layer), filter Phân loại (CBNV / Không phải CBNV), cột Hashtag cá nhân, ẩn Ngày tạo
 - Analytics: filter Phân loại CBNV + Cơ sở làm việc
 - Export: column picker dialog + default preset (bỏ tick cột thừa, tick các cột mới)
 
@@ -138,7 +138,7 @@ Admin mở Tab Nội dung / Tab Creator / Analytics
   → Chọn filter Thương hiệu (VD: Vinpearl)
   → Nếu brand có Layer 2 → hiện dropdown Công ty
   → Nếu brand có Layer 3 → hiện dropdown Cơ sở/Bộ phận
-  → Kết hợp filter Phân loại (CBNV/Bên ngoài) / Sự kiện / các filter khác
+  → Kết hợp filter Phân loại (CBNV / Không phải CBNV) / Sự kiện / các filter khác
   → Table / KPI / chart cập nhật realtime
 ```
 
@@ -202,7 +202,7 @@ Popup cho phép "Để sau" 2 lần. Lần thứ 3 trở đi = mandatory (không
 **Priority:** Must Have
 
 **Description:**
-Thu thập: Họ tên, SĐT, Email, Toggle "Tôi là nhân viên" (required cho tất cả).
+Thu thập: Họ tên, SĐT, Email, Toggle "Tôi có mã nhân viên" (required cho tất cả).
 
 **Acceptance Criteria:**
 - [ ] Họ tên: text, required, pre-fill từ social
@@ -286,7 +286,7 @@ User dismiss popup giữa chừng → lưu draft vào localStorage → restore k
 **Priority:** Must Have
 
 **Description:**
-Khi toggle "Tôi là nhân viên" = ON → hiện các field nhân viên theo cấu trúc 3 layer + Mã nhân viên.
+Khi toggle "Tôi có mã nhân viên" = ON → hiện các field nhân viên theo cấu trúc 3 layer + Mã nhân viên.
 
 **Acceptance Criteria:**
 - [ ] Slide animation khi toggle ON/OFF
@@ -442,20 +442,74 @@ User nhận thông báo khi admin verify / reject mã NV.
 
 ---
 
-#### FR-018: Chỉnh sửa profile sau submit (Settings)
+#### FR-018a: Xem profile (Profile View) — **BỔ SUNG V1**
+
+**Priority:** Must Have
+
+**Description:**
+User vào trang Profile / Thông tin tài khoản sau khi đã submit để **xem lại toàn bộ thông tin đã khai**, bao gồm cả **nơi làm việc 3 layer** và **trạng thái xác minh**. Hiện tại page profile trên VCreator mới chỉ hiển thị: Ảnh đại diện, Tên hiển thị, Giới tính, Ngày sinh, Email, SĐT — thiếu thông tin CBNV (phân loại, nơi làm việc, mã NV, trạng thái xác minh).
+
+**Acceptance Criteria:**
+- [ ] Hiển thị section **"Thông tin tài khoản"** (giữ nguyên các field hiện có: avatar, tên, giới tính, ngày sinh, email, SĐT)
+- [ ] Hiển thị **badge trạng thái xác minh** cạnh email / SĐT:
+  - Email verified → badge xanh "✓ Đã xác minh"
+  - SĐT verified → badge xanh "✓ Đã xác minh"
+  - Chưa verified → badge amber "⚠ Chưa xác minh" + nút "Xác minh ngay"
+- [ ] Hiển thị section **"Thông tin công tác"** (luôn luôn, bất kể loại tài khoản):
+  - Nếu `account_type = staff` (có khai mã NV) → hiển thị đầy đủ:
+    - **Nơi làm việc**: format gộp 3 layer (vd "Vinpearl › VinWonders › VinWonders Phú Quốc"), hoặc "Green SM › Khối Marketing", hoặc "Vinhomes" nếu brand phẳng
+    - **Mã nhân viên**
+    - **Trạng thái xác minh NV** (rất quan trọng — user cần biết):
+      - `pending` → badge amber "⏳ Đang xác minh" + hint "Admin sẽ xác minh trong 1-2 ngày làm việc"
+      - `verified` → badge xanh "✓ Đã xác minh nhân viên" + ngày verify
+      - `rejected` → badge đỏ "✗ Từ chối" + lý do (nếu có) + hint "Bấm Chỉnh sửa để cập nhật lại" (không có nút riêng — dùng chung nút Chỉnh sửa ở cuối trang)
+  - Nếu `account_type = creator` (không khai mã NV) → hiển thị thông báo đơn giản: "Không phải CBNV" + gợi ý vào "Chỉnh sửa" để bổ sung nếu có mã NV
+- [ ] Nút **"Chỉnh sửa"** ở góc để vào edit mode (FR-018b)
+- [ ] Mobile responsive: stack vertical, section card dễ scan
+
+**Dependencies:** FR-015 (submit profile đã lưu data), FR-016 (staff verification status)
+
+---
+
+#### FR-018b: Chỉnh sửa profile (Edit mode)
 
 **Priority:** Should Have
 
 **Description:**
-User vào Settings sửa thông tin. Email/SĐT verified → read-only. Đổi nơi LV / mã NV → reset `staff_status = pending`.
+User có thể chỉnh sửa profile sau khi đã submit. Edit **inline tại chỗ** (không phải popup / modal) — bấm "Chỉnh sửa" ở cuối trang → các field text chuyển thành input tại chính vị trí đang xem. Giữ context để user biết mình đang sửa gì, đặc biệt khi bị rejected cần đối chiếu lý do.
 
 **Acceptance Criteria:**
-- [ ] Settings hiển thị profile hiện tại
-- [ ] Editable: tên, toggle nhân viên, 3 layer, mã NV
-- [ ] Email đã verified → read-only + badge ✓
-- [ ] SĐT đã verified → read-only + badge ✓
-- [ ] Đổi bất kỳ field nào trong nhóm staff (brand/company/unit/mã NV) → reset `staff_status = pending`
-- [ ] User chưa verified SĐT/email (edge case) → cho sửa + yêu cầu verify lại
+
+*Edit mode UI*
+- [ ] Bấm "Chỉnh sửa" → các field chuyển sang input tại chỗ (inline edit, KHÔNG popup/modal)
+- [ ] Hiện banner "Đang chỉnh sửa — thay đổi chưa được lưu" ở đầu trang khi ở edit mode
+- [ ] Nút "Lưu thay đổi" (primary) + "Hủy" (secondary) ở cuối trang — thay thế nút "Chỉnh sửa"
+- [ ] Bấm Hủy → revert draft về data gốc, thoát edit mode
+- [ ] Bấm Lưu → persist + thoát edit mode + show toast "Đã lưu"
+
+*Editable fields*
+- [ ] Editable: tên, ngày sinh, giới tính, toggle "Tôi có mã nhân viên", 3 layer workplace, mã NV
+- [ ] **Email đã verified → read-only** (viền xanh + icon 🔒), muốn đổi phải qua flow "Đổi email" riêng (V2)
+- [ ] **SĐT đã verified → read-only** (viền xanh + icon 🔒), muốn đổi phải qua flow "Đổi SĐT" riêng (V2)
+- [ ] User chưa verified SĐT/email (edge case) → cho sửa + yêu cầu verify lại qua OTP
+
+*Matrix disable toggle "Tôi có mã nhân viên"*
+
+| Trạng thái hiện tại | Toggle state | Lý do |
+|---|---|---|
+| `creator` (chưa khai) | ✅ Có thể bật ON | User có thể bổ sung mã NV lần đầu |
+| `staff` + `pending` | 🔒 Khóa ON, disabled | Đang chờ admin — không cho tắt |
+| `staff` + `verified` | 🔒 Khóa ON, disabled | Đã xác minh chính thức — muốn đổi phải liên hệ admin |
+| `staff` + `rejected` | ✅ Có thể tắt HOẶC sửa lại | User cần sửa mã/nơi LV hoặc chuyển về creator |
+
+- [ ] Toggle disabled → icon 🔒 + hint "Đang chờ admin xác minh / Đã xác minh — liên hệ admin nếu cần đổi"
+- [ ] Toggle OFF (chỉ khả dụng với `creator` hoặc `staff + rejected`) → clear hết field staff + `account_type = "creator"` + `staff_status = null`
+- [ ] Toggle ON (từ `creator` → `staff` lần đầu) → yêu cầu khai đủ 3 layer + mã NV
+
+*Behavior sau khi save*
+- [ ] Đổi bất kỳ field nào trong nhóm staff (brand/company/unit/mã NV) → reset `staff_status = "pending"`, hiển thị warning "Thay đổi thông tin công tác sẽ cần xác minh lại"
+- [ ] `rejected` sửa lại → `staff_status = "pending"` → trạng thái card đổi từ đỏ sang amber
+- [ ] Không đổi field staff (chỉ đổi tên/ngày sinh) → giữ nguyên `staff_status`
 
 ---
 
@@ -489,12 +543,12 @@ Thêm filter "Cơ sở làm việc" theo 3 layer vào Tab Nội dung. Lọc vide
 **Priority:** Must Have
 
 **Description:**
-Hiển thị "CBNV" / "Bên ngoài" cho mỗi video, dựa trên `account_type` của creator.
+Hiển thị "CBNV" / "Không phải CBNV" cho mỗi video, dựa trên `account_type` của creator.
 
 **Acceptance Criteria:**
 - [ ] Cột "Phân loại" hiển thị sát cột Tên creator
-- [ ] Badge phân biệt: CBNV (xanh), Bên ngoài (xám)
-- [ ] Creator không có `account_type` → mặc định hiển thị "Bên ngoài"
+- [ ] Badge phân biệt: CBNV (xanh), Không phải CBNV (xám)
+- [ ] Creator không có `account_type` → mặc định hiển thị "Không phải CBNV"
 
 ---
 
@@ -510,7 +564,7 @@ Hiển thị tên cơ sở của creator theo format gộp 3 layer ngắn gọn.
   - VD Vinpearl: "Vinpearl · VinWonders · VinWonders Phú Quốc"
   - VD Green SM: "Green SM · Khối Kinh doanh"
   - VD Vinhomes: "Vinhomes"
-- [ ] Creator bên ngoài → "—"
+- [ ] Không phải CBNV → "—"
 - [ ] Tooltip hiển thị đầy đủ nếu bị truncate
 
 ---
@@ -551,12 +605,12 @@ Filter 3 layer giống FR-019 trên Tab Creator. Lọc tất cả CBNV thuộc p
 **Priority:** Must Have
 
 **Description:**
-Dropdown 3 options: Tất cả / CBNV / Bên ngoài.
+Dropdown 3 options: Tất cả / CBNV / Không phải CBNV.
 
 **Acceptance Criteria:**
 - [ ] Chọn CBNV → chỉ hiện creator có `account_type = staff`
-- [ ] Chọn Bên ngoài → chỉ hiện creator có `account_type = creator`
-- [ ] Khi chọn "Bên ngoài" → ẩn/disable filter 3 layer (FR-023)
+- [ ] Chọn "Không phải CBNV" → chỉ hiện creator có `account_type = creator`
+- [ ] Khi chọn "Không phải CBNV" → ẩn/disable filter 3 layer (FR-023)
 
 ---
 
@@ -592,10 +646,10 @@ Cột hashtag cá nhân trong table Creator (verify xem đã có chưa — nếu
 **Priority:** Must Have
 
 **Description:**
-Thêm filter phân loại CBNV/Bên ngoài trên màn hình Thống kê.
+Thêm filter phân loại CBNV / Không phải CBNV trên màn hình Thống kê.
 
 **Acceptance Criteria:**
-- [ ] Dropdown: Tất cả / CBNV / Bên ngoài
+- [ ] Dropdown: Tất cả / CBNV / Không phải CBNV
 - [ ] Chọn → tất cả KPI, chart cập nhật
 - [ ] Kết hợp được với filter Sự kiện hiện có
 
@@ -611,7 +665,7 @@ Filter 3 layer giống FR-019 trên Analytics.
 **Acceptance Criteria:**
 - [ ] Dùng chung component với FR-019, FR-023
 - [ ] KPI / chart filter theo phạm vi đã chọn
-- [ ] Disable khi FR-027 = "Bên ngoài"
+- [ ] Disable khi FR-027 = "Không phải CBNV"
 
 ---
 
@@ -648,10 +702,10 @@ Khi bấm "Xuất dữ liệu" trên bất kỳ tab nào → hiện dialog check
 Export file phải chứa đúng data các cột mới khi user tick.
 
 **Acceptance Criteria:**
-- [ ] Cột Phân loại: "CBNV" / "Bên ngoài"
+- [ ] Cột Phân loại: "CBNV" / "Không phải CBNV"
 - [ ] Cột Cơ sở làm việc: format ngắn như FR-021 (`Brand · Company · Unit`)
 - [ ] Cột Hashtag cá nhân: giá trị hashtag hoặc rỗng
-- [ ] Creator bên ngoài → Cơ sở = rỗng
+- [ ] Không phải CBNV → Cơ sở = rỗng
 
 ---
 
@@ -746,7 +800,7 @@ Upgrade admin dashboard không ảnh hưởng team khác đang dùng. Không bre
 
 **Priority:** Must Have
 
-- Creator chưa có `account_type` → mặc định "Bên ngoài" trên UI
+- Creator chưa có `account_type` → mặc định "Không phải CBNV" trên UI
 - `workplace_*` field = null → hiển thị "—", không crash
 - Staff submit phải lưu đủ 3 layer (dùng `"other"` cho layer không apply) để query/export đồng nhất
 
@@ -856,12 +910,12 @@ Filter 3 layer (FR-019, FR-023, FR-028) dùng chung **1 component** trên cả 3
 | EPIC-001: Popup trigger | End-user | FR-001, FR-002, FR-003 | 2-3 stories | Must |
 | EPIC-002: Form cơ bản + OTP | End-user | FR-004, FR-005, FR-006, FR-007, FR-008 | 5-7 stories | Must |
 | EPIC-003: Form nhân viên + 3 Layer | End-user | FR-009, FR-010, FR-011, FR-012, FR-013, FR-014, FR-015 | 6-8 stories | Must |
-| EPIC-004: Staff verification | Admin | FR-016, FR-017, FR-018 | 2-3 stories | Must |
+| EPIC-004: Staff verification + Profile View/Edit | Admin + User | FR-016, FR-017, FR-018a, FR-018b | 3-5 stories | Must |
 | EPIC-005: Admin Tab Nội dung | Admin | FR-019, FR-020, FR-021, FR-022 | 3-4 stories | Must |
 | EPIC-006: Admin Tab Creator & Analytics | Admin | FR-023, FR-024, FR-025, FR-026, FR-027, FR-028 | 4-5 stories | Must |
 | EPIC-007: Admin Export & Config | Admin | FR-029, FR-030, FR-031 | 3-4 stories | Must |
 
-**Tổng:** 7 epics · 31 FRs · 9 NFRs · ~25-34 stories
+**Tổng:** 7 epics · 32 FRs · 9 NFRs · ~26-36 stories
 
 ---
 
@@ -869,7 +923,7 @@ Filter 3 layer (FR-019, FR-023, FR-028) dùng chung **1 component** trên cả 3
 
 | Priority | FRs | NFRs |
 |----------|-----|------|
-| **Must Have** | 26 | 8 |
+| **Must Have** | 27 | 8 |
 | **Should Have** | 5 | 1 |
 
 ---
@@ -917,7 +971,7 @@ Filter 3 layer (FR-019, FR-023, FR-028) dùng chung **1 component** trên cả 3
 | 4 | Popup có nên block navigation hay chỉ overlay? | FR-003 UX |
 | 5 | Column picker lưu preference user (localStorage/server) hay mỗi lần chọn lại? | FR-029 |
 | 6 | Export format V1: chỉ Excel (.xlsx) hay thêm CSV? | FR-029 scope |
-| 7 | Policy khi creator bên ngoài đổi thành CBNV sau (upgrade account_type)? | FR-018 |
+| 7 | Policy khi user thường đổi thành CBNV sau (upgrade account_type)? | FR-018b |
 | 8 | Admin Config 3 layer (FR-031) — V1 có cần Import Excel hay chỉ CRUD form? | FR-031 scope |
 
 ---
@@ -943,6 +997,9 @@ Filter 3 layer (FR-019, FR-023, FR-028) dùng chung **1 component** trên cả 3
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-04-12 | Product Manager | Rewrite greenfield. Chuyển sang cấu trúc 3 layer. Gộp filter admin từ `admin-dashboard-upgrade`. |
+| 1.1 | 2026-04-22 | Product Manager | Tách FR-018 thành FR-018a (Profile View — Must) + FR-018b (Profile Edit — Should). Bổ sung yêu cầu hiển thị Nơi làm việc 3 layer + trạng thái xác minh (email/SĐT/staff) trên trang Profile hiện có của VCreator. |
+| 1.2 | 2026-04-22 | Product Manager | **Wording update**: đổi "Creator bên ngoài" → **"Không phải CBNV"**, toggle "Tôi là nhân viên Vin" → **"Tôi có mã nhân viên"**, label filter "Phân loại" → **"Loại tài khoản"**. Section "Phân loại tài khoản" gộp vào "Thông tin công tác" (luôn hiển thị, state khác nhau theo `account_type`). |
+| 1.3 | 2026-04-22 | Product Manager | **FR-018b detailed**: chốt inline edit (không popup), thêm matrix disable toggle "Tôi có mã nhân viên" theo 4 trạng thái (creator / staff+pending / staff+verified / staff+rejected). Bỏ nút "Khai lại thông tin" ở state `rejected` — dùng chung nút Chỉnh sửa. |
 
 ---
 
