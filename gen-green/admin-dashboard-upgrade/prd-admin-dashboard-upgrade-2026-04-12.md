@@ -4,9 +4,20 @@
 **Date:** 2026-04-12
 **Version:** 1.0
 **Author:** Product Manager
-**Status:** Draft
+**Status:** ⚠️ **Superseded (2026-04-22)** — nội dung đã chuyển sang PRD V1 Registration & Grouping (EPIC-005, EPIC-006, EPIC-007)
 **Source:** [overview.md](overview.md)
 **Related:** [VCreator Dashboard v2 PRD](../vcreator-dashboard/prd-vcreator-dashboard-v2-2026-04-12.md)
+
+---
+
+> ⚠️ **Lưu ý:** Toàn bộ các FR trong PRD này (filter Cơ sở, cột Phân loại/Cơ sở/Hashtag, Column Picker Export, CRUD Workplace) phụ thuộc trực tiếp vào cấu trúc 3 layer (Thương hiệu → Công ty → Cơ sở) và đã được **gộp vào PRD V1 Registration & Grouping**.
+>
+> **Nguồn sự thật mới:** [registration-grouping-v2/prd-registration-v1-2026-04-12.md](../registration-grouping-v2/prd-registration-v1-2026-04-12.md)
+> - EPIC-005: Admin — Tab Nội dung (Filter & Cột)
+> - EPIC-006: Admin — Tab Creator & Analytics
+> - EPIC-007: Admin — Export & Quản trị dữ liệu nơi làm việc
+>
+> PRD này giữ lại làm tham chiếu lịch sử. Không sử dụng để scope / estimate / implement — dùng PRD V1 mới.
 
 ---
 

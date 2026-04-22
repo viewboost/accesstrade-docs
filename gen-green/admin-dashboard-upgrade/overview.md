@@ -9,6 +9,14 @@
 
 ---
 
+> ⚠️ **Scope change (2026-04-22):** Toàn bộ nhóm yêu cầu **filter theo Cơ sở làm việc / Phân loại CBNV + cột CBNV/Cơ sở/Hashtag + Column Picker Export + CRUD cấu hình Thương hiệu/Công ty/Cơ sở** đã được **gộp vào PRD V1 của Registration & Grouping** vì chúng phụ thuộc trực tiếp vào cấu trúc 3 layer (Thương hiệu → Công ty → Cơ sở).
+>
+> Xem: [registration-grouping-v2/prd-registration-v1-2026-04-12.md](../registration-grouping-v2/prd-registration-v1-2026-04-12.md) — EPIC-005, EPIC-006, EPIC-007.
+>
+> Document này giữ lại để tham chiếu nguyên văn meeting 0410 và các yêu cầu dashboard **không liên quan tới phân nhóm CBNV** (nếu phát sinh sau).
+
+---
+
 ## 1. Bối cảnh
 
 Sau khi triển khai phân loại CBNV (cán bộ nhân viên) trên Gen-Green, admin dashboard cần bổ sung khả năng **filter, hiển thị, và export** theo phân loại này. Hiện tại:
