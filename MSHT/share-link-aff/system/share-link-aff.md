@@ -743,98 +743,53 @@ Các mục sau **KHÔNG** làm trong PRD này:
 }
 ```
 
-### 15.2. So sánh V1 vs V2 (ref internal/util/generate_url.go)
+### 15.2. So sánh V1 vs V2 vs AT product_link/create (ref internal/util/generate_url.go)
 
-| | V1 | V2 (other) |
-|---|---|---|
-| Guard | `RootID == "" \|\| UserID == ""` | `RootID == "" \|\| ClickID == ""` → adjust thành `RootID == "" \|\| (ClickID == "" && !Share)` |
-| `utm_source` | `getUTMSource()` | `getUTMSource()` |
-| `utm_campaign` | `RootID` | `RootID` |
-| `utm_content` | `UserID` (luôn) | `UserID` (OneAT) / `""` (non-OneAT) |
-| `utm_medium` | — | `ASCEncrypt(UserID)` |
-| `utm_term` | — | `ClickID` (server-brand luôn truyền → non-empty) |
-| `utm_aff` | — | **`share_link`** khi `p.Share = true`, otherwise không set |
-| URL encoding | OneAT: `url_enc`; else `url` | Giống V1 |
+Cột cuối thêm cho share-flow (AT `POST /v1/product_link/create`) để đối chiếu trực tiếp.
+
+| | V1 | V2 (other) | V2 (tiktokshop) | AT `product_link/create` (share-flow) |
+|---|---|---|---|---|
+| Guard | `RootID == "" \|\| UserID == ""` | `RootID == "" \|\| ClickID == ""` → adjust thành `RootID == "" \|\| (ClickID == "" && !Share)` | (không có guard strict) | `token == "" \|\| CampaignID == "" \|\| URL == ""` → return "" |
+| `utm_source` | `getUTMSource()` | `getUTMSource()` | `getUTMSource()` | `getUTMSource()` |
+| `utm_campaign` | `RootID` | `RootID` | `RootID` | `RootID` |
+| `utm_content` | `UserID` (luôn) | `UserID` (OneAT) / `""` (non-OneAT) | `UserID + "_" + ClickID` (defensive: chỉ `UserID` khi ClickID rỗng) | `UserID` (OneAT) / `""` (non-OneAT) |
+| `utm_medium` | — | `ASCEncrypt(UserID)` | `ASCEncrypt(UserID)` | `ASCEncrypt(UserID)` |
+| `utm_term` | — | `ClickID` (server-brand luôn truyền → non-empty) | — (body JSON không có field) | — (AT API không support field này) |
+| `utm_aff` | — | **`share_link`** khi `p.Share = true`, otherwise không set | **`share_link`** khi `p.Share = true`, otherwise không set | **`share_link`** (luôn có — hàm chỉ chạy khi share=true) |
+| `sub1` | ❌ không set | ❌ không set | ❌ không set (body JSON không có field) | ❌ không set (**Open Question Q4** — có thể map `clickID` nếu BI yêu cầu) |
+| `sub2` | ❌ không set | ❌ không set | ❌ không set | ❌ không set |
+| `sub3` | ✅ từ `addInfo=sub3:xxx` (qua `assignATAddInfo`) | ✅ từ `addInfo=sub3:xxx` | ❌ không set (body JSON không có field) | ✅ từ `addInfo=sub3:xxx` |
+| `sub4` | ✅ từ `addInfo=sub4:xxx` | ✅ từ `addInfo=sub4:xxx` | ❌ không set | ✅ từ `addInfo=sub4:xxx` |
+| URL encoding | OneAT: `url_enc`; else `url` | Giống V1 | `product_url` (plain, không encode) | OneAT: `url_enc=true` + `urls=[Base64(URL)]`; non-OneAT: `urls=[URL]` plain |
+
+**Chú thích:**
+- `sub1`, `sub2` **hiện không dùng trong AT family** — là "reserved slots". `assignATAddInfo` ([generate_url.go:336](../internal/util/generate_url.go#L336)) hard-code whitelist `["sub3", "sub4"]`; client gửi `addInfo=sub1:xxx` sẽ **bị drop silently**.
+- **V2 tiktokshop KHÔNG support `sub*` qua `addInfo`** vì request là body JSON thuần, không phải query params. Nếu cần tracking sub cho Tiktok, phải mở rộng struct `RequestPayload` riêng.
+- Các source ngoài AT family (Ecomobi, Optimise, Cityads, Shopee direct) **dùng `sub1/sub2/sub3` hardcode `rootID/userID/partnerID`** — semantic khác hẳn, KHÔNG liên quan share-flow (bị chặn bởi `isATFamilySource` guard).
 
 ### 15.3. Ideas từ brainstorm session
 
 16 ideas được capture trong [_bmad-output/brainstorming/brainstorming-session-2026-04-21.md](../../_bmad-output/brainstorming/brainstorming-session-2026-04-21.md).
 
-### 15.4. Sub* usage matrix
-
-Bảng sau liệt kê **tất cả `sub*` field** được set trong hệ thống hiện có, phân theo từng hàm build URL. Giúp dev + BI hiểu chính xác `sub` nào có nguồn từ đâu, có cần adjust gì cho share-flow.
-
-#### 15.4.1. AccessTrade family (V1, V2-other, V2-tiktokshop)
-
-| Sub | V1<br>(`GenerateURLForAccessTrade`) | V2 other<br>(`...VersionIIForOther`) | V2 tiktokshop<br>(`...VersionIIForTiktokshop`) | Nguồn gốc | Share-flow cần adjust? |
-|---|---|---|---|---|---|
-| `sub1` | ❌ không set | ❌ không set | ❌ không set | — | **KHÔNG** (reserved — xem Open Question Q4) |
-| `sub2` | ❌ không set | ❌ không set | ❌ không set | — | **KHÔNG** |
-| `sub3` | ✅ set **nếu** `addInfo` có `sub3:xxx` | ✅ set **nếu** `addInfo` có `sub3:xxx` | ❌ không set (request body JSON không có field) | User-supplied qua query `addInfo` | **KHÔNG** (đã tái dùng logic cũ qua `assignATAddInfo`) |
-| `sub4` | ✅ set **nếu** `addInfo` có `sub4:xxx` | ✅ set **nếu** `addInfo` có `sub4:xxx` | ❌ không set | User-supplied qua query `addInfo` | **KHÔNG** |
-
-**Chú ý:**
-- Hàm `assignATAddInfo(q, addInfo)` ([generate_url.go:336](../internal/util/generate_url.go#L336)) có hard-coded whitelist `allowedKeys := []string{"sub3", "sub4"}`. Nếu client gửi `addInfo=sub1:xxx,sub2:yyy` → **2 field này sẽ bị drop silently**.
-- V2 tiktokshop dùng request body JSON với struct `RequestPayload` chỉ có `utm_*` — **không support sub*`** qua `addInfo`.
-
-#### 15.4.2. AccessTrade `product_link/create` (share-flow MỚI)
-
-| Sub | Share-flow (PRD này) | Nguồn gốc |
-|---|---|---|
-| `sub1` | ❌ không set — **Open Question Q4** | Nếu BI yêu cầu track clickID ở shortlink, có thể map `sub1 = p.ClickID` (vì AT body không có `utm_term`). |
-| `sub2` | ❌ không set | — |
-| `sub3` | ✅ set **nếu** `addInfo` có `sub3:xxx` | Giống V1/V2 — tái dùng logic cũ |
-| `sub4` | ✅ set **nếu** `addInfo` có `sub4:xxx` | Giống V1/V2 |
-
-Body AT thực tế khi share (non-OneAT, không có addInfo):
-```json
-{
-  "campaign_id": "...",
-  "urls": ["..."],
-  "utm_source": "...",
-  "utm_campaign": "...",
-  "utm_medium": "...",
-  "utm_content": "",
-  "utm_aff": "share_link"
-}
-```
-
-Body AT khi `addInfo=sub3:xxx,sub4:yyy`:
-```json
-{
-  "...": "...",
-  "utm_aff": "share_link",
-  "sub3": "xxx",
-  "sub4": "yyy"
-}
-```
-
-#### 15.4.3. Source khác (ngoài AT family) — để tham khảo
-
-Các hàm dưới đây **KHÔNG liên quan PRD này** (share-flow chỉ hỗ trợ AT family). Chỉ liệt kê để tránh nhầm lẫn khi BI/dev thấy `sub*` xuất hiện ở tracking log.
-
-| Hàm | Sub | Giá trị hardcode | Mục đích |
-|---|---|---|---|
-| `GenerateURLForEcomobi` ([:515](../internal/util/generate_url.go#L515)) | `sub1` | `rootID` | Brand identifier cho Ecomobi tracking |
-| `GenerateURLForEcomobi` | `sub2` | `userID` | User identifier |
-| `GenerateURLForEcomobi` | `sub3` | `partnerID` | Partner identifier |
-| `GenerateURLForOptimise` / `GenerateURLForCitiads` ([:629](../internal/util/generate_url.go#L629)) | `aff_sub1` | `rootID` | Tương tự Ecomobi nhưng prefix `aff_sub*` |
-| `GenerateURLForOptimise` / `GenerateURLForCitiads` | `aff_sub2` | `userID` | |
-| `GenerateURLForOptimise` / `GenerateURLForCitiads` | `aff_sub3` | `partnerID` | |
-| `GenerateShopeeShortLink` ([:46](../internal/util/generate_url.go#L46)) | `subIds` (array) | `[clickID, rootID, userID, partnerID, "app"]` | Shopee GraphQL format khác hẳn `sub1..4` |
-
-**→ Share-flow hiện tại không đụng các hàm này** (bị chặn bởi `isATFamilySource` guard).
-
-#### 15.4.4. Quick reference cho dev
+### 15.4. Sub* quick reference cho dev
 
 Khi client gọi `GET /v2/brands/generate-url?share=true&addInfo=sub3:promo_home,sub4:banner_01`:
-
-- **Aff-link `url` field** (V2 other/tiktokshop) có query: `...&sub3=promo_home&sub4=banner_01&utm_aff=share_link`
-- **Body AT `product_link/create`** sẽ chứa: `{ ..., "utm_aff": "share_link", "sub3": "promo_home", "sub4": "banner_01" }`
+- **Aff-link `url` field** (V2 other) query: `...&sub3=promo_home&sub4=banner_01&utm_aff=share_link`
+- **Aff-link V2 tiktokshop body**: `sub3`/`sub4` **bị drop** (body JSON không có field)
+- **Body AT `product_link/create`** chứa: `{ ..., "utm_aff": "share_link", "sub3": "promo_home", "sub4": "banner_01" }`
 
 Khi client gọi `GET /v2/brands/generate-url?share=true&addInfo=sub1:evil,sub5:ignored`:
+- `sub1` và `sub5` **bị drop silently** mọi nơi (whitelist `assignATAddInfo` chỉ nhận `sub3`, `sub4`).
 
-- **Cả aff-link lẫn body AT**: `sub1` và `sub5` **bị drop silently**. Chỉ `utm_aff=share_link` xuất hiện. Đây là behavior hiện có, KHÔNG đổi trong PRD này.
+### 15.5. Source ngoài AT family — reference chéo (tham khảo)
+
+Share-flow **không đụng** các source dưới, liệt kê để BI/dev tránh nhầm `sub*` khi thấy trong log khác.
+
+| Hàm | Sub | Giá trị hardcode |
+|---|---|---|
+| `GenerateURLForEcomobi` ([:515](../internal/util/generate_url.go#L515)) | `sub1/sub2/sub3` | `rootID / userID / partnerID` |
+| `GenerateURLForOptimise` / `GenerateURLForCitiads` ([:629](../internal/util/generate_url.go#L629)) | `aff_sub1/aff_sub2/aff_sub3` | `rootID / userID / partnerID` |
+| `GenerateShopeeShortLink` ([:46](../internal/util/generate_url.go#L46)) | `subIds` (array) | `[clickID, rootID, userID, partnerID, "app"]` |
 
 ---
 
