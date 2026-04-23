@@ -68,7 +68,6 @@ V1 tập trung vào **user tự khai + admin manual verify**. V1 CHƯA có emplo
 **Admin Dashboard — Filter & Hiển thị phân nhóm** *(gộp từ `admin-dashboard-upgrade`)*
 - Tab Nội dung: filter cơ sở làm việc (3 layer), cột Phân loại, Cơ sở, Hashtag cá nhân
 - Tab Creator: filter Nơi làm việc (3 layer), filter Phân loại (CBNV / Không phải CBNV), cột Hashtag cá nhân, ẩn Ngày tạo
-- Analytics: filter Phân loại CBNV + Cơ sở làm việc
 - Export: column picker dialog + default preset (bỏ tick cột thừa, tick các cột mới)
 
 **Cấu hình nơi làm việc (data)**
@@ -134,12 +133,12 @@ Admin mở danh sách pending
 ### 5.4. Admin vận hành — Filter theo cơ sở
 
 ```
-Admin mở Tab Nội dung / Tab Creator / Analytics
+Admin mở Tab Nội dung / Tab Creator
   → Chọn filter Thương hiệu (VD: Vinpearl)
   → Nếu brand có Layer 2 → hiện dropdown Công ty
   → Nếu brand có Layer 3 → hiện dropdown Cơ sở/Bộ phận
   → Kết hợp filter Phân loại (CBNV / Không phải CBNV) / Sự kiện / các filter khác
-  → Table / KPI / chart cập nhật realtime
+  → Table cập nhật realtime
 ```
 
 ---
@@ -584,7 +583,7 @@ Hiển thị hashtag cá nhân của creator tại mỗi video, để admin vậ
 
 ---
 
-### EPIC-006: Admin — Tab Creator & Analytics (Filter & Cột)
+### EPIC-006: Admin — Tab Creator (Filter & Cột)
 
 #### FR-023: Filter Nơi làm việc trên Tab Creator
 
@@ -638,34 +637,6 @@ Cột hashtag cá nhân trong table Creator (verify xem đã có chưa — nếu
 - [ ] Cột "Ngày tạo" không hiển thị trên giao diện
 - [ ] Cột "Ngày tham gia" vẫn hiển thị
 - [ ] Cột "Ngày tạo" vẫn available trong export (nếu user tick)
-
----
-
-#### FR-027: Filter Phân loại CBNV trên Analytics
-
-**Priority:** Must Have
-
-**Description:**
-Thêm filter phân loại CBNV / Không phải CBNV trên màn hình Thống kê.
-
-**Acceptance Criteria:**
-- [ ] Dropdown: Tất cả / CBNV / Không phải CBNV
-- [ ] Chọn → tất cả KPI, chart cập nhật
-- [ ] Kết hợp được với filter Sự kiện hiện có
-
----
-
-#### FR-028: Filter Cơ sở làm việc trên Analytics
-
-**Priority:** Must Have
-
-**Description:**
-Filter 3 layer giống FR-019 trên Analytics.
-
-**Acceptance Criteria:**
-- [ ] Dùng chung component với FR-019, FR-023
-- [ ] KPI / chart filter theo phạm vi đã chọn
-- [ ] Disable khi FR-027 = "Không phải CBNV"
 
 ---
 
@@ -810,7 +781,7 @@ Upgrade admin dashboard không ảnh hưởng team khác đang dùng. Không bre
 
 **Priority:** Should Have
 
-Filter 3 layer (FR-019, FR-023, FR-028) dùng chung **1 component** trên cả 3 tab. Cùng behavior cascade, cùng data source.
+Filter 3 layer (FR-019, FR-023) dùng chung **1 component** trên cả 2 tab. Cùng behavior cascade, cùng data source.
 
 ---
 
@@ -897,7 +868,6 @@ Filter 3 layer (FR-019, FR-023, FR-028) dùng chung **1 component** trên cả 3
 | `PATCH /admin/users/:id/verify-staff` | Verify / reject |
 | `GET /admin/contents?workplace_brand=&workplace_company=&workplace_unit=&account_type=` | Filter content |
 | `GET /admin/creators?workplace_brand=&workplace_company=&workplace_unit=&account_type=` | Filter creator |
-| `GET /admin/analytics?workplace_brand=&workplace_company=&workplace_unit=&account_type=&event_id=` | Filter analytics |
 | `POST /admin/export?tab=content\|creator&columns[]=...` | Export với column picker |
 | `GET/POST/PUT/DELETE /admin/workplace/brands\|companies\|units` | CRUD config |
 
@@ -912,10 +882,10 @@ Filter 3 layer (FR-019, FR-023, FR-028) dùng chung **1 component** trên cả 3
 | EPIC-003: Form nhân viên + 3 Layer | End-user | FR-009, FR-010, FR-011, FR-012, FR-013, FR-014, FR-015 | 6-8 stories | Must |
 | EPIC-004: Staff verification + Profile View/Edit | Admin + User | FR-016, FR-017, FR-018a, FR-018b | 3-5 stories | Must |
 | EPIC-005: Admin Tab Nội dung | Admin | FR-019, FR-020, FR-021, FR-022 | 3-4 stories | Must |
-| EPIC-006: Admin Tab Creator & Analytics | Admin | FR-023, FR-024, FR-025, FR-026, FR-027, FR-028 | 4-5 stories | Must |
+| EPIC-006: Admin Tab Creator | Admin | FR-023, FR-024, FR-025, FR-026 | 3-4 stories | Must |
 | EPIC-007: Admin Export & Config | Admin | FR-029, FR-030, FR-031 | 3-4 stories | Must |
 
-**Tổng:** 7 epics · 32 FRs · 9 NFRs · ~26-36 stories
+**Tổng:** 7 epics · 30 FRs · 9 NFRs · ~24-34 stories
 
 ---
 
@@ -923,7 +893,7 @@ Filter 3 layer (FR-019, FR-023, FR-028) dùng chung **1 component** trên cả 3
 
 | Priority | FRs | NFRs |
 |----------|-----|------|
-| **Must Have** | 27 | 8 |
+| **Must Have** | 25 | 8 |
 | **Should Have** | 5 | 1 |
 
 ---
@@ -1000,6 +970,7 @@ Filter 3 layer (FR-019, FR-023, FR-028) dùng chung **1 component** trên cả 3
 | 1.1 | 2026-04-22 | Product Manager | Tách FR-018 thành FR-018a (Profile View — Must) + FR-018b (Profile Edit — Should). Bổ sung yêu cầu hiển thị Nơi làm việc 3 layer + trạng thái xác minh (email/SĐT/staff) trên trang Profile hiện có của VCreator. |
 | 1.2 | 2026-04-22 | Product Manager | **Wording update**: đổi "Creator bên ngoài" → **"Không phải CBNV"**, toggle "Tôi là nhân viên Vin" → **"Tôi có mã nhân viên"**, label filter "Phân loại" → **"Loại tài khoản"**. Section "Phân loại tài khoản" gộp vào "Thông tin công tác" (luôn hiển thị, state khác nhau theo `account_type`). |
 | 1.3 | 2026-04-22 | Product Manager | **FR-018b detailed**: chốt inline edit (không popup), thêm matrix disable toggle "Tôi có mã nhân viên" theo 4 trạng thái (creator / staff+pending / staff+verified / staff+rejected). Bỏ nút "Khai lại thông tin" ở state `rejected` — dùng chung nút Chỉnh sửa. |
+| 1.4 | 2026-04-23 | Product Manager | **Bỏ filter cho Analytics**: xóa FR-027 (Filter Phân loại CBNV) và FR-028 (Filter Cơ sở làm việc) trên màn Thống kê. Lý do: màn Thống kê hiện chỉ hỗ trợ filter theo event, chưa thể lọc theo creator. Đổi tên EPIC-006 → "Admin — Tab Creator". Cập nhật NFR-009, API surface, traceability. |
 
 ---
 
