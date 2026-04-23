@@ -2,9 +2,9 @@
 
 ### Dự án: **Techcombank Influencer Platform (T-Fluencers)**
 
-**Phiên bản:** 2.1
+**Phiên bản:** 2.2
 
-**Ngày phát hành:** 01/11/2025
+**Ngày phát hành:** 23/04/2026
 
 ---
 
@@ -15,6 +15,7 @@
 | 1.0 | — | AT Dev Team | Bản SRS gốc |
 | 2.0 | 11/03/2026 | AT Dev Team | Cập nhật toàn bộ theo phạm vi đã triển khai |
 | 2.1 | 12/03/2026 | AT Dev Team | Bổ sung Acceptance Criteria, NFR, State Diagram, Business Rules. Bỏ đăng nhập Facebook (Creator) và đăng nhập Google (Admin) |
+| 2.2 | 23/04/2026 | AT Dev Team | Bổ sung mô tả **Snapshot đối soát (Reconciliation Snapshot)** — cơ chế tạo, dữ liệu ghi nhận và cách sử dụng trong quy trình đối soát |
 
 ## Bảng thuật ngữ
 
@@ -24,6 +25,7 @@
 | **Thử thách (Event)** | Một chiến dịch truyền thông mà Creator tham gia, đăng nội dung và nhận hoa hồng |
 | **Content** | Bài tham gia của Creator (thường là video trên MXH) cho một thử thách |
 | **Đối soát (Reconciliation)** | Quy trình kiểm tra, xác nhận hoa hồng phát sinh cho Creator |
+| **Snapshot đối soát (Reconciliation Snapshot)** | Ảnh chụp số liệu hiệu suất content (view, like, comment, share) tại thời điểm cụ thể, dùng làm bằng chứng ghi nhận không thay đổi trong quá trình đối soát |
 | **Thanh toán (Transfer)** | Đợt chi trả hoa hồng đã đối soát cho Creator |
 | **Hồ sơ social (User Social)** | Tài khoản MXH đã đăng ký và xác thực trên hệ thống |
 | **eKYC** | Xác minh danh tính điện tử bằng CCCD/CMND |
@@ -885,6 +887,118 @@ Cho phép Admin thực hiện đối soát hoa hồng cho Influencer theo chiế
 | AC-20.5 | Xuất Excel | Nhấn xuất → tạo file Excel đúng cấu trúc (BY_VIEW hoặc BY_TASK), tải thành công |
 | AC-20.6 | Kết thúc đợt | Khóa đợt → số dư user cập nhật chính xác, không thao tác thêm được trên đợt đã khóa |
 | AC-20.7 | Tính toán chính xác | Tổng tiền đối soát = tổng các mốc thưởng đã đạt + thưởng bổ sung, khớp với Excel xuất ra |
+
+---
+
+## 20A. Snapshot đối soát (Reconciliation Snapshot)
+
+### Mục tiêu
+Ghi nhận lại số liệu hiệu suất content (view, like, comment, share) tại các thời điểm cụ thể dưới dạng **ảnh chụp (snapshot) không thể chỉnh sửa**, phục vụ làm bằng chứng trong quá trình đối soát hoa hồng giữa AT, TCB và Creator — đảm bảo tính minh bạch, truy vết và chống tranh chấp khi có khác biệt giữa số liệu đầu kỳ và cuối kỳ.
+
+### Luồng nghiệp vụ
+
+#### Phần 1 — Cơ chế tạo Snapshot
+
+Hệ thống tạo snapshot theo **3 cơ chế độc lập**:
+
+**1) Tạo theo crawl hàng ngày (Daily Crawl Snapshot)**
+- Kích hoạt tự động mỗi lần hệ thống crawl content (theo lịch crawl định kỳ 15-30 phút/lần).
+- Mỗi content được crawl → ngay sau đó tự động tạo một snapshot ghi lại số liệu hiện tại.
+- Chạy song song, không chặn luồng crawl chính.
+- Nguồn (`source`): `daily_crawl`.
+
+**2) Tạo sau khi thử thách kết thúc (Post-Expiry Crawl)**
+- Cron job tự động chạy lúc **02:00 sáng hàng ngày**.
+- Hệ thống tìm tất cả thử thách đã kết thúc (`endAt < hiện tại`) nhưng chưa đóng đối soát.
+- Crawl lại toàn bộ content của các reward hợp lệ (không bị từ chối) → tạo snapshot.
+- Đảm bảo luôn có snapshot chốt sau khi thử thách kết thúc, kể cả khi crawl hàng ngày bị gián đoạn.
+- Nguồn (`source`): `post_expiry_crawl`.
+
+**3) Tạo bổ sung thủ công (Makeup Crawl)**
+- Admin trigger thủ công qua nút "Crawl bổ sung" trên trang đối soát.
+- Hệ thống tự động phát hiện các ngày thiếu snapshot trong khoảng từ `endAt` đến hiện tại (detect missing days).
+- Có cơ chế **debounce 1 giờ** (trừ khi force) để tránh spam crawl.
+- Dùng khi admin phát hiện thiếu dữ liệu hoặc cần lấy lại số liệu mới nhất trước khi đóng đối soát.
+- Nguồn (`source`): `makeup_crawl`.
+
+#### Phần 2 — Dữ liệu ghi nhận trong Snapshot
+
+Mỗi snapshot ghi nhận đầy đủ thông tin sau (bất biến sau khi tạo):
+
+| Trường | Mô tả |
+|---|---|
+| `user` | ID Creator sở hữu content |
+| `event` | ID thử thách |
+| `content` | ID content/bài đăng |
+| `contentSource` | Nền tảng (tiktok / facebook / youtube / instagram) |
+| `date` | Ngày tạo snapshot (theo múi giờ Việt Nam) |
+| `viewCount` | Số lượt xem tại thời điểm snapshot |
+| `likeCount` | Số lượt thích |
+| `commentCount` | Số bình luận |
+| `shareCount` | Số lượt chia sẻ |
+| `hashtags` | Danh sách hashtag của content |
+| `crawlSuccess` | Trạng thái crawl thành công hay thất bại |
+| `statusCode` | Mã phản hồi từ dịch vụ crawl |
+| `source` | Nguồn tạo snapshot (`daily_crawl` / `post_expiry_crawl` / `makeup_crawl`) |
+| `crawledAt` | Thời điểm crawl |
+| `createdAt` | Thời điểm ghi vào hệ thống |
+
+**Đặc điểm quan trọng:**
+- Snapshot là **immutable** — không cho phép sửa, xóa sau khi tạo.
+- Mỗi content có thể có **nhiều snapshot theo thời gian** → tạo thành chuỗi lịch sử phục vụ phân tích xu hướng và đối chiếu.
+
+#### Phần 3 — Sử dụng Snapshot trong quá trình đối soát
+
+Snapshot được sử dụng tại 3 điểm chính trong luồng đối soát:
+
+**1) Giai đoạn Chuẩn bị (DRAFT → IN_PROGRESS)**
+- Khi tạo đợt đối soát, hệ thống lấy **snapshot gần nhất** của mỗi content (theo `crawledAt` giảm dần).
+- Số liệu snapshot được dùng để tính **số tiền dự kiến** theo các mốc thưởng.
+- Số liệu này được **"khóa"** như giá trị gốc, không thay đổi kể cả khi content có thêm lượt xem sau đó.
+
+**2) Giai đoạn Đánh giá Checklist (IN_PROGRESS → REVIEWED)**
+- Hệ thống tự động đánh giá các tiêu chí checklist dựa trên dữ liệu snapshot:
+  - `video_accessible`: Content còn truy cập được không (dựa vào `crawlSuccess` + `statusCode`)
+  - `hashtag_present`: Hashtag yêu cầu có xuất hiện trong `hashtags` không
+  - `view_not_dropped`: So sánh view hiện tại với view snapshot → phát hiện sụt giảm bất thường
+- Các content có cảnh báo → Admin xem chi tiết và override/confirm thủ công.
+
+**3) Giai đoạn Công bố & Thanh toán (REVIEWED → CLOSED)**
+- Số liệu snapshot là **bằng chứng cuối cùng** gửi đến Creator khi công bố kết quả đối soát.
+- Nếu Creator có khiếu nại → Admin kiểm tra lại snapshot làm căn cứ.
+- Khi đợt đối soát đóng (CLOSED) → snapshot liên quan vẫn giữ nguyên như bản ghi kiểm toán (audit trail).
+
+### Quy tắc nghiệp vụ
+
+| # | Quy tắc | Mô tả |
+|---|---|---|
+| BR-SS.1 | Snapshot bất biến | Không cho phép sửa, xóa snapshot sau khi tạo |
+| BR-SS.2 | Nhiều snapshot/content | Một content có thể có nhiều snapshot theo thời gian; luôn dùng **snapshot gần nhất** khi tính toán đối soát |
+| BR-SS.3 | Ưu tiên theo nguồn | Khi có nhiều snapshot cùng ngày, ưu tiên theo thứ tự: `makeup_crawl` > `post_expiry_crawl` > `daily_crawl` |
+| BR-SS.4 | Debounce Makeup Crawl | Makeup crawl có cơ chế chống spam 1 giờ (trừ khi admin force) |
+| BR-SS.5 | Timezone chuẩn | Ngày snapshot (`date`) tính theo múi giờ **Asia/Ho_Chi_Minh**, lấy đầu ngày (start of day) |
+| BR-SS.6 | Bắt buộc có snapshot | Đợt đối soát chỉ có thể chuyển sang CLOSED khi tất cả content item đều có ít nhất 1 snapshot |
+
+### API đã triển khai
+- `POST /reconciliations/events/:eventId/makeup-crawl` — Trigger tạo snapshot bổ sung thủ công (hỗ trợ query `?force=true`)
+- `GET /reconciliations/:id/content` — Danh sách content item (đã chứa dữ liệu snapshot mới nhất)
+- `POST /reconciliations/:id/evaluate` — Đánh giá checklist sử dụng dữ liệu snapshot
+- Cron job `post-expiry-crawl` — Tự động chạy 02:00 AM hàng ngày (không phải API)
+
+### Tiêu chí chấp nhận (Acceptance Criteria)
+| # | Tiêu chí | Điều kiện đạt |
+|---|---|---|
+| AC-20A.1 | Tạo snapshot khi crawl hàng ngày | Crawl content → tự động tạo snapshot với `source=daily_crawl`, ghi đúng các chỉ số view/like/comment/share |
+| AC-20A.2 | Cron post-expiry crawl | Lúc 02:00 AM → tìm đúng event đã hết hạn chưa close, crawl và tạo snapshot với `source=post_expiry_crawl` |
+| AC-20A.3 | Makeup crawl thủ công | Admin trigger API → hệ thống phát hiện các ngày thiếu, tạo snapshot với `source=makeup_crawl` |
+| AC-20A.4 | Debounce makeup crawl | Trigger makeup crawl 2 lần trong 1 giờ → lần 2 bị chặn; gọi với `force=true` → cho phép chạy |
+| AC-20A.5 | Snapshot bất biến | Không có API/chức năng sửa hoặc xóa snapshot đã tạo |
+| AC-20A.6 | Dùng snapshot gần nhất | Mở đợt đối soát → số liệu view/like hiển thị khớp với snapshot mới nhất của content |
+| AC-20A.7 | Đánh giá checklist theo snapshot | Chạy evaluate → các tiêu chí `video_accessible`, `hashtag_present`, `view_not_dropped` dùng đúng dữ liệu snapshot |
+| AC-20A.8 | Phát hiện view giảm | Nếu view hiện tại < view snapshot → checklist `view_not_dropped` báo cảnh báo (warning) |
+| AC-20A.9 | Số liệu đối soát không đổi | Sau khi đợt đối soát bắt đầu, view trong đối soát giữ nguyên kể cả content nhận thêm view mới |
+| AC-20A.10 | Timezone | Ngày snapshot (`date`) khớp với đầu ngày theo múi giờ Việt Nam (Asia/Ho_Chi_Minh) |
+| AC-20A.11 | Phân biệt nguồn snapshot | Query snapshot → phân biệt được nguồn (`daily_crawl` / `post_expiry_crawl` / `makeup_crawl`) |
 
 ---
 
