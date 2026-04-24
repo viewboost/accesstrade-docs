@@ -4,6 +4,7 @@
 
 - [Security & Authentication](#security--authentication)
 - [Error Code](#error-code)
+- [Practical Testing Notes](#practical-testing-notes)
 - [API 1: Lấy thông tin Campaign (Optional)](#api-1-lấy-thông-tin-campaign-optional)
 - [API 1.2: Tham gia chiến dịch](#api-12-tham-gia-chiến-dịch)
 - [API 2: Lấy Link Affiliate](#api-2-lấy-link-affiliate)
@@ -60,6 +61,81 @@ Response chuẩn bao gồm 3 trường:
 | | | `"error"` — Thất bại do hệ thống |
 | `code` | Mã lỗi | `PX00000` = thành công. Khác giá trị này là thất bại, nội dung lỗi tương ứng với `message` |
 | `message` | Nội dung tương ứng code | `"success"` |
+
+### Mã lỗi đã gặp thực tế
+
+| Code | HTTP | Message | Nguyên nhân thực tế |
+|---|---|---|---|
+| `PX00000` | 200 | `success` | Thành công |
+| `PX00002` | 400 | `Invalid value for parameter 'from_date'` | Sai format ngày tháng (xem [Practical Testing Notes](#practical-testing-notes)) |
+| `PX00099` | 400 | `Dữ liệu không đúng định dạng` | Body hoặc field không đúng spec (ví dụ `from_date` format sai với `conversion-service`) |
+| `PX00099` | 400 | `Khoảng thời gian tìm kiếm vượt quá 3 tháng` | `to_date - from_date > 3 months` (xem [Practical Testing Notes](#practical-testing-notes)) |
+| `PX000100` | 400 | `Có lỗi xảy ra phía nhà cung cấp` | Lỗi upstream Pub2. Thực tế: xảy ra khi `partner_ref_campaign_id` rỗng/không hợp lệ ở [API 2](#api-2-lấy-link-affiliate) |
+
+---
+
+## Practical Testing Notes
+
+> Ghi chú dựa trên kết quả test thực tế trên môi trường `core-aff.dev.accesstrade.me` (verified 2026-04-24, sso_user_id=504).
+
+### 1. Format `from_date` / `to_date` (BẮT BUỘC)
+
+Pub2 **chỉ chấp nhận** format ISO-8601 có offset timezone **không có dấu `:` trong offset**:
+
+```
+YYYY-MM-DDTHH:mm:ss+0700
+```
+
+- ✅ Hợp lệ: `2026-02-23T00:00:00+0700`
+- ❌ Reject (`PX00002` / `PX00099`): `2026-02-23 00:00:00`, `2026-02-23T00:00:00+07:00`, `2026-02-23T00:00:00Z`
+
+Backend implementation tương ứng: [`formatPub2Date()`](../../ambassabor/backend/pkg/public/service/affiliate.go) — convert input sang `Asia/Ho_Chi_Minh` rồi format `2006-01-02T15:04:05+0700` (Go layout).
+
+### 2. Giới hạn khoảng thời gian 3 tháng
+
+Tất cả API report (API 3.1, 3.2, 3.3, 3.4) và API 8 (danh sách đơn) đều reject nếu `to_date - from_date > 3 tháng` với:
+
+```json
+{ "code": "PX00099", "message": "Khoảng thời gian tìm kiếm vượt quá 3 tháng" }
+```
+
+**Khuyến nghị**: validate ở client/BFF trước khi gọi Pub2 để trả về error message thân thiện (hoặc chia nhỏ range).
+
+### 3. `partner_ref_campaign_id` không được rỗng ở API 2
+
+Ở [API 2 (Lấy Link Affiliate)](#api-2-lấy-link-affiliate), nếu truyền `"partner_ref_campaign_id": ""` (rỗng), Pub2 trả:
+
+```json
+{ "code": "PX000100", "message": "Có lỗi xảy ra phía nhà cung cấp" }
+```
+
+Phải luôn truyền campaign ID hợp lệ (VD: `4751584435713464237` — Shopee Smartlink trên môi trường dev).
+
+### 4. Signature & timestamp
+
+- `client-request-time` là **Unix epoch milliseconds** (ví dụ `1777043989000`), không phải giây hay ISO string.
+- `client-trace-no` là UUID v4 (lowercase).
+- Signature HMAC-SHA256 với message ghép bằng ký tự `|`:
+
+```
+HMAC-SHA256(client_id + "|" + client_trace_no + "|" + client_request_time, client_secret)
+```
+
+Test nhanh bằng `openssl`:
+
+```sh
+echo -n "$CLIENT_ID|$TRACE_NO|$REQUEST_TIME" | openssl dgst -sha256 -hmac "$CLIENT_SECRET" -hex
+```
+
+### 5. Data shape đặc biệt
+
+- **`statistics` key là Unix epoch seconds** (theo ngày, `+0700`), không phải date string → FE phải parse và format lại.
+- **`statistic_details` chỉ xuất hiện ở API 3.3 (sale-amount) và 3.4 (commission)**; API 3.1 (click) và 3.2 (conversion) không có breakdown theo trạng thái.
+- Trong response API 8, `total_sale_amount` có thể là **scientific notation** (VD `6.74502E7` = 67,450,200) — JSON parser chuẩn handle OK, nhưng cần lưu ý khi hiển thị.
+
+### 6. Testing script
+
+Script test end-to-end: [`.tmp/pub2-test/test-pub2.sh`](../../../.tmp/pub2-test/test-pub2.sh) (trong thư mục workspaces root) — gọi cả 6 APIs với `sso_user_id=504` và lưu response từng API ra file JSON riêng.
 
 ---
 
@@ -180,6 +256,8 @@ Tạo link affiliate cho campaign.
 | `sub1` — `sub4` | String | Layer tracking |
 | `utm_source`, `utm_medium`, `utm_campaign`, `utm_content` | String | Tạm thời không quan tâm |
 
+> **Lưu ý quan trọng:** `partner_ref_campaign_id` **không được rỗng**. Nếu truyền `""` thì Pub2 trả `PX000100 "Có lỗi xảy ra phía nhà cung cấp"` (xem [Practical Testing Notes §3](#3-partner_ref_campaign_id-không-được-rỗng-ở-api-2)).
+
 ### Response
 
 ```json
@@ -244,7 +322,9 @@ Lấy thống kê số lượt click.
 | `campaign_ids` | Array | Mã định danh chiến dịch |
 | `subs` | Object | Sub tracking (`sub1` — `sub4`) |
 
-> **Lưu ý:** Thời gian lọc tối đa 3 tháng.
+> **Lưu ý:**
+> - Thời gian lọc tối đa **3 tháng** — vượt quá trả `PX00099`.
+> - `from_date`/`to_date` bắt buộc format `YYYY-MM-DDTHH:mm:ss+0700` (không có dấu `:` trong offset). Xem [Practical Testing Notes §1](#1-format-from_date--to_date-bắt-buộc).
 
 ### Response
 
