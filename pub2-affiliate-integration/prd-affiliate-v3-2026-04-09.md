@@ -1,11 +1,14 @@
 # Product Requirements Document: Pub2 Affiliate Integration — V3 (Discovery, Charts & Polish)
 
+> Replaced by [V3.1 (2026-04-24)](./prd-affiliate-v3.1-2026-04-24.md). This V3 draft was never implemented; V3.1 is the current source of truth for Phase 3.
+
+
 **Date:** 2026-04-09
 **Author:** vinhnguyen
 **Version:** 1.0
 **Project Type:** Feature Enhancement
 **Project Level:** Level 2
-**Status:** Draft
+**Status:** Replaced by V3.1 (2026-04-24) — not implemented
 **Platform:** Ambassador (`accesstrade-projects/ambassabor/`)
 
 ---

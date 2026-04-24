@@ -5,6 +5,7 @@
 - [Security & Authentication](#security--authentication)
 - [Error Code](#error-code)
 - [Practical Testing Notes](#practical-testing-notes)
+  - [Dev environment seeded data](#7-dev-environment-seeded-data--client-side-overrides)
 - [API 1: Lấy thông tin Campaign (Optional)](#api-1-lấy-thông-tin-campaign-optional)
 - [API 1.2: Tham gia chiến dịch](#api-12-tham-gia-chiến-dịch)
 - [API 2: Lấy Link Affiliate](#api-2-lấy-link-affiliate)
@@ -136,6 +137,31 @@ echo -n "$CLIENT_ID|$TRACE_NO|$REQUEST_TIME" | openssl dgst -sha256 -hmac "$CLIE
 ### 6. Testing script
 
 Script test end-to-end: [`.tmp/pub2-test/test-pub2.sh`](../../../.tmp/pub2-test/test-pub2.sh) (trong thư mục workspaces root) — gọi cả 6 APIs với `sso_user_id=504` và lưu response từng API ra file JSON riêng.
+
+### 7. Dev environment: seeded data & client-side overrides
+
+> Chỉ áp dụng trên môi trường **`core-aff.dev.accesstrade.me`**. Không tồn tại trong staging/production code path.
+
+**Seeded data trên Pub2 dev** chỉ có cho `sso_user_id=504`. Scan toàn bộ Q1/2023 → Q2/2026 cho thấy data tập trung ở:
+
+| Tháng | Orders | Clicks | Conversions | Sale | Commission |
+|---|---|---|---|---|---|
+| 2023-04 | 29,046 | 0 | 29,900 | ~7.38 tỷ | ~1.13 tỷ |
+| 2023-05 | 2,301 | 1 | 1,745 | ~27 triệu | ~205 triệu |
+| 2023-03 | 24 | 0 | 2 | 0.12M | 14K |
+| 2026-03 | 6 | 0 | 0 | 0 | 0 |
+| Các tháng khác | 0 | 0 | 0 | 0 | 0 |
+
+**Hệ quả**: nếu gọi Pub2 dev với bất kỳ `sso_user_id` nào khác 504, hoặc với range ngoài 2023-03 → 2023-05, kết quả là **rỗng**.
+
+**Client-side override pattern khuyến nghị** khi chạy backend ở `ENV=development`:
+- Rewrite `from_date` / `to_date` → `2023-03-01T00:00:00+0700` / `2023-05-31T23:59:59+0700` (đúng 3 tháng — sát hard-limit Pub2).
+- Rewrite `sso_user_id` → `504`.
+- Clear `campaign_ids` về rỗng (vì pub2 campaign IDs map từ Mongo dev DB có thể không trùng với campaigns có seeded data — test với `4751584435713464237` Shopee Smartlink và `5250371113292977031` Shopee KOL NEW là chắc chắn có).
+
+Áp dụng overrides **chỉ cho report/listing APIs** (API 3.1–3.4 + API 8). **Tuyệt đối không** override cho mutation APIs (API 1.2 JoinCampaign, API 2 GenerateLink) — cần giữ `sso_user_id` thật để test flow contract.
+
+Reference implementation (Go): xem `backend/internal/module/pub2/client.go` — helper `applyDevReportOverride()` bảo vệ bằng `config.IsEnvDevelop()`, no-op ngoài dev.
 
 ---
 
