@@ -28,15 +28,16 @@ Phase 1 đã hoàn thành core flow: Admin quản lý campaigns, Influencer tham
 
 **Điểm đặc biệt:** Backend Pub2 client (`internal/module/pub2/client.go`) **đã có sẵn** các method cho report APIs (`GetClickStats`, `GetConversionStats`, `GetSaleAmountStats`, `GetCommissionStats`, `GetConversions`). Công việc chính là **expose qua Public API endpoints** và **xây dựng frontend**.
 
-**Scope V2:**
-1. **Trang browse affiliate campaigns** cho influencer (FR-019)
-2. **5 Public Report API endpoints** (proxy Pub2 APIs 3.1, 3.2, 3.3, 3.4, 8)
-3. **Frontend báo cáo:** biểu đồ click/conversion/commission theo ngày
-4. **Danh sách đơn hàng chi tiết** với filter, phân trang
-5. **Dashboard tổng hợp** aggregate từ 4 APIs
-6. **Trang quản lý links riêng** (FR-006)
-7. **Circuit breaker** cho Pub2 client (NFR-004)
-8. **Swagger documentation** cho affiliate APIs
+**Scope V2 (final):**
+1. **Enhanced Link Generation** — custom URL, naming, history (FR-020) ✅
+2. **5 Public Report API endpoints** (proxy Pub2 APIs 3.1, 3.2, 3.3, 3.4, 8) (FR-016B) ✅
+3. **Commission Dashboard baseline** — summary cards + orders list (FR-011, FR-012) ✅
+4. **Trang browse affiliate campaigns** cho influencer (FR-019) ✅
+5. **Trang quản lý links riêng** (FR-006) ✅
+6. **Circuit breaker** cho Pub2 client (NFR-004) ✅
+7. **Commission Dashboard Simplified** — refactor về KPI + list, không tabs/charts (FR-023) ✅
+8. **Report charts** (click / conversion / sale-amount / commission theo ngày) — prototyped rồi **huỷ** (FR-007/8/9/10)
+9. **Swagger documentation** — deferred (NFR-008)
 
 ---
 
@@ -119,166 +120,74 @@ db.getCollection("affiliate-links").dropIndex("userId_1_affiliateCampaignId_1")
 
 ---
 
-### FR-019: Influencer browse danh sách Affiliate Campaigns
+### FR-019: Influencer browse danh sách Affiliate Campaigns ✅
 
 **Priority:** Must Have
+**Status:** Implemented (2026-04-16)
 
 **Description:**
-Influencer vào trang riêng để xem danh sách tất cả affiliate campaigns đang active. Hiện tại influencer chỉ thấy affiliate campaigns trong chi tiết campaign/event (FR-004 V1), chưa có trang listing riêng để browse toàn bộ.
+Influencer vào trang riêng để xem danh sách tất cả affiliate campaigns đang active.
 
 **Acceptance Criteria:**
-- [ ] Trang riêng hiển thị danh sách affiliate campaigns có status = active
-- [ ] Sắp xếp theo ngày tạo mới nhất trước (descending)
-- [ ] Mỗi item hiển thị: banner, title, commission info, bonus info (reuse Affiliate Item Card từ V1)
-- [ ] Click vào item → navigate đến trang chi tiết affiliate campaign
-- [ ] Phân trang (infinite scroll hoặc pagination)
-- [ ] Responsive trên mobile (1 cột) và desktop (2 cột grid)
-- [ ] Empty state khi không có campaigns
+- [x] Trang riêng hiển thị danh sách affiliate campaigns có status = active
+- [x] Sắp xếp theo ngày tạo mới nhất trước (descending)
+- [x] Mỗi item hiển thị: banner, title, commission info, bonus info
+- [x] Click vào item → navigate đến trang chi tiết affiliate campaign
+- [x] Phân trang + search
+- [x] Responsive mobile/desktop
+- [x] Empty state khi không có campaigns
 
-**Existing Assets:**
-- Admin backend: `GET /admin/affiliate-campaigns` (có sẵn, nhưng cần public endpoint)
-- Frontend component: `affiliate-item-card/` (reuse từ V1)
-- Model: `AffiliateCampaignRaw` ✅
-
-**Cần làm:**
-- Backend: Public API endpoint `GET /api/public/affiliate-campaigns` (list active campaigns, sorted by created_at desc, pagination)
-- Frontend page mới: `frontend/src/pages/affiliate-campaigns/index.tsx`
-- Frontend service method: `affiliate.ts` → `getAffiliateCampaigns()`
-- Route mới trong `frontend/config/routes.ts`
-- Navigation link trong sidebar/menu
+**Implementation:**
+- Backend: `GET /api/public/affiliate-campaigns` (handler + service + router)
+- Frontend page: `frontend/src/pages/affiliate-campaigns/index.tsx` + `index.scss`
+- Frontend service: `affiliate.ts` → `getAllCampaigns()`
+- Route: `frontend/config/routes.ts`
 
 **Dependencies:** None
 
 ---
 
-### FR-006: Influencer xem danh sách Link đã tạo
+### FR-006: Influencer xem danh sách Link đã tạo ✅
 
 **Priority:** Must Have
+**Status:** Implemented (2026-04-16)
 
 **Description:**
-Influencer xem lại tất cả affiliate links đã tạo, grouped theo campaign. Backend API `GET /affiliate/my-links` đã có, cần **frontend page riêng** (hiện tại chỉ hiển thị inline trong campaign detail).
+Influencer xem lại tất cả affiliate links đã tạo, grouped theo campaign.
 
 **Acceptance Criteria:**
-- [ ] Trang riêng hiển thị danh sách links grouped theo campaign
-- [ ] Mỗi link: campaign name, short link, ngày tạo
-- [ ] Copy link nhanh (cả dài và ngắn)
-- [ ] Link đến campaign detail
-- [ ] Phân trang
-- [ ] Responsive trên mobile
+- [x] Trang riêng hiển thị danh sách links
+- [x] Mỗi link: campaign name, short link, ngày tạo
+- [x] Copy link nhanh
+- [x] Link đến campaign detail
+- [x] Phân trang
+- [x] Responsive trên mobile
 
-**Existing Assets:**
-- Backend API: `GET /api/public/affiliate/my-links` ✅
-- Frontend service: `affiliate.ts` → `getMyLinks()` ✅
-- Interface: `IAffiliateLink` ✅
-
-**Cần làm:**
-- Frontend page mới: `frontend/src/pages/affiliate-links/index.tsx`
-- Route mới trong `frontend/config/routes.ts`
-- Navigation link trong sidebar/menu
+**Implementation:**
+- Frontend page: `frontend/src/pages/affiliate-links/index.tsx` + `index.scss`
+- Route: `frontend/config/routes.ts`
+- Backend API: `GET /api/public/affiliate/my-links` (đã có từ V1)
 
 **Dependencies:** None (API đã có)
 
 ---
 
-### FR-007: Báo cáo Click
+### FR-007 / FR-008 / FR-009 / FR-010: Report Charts ❌ Cancelled
 
-**Priority:** Must Have
+**Priority:** ~~Must Have / Should Have~~ Cancelled (2026-04-24)
 
-**Description:**
-Influencer xem báo cáo số lượt click affiliate links. Backend proxy Pub2 API 3.1.
+**Cancelled items:**
+- FR-007: Báo cáo Click (chart theo ngày)
+- FR-008: Báo cáo Conversion (chart theo ngày)
+- FR-009: Báo cáo Sale Amount (chart + status breakdown)
+- FR-010: Báo cáo Commission (chart + status breakdown)
 
-**Acceptance Criteria:**
-- [ ] Hiển thị tổng click trong khoảng thời gian chọn
-- [ ] Biểu đồ click theo ngày (dữ liệu epoch time từ Pub2 → convert sang ngày)
-- [ ] Lọc theo khoảng thời gian (max 3 tháng)
-- [ ] Lọc theo campaign (optional, dropdown danh sách campaigns đã tham gia)
-- [ ] Gọi Pub2 API on-demand khi user request
-- [ ] Loading state khi đang fetch data
-- [ ] Error state khi Pub2 API fail
+**Lý do huỷ:**
+Khi prototype với recharts đã build xong, review UI thực tế cho thấy biểu đồ theo ngày trên khung thời gian ngắn (7/30/90 ngày) không cho insight đáng kể cho influencer. Data Pub2 sparse + UI tab-based tạo friction (6 tabs: Tổng quan / Lượt click / Đơn hàng / Hoa hồng / Doanh số / Chi tiết đơn) — giá trị thực tế nằm trọn ở KPI cards + list đơn.
 
-**Existing Assets:**
-- Pub2 Client method: `client.go` → `GetClickStats()` ✅
+**Thay thế bằng:** [FR-023 Commission Dashboard Simplified](#fr-023-commission-dashboard-simplified) — gộp về 1 view phẳng: 3 KPI cards commission theo trạng thái + danh sách đơn hàng. Loại bỏ tabs, charts, date filter.
 
-**Cần làm:**
-- Backend: Public API endpoint `POST /api/public/affiliate-reports/clicks`
-- Backend: Handler + Service trong `pkg/public/`
-- Frontend: Report page component với chart library
-- Frontend: Service method `getClickReport()`
-
-**Dependencies:** FR-014 (Pub2 client — đã implement)
-
----
-
-### FR-008: Báo cáo Conversion
-
-**Priority:** Must Have
-
-**Description:**
-Influencer xem báo cáo số đơn hàng (conversions). Backend proxy Pub2 API 3.2.
-
-**Acceptance Criteria:**
-- [ ] Hiển thị tổng conversion trong khoảng thời gian
-- [ ] Biểu đồ conversion theo ngày
-- [ ] Lọc theo thời gian (max 3 tháng) và campaign
-- [ ] Gọi Pub2 API on-demand
-- [ ] Loading + error states
-
-**Existing Assets:**
-- Pub2 Client method: `client.go` → `GetConversionStats()` ✅
-
-**Cần làm:**
-- Backend: `POST /api/public/affiliate-reports/conversions`
-- Frontend: Conversion chart component
-
-**Dependencies:** FR-014
-
----
-
-### FR-009: Báo cáo Sale Amount
-
-**Priority:** Should Have
-
-**Description:**
-Influencer xem báo cáo giá trị đơn hàng (sale amount), phân theo trạng thái. Backend proxy Pub2 API 3.3.
-
-**Acceptance Criteria:**
-- [ ] Hiển thị tổng sale amount
-- [ ] Phân theo trạng thái: REJECTED, WAITING_FOR_APPROVED, APPROVED, TEMPORARY_APPROVED
-- [ ] Biểu đồ theo ngày
-- [ ] Lọc theo thời gian (max 3 tháng) và campaign
-
-**Existing Assets:**
-- Pub2 Client method: `client.go` → `GetSaleAmountStats()` ✅
-
-**Cần làm:**
-- Backend: `POST /api/public/affiliate-reports/sale-amount`
-- Frontend: Sale amount chart + status breakdown
-
-**Dependencies:** FR-014
-
----
-
-### FR-010: Báo cáo Commission (Hoa hồng)
-
-**Priority:** Must Have
-
-**Description:**
-Influencer xem báo cáo hoa hồng, phân theo trạng thái. Backend proxy Pub2 API 3.4.
-
-**Acceptance Criteria:**
-- [ ] Hiển thị tổng commission
-- [ ] Phân theo trạng thái: REJECTED, WAITING_FOR_APPROVED, APPROVED, TEMPORARY_APPROVED
-- [ ] Biểu đồ theo ngày
-- [ ] Lọc theo thời gian (max 3 tháng) và campaign
-
-**Existing Assets:**
-- Pub2 Client method: `client.go` → `GetCommissionStats()` ✅
-
-**Cần làm:**
-- Backend: `POST /api/public/affiliate-reports/commission`
-- Frontend: Commission chart + status breakdown
-
-**Dependencies:** FR-014
+**Backend assets vẫn giữ:** 5 report endpoints (`POST /affiliate/reports/clicks|conversions|sale-amount|commission|orders`) đã implement ở FR-016B → dùng lại cho FR-023 (commission + orders). Click / conversion / sale-amount endpoints tồn tại nhưng không có UI caller — giữ lại phòng trường hợp cần mở lại sau.
 
 ---
 
@@ -307,13 +216,49 @@ Influencer xem danh sách đơn hàng chi tiết (conversions list). Backend pro
 
 ---
 
+### FR-023: Commission Dashboard Simplified ✅
+
+**Priority:** Must Have
+**Status:** Implemented (2026-04-24)
+
+**Description:**
+Refactor trang `/hoa-hong-affiliate` (FR-012 baseline) về dạng 1 view phẳng: sidebar chọn campaign, header, 3 KPI cards commission theo trạng thái, và danh sách đơn hàng. Loại bỏ tabs, charts, date filter UI đã prototype. Đây là quyết định course-correction sau khi huỷ FR-007/8/9/10.
+
+**Acceptance Criteria:**
+- [x] Layout: sidebar trái (campaigns + "Tất cả" không icon) + main content (breadcrumb, header, 3 KPI, list đơn)
+- [x] 3 KPI cards (gradient border, icon, tiền):
+  - "Hoa hồng chờ duyệt" = `WAITING_FOR_APPROVED + TEMPORARY_APPROVED`
+  - "Hoa hồng đã duyệt" = `APPROVED`
+  - "Hoa hồng đã nhận" = `total - waiting - approved - rejected`
+- [x] Danh sách đơn (tối đa 50): icon theo status, campaign name, sale time, commission, badge trạng thái
+- [x] Load song song `reportCommission` + `reportOrders` khi mount và khi đổi campaign filter
+- [x] Date range cố định 90 ngày, không lộ UI
+- [x] Empty states
+- [x] Responsive mobile
+
+**Implementation:**
+- Frontend refactor: `pages/affiliate-commission/index.tsx` + `index.scss` — gỡ tabs, `ReportChart`, date range buttons, recharts imports
+- Backend: không đổi (tái sử dụng FR-016B endpoints)
+- Bug fix kèm theo: thêm `TotalPubCommission` field vào `pub2.ReportStatsMeta` (Pub2 commission API trả `meta.total_pub_commission`, model thiếu field → KPI trước đó luôn bằng 0)
+- Menu icon polish: đổi icon "Hoa hồng affiliate" trong avatar dropdown, bỏ icon "Tất cả" trong sidebar
+
+**Out of scope (explicit):**
+- Chart các metrics theo ngày
+- Date filter 7/30/90 buttons
+- Tab navigation
+- Nút "Chia sẻ nhận hoa hồng"
+
+**Dependencies:** FR-016B, FR-012
+
+---
+
 ### FR-012: Commission Dashboard (Quản lý hoa hồng) ✅
 
 **Priority:** Should Have → Implemented
-**Status:** Implemented (2026-04-09)
+**Status:** Implemented (2026-04-09), simplified by FR-023 (2026-04-24)
 
 **Description:**
-Dashboard quản lý hoa hồng affiliate. Hiển thị commission breakdown theo status, danh sách đơn hàng, filter theo campaign.
+Dashboard quản lý hoa hồng affiliate. Hiển thị commission breakdown theo status, danh sách đơn hàng, filter theo campaign. **Layout hiện tại xem [FR-023](#fr-023-commission-dashboard-simplified)** (đã gỡ tabs + charts + date filter).
 
 **Acceptance Criteria:**
 - [x] 3 Summary cards: Hoa hồng chờ duyệt, Hoa hồng đã duyệt, Hoa hồng đã nhận (gradient border)
@@ -394,46 +339,40 @@ Report APIs phải responsive, dashboard aggregate không quá lâu.
 
 ---
 
-### NFR-004: Reliability — Error Handling & Circuit Breaker
+### NFR-004: Reliability — Error Handling & Circuit Breaker ✅
 
 **Priority:** Must Have
+**Status:** Implemented (2026-04-16)
 
 **Description:**
-Xử lý graceful khi Pub2 API down hoặc trả lỗi. **Chưa implement circuit breaker.**
+Xử lý graceful khi Pub2 API down hoặc trả lỗi liên tục.
 
 **Acceptance Criteria:**
-- [ ] Pub2 API timeout: hiển thị thông báo "Hệ thống đang bận, vui lòng thử lại"
-- [ ] Pub2 error response (code != PX00000): parse message và hiển thị cho user
-- [ ] Retry logic: max 3 retries với exponential backoff cho network errors
-- [ ] **Circuit breaker: nếu Pub2 fail liên tục > 5 lần → short-circuit 30s**
+- [x] Pub2 error response (code != PX00000): parse message và hiển thị cho user
+- [x] Retry logic: max 3 retries với 500ms → 2s wait time (resty built-in) cho network errors
+- [x] **Circuit breaker: Pub2 fail liên tục > 5 lần → short-circuit 30s**
+- [x] Per-scope circuit breaker: `reportCB` (report APIs) và `mutationCB` (join/link APIs) tách biệt → lỗi report không block mutation
+- [x] Frontend: hiện thông báo error từ backend khi circuit open
 
-**Implementation Notes:**
-- Có thể dùng Go library như `sony/gobreaker` hoặc `afex/hystrix-go`
-- Implement tại `internal/module/pub2/client.go` level
-- Cần per-endpoint circuit breaker (report APIs fail không block join/link APIs)
-
-**Rationale:** Pub2 là external dependency, cần graceful degradation
+**Implementation:**
+- Lightweight custom breaker tại `internal/module/pub2/circuit-breaker.go` (tránh thêm dependency)
+- Applied tại mọi method của `pub2.Client` — mỗi method gọi `cb.allow()` trước khi hit HTTP, `cb.recordSuccess()/recordFailure()` sau
+- State machine: CLOSED → OPEN (5 failures) → HALF_OPEN (sau 30s) → CLOSED (1 success) hoặc OPEN lại
 
 ---
 
-### NFR-005B: Usability — Report Charts Responsive
+### NFR-005B: Usability — Report Charts Responsive ❌ Cancelled
 
-**Priority:** Should Have
+**Priority:** ~~Should Have~~ Cancelled (2026-04-24)
 
-**Description:**
-Biểu đồ báo cáo phải responsive và usable trên mobile.
-
-**Acceptance Criteria:**
-- [ ] Biểu đồ báo cáo responsive trên mobile (≥ 320px)
-- [ ] Touch-friendly: tap để xem data point
-- [ ] Landscape mode support cho charts
-- [ ] Orders table: switch sang card view trên mobile
+**Lý do:** Cùng lý do với FR-007/8/9/10 — không còn chart nào trên UI. Responsive requirement cho orders list + KPI cards được cover trong FR-023.
 
 ---
 
-### NFR-008: Swagger API Documentation
+### NFR-008: Swagger API Documentation ⏳ Deferred
 
 **Priority:** Should Have
+**Status:** Deferred (low priority — `api-reference.md` hiện đủ dùng cho internal)
 
 **Description:**
 Bổ sung Swagger documentation cho tất cả affiliate API endpoints.
@@ -446,49 +385,56 @@ Bổ sung Swagger documentation cho tất cả affiliate API endpoints.
 
 ---
 
+### NFR-009: UTM Support (Pending Pub2) 🚫 Blocked
+
+**Priority:** Should Have
+**Status:** Blocked — chờ Pub2 confirm hỗ trợ
+
+**Description:**
+Pub2 API nhận UTM fields (`utm_source`, `utm_medium`, `utm_campaign`, `utm_content`) nhưng docs hiện ghi "Tạm thời không quan tâm". Khi Pub2 confirm → bật UTM builder trong link generation form.
+
+**Acceptance Criteria:**
+- [ ] UTM builder accordion trong link generation form (4 fields)
+- [ ] Backend pass UTM to Pub2 `GenerateLinkRequest`
+- [ ] Lưu UTM params vào `AffiliateLinkRaw`
+
+**Existing Assets:** Go struct `pub2.GenerateLinkRequest` đã có sẵn 4 fields UTM (pointer string để nullable).
+
+---
+
 ## Epics
 
 ---
 
-### EPIC-004: Affiliate Reports & Dashboard
+### EPIC-004: Affiliate Reports & Dashboard ✅
 
 **Description:**
-Influencer xem báo cáo hiệu suất affiliate: clicks, conversions, sale amount, commission, danh sách đơn. Dashboard tổng hợp.
+Backend report endpoints + Commission Dashboard tối giản (KPI cards + danh sách đơn hàng). Không bao gồm chart-based reports (huỷ).
 
 **Functional Requirements:**
 - FR-016B: Backend Report API Endpoints ✅
-- FR-007: Báo cáo Click
-- FR-008: Báo cáo Conversion
-- FR-009: Báo cáo Sale Amount
-- FR-010: Báo cáo Commission
 - FR-011: Danh sách đơn hàng chi tiết ✅
-- FR-012: Commission Dashboard ✅
+- FR-012: Commission Dashboard (baseline) ✅
+- FR-023: Commission Dashboard Simplified ✅
+- ~~FR-007 / FR-008 / FR-009 / FR-010: Report Charts~~ ❌ Cancelled
 
-**Story Count Estimate:** 8-12 (FR-016B, FR-011, FR-012 done)
-
-**Priority:** Must Have (FR-007, 008, 010 remaining), Should Have (FR-009)
-
-**Business Value:** Transparency — influencer cần thấy hiệu suất để tiếp tục sử dụng
+**Business Value:** Transparency — influencer xem nhanh commission + list đơn
 
 ---
 
-### EPIC-005: Affiliate Campaign Discovery, Links Management & Polish
+### EPIC-005: Affiliate Campaign Discovery, Links Management & Polish ✅
 
 **Description:**
-Trang browse affiliate campaigns, trang quản lý links riêng, enhanced link generation, circuit breaker, Swagger docs.
+Trang browse affiliate campaigns, trang quản lý links riêng, enhanced link generation, circuit breaker.
 
 **Functional Requirements:**
-- FR-020: Enhanced Link Generation — Custom URL, Naming, History ✅
-- FR-019: Browse danh sách affiliate campaigns
-- FR-006: Danh sách links riêng
+- FR-020: Enhanced Link Generation ✅
+- FR-019: Browse danh sách affiliate campaigns ✅
+- FR-006: Danh sách links riêng ✅
 
 **Non-Functional Requirements:**
-- NFR-004: Circuit breaker
-- NFR-008: Swagger documentation
-
-**Story Count Estimate:** 4-6 (FR-020 done)
-
-**Priority:** Must Have (FR-019, FR-006, NFR-004), Should Have (NFR-008)
+- NFR-004: Circuit breaker ✅
+- NFR-008: Swagger documentation (deferred)
 
 **Business Value:** Influencer khám phá campaigns dễ dàng hơn, hoàn thiện trải nghiệm, ổn định hệ thống
 
@@ -498,12 +444,10 @@ Trang browse affiliate campaigns, trang quản lý links riêng, enhanced link g
 
 ### EPIC-004: Reports & Dashboard
 
-- As an **Influencer**, I want to see click statistics over time so that I know how my links perform.
-- As an **Influencer**, I want to see conversion statistics so that I know how many orders my links generate.
-- As an **Influencer**, I want to see my commission earnings by status (approved, pending, rejected) so that I know my actual and expected income.
+- As an **Influencer**, I want to see my commission earnings by status (approved, pending, received) so that I know my actual and expected income.
 - As an **Influencer**, I want to see a detailed list of my orders with status, amount, and commission so that I can track individual conversions.
-- As an **Influencer**, I want to filter reports by date range and campaign so that I can analyze specific periods or campaigns.
-- As an **Influencer**, I want a dashboard overview with summary cards so that I get a quick snapshot of my affiliate performance.
+- As an **Influencer**, I want to filter orders & commission by campaign so that I can analyze individual campaigns.
+- As an **Influencer**, I want a simple dashboard with KPI cards so that I get a quick snapshot without noise.
 
 ### EPIC-005: Campaign Discovery, Links Management & Polish
 
@@ -515,18 +459,17 @@ Trang browse affiliate campaigns, trang quản lý links riêng, enhanced link g
 
 ## User Flows
 
-### Flow 4: Influencer xem báo cáo
+### Flow 4: Influencer xem báo cáo hoa hồng
 
 ```
 Influencer đã có affiliate links
-  → Vào menu "Báo cáo Affiliate" (hoặc từ Dashboard)
-  → Thấy Dashboard: 4 summary cards (Clicks, Conversions, Commission, Sale Amount)
-  → Mặc định: dữ liệu 30 ngày gần nhất
-  → Chọn tab cụ thể: "Click" / "Conversion" / "Hoa hồng" / "Đơn hàng"
-  → Xem biểu đồ theo ngày
-  → Lọc theo khoảng thời gian (date picker, max 3 tháng)
-  → Lọc theo campaign (dropdown)
-  → Tab "Đơn hàng": xem bảng chi tiết, phân trang, filter theo trạng thái
+  → Vào menu "Hoa hồng affiliate" (avatar dropdown)
+  → Thấy trang Commission Dashboard:
+      - Sidebar: danh sách campaigns đã tham gia + "Tất cả" (default)
+      - 3 KPI cards: Chờ duyệt / Đã duyệt / Đã nhận (commission theo status)
+      - Danh sách đơn hàng 90 ngày gần nhất (tối đa 50)
+  → Click 1 campaign ở sidebar → KPI + list reload theo campaign đó
+  → Click "Tất cả" → reset về tổng hợp toàn bộ campaigns
 ```
 
 ### Flow 6: Influencer browse affiliate campaigns
@@ -572,7 +515,7 @@ Influencer đã tạo affiliate links
 | Pub2 API 3.3 (Sale Amount) | Report sale amount | ✅ Available |
 | Pub2 API 3.4 (Commission) | Report commission | ✅ Available |
 | Pub2 API 8 (Orders) | List conversions/orders | ✅ Available |
-| Chart library (Frontend) | Biểu đồ cho reports | ⏳ Cần chọn (recharts / chart.js) |
+| ~~Chart library (Frontend)~~ | ~~Biểu đồ cho reports~~ | N/A — charts cancelled |
 
 ---
 
@@ -588,13 +531,15 @@ Influencer đã tạo affiliate links
 
 ## Out of Scope (V2)
 
-1. **Scheduled sync / caching reports** — Vẫn dùng on-demand, cache nếu cần là V3
-2. **Webhook real-time** (Pub2 API 7 chưa có)
-3. **Export reports** (CSV/PDF) — V3
-4. **Email digest** báo cáo hàng tuần — V3
-5. **Admin report dashboard** (admin xem tổng hợp tất cả influencers) — V3
-6. **AI campaign recommendations** dựa trên performance data — V3
-7. **Comparison charts** (so sánh giữa campaigns) — V3
+1. **Chart-based reporting** (click / conversion / sale-amount / commission theo ngày) — prototyped rồi huỷ, xem [FR-007/8/9/10](#fr-007--fr-008--fr-009--fr-010-report-charts--cancelled). Có thể mở lại sau khi có insight khác về UX.
+2. **Scheduled sync / caching reports** — vẫn dùng on-demand, không cần khi đã bỏ chart polling.
+3. **Webhook real-time** (Pub2 API 7 chưa có).
+4. **Export reports** (CSV/PDF).
+5. **Email digest** báo cáo hàng tuần.
+6. **Admin report dashboard** (admin xem tổng hợp tất cả influencers).
+7. **AI campaign recommendations** dựa trên performance data.
+8. **Comparison charts** (so sánh giữa campaigns).
+9. **UTM support** — blocked chờ Pub2 confirm. Model Go đã có fields.
 
 ---
 
@@ -602,11 +547,17 @@ Influencer đã tạo affiliate links
 
 | # | Question | Owner | Status |
 |---|----------|-------|--------|
-| 1 | Chart library nào phù hợp? (recharts vs chart.js vs nivo) — cần tương thích React 16 | Engineering | Open |
-| 2 | Report data có cache không? Nếu có thì TTL bao lâu? | Product + Engineering | Open |
-| 3 | Dashboard cards có cần sparkline mini-chart không? | Design | Open |
-| 4 | Mobile: orders table dùng card view hay horizontal scroll table? | Design | Open |
-| 5 | Circuit breaker config: threshold bao nhiêu? Recovery time? | Engineering | Open |
+| 1 | Khi nào Pub2 hỗ trợ UTM fields? | Pub2 team | Blocked |
+| 2 | Có cần mở lại charts sau này không? (Nếu Pub2 có realtime data dày hơn) | Product | Open |
+| 3 | Dashboard có cần thêm "trending" badge / "Top campaign" metric không? | Product | Open |
+| 4 | Production có cần verify lại KPI bằng data thật không? | QA | Open |
+
+**Resolved:**
+- ~~Chart library nào? (recharts / chart.js / nivo)~~ → Đã prototype recharts rồi huỷ (charts cancelled).
+- ~~Report data caching TTL?~~ → Không cache, dùng on-demand.
+- ~~Dashboard sparkline?~~ → Không (dashboard đã simplified).
+- ~~Mobile orders: card view vs table?~~ → Card view (đã implement).
+- ~~Circuit breaker config?~~ → 5 failures → OPEN 30s (đã implement).
 
 ---
 
@@ -634,58 +585,55 @@ Influencer đã tạo affiliate links
 | 1.1 | 2026-04-01 | vinhnguyen | Bổ sung FR-019: Influencer browse danh sách affiliate campaigns (listing page). |
 | 1.2 | 2026-04-09 | vinhnguyen | Thêm FR-020: Enhanced Link Generation (Custom URL, Naming, History). Implemented. UTM deferred. |
 | 1.3 | 2026-04-09 | vinhnguyen | FR-016B, FR-012, FR-011 implemented. Commission Dashboard + 6 report endpoints. |
-| 1.4 | 2026-04-09 | vinhnguyen | V2 marked COMPLETE. Remaining FRs (019, 006, 007-010) + NFRs (004, 008) deferred to V3. |
+| 1.4 | 2026-04-09 | vinhnguyen | V2 marked COMPLETE (partial). Remaining FRs (019, 006, 007-010) + NFRs (004, 008) deferred. |
+| 1.5 | 2026-04-16 | vinhnguyen | FR-019, FR-006, NFR-004 implemented. Campaign listing page + Links page + Circuit breaker. |
+| 1.6 | 2026-04-25 | vinhnguyen | Cancel FR-007/8/9/10 + NFR-005B (charts dropped after prototype). Add FR-023 Commission Dashboard Simplified. V3 draft archived, V2 now complete across all retained scope. |
 
 ---
 
 ## Next Steps
 
-### Recommended Implementation Order
+### Implementation Timeline
 
 ```
 ✅ FR-020: Enhanced Link Generation — Custom URL, Naming, History (2026-04-09)
 ✅ FR-016B: 6 Backend Report API Endpoints (2026-04-09)
-✅ FR-012: Commission Dashboard — Quản lý hoa hồng (2026-04-09)
+✅ FR-012: Commission Dashboard baseline (2026-04-09)
 ✅ FR-011: Orders list — integrated trong Dashboard (2026-04-09)
+✅ FR-019: Affiliate campaigns listing page (2026-04-16)
+✅ FR-006: Links management page (2026-04-16)
+✅ NFR-004: Circuit breaker (2026-04-16)
+✅ FR-023: Commission Dashboard Simplified (2026-04-24)
+❌ FR-007 / FR-008 / FR-009 / FR-010: Report charts — Cancelled (2026-04-24)
+❌ NFR-005B: Report charts responsive — Cancelled (2026-04-24)
+⏳ NFR-008: Swagger docs — deferred (low priority)
+🚫 NFR-009: UTM — blocked by Pub2
 
-V2 COMPLETE.
+V2 COMPLETE across all retained scope.
 ```
-
-### Deferred to V3
-
-Các items sau chuyển sang PRD V3:
-- FR-019: Affiliate campaigns listing page
-- FR-006: Links management page (trang riêng)
-- FR-007 + FR-008 + FR-010: Report charts (Click, Conversion, Commission theo ngày)
-- FR-009: Sale Amount report
-- NFR-004: Circuit breaker cho Pub2 client
-- NFR-008: Swagger documentation
 
 ### Architecture Notes
 
-Backend report endpoints pattern (tất cả giống nhau):
+Backend report endpoints pattern:
 ```
 Handler (validate request, inject sso_user_id)
-  → Service (call Pub2 client method)
-    → Pub2 Client (HMAC auth, HTTP call, parse response)
+  → Service (call Pub2 client method with dev-only overrides if applicable)
+    → Pub2 Client (HMAC auth, HTTP call, circuit breaker, retry, parse response)
       → Return formatted response
 ```
 
-Vì Pub2 client methods đã implement, effort chính là:
-- **Backend:** ~2-3 ngày (boilerplate handler/service/router + request validation)
-- **Frontend:** ~5-7 ngày (chart components, orders table, dashboard, links page)
-- **Circuit breaker:** ~1 ngày
+Circuit breaker scope: 2 instances — `reportCB` (report APIs) vs `mutationCB` (join / link). Failure trong report không block mutation flow.
+
+Dev-only data: xem [api-reference.md §7 "Dev environment: seeded data & client-side overrides"](./api-reference.md#7-dev-environment-seeded-data--client-side-overrides).
 
 ---
 
 ## Appendix A: Requirements Traceability Matrix
 
-| Epic ID | Epic Name | Functional Requirements | NFRs | Story Count (Est.) |
-|---------|-----------|-------------------------|------|-------------------|
-| EPIC-004 | Reports & Dashboard | FR-007, FR-008, FR-009, FR-010, FR-011, FR-012, FR-016B | NFR-001B, NFR-005B | 8-12 |
-| EPIC-005 | Campaign Discovery, Links Management & Polish | FR-019, FR-006 | NFR-004, NFR-008 | 4-6 |
-
-**Total Estimated Stories:** 12-18
+| Epic ID | Epic Name | Functional Requirements | NFRs | Status |
+|---|---|---|---|---|
+| EPIC-004 | Reports & Dashboard | FR-011 ✅, FR-012 ✅, FR-016B ✅, FR-023 ✅ (FR-007/8/9/10 ❌ Cancelled) | NFR-001B, ~~NFR-005B~~ | Complete |
+| EPIC-005 | Campaign Discovery, Links Management & Polish | FR-019 ✅, FR-006 ✅, FR-020 ✅ | NFR-004 ✅, NFR-008 ⏳ | Complete |
 
 ---
 
@@ -695,15 +643,18 @@ Vì Pub2 client methods đã implement, effort chính là:
 
 | Priority | Count | FRs |
 |----------|-------|-----|
-| **Must Have** | 8 | FR-020 ✅, FR-016B ✅, FR-011 ✅, FR-019, FR-006, FR-007, FR-008, FR-010 |
-| **Should Have** | 2 | FR-009, FR-012 ✅ |
+| **Must Have — Shipped** | 7 | FR-006 ✅, FR-011 ✅, FR-012 ✅, FR-016B ✅, FR-019 ✅, FR-020 ✅, FR-023 ✅ |
+| **Cancelled** | 4 | ~~FR-007~~, ~~FR-008~~, ~~FR-009~~, ~~FR-010~~ |
 
 ### Non-Functional Requirements
 
 | Priority | Count | NFRs |
 |----------|-------|------|
-| **Must Have** | 2 | NFR-001B, NFR-004 |
-| **Should Have** | 2 | NFR-005B, NFR-008 |
+| **Must Have — Shipped** | 1 | NFR-004 ✅ |
+| **Must Have — Not tracked** | 1 | NFR-001B (performance — no SLO tracking in place) |
+| **Should Have — Deferred** | 1 | NFR-008 (Swagger) |
+| **Should Have — Cancelled** | 1 | ~~NFR-005B~~ |
+| **Blocked** | 1 | NFR-009 (UTM — Pub2 side) |
 
 ---
 
