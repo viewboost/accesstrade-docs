@@ -9,6 +9,8 @@
 
 ## 1. Bối cảnh
 
+> **Update 2026-04-24:** Đợt 1 V2 đã go-live trên branch `hotfix/group-users` — schema registry, upload + parse Excel, admin UI list. Dry-run + match logic + lifecycle sẽ làm đợt 2/3. Chi tiết: [prd-registration-v2-2026-04-12.md#13-implementation-progress](prd-registration-v2-2026-04-12.md#13-implementation-progress).
+
 Gen-Green có ~150.000 creators, trong đó **core là đội ngũ cán bộ nhân viên (CBNV)** thuộc hệ sinh thái Vin (~57 cơ sở, 6 nhóm). Hiện tại:
 
 - Hệ thống chưa phân biệt được CBNV và creator bên ngoài

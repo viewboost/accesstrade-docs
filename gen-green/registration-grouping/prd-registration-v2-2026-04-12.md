@@ -1,542 +1,372 @@
 # PRD: Đăng ký và Phân nhóm Tài khoản — V2 (Employee Registry & Import)
 
 **Project:** Gen-Green Registration & Account Grouping
-**Date:** 2026-04-12 (updated 2026-04-21)
-**Version:** 2.1
-**Status:** Draft
+**Date:** 2026-04-12 → rewritten 2026-04-25 reflecting shipped code
+**Version:** 2.3 (post-implementation, branch `hotfix/group-users`)
+**Status:** ✅ Implemented — đợt 1 + 2 + 3 done
 **Prerequisite:** [PRD V1](prd-registration-v1-2026-04-12.md) đã go-live
-**Reference file:** [VP_Mẫu danh sách trường CBNV 1.xlsx](VP_Mẫu danh sách trường CBNV 1.xlsx) — file mẫu do đối tác (Vin) cung cấp
+**File mẫu HR:** [VP_Mẫu danh sách trường CBNV 1.xlsx](VP_Mẫu danh sách trường CBNV 1.xlsx)
+**File test 2-step:** [step1-initial](sample-import-step1-initial.xlsx) · [step2-mixed](sample-import-step2-mixed.xlsx)
+
+> **PRD này** mô tả V2 đã ship — không phải spec dự định ban đầu. Đối chiếu với code thực tế trong `accesstrade-projects/vcreator/`.
+> **Audience:** Dev, QA, PM, HR Vin (đọc Section 2-4 đủ hiểu chức năng).
+> **Non-tech overview:** [overview-v2-import-logic.md](overview-v2-import-logic.md).
 
 ---
 
 ## 1. Executive Summary
 
-Xây dựng **Employee Registry** — danh sách nhân viên chính thức từ HR — và **Import Pipeline** để quản lý vòng đời nhân viên trên Gen-Green: import trước/sau đăng ký, điều chuyển công tác, nghỉ việc. Thay thế quy trình manual verify bằng auto-match từ registry.
+V2 xây Employee Registry + Import Pipeline trên nền V1 (user popup khai mã NV, admin verify manual). Mục tiêu:
 
-V2 xây trên nền V1 (user đã tự khai mã NV, admin đã verify manual). V2 bổ sung nguồn sự thật từ HR để auto-verify và quản lý lifecycle.
+1. Tạo "nguồn sự thật" về danh sách nhân viên từ HR Vin
+2. Auto-match user Gen-Green vs file HR → giảm verify thủ công
+3. Quản lý lifecycle: điều chuyển, nghỉ việc, grace period
+4. Audit trail đầy đủ cho mọi thao tác
 
-### Thay đổi chính so với bản v2.0 (2026-04-12)
-
-- **Format import được chốt theo file mẫu đối tác cung cấp**: chỉ 5 cột (STT, Họ tên, SĐT, Đơn vị thành viên, Mã nhân viên). Bỏ các cột CCCD, email, department, status vì đối tác không cung cấp trong file mẫu v1.
-- **Match logic simplify**: key match = `SĐT + mã nhân viên` (không còn CCCD/email vì file mẫu không có).
-- **Auto-verify flow chi tiết hoá 3 kịch bản**: khớp cả 2 → auto-fix phòng ban; lệch → cancel + yêu cầu sửa lại; không tìm thấy → giữ pending.
-- **Validation cụ thể theo file mẫu**: STT 5 chữ số, SĐT 10 chữ số, mã NV 8 chữ số, họ tên in hoa chữ cái đầu có dấu.
-- **Đơn vị thành viên** dùng validation list (data validation Excel cột J) — reject nếu không nằm trong DS hợp lệ.
+**Outcome:** Admin upload file Excel → preview 8 actions → bấm Apply → user được verify/reject/transferred + cron daily xử lý nghỉ việc sau 7 ngày grace period.
 
 ---
 
-## 2. Business Objectives
+## 2. Architecture Overview
 
-| # | Objective | Success Metric |
-|---|-----------|----------------|
-| 1 | Giảm thời gian verify mã NV từ manual → auto | >90% user auto-verified khi có registry |
-| 2 | Phát hiện khai mã NV sai (mã người khác) | 100% identity mismatch được flag + cancel |
-| 3 | Cập nhật tự động khi điều chuyển/nghỉ việc | Thời gian update < 24h sau HR import |
-| 4 | Giảm tải admin | Admin chỉ xử lý conflict, không verify từng người |
+### 2.1 Data Model (3 collections)
 
----
+| Collection | Mục đích |
+|-----------|---------|
+| `employee-registries` | Danh sách nhân viên chính thức từ HR (master data) |
+| `import-histories` | Mỗi đợt upload file = 1 record với status, counters, file metadata |
+| `import-changes` | Per-row action (preview/applied/cancelled/rolled_back) cho audit + rollback |
 
-## 3. User Personas
+### 2.2 Tech Stack
 
-| Persona | Nhu cầu |
-|---------|---------|
-| **HR Vin** | Export danh sách nhân viên từ HRIS sang Excel theo template sẵn, không cần kỹ thuật |
-| **Admin AT** | Upload file từ HR, review conflict, xem import history |
-| **CBNV (creator)** | Nhận thông báo khi status thay đổi (auto-verified / cancel / điều chuyển / nghỉ) |
+- **Backend:** Go 1.24, Echo, MongoDB (driver v1.x), `xuri/excelize/v2`, `redsync/v4`, `robfig/cron/v3`
+- **Admin:** React + DVA + Umi 3.5.20 + Ant Design Pro
+- **Storage:** MinIO bucket `PrivateFile` với prefix `employee-registry-imports/`
+- **Cron:** Daily 00:00 (staff removal) + 01:00 (TTL cleanup preview 24h)
 
----
-
-## 4. Functional Requirements
-
-### EPIC-001: Employee Registry
-
-#### FR-001: Bảng Employee Registry
-
-**Priority:** Must Have
-
-**Description:**
-Tạo bảng `employee_registry` riêng biệt với user model. Lưu danh sách nhân viên chính thức từ HR. Đây là nguồn sự thật về "ai là nhân viên".
-
-**Acceptance Criteria:**
-- [ ] Bảng chứa: employee_code (unique), full_name, phone, workplace_name, status, gen_green_user_id (nếu đã match), imported_at, import_id
-- [ ] employee_code là khóa chính, unique
-- [ ] Trùng employee_code khi import → update record (không tạo mới)
-- [ ] Tách biệt hoàn toàn với user model
-- [ ] Phone được normalize về dạng chuẩn (84xxxxxxxxx hoặc 0xxxxxxxxx — chọn 1 format, lưu consistently)
-
----
-
-#### FR-002: Admin xem danh sách registry
-
-**Priority:** Must Have
-
-**Description:**
-Admin xem danh sách nhân viên trong registry. Filter theo cơ sở, trạng thái, matched/unmatched.
-
-**Acceptance Criteria:**
-- [ ] Table columns: mã NV, họ tên, SĐT, đơn vị, status, matched Gen-Green user
-- [ ] Filter: đơn vị, status (active/terminated), matched/unmatched
-- [ ] Search: theo mã NV, tên, SĐT
-- [ ] Pagination
-
----
-
-### EPIC-002: Import Pipeline
-
-#### FR-003: Upload file Excel theo template đối tác
-
-**Priority:** Must Have
-
-**Description:**
-Admin upload file Excel (.xlsx) chứa danh sách nhân viên theo đúng template đối tác cung cấp. Validate format trước khi xử lý.
-
-**File format tham chiếu:** [VP_Mẫu danh sách trường CBNV 1.xlsx](VP_Mẫu danh sách trường CBNV 1.xlsx)
-
-**Import columns (khớp 100% template đối tác):**
-
-| Cột | Bắt buộc | Validation | Mô tả |
-|-----|----------|------------|-------|
-| STT | ✅ | 5 chữ số (e.g. `00001`) | Số thứ tự |
-| Họ tên | ✅ | In hoa chữ cái đầu, có dấu | Họ tên đầy đủ |
-| SĐT | ✅ | Đúng 10 chữ số, không ký tự đặc biệt | Số điện thoại liên hệ |
-| Các đơn vị thành viên | ✅ | Phải nằm trong DS đơn vị hợp lệ (cột J của template) | Nơi làm việc |
-| Mã nhân viên | ✅ | 8 chữ số | Mã NV nội bộ |
-
-**Acceptance Criteria:**
-- [ ] Accept .xlsx file, match template đối tác
-- [ ] Detect header row (bỏ qua row đầu rỗng + row `VD` minh hoạ)
-- [ ] Validate từng field theo quy tắc trên
-- [ ] Reject file nếu format sai → hiển thị lỗi cụ thể (dòng nào, cột nào, lý do)
-- [ ] File size limit: 10MB
-- [ ] Validate "Đơn vị thành viên" phải khớp với DS master trong hệ thống (tham chiếu `overview.md` mục 5 — VinPalace/Vinpearl/VinWonders/Golf/GreenSM/Khác). Nếu HR thêm đơn vị mới chưa có trong master → warn admin, cho phép auto-thêm vào master list.
-
----
-
-#### FR-004: Dry-run mode
-
-**Priority:** Must Have
-
-**Description:**
-Sau upload, hiển thị preview kết quả TRƯỚC khi commit. Admin xem rồi quyết định có commit hay không.
-
-**Acceptance Criteria:**
-- [ ] Preview hiển thị: N records new, M records updated, K users auto-verified, J conflicts (cancel), L terminated
-- [ ] Danh sách conflict (phone/employee_code mismatch) hiển thị chi tiết kèm lý do
-- [ ] Nút "Commit" để thực hiện
-- [ ] Nút "Hủy" để bỏ qua
-- [ ] Dry-run KHÔNG thay đổi data
-
----
-
-#### FR-005: Async processing cho file lớn
-
-**Priority:** Must Have
-
-**Description:**
-File >1000 records → xử lý background job. Email kết quả khi xong.
-
-**Acceptance Criteria:**
-- [ ] File ≤1000 records → xử lý sync, hiển thị kết quả ngay
-- [ ] File >1000 records → queue background → email summary khi hoàn tất
-- [ ] Chỉ 1 import chạy tại 1 thời điểm (queue)
-- [ ] Progress indicator cho file đang xử lý
-
----
-
-#### FR-006: Rollback import
-
-**Priority:** Should Have
-
-**Description:**
-Mỗi import có import_id. Admin có thể rollback toàn bộ changes thuộc 1 import.
-
-**Acceptance Criteria:**
-- [ ] Import history table: import_id, file_name, uploaded_by, timestamp, records count, status
-- [ ] Nút "Rollback" trên mỗi import record
-- [ ] Rollback revert tất cả changes (registry + user updates) thuộc import_id
-- [ ] Confirm dialog trước rollback
-
----
-
-### EPIC-003: Auto-match & Verify (V2.1 — CHI TIẾT HOÁ)
-
-#### FR-007: Match key = SĐT + Mã nhân viên
-
-**Priority:** Must Have
-
-**Description:**
-Match logic v2.1 dùng **2 field**: `phone` và `employee_code`. Bỏ CCCD/email vì file mẫu đối tác không cung cấp. Mọi so sánh đều dùng phone đã normalize.
-
-**Acceptance Criteria:**
-- [ ] Normalize SĐT trước compare: loại bỏ khoảng trắng, dấu `+`, prefix `84` → dạng `0xxxxxxxxx` 10 số
-- [ ] Reject SĐT không đủ 10 số khi import
-- [ ] Mã NV so sánh exact (case-sensitive, trim whitespace)
-
----
-
-#### FR-008: 3 Kịch bản auto-verify khi user đã đăng ký TRƯỚC import
-
-**Priority:** Must Have
-
-**Description:**
-Khi HR import registry, hệ thống chạy auto-match cho tất cả user đã đăng ký. Có 3 kịch bản rõ ràng:
-
-##### Kịch bản A: Khớp cả SĐT và mã nhân viên → AUTO-VERIFY
+### 2.3 8 Action Types
 
 ```
-Tìm user có phone = registry.phone AND employee_code = registry.employee_code
-  → MATCH
-  → Nếu staff_status = pending → chuyển sang "verified"
-  → Update workplace_name từ registry (auto-fix phòng ban/đơn vị)
-  → Nếu user đã verified nhưng workplace khác → auto-update workplace
-  → Notify user: "Mã nhân viên đã được xác minh tự động ✓. Đơn vị: [X]"
-  → Ghi log: auto_verified + workplace_updated
+┌──────────────────────┬───────┬──────────┬──────────────────────────────┐
+│ Action               │ Color │ Priority │ Behavior                      │
+├──────────────────────┼───────┼──────────┼──────────────────────────────┤
+│ cancelled_mismatch   │ 🔴 Red │ 1        │ Reject user, clear staff fields│
+│ transferred          │ 🟠 Org │ 2        │ Update workplace, giữ verified│
+│ missing_from_file    │ 🟠 Org │ 3        │ Schedule removal +7d (opt)   │
+│ auto_verified        │ 🟡 Ylw │ 4        │ Set verified, link registry  │
+│ new_record           │ 🟢 Grn │ 5        │ Insert registry mới           │
+│ no_match             │ ⚪ Gry │ 6        │ Insert registry (fallback)    │
+│ unchanged            │ ⚪ Gry │ 7        │ No-op                         │
+│ invalid              │ ⚫ Blk │ 8        │ Skip khi apply                │
+└──────────────────────┴───────┴──────────┴──────────────────────────────┘
 ```
 
-**Acceptance Criteria:**
-- [ ] Query: WHERE user.phone = registry.phone (normalized) AND user.employee_code = registry.employee_code
-- [ ] Match → staff_status = verified, workplace_name = registry.workplace_name
-- [ ] Nếu workplace user khác với registry → vẫn update (registry là nguồn sự thật)
-- [ ] Nếu full_name user khác với registry → KHÔNG overwrite (tên là do user tự nhập, có thể khác định dạng) nhưng log warning để admin review
-- [ ] Notification in-app
+Logic match chi tiết → [overview-v2-import-logic.md §3](overview-v2-import-logic.md).
 
 ---
 
-##### Kịch bản B: Lệch SĐT HOẶC mã nhân viên → CANCEL + yêu cầu sửa lại
+## 3. Functional Requirements (đã ship)
 
+### EPIC 1 — Employee Registry CRUD
+
+#### FR-001: Bảng Employee Registry ✅
+- Schema: `employeeCode` (unique index), `fullName`, `phone` (normalized), `workplaceName`, `workplaceGroup`, `status` enum, `genGreenUserId`, `importedAt`, `importId`, `lastSeenImportId`
+- Phone luôn normalize về `0xxxxxxxxx`
+- Phone DB cũ vẫn match được (variants `0xxx` / `xxx` / `+84xxx`)
+
+#### FR-002: Admin xem danh sách registry ✅
+- **Endpoint:** `GET /v1/admin/employee-registry?page=&pageSize=&q=&workplace=&status=&matched=`
+- **Page:** `/employee-registry` — filter dropdown, search, pagination, button "Import Excel" + "Lịch sử import"
+- DVA model `employeeRegistryModel`
+
+### EPIC 2 — Import Pipeline
+
+#### FR-003: Upload + Parse + Validate Excel ✅
+- **Endpoint:** `POST /v1/admin/employee-registry/import` (multipart, field `file` + `detectMissing`)
+- File size ≤10MB, ext `.xlsx` only (server-side validate)
+- Parser layout-aware: skip leading empty rows + header (chứa "STT"/"Họ tên") + VD row + metadata row
+- Column offset auto-detect (cột STT có thể ở A hoặc B tuỳ template)
+- Validation per cell:
+  - STT: 5 chữ số
+  - Họ tên: required, soft warning nếu chữ cái đầu không in hoa
+  - SĐT: normalize qua util.NormalizePhone, must `0xxxxxxxxx` 10 số
+  - Đơn vị: required (đợt sau validate theo workplace-units master)
+  - Mã NV: required, **chấp nhận mọi format**
+  - Duplicate empCode trong file → flag dòng sau
+- Errors aggregate, không fail-fast
+- Errors persist thành `ImportChangeRaw{action:invalid, phase:preview, reason:"[CODE] message"}` để admin xem trong preview
+
+#### FR-004: Dry-run Preview với full table ✅
+- **Endpoint:** `GET /v1/admin/employee-registry/imports/:importId/preview?action[]=&workplace=&q=&page=&pageSize=&sortByPriority=`
+- **Page:** `/employee-registry/imports/:importId/preview`
+- UI compact: counter pills inline (không cards) + filter dropdown + 9-column table
+- Sort default theo priority (impact descending)
+- Buttons trên top bar: **Hủy** / **Apply** (di chuyển từ footer lên đầu)
+- Snapshot mode khi status ≠ preview: ẩn Apply, badge status
+
+#### FR-005: Async Processing >1000 Rows ✅
+- File >1000 rows → spawn goroutine với `redsync.Mutex` lock 30 phút theo `importId`
+- Status: `processing` → `preview` (success) hoặc `failed`
+- UI poll `GET /imports/:importId/status` mỗi 3s, hiển thị Progress bar
+- `processedRows = totalRows` khi done (jump 0%→100%, không real progress per batch)
+- Panic recovery → set status=failed
+
+#### FR-006: Rollback Import ✅
+- **Endpoint:** `POST /v1/admin/employee-registry/imports/:importId/rollback`
+- Điều kiện: status = `completed` hoặc `completed_with_errors`
+- Revert mọi changes của importId qua `oldValue`/`newValue` đã lưu
+- Update status = `rolled_back`, đổi phase = `rolled_back`
+- ⚠️ Warning trong UI: rollback có thể overwrite user-modified profile sau apply
+
+#### FR-018: Cancel Preview (mới — không có trong PRD ban đầu) ✅
+- **Endpoint:** `POST /v1/admin/employee-registry/imports/:importId/cancel`
+- Điều kiện: status = `preview`
+- Set status = `cancelled`, đổi phase = `cancelled`
+- Records giữ lại làm audit trail
+- UI: button "Hủy" → confirm dialog → call API → redirect `/imports`
+
+### EPIC 3 — Match Engine
+
+#### FR-007: Phone Normalize Util ✅
+- `util.NormalizePhone(raw) (string, error)`
+- Strip whitespace, dash, plus, parens
+- Strip prefix `+84` / `84` (11 ký tự) → leading `0`
+- Validate `^0\d{9}$` 10 chữ số
+- Test: 17 cases pass
+
+#### FR-008: Match Engine + Bulk Query ✅
+- `MatchEngine.GenerateChanges(ctx, parseRows, importID)` build per-row action
+- 2 bulk queries:
+  - `EmployeeRegistryDAO.Find(employeeCode IN [codes])` → hash map
+  - `UserDAO.Find(phone.number IN [variants])` với 3 variants per parser phone
+- In-memory match → ~200ms cho 1000 rows
+- Logic 4 case (đã fix bug ngữ nghĩa `no_match` lúc test):
+  - `!hasReg && !hasUser` → new_record
+  - `!hasReg && hasUser`:
+    - code+phone khớp → **auto_verified** (registry sẽ insert)
+    - phone khớp, code khác → cancelled_mismatch (code_mismatch)
+    - code khớp, phone khác → cancelled_mismatch (phone_mismatch)
+    - cả khác → new_record
+  - `hasReg && !hasUser` → unchanged
+  - `hasReg && hasUser` → auto_verified hoặc transferred (workplace) hoặc cancelled_mismatch
+
+#### FR-009: Register Hook (FR-009) ✅
+- `MatchEngine.LookupSingle(ctx, empCode, phone)` được gọi trong `CompleteProfile` (public service)
+- 3 kịch bản A/B/C:
+  - A → `staffStatus=verified`, link genGreenUserId, push notification auto_verified
+  - B → return error inline 400 "Thông tin không khớp dữ liệu HR..."
+  - C → fallback `staffStatus=pending`
+- Graceful degrade nếu LookupSingle fail (network, DB) → fallback pending, không block user register
+
+#### FR-010: Apply Trigger ✅
+- **Endpoint:** `POST /v1/admin/employee-registry/imports/:importId/apply` (body `{confirmTerminate: bool}`)
+- Atomic state machine: `FindOneAndUpdate{status:"preview" → "processing"}` để chống concurrent apply
+- Loop từng change phase=preview → gọi V1 API tương ứng:
+  - `auto_verified` → `userService.VerifyStaff(action="verify", actor=root)`
+  - `cancelled_mismatch` → `userService.VerifyStaff(action="reject", reason, actor=root)`
+  - `transferred` → `userService.UpdateWorkplace(actor=root)` (build mới Phase F.2)
+  - `missing_from_file` → `userService.ScheduleStaffRemoval(scheduledAt=now+7d)` **chỉ khi confirmTerminate=true**, ngược lại skip
+  - `new_record` → `EmployeeRegistryDAO.InsertOne`
+  - `no_match`, `unchanged` → no-op
+  - `invalid` → skip
+- Đổi phase: preview → applied
+- Update `import_history.status=completed`
+- Notification push qua `internalservice.Notification().Push()` async goroutine
+
+### EPIC 4 — Lifecycle Management
+
+#### FR-011: Transferred Detection ✅
+- Wired trong MatchEngine `buildChange` → so workplace user vs row file
+- Apply qua `UpdateWorkplace` API (mới)
+
+#### FR-012: Missing from File với 2-Layer Confirm ✅
+- **Layer 1 — Toggle "Rà soát nghỉ việc" lúc upload:** Default OFF (delta mode). Bật khi full-dump tháng.
+  - `CreateImportInput.DetectMissing bool` → chỉ chạy `detectMissingFromFile` khi true
+  - Frontend Checkbox với hint "Bật khi file đầy đủ tháng. Tắt nếu file delta"
+- **Layer 2 — Checkbox confirm trong preview:** Hiện khi `missingFromFile > 0`. Admin tick = lên lịch terminate, không tick = skip records này khi apply.
+
+#### FR-013: Grace Period 7 Ngày ✅
+- `UserRaw.StaffRemovalScheduledAt *time.Time` field
+- Constant `StaffStatusPendingRemoval = "pending_removal"`
+- Cron daily 00:00 VN: scan `staffRemovalScheduledAt < now() AND staffStatus=pending_removal` → gỡ staff tag, clear workplace, account_type=creator
+- File: `pkg/admin/service/staff_removal_cron.go` + register trong `pkg/admin/schedule/init.go`
+
+#### FR-014: Notification Wire-up ✅
+- 5 constants mới trong `internal/constants/notification.go`:
+  - `NotificationTypeAutoVerified`
+  - `NotificationTypeCancelledMismatch`
+  - `NotificationTypeWorkplaceUpdated`
+  - `NotificationTypeStaffRemovedScheduled`
+  - `NotificationTypeStaffRemoved`
+- Helper `pushImportNotification` trong `employee_registry_apply.go` (async goroutine, pattern V1)
+- Wire vào 4 action successful: auto_verified, cancelled_mismatch (reason), workplace_updated (newValue=brandCode), staff_removed_scheduled
+
+### EPIC 5 — Audit & History
+
+#### FR-015: Import History List + Detail ✅
+- **Endpoint:** `GET /v1/admin/employee-registry/imports?page=&pageSize=&status=&dateFrom=&dateTo=`
+- **Page:** `/employee-registry/imports` — table list + button Rollback inline
+- **Page detail:** click vào import → `/imports/:importId/preview` (snapshot mode nếu đã apply/cancel)
+- Breadcrumb 2-level: `Danh sách nhân viên › Lịch sử import`
+- Button "Import Excel" trong header → mở UploadModal
+
+#### FR-016: Audit ActorType ✅
+- `AuditRaw.ActorType string` field (V1 refactor)
+- Constants: `human_admin` | `root_account` | `user_self`
+- `internalservice.Staff().GetRoot(ctx)` helper wrap query `bson.M{"isRoot":true}`
+- `VerifyStaff(..., actor *StaffInfo)` accept optional actor, nil → fallback root
+- Refactor `opshub_webhook.go:161` dùng helper
+
+#### FR-017: Block Concurrent Import (mới) ✅
+- `findPendingImport(ctx)` query `status IN [preview, processing]`
+- Nếu found → CreateImport return `ErrPendingImportExists` → handler trả 409 với code `PENDING_IMPORT_EXISTS`
+- Message: "Đã có 1 đợt import chưa hoàn tất. Vui lòng Apply hoặc Hủy đợt đó trước khi tạo đợt mới."
+
+---
+
+## 4. UI/UX Decisions (đã ship)
+
+### 4.1 Upload Modal
+- File picker `.xlsx` only, max 10MB, validate `beforeUpload`
+- Checkbox "Rà soát nhân viên nghỉ việc" với hint dài
+- Async path: progress bar + polling 3s + redirect preview khi done
+- Sync path: redirect ngay sang preview (kể cả có errors → admin xem chi tiết qua filter)
+- KHÔNG hiển thị errors trong modal nữa (trước đây block, giờ luôn redirect preview)
+
+### 4.2 Preview Page Layout
 ```
-User có phone trùng registry nhưng employee_code khác
-  HOẶC
-User có employee_code trùng registry nhưng phone khác
-  → MISMATCH → có thể user khai nhầm/mạo danh
-  → Hủy yêu cầu verify (staff_status = rejected)
-  → Reset fields: employee_code = null, workplace_name = null, workplace_group = null
-  → account_type = creator (tạm thời)
-  → Notify user: "Thông tin nhân viên không khớp dữ liệu HR. Vui lòng sửa lại mã nhân viên/SĐT và gửi lại yêu cầu xác minh."
-  → Flag cho admin review
-  → Ghi log: cancelled_mismatch + reason (phone_mismatch | code_mismatch)
+[Breadcrumb: Danh sách NV › Lịch sử import › Preview <8-char>]  [← Quay lại]
+[(Top bar) Hủy | Apply (N thay đổi) | Status text]
+[Counter pills: Tổng | Xung đột:1 | Điều chuyển:2 | Nghi ngờ:3 | Tự xác minh:5 | Thêm mới:4 | Không khớp:0 | Không đổi:2 | Lỗi format:4]
+[Filter: action multi-select | workplace | search]
+[Table 9 cột — pagination 50/page]
 ```
 
-**Acceptance Criteria:**
-- [ ] Detect 2 loại mismatch: (a) phone khớp nhưng code khác, (b) code khớp nhưng phone khác
-- [ ] staff_status → "rejected" (dùng lại enum đã có ở V1)
-- [ ] Clear employee_code + workplace để user nhập lại
-- [ ] Notification + flag admin
-- [ ] Audit log ghi rõ loại mismatch
+- Counter cards cũ (8 boxes lớn) → **đã refactor thành text inline** (compact)
+- Apply/Hủy chuyển từ footer lên top bar
+- Snapshot mode khi status ≠ preview: ẩn Apply, badge "✓ Đã áp dụng" / "⊘ Đã hủy" / "↺ Đã rollback" / "✕ Thất bại"
+- Apply confirm modal liệt kê chi tiết action sẽ chạy, đặc biệt nếu skip missing thì show "BỎ QUA N nhân viên"
+- Hủy preview → confirm dialog → status=cancelled
+
+### 4.3 Header Pattern Pages
+- Trang chính `/employee-registry`: button "Lịch sử import" + "Import Excel"
+- Trang `/employee-registry/imports`: button "Quay lại" + "Import Excel" (cùng UploadModal)
+- Sidebar menu: chỉ "Danh sách nhân viên" (Lịch sử import ẩn, vào qua button)
 
 ---
 
-##### Kịch bản C: Không tìm thấy trong registry → GIỮ PENDING
+## 5. Non-Functional Requirements (đã verify)
 
-```
-User khai mã NV mà registry không có
-  → Not found
-  → Giữ staff_status = pending (không đổi)
-  → KHÔNG notify user (tránh spam — chờ đợt import sau có thể khớp)
-  → Admin có thể review manual
-```
-
-**Acceptance Criteria:**
-- [ ] Không touch user record
-- [ ] Log vào import_changes với action = "no_match" để admin xem báo cáo
-- [ ] Nếu user giữ pending >30 ngày → admin được nhắc review manual
-
----
-
-#### FR-009: Auto-match khi user đăng ký MỚI (registry đã có trước)
-
-**Priority:** Must Have
-
-**Description:**
-Khi user đăng ký + khai mã NV → lookup `employee_registry`. Áp dụng cùng 3 kịch bản A/B/C như FR-008, chạy realtime trong registration flow.
-
-**Acceptance Criteria:**
-- [ ] Tại thời điểm user submit registration form, lookup registry WHERE employee_code = user.employee_code
-- [ ] Kịch bản A (khớp cả phone + code) → tạo user với staff_status = verified ngay
-- [ ] Kịch bản B (lệch) → reject với inline error: "Thông tin không khớp dữ liệu HR. Vui lòng kiểm tra lại SĐT và mã nhân viên"
-- [ ] Kịch bản C (not found) → tạo user với staff_status = pending, thông báo "Đang chờ xác minh"
-
----
-
-#### FR-010: Batch match endpoint
-
-**Priority:** Must Have
-
-**Description:**
-Pipeline gọi batch match cho TẤT CẢ user (đã đăng ký) sau mỗi lần import commit. Xử lý cả 3 kịch bản A/B/C.
-
-**Acceptance Criteria:**
-- [ ] Trigger sau khi import commit thành công
-- [ ] Scan toàn bộ user có employee_code IS NOT NULL
-- [ ] Áp dụng FR-008 (A/B/C) cho mỗi user
-- [ ] Summary: N verified, M cancelled (mismatch), K unchanged
-- [ ] Email summary cho admin + attach danh sách mismatch
-
----
-
-### EPIC-004: Lifecycle Management
-
-#### FR-011: Import điều chuyển công tác
-
-**Priority:** Must Have
-
-**Description:**
-HR upload file mới (hoặc delta) có nhân viên đã đổi đơn vị → update registry + user profile.
-
-**Acceptance Criteria:**
-- [ ] Khi import phát hiện employee_code đã tồn tại + workplace_name khác → đánh dấu là "transferred"
-- [ ] Update employee_registry
-- [ ] Tìm Gen-Green user đã link → update workplace_name
-- [ ] KHÔNG reset staff_status (vẫn verified)
-- [ ] Notify user: "Nơi làm việc đã cập nhật: [Đơn vị mới]"
-- [ ] Ghi log: workplace_updated với old_value/new_value
-
----
-
-#### FR-012: Import nghỉ việc (nhân viên biến mất khỏi danh sách)
-
-**Priority:** Must Have
-
-**Description:**
-File mẫu đối tác KHÔNG có cột `status`. Nghỉ việc được detect implicit — nhân viên không còn trong file full-dump mới nhất.
-
-**Hai cơ chế:**
-1. **Full-dump mode** (V2 default): HR gửi full list mỗi tháng. Employee_code trong registry nhưng không có trong file mới → flag "có thể đã nghỉ", chờ admin confirm trước khi gỡ staff tag.
-2. **Explicit terminate mode** (V2.1 optional): Admin đánh dấu manually hoặc đối tác bổ sung cột `status` vào template sau này.
-
-**Acceptance Criteria:**
-- [ ] Dry-run phải hiển thị rõ: "N nhân viên trong registry không có trong file này — nghi ngờ nghỉ việc"
-- [ ] Admin phải xác nhận trước khi gỡ staff tag (KHÔNG auto-terminate trong v2.1 vì rủi ro file thiếu)
-- [ ] Khi admin confirm terminate:
-  - employee_registry.status = "terminated"
-  - Gen-Green user: account_type = creator, staff_status = null, workplace = null
-- [ ] Ghi log: staff_removed với reason = "not_in_latest_import"
-
----
-
-#### FR-013: Grace period nghỉ việc
-
-**Priority:** Should Have
-
-**Description:**
-Khi nhân viên được xác nhận nghỉ, không gỡ staff tag ngay. Grace period 7 ngày — notify trước, gỡ sau.
-
-**Acceptance Criteria:**
-- [ ] Notify user ngay: "Tài khoản sẽ chuyển về Creator từ ngày X" (7 ngày sau)
-- [ ] Sau 7 ngày → tự động gỡ staff tag (scheduled job)
-- [ ] Trong 7 ngày vẫn giữ quyền staff
-- [ ] Admin có thể override (gỡ ngay hoặc cancel)
-
----
-
-#### FR-014: Notification khi status thay đổi
-
-**Priority:** Must Have
-
-**Description:**
-User nhận thông báo khi status thay đổi do import: auto-verified, cancel (mismatch), điều chuyển, sắp nghỉ.
-
-**Acceptance Criteria:**
-- [ ] Auto-verified: "Mã nhân viên đã được xác minh tự động ✓. Đơn vị: [X]"
-- [ ] Cancel — phone mismatch: "SĐT không khớp với mã nhân viên bạn đã khai. Vui lòng cập nhật lại."
-- [ ] Cancel — code mismatch: "Mã nhân viên không khớp với SĐT đã đăng ký. Vui lòng cập nhật lại."
-- [ ] Điều chuyển: "Nơi làm việc đã cập nhật: [Đơn vị mới]"
-- [ ] Sắp nghỉ: "Tài khoản sẽ chuyển về Creator từ ngày [X]"
-- [ ] Đã nghỉ: "Tài khoản đã chuyển về dạng Creator"
-- [ ] In-app notification (bắt buộc), SMS/email (optional — V3)
-
----
-
-### EPIC-005: Audit & History
-
-#### FR-015: Import history
-
-**Priority:** Must Have
-
-**Description:**
-Admin xem lịch sử tất cả import: file name, người upload, thời gian, số records, kết quả.
-
-**Acceptance Criteria:**
-- [ ] Table: import_id, file_name, uploaded_by, timestamp, total_records, new, updated, auto_verified, cancelled_mismatch, terminated
-- [ ] Click vào → xem chi tiết changes
-- [ ] Filter theo thời gian
-
----
-
-#### FR-016: Audit trail cho changes
-
-**Priority:** Must Have
-
-**Description:**
-Ghi log tất cả thay đổi trên user profile do import gây ra.
-
-**Acceptance Criteria:**
-- [ ] Mỗi change: user_id, import_id, field, old_value, new_value, action, reason, timestamp
-- [ ] Actions: auto_verified, workplace_updated, cancelled_mismatch, staff_removed, no_match, flagged
-- [ ] Reasons cho cancelled_mismatch: phone_mismatch | code_mismatch
-- [ ] Admin xem được audit trail theo user hoặc theo import
-
----
-
-## 5. Non-Functional Requirements
-
-### NFR-001: Performance — Import
-
-**Priority:** Must Have
-
-File 1000 records sync < 30 giây. File 10000 records async < 5 phút. Batch match < 1 phút cho 5000 pending users.
+### NFR-001: Performance
+- Bulk match 1000 rows: 2 queries + in-memory hash → ~200ms
+- Preview API: `aggregateCounters` + paginated find ≤300ms
+- Async processing: file 10k rows ~5 phút (redsync TTL 30 phút buffer)
 
 ### NFR-002: Reliability — Atomicity
+- Apply per-record commit (1 user fail không block khác)
+- Failed records logged riêng, success records persist
+- `FindOneAndUpdate` atomic chống concurrent apply
 
-**Priority:** Must Have
+### NFR-003: Security
+- Admin endpoint: `RequiredLogin + IsRoot` middleware
+- File upload: ext `.xlsx` only, size ≤10MB, MinIO key randomized (no path traversal)
+- Excel XXE: excelize/v2 v2.8+ disable external entity
+- Error messages: generic cho client, log chi tiết server-side
+- BSON injection: struct binding qua bson tags, escape regex cho search
 
-Import per-record transactional. Failed records log riêng, successful records commit. Partial failure không ảnh hưởng records đã thành công.
+### NFR-004: Data Integrity
+- File checksum SHA256 store (chưa wire dedup UI — defer)
+- Import per-record audit qua `import_changes` + `actor_type`
+- Idempotent operations: re-run dry-run xoá preview cũ trước insert
 
-### NFR-003: Security — File upload
-
-**Priority:** Must Have
-
-Validate file type (.xlsx only). Size limit 10MB. Scan content (no macros/scripts). Upload qua authenticated admin endpoint.
-
-### NFR-004: Data integrity — Dedup
-
-**Priority:** Must Have
-
-`employee_code` unique trong registry. Import file đã xử lý trước đó → detect bằng checksum, warn admin.
-
-### NFR-005: Phone normalization consistency
-
-**Priority:** Must Have
-
-Mọi SĐT (cả user register và registry import) phải normalize về cùng 1 format trước khi so sánh. Chuẩn chọn: `0xxxxxxxxx` (10 số, leading 0). Trim whitespace, strip `+84`/`84` prefix.
+### NFR-005: Phone Format Consistency
+- Mọi phone normalize về `0xxxxxxxxx` trước compare
+- Match với 3 variants để bao quát DB legacy: `0xxx` / `xxx` / `+84xxx`
 
 ---
 
-## 6. Data Model
+## 6. API Endpoints (final)
 
-### employee_registry
-
-| Field | Type | Mô tả |
-|-------|------|-------|
-| `employee_code` | string, unique | Khóa chính, 8 chữ số |
-| `full_name` | string | Họ tên HR (in hoa chữ cái đầu, có dấu) |
-| `phone` | string | SĐT normalized (0xxxxxxxxx), 10 số |
-| `workplace_name` | string | Tên đơn vị (từ DS master) |
-| `workplace_group` | string, nullable | Derived từ workplace_name (VinPalace/Vinpearl/VinWonders/Golf/GreenSM/Khác) |
-| `status` | enum | `active` / `terminated` — default active, terminated do admin confirm |
-| `gen_green_user_id` | string, nullable | Linked user |
-| `imported_at` | datetime | Import gần nhất |
-| `import_id` | string | Batch import ID |
-| `last_seen_import_id` | string | Import ID cuối cùng thấy record này (để detect "mất khỏi list") |
-
-**Note:** Bỏ CCCD, email, department vì file mẫu đối tác v1 không cung cấp. Có thể bổ sung ở V3 nếu đối tác mở rộng template.
-
-### import_history
-
-| Field | Type | Mô tả |
-|-------|------|-------|
-| `import_id` | string, unique | ID batch |
-| `file_name` | string | Tên file upload |
-| `file_checksum` | string | Detect duplicate file |
-| `uploaded_by` | string | Admin ID |
-| `timestamp` | datetime | Thời gian import |
-| `total_records` | int | Tổng records trong file |
-| `new_count` | int | Records mới |
-| `updated_count` | int | Records update (transferred) |
-| `auto_verified_count` | int | Users auto-verified (kịch bản A) |
-| `cancelled_mismatch_count` | int | Users bị cancel do mismatch (kịch bản B) |
-| `no_match_count` | int | Users pending giữ nguyên (kịch bản C) |
-| `missing_from_file_count` | int | Records trong registry nhưng không có trong file này (nghi ngờ nghỉ) |
-| `terminated_count` | int | Được confirm terminate bởi admin |
-| `status` | enum | `completed` / `processing` / `failed` / `rolled_back` |
-
-### import_changes
-
-| Field | Type | Mô tả |
-|-------|------|-------|
-| `import_id` | string | Ref import_history |
-| `user_id` | string, nullable | Gen-Green user (nếu có) |
-| `employee_code` | string | Mã NV |
-| `action` | enum | `auto_verified` / `workplace_updated` / `cancelled_mismatch` / `staff_removed` / `no_match` / `new_record` / `flagged` |
-| `reason` | string, nullable | Lý do chi tiết (vd: `phone_mismatch`, `code_mismatch`, `not_in_latest_import`) |
-| `field` | string, nullable | Field thay đổi |
-| `old_value` | string, nullable | Giá trị cũ |
-| `new_value` | string, nullable | Giá trị mới |
-| `timestamp` | datetime | |
+| Method | Path | Mục đích |
+|--------|------|---------|
+| GET | `/v1/admin/employee-registry` | List registry + filter + search |
+| POST | `/v1/admin/employee-registry/import` | Upload file Excel (multipart) |
+| GET | `/v1/admin/employee-registry/imports` | List import history |
+| GET | `/v1/admin/employee-registry/imports/:importId/status` | Poll status async |
+| GET | `/v1/admin/employee-registry/imports/:importId/preview` | Preview changes |
+| POST | `/v1/admin/employee-registry/imports/:importId/apply` | Apply (body confirmTerminate) |
+| POST | `/v1/admin/employee-registry/imports/:importId/rollback` | Rollback applied |
+| POST | `/v1/admin/employee-registry/imports/:importId/cancel` | Hủy preview |
 
 ---
 
-## 7. Epics & Traceability
+## 7. Files Changed (commit references)
 
-| Epic | FRs | Stories (est.) | Priority |
-|------|-----|----------------|----------|
-| EPIC-001: Employee Registry | FR-001 → FR-002 | 2-3 | Must Have |
-| EPIC-002: Import Pipeline | FR-003 → FR-006 | 4-5 | Must Have |
-| EPIC-003: Auto-match & Verify | FR-007 → FR-010 | 4-5 | Must Have |
-| EPIC-004: Lifecycle Management | FR-011 → FR-014 | 4-5 | Must Have |
-| EPIC-005: Audit & History | FR-015 → FR-016 | 2-3 | Must Have |
+Branch `hotfix/group-users`:
 
-**Tổng:** 5 epics · 16 FRs · 5 NFRs · 16-21 stories
-
----
-
-## 8. Prioritization
-
-| Priority | FRs | NFRs |
-|----------|-----|------|
-| Must Have | 14 | 5 |
-| Should Have | 2 | 0 |
+| Commit | Phase | Scope |
+|--------|-------|-------|
+| `3dbcf8c3` | A + B | Models + DAO + indexes + phone util + list API + admin UI scaffold + upload skeleton |
+| `9524a648` | C | Excel parser + validator + modal errors |
+| `c5b319a6` | D + E | Match engine + dry-run + preview API |
+| `6c1f2260` | F | Apply + Rollback + UI preview/history |
+| `a974a495` | G | Cron grace period + register hook + notification |
+| (uncommitted) | H + bug fixes + UX | Async + Cancel + match phone variants + missing toggle + UI compact |
 
 ---
 
-## 9. Dependencies
+## 8. Test Workflow (2 file Excel mẫu)
 
-| Dependency | Status |
-|-----------|--------|
-| V1 go-live (user model có account_type, staff_status, workplace) | Prerequisite |
-| HR Vin cung cấp file theo template [VP_Mẫu danh sách trường CBNV 1.xlsx](VP_Mẫu danh sách trường CBNV 1.xlsx) | ✅ Đã có file mẫu |
-| HR Vin confirm frequency gửi file (monthly/ad-hoc) | Cần confirm |
-| DS master "Đơn vị thành viên" đồng bộ giữa app + template Excel | Cần đồng bộ |
-| Admin dashboard có trang upload + review | Cần build |
+### Step 1 — Upload baseline
+- File: [sample-import-step1-initial.xlsx](sample-import-step1-initial.xlsx)
+- 7 rows: 2 Match A + 5 baseline NV
+- Toggle "Rà soát nghỉ việc": **OFF**
+- Apply → registry có baseline data
 
----
-
-## 10. Out of Scope (V2)
-
-- HR Vin tự upload trực tiếp (V2 = admin AT upload hộ)
-- API sync tự động từ hệ thống HR Vin
-- CCCD/email trong registry (đối tác chưa cung cấp — để V3)
-- Explicit `status` column trong import (auto-terminate) — V2 cần admin confirm
-- Multi-select nơi làm việc
-- Saved import templates
-
-→ Cân nhắc cho V3 nếu volume import cao hoặc đối tác mở rộng template.
+### Step 2 — Mixed scenarios (cover full 8 actions)
+- File: [sample-import-step2-mixed.xlsx](sample-import-step2-mixed.xlsx)
+- 16 rows mix
+- Toggle "Rà soát nghỉ việc": **ON** (full-dump test)
+- Preview expected counters:
+  - auto_verified: 2
+  - cancelled_mismatch: 2
+  - transferred: 2
+  - new_record: 4
+  - unchanged: 2
+  - missing_from_file: 3 (BASE003/004/005 vắng từ file 1)
+  - invalid: 4
 
 ---
 
-## 11. Timeline
+## 9. Out of Scope V2 (defer V3 nếu cần)
 
-| Phase | Thời gian | Nội dung |
-|-------|-----------|----------|
-| Phase 1 | 3 ngày | Employee registry + Import pipeline (upload, validate theo template đối tác, dry-run) |
-| Phase 2 | 3 ngày | Auto-match 3 kịch bản (A/B/C) + Batch match + Lifecycle (điều chuyển, nghỉ với admin confirm) |
-| Phase 3 | 2 ngày | Notification + Audit trail + Import history |
-| **Tổng** | **~8 ngày** | |
-
-**Prerequisite:** V1 go-live trước.
+- Multi-select workplace (kiêm nhiệm)
+- HR Vin tự upload trực tiếp (không qua admin AT)
+- API sync tự động từ HRIS Vin
+- CCCD/email trong registry (đối tác chưa cung cấp)
+- File checksum dedup warn UI
+- Real-progress goroutine batched processedRows (hiện tại jump 0%→100%)
+- Export preview Excel
+- Rollback transactional (hiện tại per-record best-effort)
+- Multi-pod safety cho cron (chưa có redsync mutex cho `RunStaffRemovalCron`)
 
 ---
 
-## 12. Appendix: Ví dụ validation lỗi
+## 10. Known Limitations
 
-Tham chiếu [file mẫu đối tác](VP_Mẫu danh sách trường CBNV 1.xlsx), các lỗi validation cần hiển thị rõ ràng:
+1. **Rollback overwrite risk:** Sau apply, nếu user thay đổi profile (vd đổi phone), rollback sẽ revert lên giá trị cũ → mất user-modified data. UI confirm dialog có warning.
+2. **Missing detect false positive:** HR gửi file delta mà admin BẬT toggle → tất cả non-listed staff bị flag. Mitigated: admin có thể skip checkbox confirm → không terminate.
+3. **Cron daily 00:00 timing:** Confirm terminate lúc 23:55 → grace thực tế còn 6d 5min. Acceptable.
+4. **Notification spam:** 1000 rows = 1000 goroutines push notify. Chấp nhận với volume HR (1-2 lần/tháng).
+5. **Multi-pod cron:** Nếu deploy multi-pod, `RunStaffRemovalCron` chạy song song trên các pod → có thể double-process. Need redsync wrap (defer V3).
 
-| Lỗi | Ví dụ | Message |
-|-----|-------|---------|
-| STT sai format | `1` thay vì `00001` | "Dòng 3: STT phải có 5 chữ số (vd: 00001)" |
-| SĐT không đủ 10 số | `088680796` | "Dòng 3: SĐT phải đúng 10 chữ số" |
-| SĐT có ký tự đặc biệt | `0886-807-963` | "Dòng 3: SĐT không được chứa ký tự đặc biệt" |
-| Mã NV sai format | `11111` | "Dòng 3: Mã nhân viên phải có 8 chữ số" |
-| Đơn vị không hợp lệ | `Vin Gì Đó` | "Dòng 3: Đơn vị 'Vin Gì Đó' không nằm trong danh sách hợp lệ. Xem cột J của template." |
-| Họ tên không in hoa | `lâm thanh bình` | "Dòng 3: Họ tên phải in hoa chữ cái đầu mỗi từ" (warning, không reject) |
-| Trùng mã NV trong file | 2 dòng cùng mã `00111111` | "Dòng 5 và 7: Mã nhân viên bị trùng" |
+---
+
+## 11. References
+
+- [overview-v2-import-logic.md](overview-v2-import-logic.md) — non-tech overview cho HR/PM/QA
+- [overview.md](overview.md) — bối cảnh business V1+V2 tổng
+- [PRD V1](prd-registration-v1-2026-04-12.md) — popup + workplace cascading + manual verify
+- Plans:
+  - [Đợt 1 plan](plans/20260424-2255-employee-registry-import-dot1/plan.md)
+  - [Đợt 2+3 plan](plans/20260425-0038-employee-registry-v2-finish/plan.md)
