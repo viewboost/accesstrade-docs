@@ -1,0 +1,49 @@
+field,description,PIC,required,Value,Note,Nội dung bài viết set up,Bài mẫu,Note
+APP_NAME,Tên thương hiệu hiển thị trên app,ADV,required,,,,,
+PARTNER_ID,Partner slug (lowercase không dấu),ADV,required,gengreen,,,,
+DOMAIN,"Domain/subdomain frontend production
+
+Trỏ thông tin về: 54.169.3.115
+*Note: nếu domain trên cloudflare cần lên cloudflare để trỏ ",ADV,required,https://gen-green.ph/gengreen,,,,
+PRIMARY_COLOR,Màu chính thương hiệu (HEX),ADV,required,Theo KV khách gửi: https://drive.google.com/file/d/1FC7zrDDtfgUYV6qA1RGQ_rzFsgJRzbY7/view,,,,
+SECONDARY_COLOR,Màu phụ (để trống nếu dùng mặc định #d0d5dd),ADV,optional,Theo KV khách gửi và theo trang Indo gen green,,,,
+LOGO_FILE,"Tên file logo (đặt trong src/assets/images/new/)
+* Gửi file design",ADV,required,Theo KV khách gửi,,,,
+FAVICON_FILE,Tên file favicon,ADV,required,https://drive.google.com/file/d/1DwtUdx3I8-qu_9axyp-El3ZgNceiA6i3/view?usp=drive_link,,,,
+OG_TITLE,Tiêu đề trang / OpenGraph title,ADV,required,Dịch từ trang Indo gen green,,,,
+OG_DESCRIPTION,Mô tả trang / OpenGraph description,ADV,required,Dịch từ trang Indo gen green,,,,
+FONT,FONT chữ đang sử dụng ,ADV,required,Theo brand guideline và theo trang Indo gen green,,,,
+BANNER,"Banner trang home:
+- 3*4: dành cho mobile
+- 20*8: dành cho desktop
+
+Ảnh Chiến dịch:
+- 9*16: chung cho cả mobile&desktop
+*Note: Gửi file thiết kế",ADV,required,,,,,
+BRAND_GUIDE,File thiết kế liên quan tới thương hiệu ,ADV,required,GSM_MKT01.01_Global_Green SM Brand Guidelines.pdf,,,,
+SEO_KEYWORDS,Từ khóa SEO,ADV,optional,,,,,
+OG_IMAGE,Ảnh social preview (1200x630),ADV,optional,,,,,
+GTM_ID,Google Tag Manager ID (để trống nếu dùng chung),AT,optional,"
+GTM-WTMZXPHC",,,,
+SUPPORT_ARTICLE_ID,ID bài hỗ trợ trên CMS( chú ý để cả môi trường dev và product),AT,optional,,,,,
+QA_ARTICLE_ID,ID bài Q&A trên CMS( chú ý để cả môi trường dev và product),AT,optional,,,,,
+TERM_ID,ID bài điều khoản( chú ý để cả môi trường dev và product),AT,optional,,,,,
+CONDITION_ID,ID bài điều kiện( chú ý để cả môi trường dev và product),AT,optional,,,,,
+PARTNER_ID,ID đối tác được setup trên hệ thống ambassdor( chú ý để cả môi trường dev và product),AT,optional,,,,,
+EVENT_ID,ID của campaign setup trên hệ thống ambassador( chú ý để cả môi trường dev và product),AT,optional,,,,,
+Thông tin liên hệ,,ADV,required,"Phone number: 02-7777-8080
+Email: support.ph@greensm.com
+Address:
+6TH FLOOR TWO E-COM CENTER
+BAYSHORE AVE, MALL OF ASIA COMPLEX BRGY. 76, PASAY CITY
+1300",,,,
+Link redirect từ CTA Về Đối tác,,ADV,required,https://www.greengsm.ph/,,,,
+Facebook,,ADV,required,https://www.facebook.com/greengsm.ph?locale=vi_VN,,,,
+Materials/ kho tư liệu,,ADV,required,https://drive.google.com/drive/folders/1LBPynskkwPBqoZ_1tAWAO_DlJyud-KB5,,,,
+Hashtag,,ADV,required,#GreenGSM,,,,
+TITLE,,ADV,required,,,,,
+CHI TIẾT CHIẾN DỊCH ,,ADV,required,,,,,
+Ngôn ngữ,,ADV,required,tiếng Filipino (dựa trên tiếng Tagalog) và tiếng Anh,,,,
+Tiền tệ,,ADV,required,Peso,,,,
+Cách tính thuế thu nhập cá nhân,,ADV,required,Tạm thời chưa cần vì khách sẽ tự thanh toán hoa hồng cho creator thông qua lương,,,,
+File design,,Hieu Ta Trung,required,https://www.figma.com/design/9j52U0cygugj0b4ajkLn5j/-P--GreenSM-PHIL---Creators?node-id=5-31&t=Df1VVpSbK0yLtcfh-1,,,,

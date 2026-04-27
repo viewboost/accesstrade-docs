@@ -1,0 +1,234 @@
+Module,Feature Code,Feature Name,Source Evidence,VN Behavior,PH Action,Effort,Priority,Status,Notes
+Auth,AUTH-01,Đăng ký creator,POST /users/register (public/router/user.go:21),"Form RegisterBody: Name + Email + City + Gender + Phone + Password + ConfirmPassword + Ref. Phone regex VN +84",Giữ form + đổi phone regex +63 + đổi text EN/Filipino,S,P0,Ready,
+Auth,AUTH-02,Đăng nhập (phone + password),POST /users/login (public/router/user.go:22),Login bằng phone + password,Giữ nguyên + đổi phone format,S,P0,Ready,
+Auth,AUTH-03,Login Google,POST /users/login-with-google (public/router/user.go:23),Google OAuth,Giữ nguyên (global),S,P0,Ready,
+Auth,AUTH-04,Login TikTok,POST /users/login-with-tiktok (public/router/user.go:24),TikTok OAuth,Giữ nguyên (global),S,P0,Ready,
+Auth,AUTH-05,Login Instagram,POST /users/login-with-instagram (public/router/user.go:25),IG OAuth login (route đã wire),Giữ nguyên hoặc bỏ tùy partner,S,P1,Pending,Cần partner confirm có dùng IG login không
+Auth,AUTH-06,Login Facebook,POST /users/login-with-facebook (public/router/user.go:26),FB OAuth login (route đã wire),Giữ nguyên,S,P0,Ready,
+Auth,AUTH-07,Logout,POST /users/logout (public/router/user.go:28),Logout flow,Giữ nguyên,S,P0,Ready,
+Auth,AUTH-08,Device token (push notification),POST /users/device (public/router/user.go:27),Lưu device token cho push,Giữ nguyên,S,P0,Ready,
+OTP,OTP-01,Request OTP đăng ký,POST /users/request-otp (public/router/user.go:20),OTP qua AccessTrade SMS - channel Zalo,Đổi sang SMS PH provider,M,P0,Blocked,§G1 SMS provider
+OTP,OTP-02,Verify OTP đăng ký,POST /users/verify-otp (public/router/user.go:19),Verify code OTP,Giữ logic,S,P0,Ready,
+OTP,OTP-03,Profile request OTP,POST /users/profile/request-otp (public/router/user.go:70),OTP cho update profile,Đổi sang SMS PH provider,S,P0,Blocked,§G1
+OTP,OTP-04,Profile verify OTP,POST /users/profile/verify-otp (public/router/user.go:71),Verify OTP profile,Giữ logic,S,P0,Ready,
+OTP,OTP-05,Update phone number (verify OTP),POST /users/update-phone-number (public/router/user.go:56),Đổi SĐT cần OTP,Giữ logic,S,P0,Ready,
+Profile,PROFILE-01,Get me (profile info),GET /users/me (public/router/user.go:29),Trả thông tin user hiện tại,Giữ nguyên,S,P0,Ready,
+Profile,PROFILE-02,Update profile,PUT /users/update (public/router/user.go:30),Update thông tin profile,Giữ nguyên + đổi text EN/Filipino,S,P0,Ready,
+Profile,PROFILE-03,Complete profile,PUT /users/complete-profile (public/router/user.go:67),Hoàn thiện profile sau đăng ký,Giữ nguyên,S,P0,Ready,
+Profile,PROFILE-04,Check unique (email/phone),GET /users/check-unique (public/router/user.go:68),Check trùng email/phone,Giữ nguyên,S,P0,Ready,
+Profile,PROFILE-05,Dismiss profile popup,POST /users/dismiss-profile-popup (public/router/user.go:69),Tắt popup yêu cầu hoàn thiện profile,Giữ nguyên,S,P1,Ready,
+Profile,PROFILE-06,FE page tài khoản,frontend-green pages/account/index.tsx (route /tai-khoan),Form update profile,Giữ nguyên + đổi text EN/Filipino,M,P0,Ready,
+Profile,PROFILE-07,FE page trang cá nhân,frontend-green pages/profile/index.tsx (route /trang-ca-nhan),Trang public profile,Giữ nguyên,S,P0,Ready,
+Identification,ID-01,Create identification,POST /users/identification (public/router/user.go:38),Upload thông tin định danh CCCD,Replace CCCD → multi-ID type PH,M,P0,Blocked,§F2 ID types
+Identification,ID-02,Get my identification,GET /users/identification/me (public/router/user.go:39),Get identification của user hiện tại,Giữ nguyên,S,P0,Ready,
+Identification,ID-03,Update identification,PUT /users/identification/:id (public/router/user.go:40),Update identification,Giữ nguyên,S,P0,Ready,
+Identification,ID-04,Get image from ID card (OCR?),POST /users/identification/image (public/router/user.go:52),OCR ảnh ID card,Verify provider có hỗ trợ ID PH không,M,P1,Blocked,§F2 + §F3
+eKYC,EKYC-01,Get eKYC SDK config,GET /users/ekyc/sdk (public/router/user.go:57),Trả config eKYC SDK,TBD: provider PH (Jumio/Sumsub) hoặc manual,L hoặc S,P1,Blocked,§F1 + §F3
+eKYC,EKYC-02,Save eKYC info,POST /users/ekyc/save (public/router/user.go:63),Lưu eKYC result (liveness + ID OCR),Giữ logic + đổi provider,M,P1,Blocked,§F1 + §F3
+eKYC,EKYC-03,Check eKYC condition (cho ký hợp đồng),GET /users/ekyc/check-condition (public/router/user.go:54),Check điều kiện eKYC để được ký hợp đồng,Giữ logic,S,P0,Ready,
+Bank Account,BANK-01,Get list bank cards,GET /users/bank-cards (public/router/user.go:33),List bank cards của user,BỎ KHỎI SCOPE,-,-,Done-Cut,Khách tự payout qua payroll
+Bank Account,BANK-02,Create bank card,POST /users/bank-cards (public/router/user.go:34),Add bank card mới,BỎ KHỎI SCOPE,-,-,Done-Cut,
+Bank Account,BANK-03,Update bank card,PUT /users/bank-cards/:id (public/router/user.go:35),Update bank card,BỎ KHỎI SCOPE,-,-,Done-Cut,
+Bank Account,BANK-04,Set default bank card,PUT /users/bank-cards/:id/set-default (public/router/user.go:36),Set bank card mặc định,BỎ KHỎI SCOPE,-,-,Done-Cut,
+Bank Account,BANK-05,Get bank list (data seed),GET /users/bank/list (public/router/user.go:64) + GET /bank (public/router/common.go),List banks VN,BỎ KHỎI SCOPE,-,-,Done-Cut,Vì bỏ bank binding
+Bank Account,BANK-06,Get bank branches,GET /bank/:id/branch (public/router/common.go),List chi nhánh ngân hàng,BỎ KHỎI SCOPE,-,-,Done-Cut,
+Bank Account,BANK-07,Check bank account name,GET /users/check-bank-account (public/router/user.go:62),Verify tên chủ tài khoản với ngân hàng,BỎ KHỎI SCOPE,-,-,Done-Cut,
+Bank Account,BANK-08,FE page thông tin thanh toán,frontend-green pages/bank (route /thong-tin-thanh-toan),Form bank info,BỎ KHỎI SCOPE - hide page,-,-,Done-Cut,
+Withdraw,WD-01,Withdraw request (creator),public/handler/withdraw.go có nhưng KHÔNG wire vào router,Handler tồn tại nhưng route public chưa active,BỎ KHỎI SCOPE,-,-,Done-Cut,
+Cashflow,CF-01,Get cashflow,GET /users/cash-flow (public/router/user.go:46),Lịch sử transaction creator,Giữ logic - tracking commission earned,S,P0,Ready,§E5 PHP centavos
+Tax,TAX-01,FE page khai báo thuế,frontend-green pages/account/tax (route /khai-bao-thue),Trang khai báo thuế TNCN,BỎ KHỎI SCOPE - hide page,-,-,Done-Cut,§D - khách tự payout qua payroll
+Tax,TAX-02,Backend tax logic (auto withhold),"constants CashFlowActionTax + field TotalCashTax (model/mg/user.go)",Logic trừ thuế tự động trong cashflow,BỎ KHỎI SCOPE - skip logic,-,-,Done-Cut,
+Contract,CONTRACT-01,Upsert contract info,POST /users/contract/info (public/router/user.go:42),Lưu thông tin để generate contract,Giữ nguyên + đổi field theo PH,S,P0,Ready,
+Contract,CONTRACT-02,Get contract estimate,POST /users/contract/estimate (public/router/user.go:43),Preview HTML contract trước khi ký,Giữ logic + dùng template PH,S,P0,Blocked,Cần template từ legal partner
+Contract,CONTRACT-03,Get pre-signed contract,GET /users/contract/pre-signed (public/router/user.go:44),Get URL upload contract đã ký,Giữ nguyên,S,P0,Ready,
+Contract,CONTRACT-04,Create econtract,POST /users/econtract/create (public/router/user.go:58),Tạo + ký hợp đồng điện tử,Giữ nguyên (RA 8792 § 8 OK),M,P0,Ready,
+Contract,CONTRACT-05,Get econtract detail,GET /users/econtract/:id (public/router/user.go:59),Xem chi tiết contract,Giữ nguyên,S,P0,Ready,
+Contract,CONTRACT-06,Get list econtracts,GET /users/econtract/list (public/router/user.go:60),List contracts của user,Giữ nguyên,S,P0,Ready,
+Contract,CONTRACT-07,Update contract status (cron),GET /schedule/update-contract-status (public/router/schedule.go),Cron update trạng thái contract,Giữ nguyên,S,P0,Ready,
+Contract,CONTRACT-08,Contract HTML template,internal/constants/contract.go (786 dòng tiếng Việt + luật VN),Template hợp đồng cứng,Rewrite EN/Bilingual + luật PH,L,P0,Blocked,Legal partner cung cấp
+Contract,CONTRACT-09,FE page hợp đồng điện tử,frontend-green pages/contract (route /hop-dong-dien-tu),Trang ký + xem contract,Giữ nguyên + đổi text + render template mới,M,P0,Ready,
+Social Link,SOC-01,Get list social,GET /users/socials (public/router/user.go:48),List tài khoản social đã link (TikTok/FB/IG/YouTube/Threads),Giữ nguyên,S,P0,Ready,
+Social Link,SOC-02,Link social account,POST /users/socials/link (public/router/user.go:49),Link tài khoản social,Giữ nguyên,S,P0,Ready,
+Social Link,SOC-03,Link account to AT,POST /users/link-account (public/router/user.go:55),Link với AT system,Verify partner cần không,M,P1,Pending,§I cần clarify
+Social Link,SOC-04,FE page liên kết tài khoản,frontend-green pages/account/management (route /lien-ket-tai-khoan),Quản lý social linked,Giữ nguyên,M,P0,Ready,
+Social Link,SOC-05,FE page đăng nhập TikTok,frontend-green pages/login-tiktok (route /dang-nhap-tiktok),OAuth callback page,Giữ nguyên,S,P0,Ready,
+Social Link,SOC-06,FE page liên kết TikTok,frontend-green pages/connect-tiktok (route /lien-ket-tiktok),Connect TikTok flow,Giữ nguyên,S,P0,Ready,
+Referral,REF-01,Add referral code,POST /users/referral (public/router/user.go:50),Nhập mã giới thiệu,Giữ nguyên,S,P1,Ready,
+Referral,REF-02,Get user info by referral code,GET /users/by-referral-code (public/router/user.go:51),Tra cứu user theo mã referral,Giữ nguyên,S,P1,Ready,
+Publisher,PUB-01,Create publisher,POST /users/publisher (public/router/user.go:31),Đăng ký mode publisher,Verify partner cần không,M,P1,Pending,Verify scope publisher mode
+Publisher,PUB-02,Get publisher,GET /users/publisher (public/router/user.go:32),Get publisher info,Giữ nguyên,S,P1,Pending,
+Event,EVENT-01,Get event list,GET /events (public/router/event.go:20),List events,Giữ nguyên,S,P0,Ready,
+Event,EVENT-02,Get user newest events,GET /events/user-newest (public/router/event.go:21),Events mới nhất của user,Giữ nguyên,S,P0,Ready,
+Event,EVENT-03,Get event statistic,GET /events/statistic (public/router/event.go:22),Thống kê event,Giữ nguyên,S,P0,Ready,
+Event,EVENT-04,Get current event home,GET /events/current (public/router/event.go:23),Event đang chạy ở home,Giữ nguyên,S,P0,Ready,
+Event,EVENT-05,Get event by slug,GET /events/by-slug (public/router/event.go:24),Detail event by slug,Giữ nguyên,S,P0,Ready,
+Event,EVENT-06,Get event leaderboard,GET /events/:id/leaderboards (public/router/event.go:25),Bảng xếp hạng creator trong event,Giữ nguyên,S,P0,Ready,
+Event,EVENT-07,Get content by event,GET /events/:id/content (public/router/event.go:26),List content trong event,Giữ nguyên,S,P0,Ready,
+Event,EVENT-08,Get event schemas,GET /events/:id/schemas (public/router/event.go:27),Get reward schemas của event,Giữ nguyên,S,P0,Ready,
+Event,EVENT-09,Get my contents in event,GET /events/:id/content/me (public/router/event.go:28),Content của tôi trong event,Giữ nguyên,S,P0,Ready,
+Event,EVENT-10,FE page chi tiết event,frontend-green pages/home (route /:partner/:slug/chi-tiet),Trang chi tiết event,Giữ nguyên,M,P0,Ready,
+Event,EVENT-11,FE page bài đăng event,frontend-green pages/content (route /:partner/:slug/bai-dang),List content event,Giữ nguyên,M,P0,Ready,
+Event,EVENT-12,FE page thể lệ event,frontend-green pages/article (route /:partner/:slug/the-le),Article thể lệ,Giữ nguyên,S,P0,Ready,
+Event,EVENT-13,FE page hướng dẫn event,frontend-green pages/guide (route /:partner/:slug/huong-dan),Article hướng dẫn,Giữ nguyên,S,P0,Ready,
+Content,CONTENT-01,Submit content cho event,POST /events/:id/content (public/router/event.go:31),Creator submit URL content vào event,Giữ nguyên,S,P0,Ready,
+Content,CONTENT-02,Crawl content TikTok,GET /schedule/crawl-content-tiktok (public/router/schedule.go),Cron crawl content TikTok,Giữ nguyên (global API),S,P0,Ready,
+Content,CONTENT-03,Crawl content TikTok self,GET /schedule/crawl-content-tiktok-self (public/router/schedule.go),Cron crawl tài khoản TikTok đã link,Giữ nguyên,S,P0,Ready,
+Content,CONTENT-04,Crawl content YouTube,GET /schedule/crawl-content-youtube (public/router/schedule.go),Cron crawl YouTube,Giữ nguyên,S,P0,Ready,
+Content,CONTENT-05,Crawl content Facebook,GET /schedule/crawl-content-facebook (public/router/schedule.go),Cron crawl FB,Giữ nguyên,S,P0,Ready,
+Content,CONTENT-06,Crawl content Threads,GET /schedule/crawl-content-threads (public/router/schedule.go),Cron crawl Threads,Giữ nguyên,S,P0,Ready,
+Content,CONTENT-07,Process content callback (cron),GET /schedule/process-content-callback (public/router/schedule.go),Cron process callback từ content-catcher,Giữ nguyên,S,P0,Ready,
+Content,CONTENT-08,Content callback webhook,POST /content-callback (public/router/content_callback.go),Webhook nhận callback từ crawler service,Giữ nguyên,S,P0,Ready,
+Notification,NOTIF-01,Get notification list,GET /notifications (public/router/notification.go),List in-app notification,Giữ nguyên,S,P0,Ready,
+Notification,NOTIF-02,Read notification,GET /notifications/:id (public/router/notification.go),Mark notification đã đọc,Giữ nguyên,S,P0,Ready,
+Notification,NOTIF-03,FE page thông báo,frontend-green pages/notification (route /thong-bao),List notifications,Giữ nguyên,S,P0,Ready,
+Notification,NOTIF-04,Email transactional,internal/module/smtp,Templates tiếng Việt,EN + Filipino templates,M,P0,Ready,§A1 EN+Filipino
+Notification,NOTIF-05,Push notification (Firebase),internal/service/notification.go: firebase.SendToListDevices,Push qua Firebase,Giữ nguyên,S,P0,Ready,
+News & Articles,NEWS-01,Get news list,GET /news (public/router/news.go),List bài viết news,Giữ nguyên,S,P0,Ready,
+News & Articles,NEWS-02,News analytic click,POST /news/:id/analytic-click (public/router/news.go),Track click news,Giữ nguyên,S,P0,Ready,
+News & Articles,NEWS-03,Get article detail,GET /articles/:id (public/router/article.go),Detail article,Giữ nguyên,S,P0,Ready,
+News & Articles,NEWS-04,FE page common article,frontend-green pages/common-article (route /bai-viet/:id),Render article,Giữ nguyên,S,P0,Ready,
+Quick Action,QA-01,Get quick actions,GET /quick-actions (public/router/quick_action.go),List quick action buttons (CMS configured),Giữ nguyên,S,P1,Ready,
+Statistic,STAT-01,Get user statistic,GET /user-statistics (public/router/user_statistic.go),Thống kê tổng creator,Giữ nguyên,S,P0,Ready,
+Statistic,STAT-02,Get user statistic content,GET /user-statistics/contents (public/router/user_statistic.go),Thống kê content,Giữ nguyên,S,P0,Ready,
+Statistic,STAT-03,Get user statistic invitees,GET /user-statistics/invitees (public/router/user_statistic.go),Thống kê người được mời,Giữ nguyên,S,P0,Ready,
+Statistic,STAT-04,Get user statistic invitees stats,GET /user-statistics/invitees/statistic (public/router/user_statistic.go),Stats invitees,Giữ nguyên,S,P0,Ready,
+Statistic,STAT-05,FE page statistics,frontend-green pages/statistic (route /statistics),Dashboard statistic creator,Giữ nguyên,M,P0,Ready,
+Partner,PART-01,Get partner list,GET /partners (public/router/partner.go),List partners,Giữ nguyên,S,P0,Ready,
+Partner,PART-02,Get partner by slug,GET /partners/by-slug (public/router/partner.go),Detail partner,Giữ nguyên,S,P0,Ready,
+Partner,PART-03,Get content features,GET /partners/content-features (public/router/partner.go),Content features của partner,Giữ nguyên,S,P0,Ready,
+Partner,PART-04,FE page partner home,frontend-green pages/partner-home (route /:partner/),Trang partner home,Giữ nguyên,S,P0,Ready,
+Workplace,WP-01,Get brands,GET /workplace/brands (public/router/workplace.go),List brands (workplace categorization),Giữ nguyên,S,P0,Ready,
+Workplace,WP-02,Get companies,GET /workplace/companies (public/router/workplace.go),List companies,Giữ nguyên,S,P0,Ready,
+Workplace,WP-03,Get units,GET /workplace/units (public/router/workplace.go),List units (cơ sở làm việc),Giữ nguyên + init data PH,M,P0,Blocked,§I2 cơ sở GreenSM PH
+Common,COMMON-01,Get app data,GET /app-data (public/router/common.go),Config + meta data app,Giữ nguyên + đổi config PH,S,P0,Ready,
+Webhook,WH-01,OpsHub webhook,POST /opshub-webhook (public/router/opshub_webhook.go),Webhook từ OpsHub,Verify partner cần không,S,P1,Pending,
+Webhook,WH-02,Transcript webhook,POST /transcript/webhook (public/router/transcript.go),Webhook transcript service,Giữ nguyên,S,P1,Ready,
+Migration,MIG-01,Email verified from Google,GET /migration/email-verified-from-google (public/router/migration.go),One-time migration script,N/A - không cần cho PH (DB fresh),-,-,Done-Cut,
+Admin Auth,ADMIN-AUTH-01,Staff login,POST /staffs/login (admin/router/staff.go),Admin login với phone + password,Giữ nguyên,S,P0,Ready,
+Admin Auth,ADMIN-AUTH-02,Staff register,POST /staffs/register (admin/router/staff.go),Admin tạo staff account,Giữ nguyên,S,P0,Ready,
+Admin Auth,ADMIN-AUTH-03,Staff login Google,POST /staffs/login-with-google (admin/router/staff.go),Admin login Google,Giữ nguyên,S,P0,Ready,
+Admin Auth,ADMIN-AUTH-04,Get me staff,GET /staffs/me (admin/router/staff.go),Profile admin,Giữ nguyên,S,P0,Ready,
+Admin User,ADMIN-USER-01,Get list user (creators),GET /users (admin/router/user.go),List + filter users,Giữ nguyên + đổi search field theo ID type PH,S,P0,Ready,
+Admin Content,ADMIN-CONT-01,Get list content,GET /contents (admin/router/content.go),List content + filter,Giữ nguyên,S,P0,Ready,
+Admin Content,ADMIN-CONT-02,Get content detail,GET /contents/:id (admin/router/content.go),Detail content,Giữ nguyên,S,P0,Ready,
+Admin Content,ADMIN-CONT-03,Reject content by select,POST /contents/reject-by-select (admin/router/content.go),Bulk reject,Giữ nguyên,S,P0,Ready,
+Admin Content,ADMIN-CONT-04,Change content status,PATCH /contents/:id/status (admin/router/content.go),Change single content status,Giữ nguyên,S,P0,Ready,
+Admin Content,ADMIN-CONT-05,Pin content,PATCH /contents/:id/pin (admin/router/content.go),Pin content,Giữ nguyên,S,P1,Ready,
+Admin Content,ADMIN-CONT-06,Statistic chart,GET /contents/statistic-chart (admin/router/content.go),Chart thống kê,Giữ nguyên,S,P1,Ready,
+Admin Content,ADMIN-CONT-07,Batch change status,PATCH /contents/batch-status (admin/router/content.go),Bulk change status,Giữ nguyên,S,P0,Ready,
+Admin Content,ADMIN-CONT-08,Add statistic for content,POST /contents/:id/add-statistic (admin/router/content.go),Manual add stats,Giữ nguyên,S,P1,Ready,
+Admin Content,ADMIN-CONT-09,Update content tag,PATCH /contents/tag (admin/router/content.go),Update tag,Giữ nguyên,S,P1,Ready,
+Admin Content,ADMIN-CONT-10,Crawl content info by id,POST /contents/:id/crawl-info (admin/router/content.go),Manual trigger crawl,Giữ nguyên,S,P1,Ready,
+Admin Content,ADMIN-CONT-11,Content manual flow,GET+POST /content-manual-flow (admin/router/content_manual_flow.go),Quản lý content thủ công,Giữ nguyên,S,P1,Ready,
+Admin Event,ADMIN-EVT-01,Create event,POST /events (admin/router/event.go),Admin tạo event,Giữ nguyên,M,P0,Ready,
+Admin Event,ADMIN-EVT-02,Update event,PUT /events/:id (admin/router/event.go),Update event,Giữ nguyên,S,P0,Ready,
+Admin Event,ADMIN-EVT-03,Change event status,PATCH /events/:id/status (admin/router/event.go),Change status,Giữ nguyên,S,P0,Ready,
+Admin Event,ADMIN-EVT-04,Get event list (collab),GET /events (admin/router/event.go),Collaborator xem events,Giữ nguyên,S,P0,Ready,
+Admin Event,ADMIN-EVT-05,Get event detail,GET /events/:id (admin/router/event.go),Detail event admin,Giữ nguyên,S,P0,Ready,
+Admin Event,ADMIN-EVT-06,Event report statistic,GET /events/report-statistic (admin/router/event.go),Báo cáo thống kê events,Giữ nguyên,S,P0,Ready,
+Admin Event,ADMIN-EVT-07,Event statistic + chart,GET /events/statistic + /events/chart (admin/router/event.go),Stats + chart,Giữ nguyên,S,P0,Ready,
+Admin Event,ADMIN-EVT-08,Run analytic daily,GET /events/run-analytic-daily (admin/router/event.go),Manual trigger analytic,Giữ nguyên,S,P1,Ready,
+Admin Event,ADMIN-EVT-09,Update extended period,PATCH /events/:id/extended-period (admin/router/event.go),Gia hạn event,Giữ nguyên,S,P0,Ready,
+Admin Event,ADMIN-EVT-10,Update opshub config,PATCH /events/:id/opshub (admin/router/event.go),Config opshub cho event,Verify partner cần không,S,P1,Pending,
+Admin Event,ADMIN-EVT-11,Reject reward event,POST /events/reject-reward-event (admin/router/event.go),Reject reward (root only),Giữ nguyên,S,P1,Ready,
+Admin Event,ADMIN-EVT-12,Rerun reward event,GET /events/rerun-reward-event-by-cad (admin/router/event.go),Re-run reward calc,Giữ nguyên,S,P1,Ready,
+Admin Event,ADMIN-EVT-13,Event reward change status,POST /event-reward/change-status (admin/router/event_reward.go),Change reward status (root),Giữ nguyên,S,P1,Ready,
+Admin Event,ADMIN-EVT-14,Event bonus CRUD,GET/POST/PUT/PATCH /event-bonus (admin/router/event_bonus.go),CRUD event bonus,Giữ nguyên,M,P0,Ready,
+Admin Event,ADMIN-EVT-15,Event schema CRUD,GET/POST/PUT/PATCH /event-schema (admin/router/event_schema.go),CRUD reward schema,Giữ nguyên,M,P0,Ready,
+Admin Recon,RECON-01,Get reconciliation list,GET /reconciliations (admin/router/reconciliation.go),List đợt đối soát,Giữ nguyên,S,P0,Ready,
+Admin Recon,RECON-02,Create reconciliation,POST /reconciliations (admin/router/reconciliation.go),Tạo đợt đối soát mới,Giữ nguyên,M,P0,Ready,
+Admin Recon,RECON-03,Update reconciliation,PATCH /reconciliations/:id (admin/router/reconciliation.go),Update đợt,Giữ nguyên,S,P0,Ready,
+Admin Recon,RECON-04,Get reconciliation detail,GET /reconciliations/:id (admin/router/reconciliation.go),Detail đợt,Giữ nguyên,S,P0,Ready,
+Admin Recon,RECON-05,Change reconciliation status,PATCH /reconciliations/:id/change-status (admin/router/reconciliation.go),Change status đợt,Giữ nguyên,S,P0,Ready,
+Admin Recon,RECON-06,Get list content trong recon,GET /reconciliations/:id/content (admin/router/reconciliation.go),List content thuộc đợt,Giữ nguyên,S,P0,Ready,
+Admin Recon,RECON-07,Get list milestone,GET /reconciliations/:id/milestone (admin/router/reconciliation.go),List milestone,Giữ nguyên,S,P0,Ready,
+Admin Recon,RECON-08,Get list bonus,GET /reconciliations/:id/bonus (admin/router/reconciliation.go),List bonus,Giữ nguyên,S,P0,Ready,
+Admin Recon,RECON-09,Change item status,PATCH /reconciliations/:id/item/:idItem/change-status (admin/router/reconciliation.go),Change status từng item,Giữ nguyên,S,P0,Ready,
+Admin Recon,RECON-10,FE admin reconciliation page,admin pages/reconciliation,UI quản lý đối soát,Giữ nguyên + đổi text EN,M,P0,Ready,
+Admin Identification,ADMIN-ID-01,Get list identification,GET /identifications (admin/router/identification.go),List ID submissions,Giữ nguyên,S,P0,Ready,
+Admin Identification,ADMIN-ID-02,Get identification detail,GET /identifications/:id (admin/router/identification.go),Detail,Giữ nguyên,S,P0,Ready,
+Admin Identification,ADMIN-ID-03,Change identification status,PATCH /identifications/:id/status (admin/router/identification.go),Approve/reject ID,Giữ nguyên,S,P0,Ready,
+Admin Employee Registry,ADMIN-EMP-01,Get list employee,GET /employee-registry (admin/router/employee_registry.go),List nhân viên đã import,Giữ nguyên + init data PH,M,P0,Blocked,§I2
+Admin Employee Registry,ADMIN-EMP-02,Import employee data,POST /employee-registry/import (admin/router/employee_registry.go),Upload Excel import nhân viên,Giữ nguyên,S,P0,Ready,
+Admin Employee Registry,ADMIN-EMP-03,Get import list,GET /employee-registry/imports (admin/router/employee_registry.go),Lịch sử imports,Giữ nguyên,S,P0,Ready,
+Admin Employee Registry,ADMIN-EMP-04,Get import status,GET /employee-registry/imports/:id/status,Track status import,Giữ nguyên,S,P0,Ready,
+Admin Employee Registry,ADMIN-EMP-05,Preview import,GET /employee-registry/imports/:id/preview,Preview trước khi apply,Giữ nguyên,S,P0,Ready,
+Admin Employee Registry,ADMIN-EMP-06,Apply import,POST /employee-registry/imports/:id/apply,Apply import vào DB,Giữ nguyên,S,P0,Ready,
+Admin Employee Registry,ADMIN-EMP-07,Rollback import,POST /employee-registry/imports/:id/rollback,Rollback import,Giữ nguyên,S,P0,Ready,
+Admin Employee Registry,ADMIN-EMP-08,Cancel import,POST /employee-registry/imports/:id/cancel,Cancel ongoing import,Giữ nguyên,S,P0,Ready,
+Admin Workplace,ADMIN-WP-01,CRUD brands,GET/POST/PUT/PATCH /workplace/brands (admin/router/workplace.go),CRUD brands,Giữ nguyên + init PH brands,S,P0,Blocked,§I2
+Admin Workplace,ADMIN-WP-02,CRUD companies,GET/POST/PUT/PATCH /workplace/companies (admin/router/workplace.go),CRUD companies,Giữ nguyên + init PH companies,S,P0,Blocked,§I2
+Admin Workplace,ADMIN-WP-03,CRUD units (cơ sở),GET/POST/PUT/PATCH /workplace/units (admin/router/workplace.go),CRUD cơ sở làm việc,Giữ nguyên + init cơ sở GreenSM PH,S,P0,Blocked,§I2
+Admin Audit,ADMIN-AUD-01,Get audit log,GET /audit (admin/router/audit.go),Audit log,Giữ nguyên,S,P0,Ready,
+Admin Article,ADMIN-ART-01,Article CRUD,GET/POST/PATCH /articles (admin/router/article.go),CRUD articles,Giữ nguyên,S,P0,Ready,
+Admin News,ADMIN-NEWS-01,News CRUD,GET/POST/PUT/PATCH/PATCH /news (admin/router/news.go),CRUD news + change status + clone,Giữ nguyên,S,P0,Ready,
+Admin Notification,ADMIN-NOTIF-01,Admin notification CRUD,GET/POST/PUT/PATCH/PATCH/POST /admin-notifications (admin/router/admin_notification.go),Tạo + gửi push notification + clone,Giữ nguyên,M,P0,Ready,
+Admin Partner,ADMIN-PART-01,Get partner list,GET /partners (admin/router/partner.go),List partners,Giữ nguyên,S,P0,Ready,
+Admin Partner,ADMIN-PART-02,Get partner users,GET /partners/users (admin/router/partner.go),Users của partner,Giữ nguyên,S,P0,Ready,
+Admin Quick Action,ADMIN-QA-01,Quick action CRUD,POST/PUT/PATCH/GET /quick-actions (admin/router/quick_action.go),CRUD quick action (root only),Giữ nguyên,S,P1,Ready,
+Admin Segment,ADMIN-SEG-01,Segment CRUD,GET/POST/PUT/PATCH /segments (admin/router/segment.go),CRUD segments,Giữ nguyên,M,P0,Ready,
+Admin User Segment,ADMIN-USEG-01,User segment CRUD,GET/POST/DELETE /user-segments (admin/router/user_segment.go),Add/remove user vào segment,Giữ nguyên,S,P0,Ready,
+Admin User Segment,ADMIN-USEG-02,Import user segment Excel,POST /user-segments/import-excel (admin/router/user_segment.go),Bulk import Excel,Giữ nguyên,S,P0,Ready,
+Admin Tag,ADMIN-TAG-01,Tag CRUD,(admin/router/tag.go - cần đọc thêm),Tag system,Giữ nguyên,S,P1,Ready,
+Admin Transfer,ADMIN-TR-01,Transfer CRUD,GET/POST/PUT/GET /transfers (admin/router/transfer.go),Đợt chuyển tiền (admin payout),BỎ KHỎI SCOPE,-,-,Done-Cut,Khách tự payout
+Admin Transfer,ADMIN-TR-02,Transfer withdraw cashes,GET /transfers/:id/withdraw-cashes (admin/router/transfer.go),Withdraws trong đợt,BỎ KHỎI SCOPE,-,-,Done-Cut,
+Admin Transfer,ADMIN-TR-03,Change transfer status,PUT /transfers/:id/change-status (admin/router/transfer.go),Approve transfer,BỎ KHỎI SCOPE,-,-,Done-Cut,
+Admin Transfer,ADMIN-TR-04,Decline transfer,PATCH /transfers/:id/change-declined (admin/router/transfer.go),Decline transfer,BỎ KHỎI SCOPE,-,-,Done-Cut,
+Admin Export,ADMIN-EXP-01,Create export,POST /exports (admin/router/export.go),Tạo export job,Giữ nguyên + thêm export commission report cho payroll,M,P0,Blocked,§E6 commission export format
+Admin Export,ADMIN-EXP-02,Get export list,GET /exports (admin/router/export.go),List exports,Giữ nguyên,S,P0,Ready,
+Admin Export,ADMIN-EXP-03,Get export pre-sign URL,GET /exports/:id/pre-sign (admin/router/export.go),Get download URL,Giữ nguyên,S,P0,Ready,
+Admin Common,ADMIN-COM-01,Update event analytic daily,GET /update-event-daily (admin/router/common.go),Manual trigger,Giữ nguyên,S,P1,Ready,
+Admin Common,ADMIN-COM-02,Get scopes (RBAC),GET /scopes (admin/router/common.go),List permission scopes,Giữ nguyên,S,P0,Ready,
+Admin Common,ADMIN-COM-03,Get configurations,GET /configurations (admin/router/common.go),App config,Giữ nguyên,S,P0,Ready,
+Admin Common,ADMIN-COM-04,Update configurations,PUT /configurations (admin/router/common.go),Update app config,Giữ nguyên,S,P0,Ready,
+Admin Role,ADMIN-ROLE-01,Get list role,GET /roles (admin/router/role.go),List roles RBAC,Giữ nguyên,S,P0,Ready,
+Admin Migration,ADMIN-MIG-01,Migration scripts,Multiple GET /migration/* (admin/router/migration.go),"15 migration scripts (content-flow, event-reward, content-analytics, etc.)","N/A - không cần cho PH (DB fresh)",-,-,Done-Cut,
+i18n,I18N-01,Frontend creator i18n,frontend-green/src/locales (vi-VN.ts 86 dòng + tiếng Việt hard-code),Đa số tiếng Việt hard-code trong components,Replace + add EN + Filipino,L,P0,Partial,§A1 + §I18N-07 Filipino translation
+i18n,I18N-02,Admin i18n,admin/src/locales (vi-VN.ts 405 dòng + tiếng Việt hard-code),Tiếng Việt hard-code,Replace → EN,L,P0,Ready,Admin chỉ EN
+i18n,I18N-03,Backend error messages,internal/locale + service/social/* (tiếng Việt hard-code),Errors mixed Vietnamese hard-code + properties,Replace → EN + Filipino,M,P0,Partial,§I18N-07
+i18n,I18N-04,Email templates,internal/module/smtp (tiếng Việt hard-code),Email VN,EN + Filipino templates,S,P0,Partial,
+i18n,I18N-05,Date/Time format,frontend (dd/MM/yyyy),VN format,MM/dd/yyyy (PH convention),S,P0,Ready,
+i18n,I18N-06,Number/Currency format,internal/util/format/currency.go: ToCurrencyVND,"đ + dấu chấm thousands","₱ + comma thousands + 2 decimals (centavos)",S,P0,Ready,
+i18n,I18N-07,Filipino translation content,N/A,N/A,Cần native translator hoặc partner cung cấp text Filipino,L,P0,Blocked,§A1
+i18n,I18N-08,Language toggle UI,Frontend không có toggle,Single language,Build mới - support EN + Filipino,S,P0,Ready,§A3
+Phone Format,PHONE-01,Phone regex,internal/constants/constants.go:39 RegexPhoneNumber `^(0|\+84|84)(\d{9}|\d{10})$`,VN regex,`^(09|\+639|639)\d{9}$` PH 11 digits,S,P0,Ready,
+Phone Format,PHONE-02,Phone format util,internal/format/string.go: ToPhoneVN (+84 strip),VN format,Generic theo region (+63),S,P0,Ready,
+Currency,CUR-01,Currency formatter,internal/util/format/currency.go: ToCurrencyVND (`đ` no decimal dot thousands),VND format,PHP format (₱ + 2 decimals + comma),S,P0,Ready,
+Currency,CUR-02,Currency stored in DB,Integer VND (existing schema),Integer VND,Integer centavos (₱1 = 100 centavos),M,P0,Ready,§E5
+Branding,BRAND-01,VinFast Creator legacy cleanup,"Còn sót: README VINFAST CREATOR + email templates + assets Gen-G.png Green-Creator.png",Reference VinFast trong code/asset,Audit & xóa toàn bộ tham chiếu VinFast,S,P0,Ready,§I6
+Branding,BRAND-02,Logo,frontend assets (Gen-G.png + Green-Creator.png),Logo Gen-Green VN,Asset GreenSM PH,S,P0,Ready,§B2 partner đã cung cấp KV + Brand Guidelines PDF
+Branding,BRAND-03,Color palette,frontend theme,VN palette,Theo Brand Guideline GreenSM PH,S,P1,Ready,§B2
+Branding,BRAND-04,Email signature footer,internal/module/smtp/templates,Tiếng Việt + Interspace VN,EN + GreenSM Philippines (Pasay City),S,P0,Ready,§K3
+Branding,BRAND-05,Banner home + Campaign banner,FE assets,N/A,Banner 3:4 mobile + 20:8 desktop + 9:16 campaign,S,P0,Blocked,§B13 file thiết kế từ partner
+Branding,BRAND-06,OG title + description,FE meta tags,Mặc định,Dịch từ trang Indo Gen-Green,S,P0,Blocked,§L1 + §L2
+Branding,BRAND-07,GTM tracking,FE config,N/A,GTM-WTMZXPHC,S,P0,Ready,§B7
+Branding,BRAND-08,Hashtag campaign default,Event config,Tùy event,#GreenSM,S,P0,Ready,§B8
+Branding,BRAND-09,CTA Về Đối tác link,FE static,vinfast.vn,https://www.greengsm.ph/,S,P0,Ready,§B9
+Branding,BRAND-10,Favicon,FE assets,Favicon VN,Favicon GreenSM PH,S,P0,Ready,§L5
+Branding,BRAND-11,Font,FE theme,Default,Theo Brand Guideline,S,P0,Ready,§B6
+Contact Info,CONTACT-01,Hotline,FE static / config,Hotline VN,02-7777-8080,S,P0,Ready,§K1
+Contact Info,CONTACT-02,Email hỗ trợ,internal/module/smtp,support@vcreator.global,support.ph@greensm.com,S,P0,Ready,§K2
+Contact Info,CONTACT-03,Địa chỉ công ty,FE static,Hà Nội,6TH FLOOR TWO E-COM CENTER PASAY CITY 1300,S,P0,Ready,§K3
+Contact Info,CONTACT-04,Facebook page link,FE static,FB VN,facebook.com/greengsm.ph,S,P0,Ready,§B10
+Contact Info,CONTACT-05,Materials/Media kit,FE static,Google Drive VN,Google Drive PH (folder GreenSM),S,P0,Ready,§B11
+SMS,SMS-01,SMS provider,internal/service/otp.go: AccessTrade SMS (Zalo channel),AccessTrade SMS,SMS PH provider (TBD),M,P0,Blocked,§G1
+SMS,SMS-02,SMS sender ID,SMS provider config,Brand ID VN,Đăng ký sender ID với telco PH,S,P0,Blocked,§G2
+SMS,SMS-03,Bỏ Zalo channel,SMS_CHANNEL=Zalo (env),Zalo,Bỏ - dùng SMS thuần,S,P0,Ready,
+Compliance,COMP-01,DPA 2012 consent flow,N/A (chưa có ở source),N/A,Build mới: registration + login consent checkboxes,M,P0,Blocked,Legal partner cung cấp consent text
+Compliance,COMP-02,DPO appointment,N/A,N/A,Partner-side: appoint DPO trước launch,-,-,Blocked,§C3
+Compliance,COMP-03,NPC registration,N/A,N/A,Partner-side: đăng ký NPC trước launch,-,-,Blocked,§C4
+Infra,INFRA-01,Repo setup,N/A,vcreator,Tạo repo mới,S,P0,Blocked,§H1
+Infra,INFRA-02,AWS account/cluster,N/A,Cùng AT VN account,IP 54.169.3.115 + cluster mới hoàn toàn,M,P0,Partial,IP có; chờ confirm AWS account
+Infra,INFRA-03,MongoDB cluster,N/A,Atlas/self-hosted VN,Cluster mới + data fresh,M,P0,Blocked,§H4
+Infra,INFRA-04,Redis,N/A,Redis VN,Instance mới,S,P0,Ready,
+Infra,INFRA-05,MinIO storage,N/A,4 buckets VN,4 buckets mới (public/private/video/contract),S,P0,Ready,
+Infra,INFRA-06,Domain & DNS,N/A,vcreator.global,gen-green.ph (Cloudflare DNS),S,P0,Ready,§B4 + §H5
+Infra,INFRA-07,SSL/HTTPS,N/A,Có,Giữ nguyên,S,P0,Ready,
+Infra,INFRA-08,Email service (SMTP),internal/module/smtp,AWS SES VN region,SES Singapore region (gen-green.ph),S,P0,Ready,
+Infra,INFRA-09,CDN,N/A,TBD,Cloudflare hoặc CloudFront,S,P1,Pending,
+CMS Content,CMS-01,Support article ID,Cần partner cung cấp,N/A,IDs cho dev + prod,S,P0,Blocked,§I11
+CMS Content,CMS-02,Q&A article ID,Cần partner cung cấp,N/A,IDs cho dev + prod,S,P0,Blocked,§I11
+CMS Content,CMS-03,Term article ID,Cần partner cung cấp,N/A,IDs cho dev + prod,S,P0,Blocked,§I11
+CMS Content,CMS-04,Condition article ID,Cần partner cung cấp,N/A,IDs cho dev + prod,S,P0,Blocked,§I11
+CMS Content,CMS-05,Partner ID slug,Partner config trên ambassador,N/A,gengreen,S,P0,Ready,§B5
+CMS Content,CMS-06,Event ID,Event config trên ambassador,N/A,IDs cho dev + prod,S,P0,Blocked,§I12

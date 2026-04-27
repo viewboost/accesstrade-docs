@@ -1,0 +1,116 @@
+Module,Feature Code,Feature Name,Source Status,Vietnam Current State,Philippines Action,Effort,Priority,Owner,Status,Blockers,Notes
+Auth & User,AUTH-01,Đăng ký creator,Existed,"Form RegisterBody: Name + Email + City + Gender + Phone + Password + ConfirmPassword + Ref (pkg/public/model/request/user.go:150)",Giữ nguyên + đổi text EN/Filipino,S,P0,DISO,Ready,,
+Auth & User,AUTH-02,Verify số điện thoại (OTP),Existed,Phone +84 + OTP qua AccessTrade SMS (channel Zalo),Phone +63 + OTP qua SMS PH provider,M,P0,DISO,Blocked,§G1 SMS provider,Bỏ Zalo. Service OTP đã có (internal/service/otp.go)
+Auth & User,AUTH-03,Đăng nhập bằng Google,Existed,LoginWithGoogle handler (POST /login-with-google),Giữ nguyên,S,P0,DISO,Ready,,
+Auth & User,AUTH-04,Liên kết tài khoản TikTok,Existed,TikTok OAuth + crawl user info (token refresh),Giữ nguyên (global API),S,P0,DISO,Ready,,Để creator submit content TikTok
+Auth & User,AUTH-05,Crawl content Facebook,Existed,Scheduled job GET /crawl-content-facebook (Graph API + regex parse),Giữ nguyên,S,P0,DISO,Ready,,FB chỉ dùng crawl - KHÔNG có OAuth login
+Auth & User,AUTH-06,Crawl content Instagram,Missing,KHÔNG có (INSTAGRAM_IS_ENABLE=false),Giữ disabled,-,-,-,Done-Cut,,Chưa implement ở source
+Auth & User,AUTH-07,Profile cá nhân,Existed,"Form 2 bước (Update + CompleteProfile) + CCCD",Form tương tự + replace CCCD → multi-ID type,M,P0,Partner,Blocked,§F2 ID types,
+Auth & User,AUTH-08,Phân loại CBNV vs creator ngoài,Existed,"Model fields: StaffStatus, EmployeeCode, StaffVerifiedAt + workplace",GIỮ logic + init data cơ sở GreenSM PH,M,P0,Partner,Blocked,§I2 số cơ sở PH,Logic ready - chỉ chờ data
+Auth & User,AUTH-09,Staff verification,Existed,Full pipeline (pkg/admin/handler/employee_registry.go: import/match/apply),GIỮ logic + init data nhân viên GreenSM PH,M,P0,Partner,Blocked,§I2 employee data,Logic ready - chỉ chờ data
+Auth & User,AUTH-10,eKYC liveness + ID OCR,Existed,EkycInfoData model + SaveEkycInfo handler,Manual hay auto provider PH,L hoặc S,P1,Partner,Blocked,§F1 + §F3,Số giờ tính cho auto integration
+KYC,KYC-01,Upload ảnh ID 2 mặt,Existed,CreateIdentification handler + model IdentificationUser (CCCD),Multi-ID type 2 mặt,S,P0,Partner,Blocked,§F2,
+KYC,KYC-02,Liveness check (selfie video),Existed,Embedded trong EkycInfoData,Giữ nếu auto eKYC + bỏ nếu manual,M,P1,Partner,Blocked,§F1,
+KYC,KYC-03,TIN field (tax ID),Existed,Contract có IdentificationNumber field,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,§D1 - khách tự payout qua payroll
+Content Management,CONTENT-01,Đăng bài creator,Existed,"pkg/public/handler/content.go: Create (POST /events/{id}/content)",Giữ nguyên,S,P0,DISO,Ready,,
+Content Management,CONTENT-02,Quản lý content (CRUD),Existed,Full CRUD + filter + status (pkg/admin/handler/content.go),Giữ nguyên,S,P0,DISO,Ready,,
+Content Management,CONTENT-03,Hashtag rules,Existed,internal/service/content.go: CheckHashTag(),Giữ logic + default #GreenSM,S,P0,DISO,Ready,,§B8
+Content Management,CONTENT-04,Resubmit rejected content,Out-of-scope,Đang phát triển ở branch khác - chưa merge vào source PH fork,Out-of-scope,-,-,-,Done-Cut,,User chốt: bỏ qua
+Campaign & Event,CAMP-01,Event/Campaign management,Existed,Full CRUD admin (pkg/admin/handler/event.go) + model EventRaw,Giữ nguyên,M,P0,DISO,Ready,,
+Campaign & Event,CAMP-02,Browse campaign list,Existed,Event list/detail endpoints (GetList + GetDetailBySlug),Giữ nguyên,S,P0,DISO,Ready,,
+Campaign & Event,CAMP-03,Đăng ký tham gia campaign,Out-of-scope,Không có endpoint register/join,Out-of-scope,-,-,-,Done-Cut,,User chốt: bỏ qua
+Campaign & Event,CAMP-04,Tracking participation + reward,Existed,internal/service/event.go (46KB) + model EventReward,Giữ nguyên + đổi currency PHP,M,P0,DISO,Ready,,§I3 PHP only
+Reconciliation,RECON-01,Crawl content post-expiry (cron),Missing,KHÔNG có ở vCreator (PRD ở docs/reconciliation-v2 là cho techcombank),Out-of-scope,-,-,-,Done-Cut,,User confirm chưa có
+Reconciliation,RECON-02,Checklist auto-validate,Missing,KHÔNG có,Out-of-scope,-,-,-,Done-Cut,,
+Reconciliation,RECON-03,Admin force reject + reason,Existed,internal/service/content.go: RejectListContentByIds(reason),Giữ nguyên text EN,S,P0,DISO,Ready,,
+Reconciliation,RECON-04,Snapshot dữ liệu đối soát,Missing,KHÔNG có (model reconciliation.go có nhưng snapshot mechanism unclear),Out-of-scope,-,-,-,Done-Cut,,
+Reconciliation,RECON-05,Classification filter,Partial,Có AccountType filter trong admin - không có classification service,Giữ nguyên,S,P1,DISO,Ready,,
+Reconciliation,RECON-06,Fractional reward by statistic,Missing,KHÔNG có (EventReward chỉ flat),Out-of-scope,-,-,-,Done-Cut,,User confirm chưa có
+Payment & Payout,PAY-01,Bank account binding,Existed,CreateUserBankCard + UpdateUserBankCard + model UserBankCardRaw,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,§E1 + §I9 - khách tự payout qua payroll
+Payment & Payout,PAY-02,E-wallet binding,Missing,KHÔNG có ở vCreator,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Payment & Payout,PAY-03,Withdraw request,Existed,pkg/public/handler/withdraw.go: Create + model WithdrawRaw,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Payment & Payout,PAY-04,QR payment (VietQR/napas247),Missing,KHÔNG có integration ở source,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Payment & Payout,PAY-05,Bank reconciliation auto match (Sepay),Missing,KHÔNG có Sepay webhook,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Payment & Payout,PAY-06,Cash flow log,Existed,internal/service/cashflow.go + model CashFlowRaw,Giữ logic - tracking commission earned,S,P0,DISO,Ready,,§E5 PHP centavos integer
+Payment & Payout,PAY-07,Payout schedule,Partial,Transfer model có - không có schedule logic,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Payment & Payout,PAY-08,Commission report export (cho khách payroll),Partial,Reconciliation model + export handler có,Repurpose: export CSV/Excel cho khách import payroll,M,P0,Partner,Blocked,§E6 format export,Mới - thay thế bank reconciliation
+Tax (BIR),TAX-01,Auto withhold tax,Existed,Logic clear: CashFlowActionTax + TotalCashTax + tax calculation flow,BỎ KHỎI SCOPE - khách tự payout qua payroll,-,-,-,Done-Cut,,§D1 toàn bộ Tax bỏ
+Tax (BIR),TAX-02,Tax refund flow,Existed,Logic clear: CashFlowActionTaxRefund + TotalCashRefundTax,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Tax (BIR),TAX-03,Tax page (frontend),Existed,Frontend pages/account/tax/,BỎ KHỎI SCOPE - hide page,-,-,-,Done-Cut,,
+Tax (BIR),TAX-04,Cấp Form 2307 PDF,Missing,KHÔNG có ở vCreator,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Tax (BIR),TAX-05,BIR Form 1601-EQ + 1604-E export,Missing,KHÔNG có,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Tax (BIR),TAX-06,Tax regime selection,Missing,KHÔNG có,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Tax (BIR),TAX-07,VAT registration flag,Missing,KHÔNG có,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Contract,CONTRACT-01,Hợp đồng điện tử HTML template,Existed,internal/constants/contract.go: ContractTemplate (786 dòng tiếng Việt + luật VN),Rewrite EN/Bilingual + luật PH (RA 8792 + DPA 2012),L,P0,Partner,Blocked,Legal team cung cấp,§C1 entity + §C5 jurisdiction
+Contract,CONTRACT-02,Click-to-sign + OTP,Existed,UpsertContractInfo + CreateEcontract + OTPPurposeSignContractOnline,Giữ logic + audit trail mạnh,S,P0,DISO,Ready,,§I4 RA 8792 § 8 OK
+Contract,CONTRACT-03,Upload contract PDF lên Google Drive,Existed,Sau khi creator ký xong - upload PDF hợp đồng lên Google Drive folder,Giữ logic + folder mới cho PH,S,P0,DISO,Ready,,
+Contract,CONTRACT-04,Contract revocation,Missing,KHÔNG có revocation endpoint/logic,Skip - không trong source,-,-,-,Done-Cut,,
+Contract,CONTRACT-05,TOS / Privacy Policy display,Partial,News/article system generic - không có route TOS/PP riêng,Rewrite theo DPA 2012 + thêm route hoặc dùng news,M,P0,Partner,Blocked,Legal team cung cấp text,
+Contract,CONTRACT-06,DPA 2012 consent flow,Missing,KHÔNG có ở vCreator,Build mới,M,P0,Partner,Blocked,§C3 DPO + §C4 NPC,
+Notification,NOTIF-01,Email transactional,Existed,Module internal/module/smtp/,EN + Filipino templates,S,P0,DISO,Ready,,§A1
+Notification,NOTIF-02,SMS OTP,Existed,AccessTrade SMS với channel Zalo,SMS PH provider,M,P0,Partner,Blocked,§G1 provider,
+Notification,NOTIF-03,Push notification (Firebase),Existed,internal/service/notification.go: firebase.SendToListDevices(),Giữ nguyên,S,P0,DISO,Ready,,
+Notification,NOTIF-04,Telegram admin alert,Missing,Module có nhưng KHÔNG wire route → coi như không có,Out-of-scope,-,-,-,Done-Cut,,User chốt: không có = không làm
+Notification,NOTIF-05,In-app notification,Existed,pkg/public/handler/notification.go + model NotificationRaw,Giữ logic + đổi text EN/Filipino,S,P0,DISO,Ready,,
+Admin Backoffice,ADMIN-01,Dashboard analytics v2 (13 widgets),Out-of-scope,Dashboard mới chưa có ở version này (đang dev riêng),Out-of-scope,-,-,-,Done-Cut,,User chốt: không bao gồm version PH
+Admin Backoffice,ADMIN-02,Creator management,Existed,pkg/admin/handler/user.go user list/search; CCCD via EmployeeCode,Giữ logic + đổi search field theo PhilID,S,P0,DISO,Partial,§F2 search field,
+Admin Backoffice,ADMIN-03,Filter CBNV/Cơ sở,Existed,"Workplace model: WorkplaceBrandCode, WorkplaceCompanyCode, WorkplaceUnitCode",Giữ logic + init cơ sở GreenSM PH,S,P0,Partner,Blocked,§I2,
+Admin Backoffice,ADMIN-04,Content review (admin reject),Existed,pkg/admin/handler/content.go review/reject,Giữ nguyên,S,P0,DISO,Ready,,
+Admin Backoffice,ADMIN-05,Export chọn cột,Existed,pkg/admin/handler/export.go: Export() field selection,Giữ nguyên,S,P0,DISO,Ready,,
+Admin Backoffice,ADMIN-06,Hashtag cá nhân,Existed,User model: Hashtag field,Giữ nguyên,S,P1,DISO,Ready,,
+Admin Backoffice,ADMIN-07,Tax report,Partial,Frontend pages/account/tax/ + backend tax fields,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Admin Backoffice,ADMIN-08,Bank reconciliation export,Partial,Reconciliation model + export handler,Repurpose → Commission report export (PAY-08),-,-,-,Done-Cut,,
+Admin Backoffice,ADMIN-09,Quick action buttons,Existed,pkg/admin/handler/quick_action.go + model QuickActionRaw,Giữ nguyên,S,P1,DISO,Ready,,
+Admin Backoffice,ADMIN-10,Audit log,Existed,pkg/admin/handler/audit.go + model AuditRaw,Giữ nguyên,S,P0,DISO,Ready,,
+Admin Backoffice,ADMIN-11,Region filter (multi-tenant),Missing,KHÔNG có multi-region,N/A (fork riêng),-,-,-,Done-Cut,,
+Referral,REF-01,Referral system (mã giới thiệu),Existed,User model: ReferralInfo + handler Referral(),Giữ nguyên,S,P1,DISO,Ready,,
+Referral,REF-02,Reward referral,Existed,Model ReferralInfo trong source - giữ nguyên logic hiện tại,Giữ nguyên,S,P1,DISO,Ready,,
+Affiliate (BỎ),AFF-01,Scalef integration,Missing,KHÔNG có ở vCreator codebase,BỎ HẲN,-,-,-,Done-Cut,,§I5
+Affiliate (BỎ),AFF-02,Affiliate sales tracking,Missing,KHÔNG có,BỎ HẲN,-,-,-,Done-Cut,,
+Branding (Cleanup),BRAND-01,VinFast Creator legacy cleanup,Existed,Còn sót: README VINFAST CREATOR + email templates + Gen-G.png Green-Creator.png,Audit & xóa toàn bộ,S,P0,DISO,Ready,,§I6
+Branding (Cleanup),BRAND-02,Logo,Existed,Logo Gen-Green VN,Asset GreenSM PH,S,P0,DISO,Ready,,§B2
+Branding (Cleanup),BRAND-03,Color palette,Existed,VN palette,Theo Brand Guideline GreenSM PH,S,P1,DISO,Ready,,§B2
+Branding (Cleanup),BRAND-04,Email signature footer,Existed,Tiếng Việt + Interspace VN,EN + GreenSM PH (Pasay),S,P0,DISO,Ready,,§K3
+Branding (Cleanup),BRAND-05,Banner home + Campaign banner,Existed,Banner config có,Banner 3:4 + 20:8 + 9:16,S,P0,Partner,Blocked,§B13 file thiết kế,
+Branding (Cleanup),BRAND-06,OG title + description,Existed,SEO meta config,Dịch từ trang Indo Gen-Green,S,P0,Partner,Blocked,§L1 + §L2,
+Branding (Cleanup),BRAND-07,GTM tracking,Existed,Setup script có,GTM-WTMZXPHC,S,P0,DISO,Ready,,§B7
+Branding (Cleanup),BRAND-08,Hashtag campaign default,Existed,Tùy event,#GreenSM,S,P0,DISO,Ready,,§B8
+Branding (Cleanup),BRAND-09,CTA Về Đối tác link,Existed,vinfast.vn,https://www.greengsm.ph/,S,P0,DISO,Ready,,§B9
+Branding (Cleanup),BRAND-10,Favicon,Existed,Favicon VN,Favicon GreenSM PH,S,P0,DISO,Ready,,§L5
+Branding (Cleanup),BRAND-11,Font,Existed,Default font,Theo Brand Guideline,S,P0,DISO,Ready,,§B6
+Infra,INFRA-01,Repo setup,N/A,vcreator,Tạo repo mới,S,P0,Partner,Blocked,§H1 + §H2,
+Infra,INFRA-02,AWS account/cluster,N/A,Cùng AT VN account,IP 54.169.3.115 + cluster mới,M,P0,Partner,Partial,§H3 confirm AWS,IP đã có
+Infra,INFRA-03,MongoDB,N/A,Atlas/self-hosted VN,Cluster mới + data fresh,M,P0,Partner,Blocked,§H4,
+Infra,INFRA-04,Redis,N/A,Redis VN,Instance mới,S,P0,DISO,Ready,,
+Infra,INFRA-05,MinIO storage,N/A,4 buckets VN,4 buckets mới,S,P0,DISO,Ready,,
+Infra,INFRA-06,Domain & DNS,N/A,vcreator.global,gen-green.ph (Cloudflare),S,P0,DISO,Ready,,§B4 + §H5
+Infra,INFRA-07,SSL/HTTPS,N/A,Có,Giữ nguyên,S,P0,DISO,Ready,,
+Infra,INFRA-08,Email service (SMTP),Existed,AWS SES VN region,SES Singapore (gen-green.ph),S,P0,DISO,Ready,,
+Infra,INFRA-09,CDN,N/A,TBD,Cloudflare hoặc CloudFront,S,P1,Partner,Pending,Confirm provider,
+Compliance,COMP-01,DPA 2012 consent flow,Missing,KHÔNG có ở vCreator,BẮT BUỘC build mới: registration + login consent,M,P0,Partner,Blocked,Legal text,
+Compliance,COMP-02,DPO appointment,N/A,N/A,BẮT BUỘC trước launch (partner-side),-,-,Partner,Blocked,§C3,Partner-side action
+Compliance,COMP-03,NPC registration,N/A,N/A,BẮT BUỘC trước launch (partner-side),-,-,Partner,Blocked,§C4,Partner-side action
+Compliance,COMP-04,BIR registration,N/A,N/A,BỎ KHỎI SCOPE,-,-,-,Done-Cut,,
+Compliance,COMP-05,Right to access/erasure (DPA),Missing,KHÔNG có ở vCreator,Build mới: data export + delete account,M,P1,DISO,Ready,,
+i18n,I18N-01,Frontend creator i18n,Partial,vi-VN.ts 86 dòng + tiếng Việt hard-code khắp components,Replace + add EN + Filipino,L,P0,DISO,Partial,§I18N-07 Filipino,EN start; Filipino chờ
+i18n,I18N-02,Frontend admin i18n,Partial,vi-VN.ts 405 dòng + tiếng Việt hard-code,Replace → EN,L,P0,DISO,Ready,,Admin chỉ EN
+i18n,I18N-03,Backend error messages i18n,Partial,Tiếng Việt hard-code service/social/...,Replace → EN + Filipino,M,P0,DISO,Partial,Filipino,
+i18n,I18N-04,Email templates i18n,Existed,Tiếng Việt hard-code,EN + Filipino templates,S,P0,DISO,Partial,Filipino,
+i18n,I18N-05,Date/Time format,Existed,dd/MM/yyyy,MM/dd/yyyy (PH convention),S,P0,DISO,Ready,,
+i18n,I18N-06,Number/Currency format,Existed,1.000.000đ,"1,000,000 ₱ (comma + 2 decimals)",S,P0,DISO,Ready,,
+i18n,I18N-07,Filipino translation content,Missing,N/A,BẮT BUỘC: native translator hoặc partner cung cấp text,L,P0,Partner,Blocked,Translator,§A1 đã chốt EN + Filipino
+i18n,I18N-08,Language toggle UI,Missing,Không có toggle,Build mới do support 2 languages,S,P0,DISO,Ready,,§A3
+Phone Format,PHONE-01,Phone regex validation,Existed,^(0|\+84|84)(\d{9}|\d{10})$ (constants/constants.go),^(09|\+639|639)\d{9}$,S,P0,DISO,Ready,,
+Phone Format,PHONE-02,Phone format util,Existed,format.ToPhoneVN() (+84 strip),Generic theo region,S,P0,DISO,Ready,,
+Phone Format,PHONE-03,SMS country code config,Existed,+84,+63,S,P0,DISO,Ready,,
+Contact Info,CONTACT-01,Hotline hỗ trợ creator,Existed,Hotline VN config,02-7777-8080,S,P0,DISO,Ready,,§K1
+Contact Info,CONTACT-02,Email hỗ trợ creator,Existed,support@vcreator.global,support.ph@greensm.com,S,P0,DISO,Ready,,§K2
+Contact Info,CONTACT-03,Địa chỉ công ty,Existed,Hà Nội,6TH FLOOR TWO E-COM CENTER PASAY CITY 1300,S,P0,DISO,Ready,,§K3
+Contact Info,CONTACT-04,Facebook page link,Existed,FB VN,facebook.com/greengsm.ph,S,P0,DISO,Ready,,§B10
+Contact Info,CONTACT-05,Materials/Media kit,Existed,Google Drive VN,Google Drive PH (folder GreenSM),S,P0,DISO,Ready,,§B11
+CMS Content,CMS-01,Support article,Existed,vCreator CMS articles,Cần ID article cho dev + prod,S,P0,Partner,Blocked,§I11,
+CMS Content,CMS-02,Q&A article,Existed,vCreator CMS articles,Cần ID article cho dev + prod,S,P0,Partner,Blocked,§I11,
+CMS Content,CMS-03,Term article,Existed,vCreator CMS articles,Cần ID article cho dev + prod,S,P0,Partner,Blocked,§I11,
+CMS Content,CMS-04,Condition article,Existed,vCreator CMS articles,Cần ID article cho dev + prod,S,P0,Partner,Blocked,§I11,
+CMS Content,CMS-05,Partner ID,Existed,vCreator partner config,gengreen,S,P0,DISO,Ready,,§B5
+CMS Content,CMS-06,Event ID,Existed,vCreator event config,Cần ID event cho dev + prod,S,P0,Partner,Blocked,§I12,

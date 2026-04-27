@@ -1,0 +1,68 @@
+Group,Code,Category,Question,Vietnam Current State,Suggested Options,Answer,Status,PIC,Notes
+A. Language,A1,Ngôn ngữ,Hỗ trợ EN-only hay EN + Filipino?,100% Tiếng Việt (vi-VN),EN-only | EN + Filipino,EN + Filipino (Tagalog),Done,Partner,File Onboarding §46. Cần native translator. Tăng ~1 tuần effort i18n
+A. Language,A2,Ngôn ngữ,Default language khi user vào lần đầu?,vi-VN default,EN | Filipino | Auto-detect,,Pending,Partner,Khuyến nghị EN default
+A. Language,A3,Ngôn ngữ,Có cần language toggle trên UI không?,Không có toggle,Có | Không,Có,Done,DISO,Bắt buộc do support 2 ngôn ngữ
+B. Branding,B1,Thương hiệu,Tên brand chính thức trên UI?,Gen-Green / VinFast Creator (legacy),,Green SM Philippines / GreenSM PH,Done,Partner,File §43 hashtag #GreenSM. KHÔNG phải Gen-Green generic — đây là GreenSM (VinFast taxi/transport service)
+B. Branding,B2,Thương hiệu,Logo & color palette: dùng VN hay version PH?,Logo VN (Gen-G.png Green-Creator.png),VN | PH mới,Asset PH mới (KV khách + Brand Guidelines PDF),Done,Partner,File §11 + §23. KV: drive.google.com/file/d/1FC7zrDDtfgUYV6qA1RGQ_rzFsgJRzbY7
+B. Branding,B3,Thương hiệu,Email sender domain?,noreply@vcreator.global,,noreply@gen-green.ph hoặc support.ph@greensm.com,Pending,Partner,Support email partner: support.ph@greensm.com (file §35)
+B. Branding,B4,Thương hiệu,Domain frontend production?,vcreator.global,,https://gen-green.ph/gengreen,Done,Partner,File §7. Trỏ về IP 54.169.3.115
+B. Branding,B5,Thương hiệu,Partner ID slug?,N/A,,gengreen,Done,Partner,File §3
+B. Branding,B6,Thương hiệu,Font?,Mặc định,,Theo Brand Guideline + trang Indo Gen Green,Done,Partner,File §15
+B. Branding,B7,Thương hiệu,GTM ID?,N/A,,GTM-WTMZXPHC,Done,Partner,File §27
+B. Branding,B8,Thương hiệu,Hashtag campaign?,N/A,,#GreenSM,Done,Partner,File §43
+B. Branding,B9,Thương hiệu,Link redirect CTA Về Đối tác?,N/A,,https://www.greengsm.ph/,Done,Partner,File §40
+B. Branding,B10,Thương hiệu,Facebook page?,N/A,,https://www.facebook.com/greengsm.ph,Done,Partner,File §41
+B. Branding,B11,Thương hiệu,Materials/Kho tư liệu?,N/A,,https://drive.google.com/drive/folders/1LBPynskkwPBqoZ_1tAWAO_DlJyud-KB5,Done,Partner,File §42
+B. Branding,B12,Thương hiệu,File design Figma?,N/A,,https://www.figma.com/design/9j52U0cygugj0b4ajkLn5j/-P--GreenSM-PHIL---Creators,Done,Partner,File §49 - PIC: Hieu Ta Trung
+B. Branding,B13,Thương hiệu,Banner home + Ảnh chiến dịch?,N/A,Banner 3:4 mobile / 20:8 desktop / 9:16 campaign,,Pending,Partner,File §16-22 - cần file thiết kế
+C. Legal,C1,Pháp lý,AT có entity Philippines chưa?,Interspace Vietnam ký Bên A,Có entity PH | Ký xuyên biên giới qua AT VN,,Pending,Partner,Ảnh hưởng tax + jurisdiction
+C. Legal,C2,Pháp lý,Bên A trong contract điền tên gì + địa chỉ?,CÔNG TY TNHH INTERSPACE VIỆT NAM,,GreenSM Philippines / 6TH FLOOR TWO E-COM CENTER BAYSHORE AVE MALL OF ASIA COMPLEX BRGY 76 PASAY CITY 1300,Done,Partner,File §36-39. Phone: 02-7777-8080. Email: support.ph@greensm.com
+C. Legal,C3,Pháp lý,Đã có Data Protection Officer (DPO)?,Không yêu cầu,Có | Chưa,,Pending,Partner,DPA 2012 PH BẮT BUỘC có DPO
+C. Legal,C4,Pháp lý,Đã đăng ký với National Privacy Commission (NPC)?,N/A,Đã đăng ký | Chưa,,Pending,Partner,BẮT BUỘC trước launch
+C. Legal,C5,Pháp lý,Jurisdiction dispute resolution?,Tòa án Hà Nội,Manila courts | PDRCI arbitration,,Pending,Partner,Theo template legal cung cấp
+D. Tax,D1,Thuế,AT Philippines đã có TIN + BIR Form 2303?,Có MST của Interspace VN,Đã có | Chưa,N/A — BỎ KHỎI SCOPE,Done,Partner,File §48: khách tự thanh toán hoa hồng cho creator qua lương → hệ thống KHÔNG cần tax module
+D. Tax,D2,Thuế,EWT rate áp dụng cho creator?,TNCN 10% auto trừ tại nguồn,5% non-VAT | 10% professional fees | Cả 2,N/A — BỎ KHỎI SCOPE,Done,Partner,Khách tự trả qua lương
+D. Tax,D3,Thuế,Creator chọn tax regime?,Không có,8% Gross IT | Graduated | Cho creator chọn,N/A — BỎ KHỎI SCOPE,Done,Partner,
+D. Tax,D4,Thuế,Form 2307 generator?,Không cấp,Auto generate quarterly | Creator request,N/A — BỎ KHỎI SCOPE,Done,Partner,Khách tự lo qua HR/payroll
+D. Tax,D5,Thuế,TIN verify với BIR API?,MST format check,BIR API verify | Format check only,N/A — BỎ KHỎI SCOPE,Done,Partner,
+D. Tax,D6,Thuế,Báo cáo BIR Form 1601-EQ + 1604-E?,TNCN VN,Có | Manual,N/A — BỎ KHỎI SCOPE,Done,Partner,
+E. Payment,E1,Thanh toán,Phương thức payout Phase 1?,Bank transfer VN (VietQR + napas247),InstaPay/PESONet | GCash | Maya | GrabPay | Manual CSV,N/A — BỎ KHỎI SCOPE,Done,Partner,File §48: khách tự payout qua payroll → KHÔNG cần payment integration
+E. Payment,E2,Thanh toán,Provider tích hợp?,Sepay + bank API,Xendit | PayMongo | Brankas | GCash B2B | Manual CSV,N/A — BỎ KHỎI SCOPE,Done,Partner,
+E. Payment,E3,Thanh toán,Min withdraw threshold?,50.000đ,₱100 | ₱200 | ₱500 | Khác,N/A — không có withdraw flow,Done,Partner,
+E. Payment,E4,Thanh toán,Frequency payout?,Theo period đối soát,Weekly | Bi-weekly | Monthly | Theo campaign,N/A — khách tự payout,Done,Partner,
+E. Payment,E5,Thanh toán,Currency lưu trong DB?,Integer VND,Integer centavos | Decimal,Integer centavos (₱1 = 100 centavos),Done,DISO,Vẫn cần để hiển thị commission tracking
+E. Payment,E6,Thanh toán,Có cần export commission report cho khách?,Có,Có | Không,,Pending,Partner,Cần xác nhận format export (CSV/Excel) để khách import vào payroll
+F. KYC,F1,Định danh,Phase 1 dùng manual hay auto eKYC?,eKYC VN auto,Manual (admin verify) | Auto (Jumio/Sumsub/HyperVerge/VeriCheck),,Pending,Partner,Nếu khách lo HR/payroll thì có thể chỉ manual hoặc bỏ KYC
+F. KYC,F2,Định danh,ID types accept?,CCCD only,PhilSys ID | TIN ID | UMID | Driver's License | Passport | SSS | Voter's ID | Postal ID,,Pending,Partner,Multi-select. PhilID + Driver's License + Passport là common
+F. KYC,F3,Định danh,eKYC provider preference?,FPT.AI / VNPT,Jumio | Sumsub | HyperVerge | VeriCheck | Khác,,Pending,Partner,
+G. SMS,G1,Thông báo,SMS provider preference?,AccessTrade SMS (eSMS/Zalo),Semaphore | Globe Labs | Twilio | Movider,,Pending,Partner,Bỏ Zalo channel cho PH
+G. SMS,G2,Thông báo,SMS sender ID đăng ký với telco PH chưa?,Brand ID VN,Đã có | Chưa,,Pending,Partner,Globe + Smart + Dito
+G. SMS,G3,Thông báo,Telegram admin notification?,Telegram room VN,Channel PH mới | Reuse VN | Không cần,,Pending,Partner,
+H. Repo,H1,Hạ tầng,Tên repo mới?,vcreator,greensm-ph | gengreen-ph | gen-green-ph,,Pending,Partner,Đề xuất greensm-ph (theo brand) hoặc gengreen-ph (theo PARTNER_ID slug)
+H. Repo,H2,Hạ tầng,Git host?,GitHub,GitHub | GitLab,,Pending,Partner,Cùng org với vcreator?
+H. Repo,H3,Hạ tầng,AWS account?,Cùng account AT VN,Account mới | Sub-account AT | Cùng account,Server có sẵn IP 54.169.3.115,Pending,Partner,File §6 - IP đã sẵn sàng. Cần xác nhận account AWS
+H. Repo,H4,Hạ tầng,MongoDB cluster?,Atlas / self-hosted,Atlas mới | Self-hosted,,Pending,Partner,
+H. Repo,H5,Hạ tầng,Domain DNS provider?,TBD,Cloudflare | Route53 | Khác,Cloudflare,Done,Partner,File §6: nếu domain trên cloudflare cần lên cloudflare để trỏ
+I. Scope,I1,Chức năng,Reconciliation v2/v3 cần thay đổi gì cho PH?,Crawl TikTok/FB/IG content,Giữ 100% | Thay timezone | Thay hashtag rules,,Pending,Partner,GreenSM = transport service → có thể có hashtag rules riêng (#GreenSM)
+I. Scope,I2,Chức năng,CBNV ở PH = nhân viên GreenSM PH?,CBNV = nhân viên Vin (57 cơ sở),Số cơ sở PH,,Pending,Partner,GreenSM PH có thể có structure khác — cần init data
+I. Scope,I3,Chức năng,Multi-currency support?,VND only,PHP only | Multi-currency,PHP only,Done,Partner,File §47: Peso
+I. Scope,I4,Chức năng,Contract auto-sign sau OTP?,Auto-sign sau OTP,Auto-sign | DocuSign-like,,Pending,Partner,PH RA 8792 § 8 công nhận click-to-sign
+I. Scope,I5,Chức năng,Bỏ hẳn Scalef integration?,Có Scalef,Bỏ hẳn | Comment out,Bỏ hẳn (comment out),Done,User,User chốt từ trước
+I. Scope,I6,Chức năng,VinFast Creator branding cleanup?,Có legacy text/asset,Có audit & xóa | Bỏ qua,Có audit & xóa,Done,User,User chốt từ trước
+I. Scope,I7,Chức năng,Min creator age?,18 tuổi,18 | Khác,,Pending,Partner,
+I. Scope,I8,Chức năng,Tax & Payment module — bỏ hẳn hay giữ ẩn?,Có full module,BỎ HẲN | Giữ logic ẩn,BỎ HẲN khỏi UI + comment out logic backend,Done,Partner,File §48: khách tự payout qua lương → BỎ HẲN tax + withdraw flow
+I. Scope,I9,Chức năng,Có cần Bank account binding không?,Có,Có | Không,Không (do khách tự payout qua payroll),Pending,Partner,Nếu không payout thì không cần thu thập bank account
+I. Scope,I10,Chức năng,Loại sản phẩm/dịch vụ chính?,Product affiliate (Shopee/Lazada),,GreenSM transport (taxi/ride-hailing),Done,Partner,File §40: greengsm.ph = taxi service. Creator quảng bá ride service KHÔNG bán product
+I. Scope,I11,Chức năng,Support article + Q&A + Term + Condition trên CMS?,Có (vCreator CMS),IDs cho dev + prod,,Pending,Partner,File §28-31
+I. Scope,I12,Chức năng,Event/Campaign ID trên hệ thống ambassador?,N/A,IDs cho dev + prod,,Pending,Partner,File §33
+J. Timeline,J1,Tiến độ,Deadline launch production?,N/A,3 tuần | 4 tuần | Khác,~3 tuần,Done,User,User chốt
+J. Timeline,J2,Tiến độ,Có UAT period?,TBD,UAT 3-5 ngày | Launch trực tiếp,,Pending,Partner,
+J. Timeline,J3,Tiến độ,Gen-Green PH cử người làm UAT?,TBD,Có (tên) | Không,Hieu Ta Trung (designer),Pending,Partner,File §49 - PIC design. Cần xác nhận PIC UAT riêng
+K. Contact,K1,Liên hệ,Phone hỗ trợ creator hiển thị trên app?,N/A,,02-7777-8080,Done,Partner,File §34
+K. Contact,K2,Liên hệ,Email hỗ trợ creator?,N/A,,support.ph@greensm.com,Done,Partner,File §35
+K. Contact,K3,Liên hệ,Địa chỉ công ty hiển thị?,N/A,,6TH FLOOR TWO E-COM CENTER BAYSHORE AVE MALL OF ASIA COMPLEX BRGY 76 PASAY CITY 1300,Done,Partner,File §36-39
+L. SEO,L1,SEO,OG Title?,N/A,,Dịch từ trang Indo Gen Green,Pending,Partner,File §13. Cần partner cung cấp text cụ thể
+L. SEO,L2,SEO,OG Description?,N/A,,Dịch từ trang Indo Gen Green,Pending,Partner,File §14
+L. SEO,L3,SEO,SEO Keywords?,N/A,,,Pending,Partner,File §24 (optional)
+L. SEO,L4,SEO,OG Image (1200x630)?,N/A,,,Pending,Partner,File §25 (optional)
+L. SEO,L5,SEO,Favicon?,N/A,,https://drive.google.com/file/d/1DwtUdx3I8-qu_9axyp-El3ZgNceiA6i3,Done,Partner,File §12
