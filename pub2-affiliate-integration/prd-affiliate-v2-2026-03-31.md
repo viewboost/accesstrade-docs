@@ -80,7 +80,7 @@ Nâng cấp chức năng tạo affiliate link: cho phép influencer nhập custo
 - [x] **URL validation:** Backend validate format URL (http/https only), block javascript:/data: schemes
 - [x] **Link history:** Section "Lịch sử tạo link" hiển thị danh sách link đã tạo cho campaign hiện tại
 - [x] **Search by name:** Tìm kiếm link theo tên trong history (debounced, regex escaped)
-- [x] **History card:** Mỗi link hiển thị: tên (hoặc "Chưa đặt tên"), short link, ngày tạo, nút copy, status badge
+- [x] **History card:** Mỗi link hiển thị: tên (hoặc "Chưa đặt tên"), short link, ngày tạo, nút copy
 - [x] **Layout 2 cột:** Bên trái 50% = accordion mô tả, bên phải 50% = form + history (sticky)
 - [x] **"Tạo thêm link mới":** Sau khi tạo xong, hiện kết quả + nút tạo thêm
 - [x] **Backward compatible:** API vẫn hoạt động khi gọi POST không có body (default = campaign URL)
