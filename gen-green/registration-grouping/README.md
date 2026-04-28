@@ -21,7 +21,7 @@
 
 | File | Mục đích | Audience |
 |------|---------|----------|
-| **[overview-v2-import-logic.md](overview-v2-import-logic.md)** | Giải thích logic import dễ hiểu — 8 action types, flowchart match, 2 chế độ rà soát, workflow đầy đủ, FAQ | HR, PM, QA |
+| **[overview-v2-import-logic.md](overview-v2-import-logic.md)** | Giải thích logic import dễ hiểu — 9 action types, flowchart match, 2 chế độ rà soát, workflow đầy đủ, FAQ | HR, PM, QA |
 | **[prd-registration-v2-2026-04-12.md](prd-registration-v2-2026-04-12.md)** | PRD v2.3 sau khi đã ship — 17 FRs + 5 NFRs + 8 endpoints + known limitations | Dev, Tech Lead |
 | **[overview.md](overview.md)** | Bối cảnh business V1+V2 tổng (legacy, dùng tham khảo context) | All |
 | **[prd-registration-v1-2026-04-12.md](prd-registration-v1-2026-04-12.md)** | PRD V1 — popup cập nhật profile + workplace cascading + admin verify manual | Dev (V1 prerequisite) |
@@ -32,13 +32,13 @@
 |------|----------------|
 | **[VP_Mẫu danh sách trường CBNV 1.xlsx](VP_Mẫu danh sách trường CBNV 1.xlsx)** | Template HR Vin cung cấp — chứa header + dropdown đơn vị (cột J). HR copy template này, điền data từ dòng 5 trở đi. |
 | **[sample-import-step1-initial.xlsx](sample-import-step1-initial.xlsx)** | File test bước 1 — baseline. 7 rows: 2 user Match A + 5 nhân viên mới. Upload với toggle "Rà soát nghỉ việc" **TẮT** rồi Apply. |
-| **[sample-import-step2-mixed.xlsx](sample-import-step2-mixed.xlsx)** | File test bước 2 — cover full 8 actions. Upload sau khi Apply file 1, **BẬT** toggle "Rà soát nghỉ việc". Preview sẽ thấy đầy đủ counters auto_verified/cancelled/transferred/missing/etc. |
+| **[sample-import-step2-mixed.xlsx](sample-import-step2-mixed.xlsx)** | File test bước 2 — cover full 9 actions. Upload sau khi Apply file 1, **BẬT** toggle "Rà soát nghỉ việc". Preview sẽ thấy đầy đủ counters auto_verified/cancelled/transferred/missing/etc. |
 
 ---
 
 ## 🧪 Test Workflow 2 bước
 
-Để demo đầy đủ 8 action types trên dev/staging:
+Để demo đầy đủ 9 action types trên dev/staging:
 
 ### Bước 1 — Tạo registry baseline
 1. Mở admin → trang `Danh sách nhân viên` (`/employee-registry`)
@@ -48,7 +48,7 @@
 5. Counters expected: `auto_verified=2, new_record=5, total=7`
 6. Click `Apply` → confirm modal → registry insert 7 records, 2 user verified
 
-### Bước 2 — Mixed scenarios cover full 8 actions
+### Bước 2 — Mixed scenarios cover full 9 actions
 1. Quay lại trang `Danh sách nhân viên`
 2. Click `Import Excel` → upload [sample-import-step2-mixed.xlsx](sample-import-step2-mixed.xlsx)
 3. Toggle `Rà soát nhân viên nghỉ việc`: **BẬT** (full-dump mode)

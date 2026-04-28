@@ -23,7 +23,7 @@ V2 xây Employee Registry + Import Pipeline trên nền V1 (user popup khai mã 
 3. Quản lý lifecycle: điều chuyển, nghỉ việc, grace period
 4. Audit trail đầy đủ cho mọi thao tác
 
-**Outcome:** Admin upload file Excel → preview 8 actions → bấm Apply → user được verify/reject/transferred + cron daily xử lý nghỉ việc sau 7 ngày grace period.
+**Outcome:** Admin upload file Excel → preview 9 actions → bấm Apply → user được verify/reject/transferred + cron daily xử lý nghỉ việc sau 7 ngày grace period.
 
 ---
 
@@ -52,12 +52,13 @@ V2 xây Employee Registry + Import Pipeline trên nền V1 (user popup khai mã 
 ├──────────────────────┼───────┼──────────┼──────────────────────────────┤
 │ cancelled_mismatch   │ 🔴 Red │ 1        │ Reject user, clear staff fields│
 │ transferred          │ 🟠 Org │ 2        │ Update workplace, giữ verified│
-│ missing_from_file    │ 🟠 Org │ 3        │ Schedule removal +7d (opt)   │
-│ auto_verified        │ 🟡 Ylw │ 4        │ Set verified, link registry  │
-│ new_record           │ 🟢 Grn │ 5        │ Insert registry mới           │
-│ no_match             │ ⚪ Gry │ 6        │ Insert registry (fallback)    │
-│ unchanged            │ ⚪ Gry │ 7        │ No-op                         │
-│ invalid              │ ⚫ Blk │ 8        │ Skip khi apply                │
+│ registry_updated     │ 🔵 Blu │ 3        │ Update registry phone/workplace (HR đính chính, chưa user claim) │
+│ missing_from_file    │ 🟠 Org │ 4        │ Schedule removal +7d (opt)   │
+│ auto_verified        │ 🟡 Ylw │ 5        │ Set verified, link registry  │
+│ new_record           │ 🟢 Grn │ 6        │ Insert registry mới           │
+│ no_match             │ ⚪ Gry │ 7        │ Insert registry (fallback)    │
+│ unchanged            │ ⚪ Gry │ 8        │ No-op                         │
+│ invalid              │ ⚫ Blk │ 9        │ Skip khi apply                │
 └──────────────────────┴───────┴──────────┴──────────────────────────────┘
 ```
 
@@ -147,7 +148,9 @@ Logic match chi tiết → [overview-v2-import-logic.md §3](overview-v2-import-
     - phone khớp, code khác → cancelled_mismatch (code_mismatch)
     - code khớp, phone khác → cancelled_mismatch (phone_mismatch)
     - cả khác → new_record
-  - `hasReg && !hasUser` → unchanged
+  - `hasReg && !hasUser`:
+    - phone & workplace registry khớp file → unchanged
+    - phone hoặc workplace khác file → **registry_updated** (HR đính chính cho mã NV chưa user claim, apply sẽ update registry data)
   - `hasReg && hasUser` → auto_verified hoặc transferred (workplace) hoặc cancelled_mismatch
 
 #### FR-009: Register Hook (FR-009) ✅
@@ -165,6 +168,7 @@ Logic match chi tiết → [overview-v2-import-logic.md §3](overview-v2-import-
   - `auto_verified` → `userService.VerifyStaff(action="verify", actor=root)`
   - `cancelled_mismatch` → `userService.VerifyStaff(action="reject", reason, actor=root)`
   - `transferred` → `userService.UpdateWorkplace(actor=root)` (build mới Phase F.2)
+  - `registry_updated` → `EmployeeRegistryDAO.UpdateOne` (update phone/workplaceName từ file mới, không động user)
   - `missing_from_file` → `userService.ScheduleStaffRemoval(scheduledAt=now+7d)` **chỉ khi confirmTerminate=true**, ngược lại skip
   - `new_record` → `EmployeeRegistryDAO.InsertOne`
   - `no_match`, `unchanged` → no-op
@@ -323,7 +327,7 @@ Branch `hotfix/group-users`:
 - Toggle "Rà soát nghỉ việc": **OFF**
 - Apply → registry có baseline data
 
-### Step 2 — Mixed scenarios (cover full 8 actions)
+### Step 2 — Mixed scenarios (cover full 9 actions)
 - File: [sample-import-step2-mixed.xlsx](sample-import-step2-mixed.xlsx)
 - 16 rows mix
 - Toggle "Rà soát nghỉ việc": **ON** (full-dump test)
