@@ -1,0 +1,274 @@
+Phase,Task ID,Task,File / Module,Description,Source Evidence,Effort,Priority,Status,Blockers,PIC,Notes,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),AT Cost ($),DISO Cost ($)
+1. Setup,SETUP-D01,Setup môi trường develop local,docker-compose.yml + Makefile + README,"Docker compose cho dev local:
+• MongoDB + Redis + MinIO
+• Backend + Frontend + Admin
+Makefile commands: build/run/test/seed.
+README hướng dẫn dev setup.",—,M,P0,Ready,,DISO,"Dev local lần đầu setup ~1 ngày, sau dev chỉ run docker compose up",4,0,4,2,0,0,0,1,11,,178
+1. Setup,SETUP-D02,Setup CI/CD pipeline (GitHub Actions),.github/workflows/,"Setup full CI/CD pipeline GitHub Actions:
+
+CI workflow (ci.yml):
+• Trigger: PR/push
+• Build Go backend + FE/admin
+• Run unit test + lint (golangci-lint + eslint)
+• Cache deps để speed up
+
+CD staging (deploy-staging.yml):
+• Trigger: merge vào branch develop (auto)
+• Build Docker image + push registry
+• SSH deploy server staging + health check
+
+CD production (deploy-production.yml):
+• Trigger: workflow_dispatch (manual)
+• Build + push + SSH deploy
+• Health check + rollback option
+• Approval required",—,M,P0,Blocked,SETUP-02 staging + production servers,DISO,Gom CI + CD staging + CD production,11,0,4,1,3,0,0,1,20,,315
+1. Setup,SETUP-D03,Setup .env.example + linter + pre-commit hooks,.env.example + .pre-commit-config.yaml + .golangci.yml + .eslintrc,"Tạo dev environment config + code quality tooling:
+
+.env.example:
+• Tất cả env vars cần thiết (Region, MongoDB, Redis, MinIO, Firebase, OAuth, SMS, etc)
+• Comments giải thích cho dev mới
+
+Pre-commit hooks:
+• golangci-lint
+• eslint + prettier
+• gitleaks (no secrets)
+Auto-format trước commit.",—,S,P0,Ready,,DISO,Code quality + dev onboarding,2,0,3,2,0,0,0,0,7,,109
+2. Foundation Config,FOUND-01,Add Region config + utility functions + ENV setup PH,internal/config/env.go + format/phone.go + util/ptime/region.go + format/search.go + .env,"Add foundation config + utilities cho region-aware + setup ENV PH:
+
+ENV config (env.go):
+• Region struct với COUNTRY_CODE, PHONE_CODE, PHONE_REGEX, TIMEZONE, CURRENCY, TAX_PERCENT, LANGUAGE
+• IPCountryCodePH + LangFil constants
+• Load từ ENV
+
+Phone util (format/phone.go):
+• FormatPhoneRegion + PhoneNumberFormatRegion config-driven
+• Remove FormatPhoneCommon legacy (REPL-01 sẽ thay callsite)
+
+Timezone util (util/ptime/region.go):
+• GetRegionLocation, TimeOfDayInRegion, TimeStartOfDayInRegion, TimeEndOfDayInRegion
+• Refactor 15 HCM functions trong util/time.go → Region functions
+
+Search util (format/search.go):
+• Rename NonAccentVietnamese → NormalizeSearchString (REPL-03 thay callsite)
+
+ENV file PH (.env):
+• REGION_COUNTRY_CODE=PH
+• REGION_PHONE_CODE=+63
+• REGION_PHONE_REGEX (PH mobile pattern)
+• REGION_TIMEZONE=Asia/Manila
+• REGION_CURRENCY=PHP
+• REGION_TAX_PERCENT=0
+• REGION_LANGUAGE=fil
+
+Smoke test cơ bản utils (không test extensive — đã verify qua REPL callsites).",audit-09,M,P0,Ready,,DISO,Foundation: build infra đọc ENV + tạo .env values PH. Block REPL-01..04,1,2,18,1,4,0,1,3,30,,451
+9. Payout Offline Mode,PAYOUT-01,Ẩn toàn bộ UI + routes payment/bank/withdraw/tax/KYC/FB-IG login/OTP SMS,Frontend creator + Admin + Backend routers,"Coi như source chưa có payment + OTP SMS — ẩn thẳng tay (không config flag):
+
+Frontend Creator (hide menu + button + routes):
+• Withdraw button trong cashflow page
+• Bank account form (page /bank)
+• Tax declaration page (/khai-bao-thue / tax)
+• KYC Identification upload page
+• Facebook login button + route /login-with-facebook
+• Instagram login button + route /login-with-instagram
+• Update label ""Số dư có thể rút"" → ""Hoa hồng đã tích lũy""
+
+Frontend Admin (hide menu):
+• Transfer/Payout menu
+• Identification Review menu
+
+Backend (comment-out routes):
+• /users/bank-cards/* (4 routes)
+• /users/identification/* (3 routes) + /users/ekyc/*
+• /users/login-with-facebook
+• /users/login-with-instagram
+• /users/request-otp + /users/verify-otp (OTP SMS — không còn use case sau khi bỏ contract)
+• Skip UpdateCashFlowTax cron entirely (line 756 schedule.go)",§48 + audit,M,P0,Ready,,DISO,"Đơn giản hóa - không config flag, hide thẳng",0,1,9,12,4,0,1,1,28,,407
+9. Payout Offline Mode,PAYOUT-02,Verify Commission Export flow cho offline payout,admin/service/export_transfer_user_cash.go (đã có sẵn),"Source đã có export_transfer_user_cash.go.
+Verify export hoạt động cho offline payout flow:
+• Admin chạy reconciliation đợt
+• Approve commission
+• Export CSV/Excel
+• Khách import vào payroll system",§48 + audit,S,P0,Ready,,DISO,Reuse export có sẵn,0,0,2,0,2,0,0,0,4,,52
+3. Replace hardcode (Backend),REPL-01,Replace +84 hardcode toàn codebase,internal/format/string.go + model/mg/user.go + service/otp.go + public/services + admin/service/user.go,"Replace toàn bộ ""+84"" hardcode (12 chỗ) → cfg.Region.PhoneCode:
+• format/string.go:31, 70-71, 77 (PhoneNumberFormatFromPhone)
+• model/mg/user.go:152 (search string)
+• service/otp.go:108 (OTP send)
+• public/service/user.go:113, 616 (contract)
+• public/service/identification.go:83
+• public/service/schedule.go:413
+• admin/service/user.go:184",audit-09 §1 + audit-user,S,P0,Ready,FOUND-04,DISO,Search-replace pattern + verify pass test,0,0,3,0,2,0,0,0,5,,67
+3. Replace hardcode (Backend),REPL-02,Replace HCM timezone toàn codebase,internal/util/time.go + util/ptime/parse.go + handlers + services (BE + admin),"Replace toàn bộ TimeOfDayInHCM/TimeStartOfDayInHCM/Asia/Ho_Chi_Minh (91 occurrences across 25+ files) → Region timezone functions:
+• Refactor util/time.go (15 HCM functions → Region functions)
+• Refactor util/ptime/parse.go
+• Update tất cả callsite trong public services (schedule, user, withdraw, identification)
+• Update tất cả callsite trong admin services (transfer, reconciliation, content, event, exports, migration, user, schedule)
+• Update handlers (admin/handler/event.go)
+• Remove constants timezoneHCM",audit-09 §2 + audit-02 + audit-07 + audit-08,L,P0,Ready,FOUND-03,DISO,91 occurrences — task lớn nhất nhóm REPL,0,2,24,0,8,0,0,2,36,,522
+3. Replace hardcode (Backend),REPL-03,Replace Vietnamese accent functions toàn codebase,internal/format/string.go + admin services + admin models,"Replace NonAccentVietnamese + RemoveAccentVietnamese (38 occurrences) → NormalizeSearchString:
+• admin/service/reconciliation.go (3 chỗ)
+• admin/service/transfer.go (2 chỗ)
+• admin/service/event.go (slug generators - 2 chỗ)
+• admin/service/partner.go (slug - 2 chỗ)
+• admin/service/export.go (filename - 2 chỗ)
+• admin/service/common.go (bank search)
+• admin/model/request/* (5 files: notification, article, news, segment, tag)
+• admin/server/initialize/dummy_db.go (3 chỗ)",audit-08 + audit-07,S,P0,Ready,FOUND-05,DISO,Search-replace pattern + verify search/sort vẫn work,0,0,4,0,2,0,0,0,6,,82
+3. Replace hardcode (Backend),REPL-04,Replace constants + slug VN-specific,internal/constants/constants.go + internal/format/string.go,"Cleanup VN-specific constants + functions:
+• Move RegexPhoneNumber (line 40) → config-driven (đọc từ ENV)
+• Remove constant timezoneHCM (line 72)
+• Remove PercentTaxIndonesia + PercentTaxVietNam (line 226-227) → config-driven
+• Remove ConvertSlugProvince + ConvertSlugProvinceFind (ho-chi-minh ⇄ tp-ho-chi-minh logic)",audit-09 §1 + §4,S,P0,Ready,FOUND-01,DISO,Foundation constants cleanup,0,0,3,0,1,0,0,0,4,,56
+3. Replace hardcode (Backend),REPL-05,Replace VN error messages + Indonesia/VN-specific code,public/service/identification.go + public/service/schedule.go + admin/service/common.go + bank model,"Cleanup các leftover VN/ID-specific:
+• Vietnamese error messages → locale keys (3 chỗ: identification.go:453, schedule.go:739, schedule.go:1775)
+• Remove hardcode `if typeBank != ""indo""` (admin/common.go:150)
+• Refactor BeneficiaryForVietinbank field → generic (admin/common.go:182 + bank model)
+• Update tax cron firstMonth date (schedule.go:760) hardcode 2024-03-31 → ENV var hoặc PH launch date",audit-user + audit-02 + audit-08,M,P0,Ready,,DISO,Misc cleanup VN/ID leftover,0,1,6,0,3,0,1,0,11,,151
+3. Replace hardcode (Frontend),FE-01,Replace toàn bộ FE hardcode (phone + currency + VN text + locale config),frontend/src/configs + admin/src/utils + frontend pages + breadcrumb-utils,"Replace toàn bộ FE hardcode cho PH:
+
+Phone format:
+• frontend/src/configs/app.tsx:58 — phoneNumberPrefix '+84' → '+63'
+• frontend/src/configs/form.ts:3 — phoneRegExp Indonesia → PH
+• admin/src/utils/format.ts:69-70 — +84 hardcode
+
+Currency:
+• admin/src/utils/format.ts:112 — unit 'VND' → 'PHP'
+
+Default locale config:
+• frontend/config/config.ts + admin/config/config.ts — 'id-ID' → auto-detect
+
+Tiếng Việt hardcode (~7 chỗ):
+• frontend/src/pages/bank/components/user-cards/index.tsx:107, 123
+• frontend/src/pages/account/management/index.tsx:64
+• frontend/src/pages/main-home/index.tsx:116
+• admin/src/utils/format.ts comments
+• admin/src/utils/upload.ts:38 error message
+• frontend/src/utils/breadcrumb-utils.ts (~10 comments)
+
+Cleanup admin format.ts Vietnamese accent funcs (verify còn cần không).",audit-10,M,P0,Ready,,DISO,Search-replace pattern + verify,0,0,1,8,3,0,0,0,12,,168
+4. Contract & Legal,LEGAL-01,Ẩn/xóa contract sign flow toàn hệ thống,backend routes + FE creator + admin + constants/contract.go + UploadContract,"Coi như source chưa có contract sign flow — ẩn/xóa thẳng tay:
+
+Backend (comment-out routes + skip logic):
+• /users/contract/info (POST upsert info)
+• /users/contract/estimate
+• /users/contract/agree
+• /users/contract/pre-signed (sign OTP)
+• Skip UploadContract (Drive + MinIO upload PDF)
+• Remove constants/contract.go template (219 dòng Bahasa)
+
+Frontend Creator (hide):
+• Contract sign page + flow
+• Profile section ""Hợp đồng"" (status + download PDF)
+
+Frontend Admin (hide):
+• Contract management menu (nếu có)
+
+Note: TOS + Privacy Policy + DPA consent KHÔNG phải contract — vẫn giữ (LEGAL-03 + LEGAL-04).",audit-09 §5 + audit-user §UploadContract,M,P0,Ready,,DISO,"User chốt: bỏ contract 100%, không ký gì cả",0,1,6,5,2,0,1,1,16,,235
+4. Contract & Legal,LEGAL-03,Rewrite TOS + Privacy Policy,CMS articles,Theo DPA 2012 - legal partner cung cấp,§C,M,P0,Blocked,Legal partner,DISO,,0,0,2,2,2,0,4,1,11,,146
+5. i18n,I18N-01,"Add Filipino (fil-PH) locale + translate ~3,800 keys","locales/{admin,client,server}/fil-PH.json + frontend/src/locales/ + admin/src/locales/","Add Filipino (Tagalog) locale support:
+
+Tạo files:
+• locales/admin/fil-PH.json
+• locales/client/fil-PH.json
+• locales/server/fil.json
+• frontend/src/locales/fil-PH.json
+• admin/src/locales/fil-PH.json
+• backend/internal/locale/properties/fil/
+
+Translate ~3,800 keys (admin + client + server).
+Cần native translator hoặc partner cung cấp text.",§A1 + §A3,L,P0,Blocked,Filipino translator hoặc partner cung cấp text,DISO,Heavy translation - cần parallel với dev,0,0,2,8,4,0,8,2,24,,322
+5. i18n,I18N-02,Build language toggle UI + format date/number,frontend/src/components/header + utils,"i18n UI + format updates cho PH:
+• Build language toggle UI (header) — auto-detect + manual override
+• Persist language choice trong localStorage
+• Update date format dd/MM/yyyy → MM/dd/yyyy (PH convention)
+• Update number format 1.000.000 → 1,000,000 (comma thousands + 2 decimals cho centavos)",§A1 + §A3,S,P0,Ready,,DISO,,0,0,2,6,2,1,0,0,11,11,142
+6. Branding,BRAND-01,Replace toàn bộ visual assets (logo + favicon + banner + theme + font),frontend assets + theme config,"Rebrand toàn bộ visual + layout GreenSM PH (theo Figma + Brand Guideline + KV partner).
+
+Lưu ý: Thiết kế PH thay đổi HOÀN TOÀN khác so với source ID (gen-green) — không chỉ replace assets mà phải rework layout/UI components nhiều page.
+
+• Logo (Gen-G.png + Green-Creator.png) — multi-size + responsive
+• Favicon
+• Banner home: 3:4 mobile + 20:8 desktop
+• Banner campaign: 9:16 chung mobile + desktop
+• Color palette + theme config (primary/secondary/accent)
+• Font theo Brand Guideline (load font + fallback + weights)
+• Rework layout + UI components theo Figma:
+  - Frontend creator: home + login/register + profile + campaign + content + cashflow + history (rework theo design mới)
+  - Admin: dashboard + tất cả menu (event/creator/reconciliation/article/notification...)
+• Verify responsive mobile/tablet/desktop sau rebrand
+• Verify theme + layout apply đúng tất cả components (button/badge/alert/modal/card/table)","§B2, §B6, §B13, §L5",XL,P0,Ready,,DISO,Design PH khác hẳn source ID — không chỉ replace assets. Có Figma + Brand Guidelines + KV.,0,0,0,40,16,12,0,4,72,132,856
+6. Branding,BRAND-02,Update toàn bộ static texts + links + meta tags,frontend static + email signature + admin + meta tags,"Update static texts + links + meta cho PH:
+• OG title + description (dịch từ trang Indo Gen Green)
+• GTM tracking: GTM-WTMZXPHC
+• CTA ""Về Đối tác"" link → https://www.greengsm.ph/
+• Facebook page link → facebook.com/greengsm.ph
+• Hashtag campaign default → #GreenSM
+• Materials/Media kit link → Drive PH
+• Hotline → 02-7777-8080
+• Email hỗ trợ → support.ph@greensm.com
+• Địa chỉ công ty → Pasay City 1300
+• Audit & xóa toàn bộ tham chiếu VinFast / vCreator / Việt Nam còn sót","§B7, §B8, §B9, §B10, §B11, §K1, §K2, §K3, §I6",M,P0,Ready,,DISO,Search-replace pattern + verify,0,0,4,8,4,0,0,0,16,,224
+7. Data Init,DATA-01,Init data baseline để launch,admin partner/event/article/staff/role config,"Init data tối thiểu để launch (DB trống từ đầu, không migrate, không seed test data):
+• Partner config: gengreen partner trên ambassador
+• Event/Campaign đầu tiên (production)
+• CMS articles (Support/Q&A/Term/Condition - 4 articles)
+• Admin root account 1 cái (partner tự tạo staff sau)
+• RBAC roles + permissions baseline",gaps-review §2,S,P0,Blocked,CMS article content (H4),DISO,"DB trống từ đầu, không migrate VN/ID data, không seed test data",0,0,6,0,2,0,2,0,10,,134
+8. Bug Fixes (Backend),BUG-01,Fix Staff/Admin security bugs (P0 critical),pkg/admin/service/staff.go,"Fix 4 P0 security bugs trong admin staff module:
+• GetMe() permission check (line 264) — validate userID==tokenOwner OR isRoot
+• UpdateInfo isRoot escalation (line 339) — block isRoot field từ user-controlled body
+• $nin syntax error (line 325) — MongoDB syntax `$nin` → `$ne`
+• reCAPTCHA score validation (line 214) — validate score threshold",audit-07 §3,M,P0,Ready,,DISO,SECURITY P0 - phải fix trước launch,0,0,5,0,4,0,0,0,9,,119
+8. Bug Fixes (Backend),BUG-02,Fix Staff hardening (TOTP rate limit + email normalize + transfer logic),admin/service/staff.go + admin/service/transfer_processing.go,"Fix logic + security hardening:
+• Add TOTP rate limit (lock after N attempts) — staff.go:118
+• Normalize email lowercase trong login — staff.go:207
+• Fix transfer math.Max logic bug — transfer_processing.go:56 (filter inverted)",audit-07,S,P1,Ready,,DISO,,0,0,6,0,3,0,0,0,9,,123
+8. Bug Fixes (Backend),BUG-03,Fix Event + Content + Schedule logic bugs,pkg/public/service/event.go + transcript.go + referral.go + news.go + user.go + schedule.go,"Fix logic bugs trong public services:
+• Event GetList sort bug — event.go:296-298 (boolean sort)
+• Event GetLeaderBoard sort — event.go:574 (add SortInterface)
+• Event commented schema time-window — event.go:314-319 (decide enable/remove)
+• Transcript loop return → continue — transcript.go:28, 38
+• Referral cash always 0 — referral.go:76 (populate value)
+• News typo ""new"" → ""news"" — news.go:38
+• isExistedEmail incomplete — user.go:1797 (check tất cả email fields)
+• Reconciliation rollback on failure — reconciliation_running.go:304
+• OOM protection UpdateSearchStringContent — schedule.go:1408 (pagination)",audit-03 + audit-06 + audit-user + audit-02,M,P1,Ready,,DISO,,0,0,17,0,8,0,0,0,25,,343
+8. Bug Fixes (Backend),BUG-04,Cleanup tech debt (recursion + dead code + stub),public/service/user.go + withdraw.go + event_reward.go,"Cleanup tech debt nhỏ:
+• Add max recursion guard cho GenerateCode — user.go:1639
+• Add PDF cleanup sau UploadContract — user.go:662
+• Cleanup withdraw dead code (route không wire)
+• Implement event_reward stub hoặc remove
+• Branch card feature decide — uncomment & fix HOẶC remove (audit user.go)
+• Tax double-charge verify — code không crash khi rate=0",audit-user + audit-04 + audit-06,S,P2,Ready,,DISO,Low priority — có thể defer post-launch,0,0,5,0,2,0,0,0,7,,97
+11. QA & Launch,QA-01,Setup test environments + smoke test core flow,Infra + DB + test plan,"Setup test environments:
+• Staging + UAT environments
+• Test data seed
+
+Smoke test E2E:
+• Register + verify OTP với số PH (+63)
+• Login (phone/Google/TikTok)
+• Submit content + reconcile + view stats
+• Currency PHP + timezone Manila
+• Admin 2FA + Captcha",—,M,P0,Ready,,DISO,,4,0,4,1,18,0,0,3,30,,401
+11. QA & Launch,QA-02,Test core business flows (reconciliation + tax + i18n),All,"QA functional test core flows:
+• Admin Reconciliation + Transfer flow (full lifecycle)
+• Tax flow validation (verify code không crash khi rate=0)
+• i18n EN + Filipino toggle
+• Browser/responsive (Chrome/Safari/iOS/Android)",—,M,P0,Ready,,DISO,,0,0,0,0,28,0,0,2,30,,348
+11. QA & Launch,QA-05,Build handbook site (user guide + nghiệm thu),"handbook/ (Next.js + Tailwind, fork từ techcombank/handbook)","Build trang handbook hướng dẫn sử dụng (style như handbook.diso.vn).
+
+Source code có sẵn — fork từ accesstrade-projects/techcombank/handbook:
+• Next.js 16 + Tailwind + react-markdown + minisearch (built-in search)
+• Cấu trúc content/wiki/ với markdown files
+
+GreenSM PH scope (2 nhóm):
+1. Creator (~10 articles): đăng ký, login, profile, tham gia campaign, submit content, leaderboard, theo dõi hoa hồng, FAQ
+2. Admin (~8 articles): tạo event, quản lý creator, content moderation, đối soát/reconciliation, export commission cho payroll, CMS articles, nhân viên/RBAC, monitoring
+
+Tài liệu nghiệm thu (tách section riêng):
+• Acceptance checklist (theo scope đã chốt)
+• Test report tóm tắt
+• Changelog vs source ID gốc (high-level)
+• Hướng dẫn tiếp nhận hệ thống (env vars + admin root account + monitoring access)
+
+Effort phần lớn ở BA — viết content markdown cho ~18 bài. Dev chỉ cần fork + adjust branding.",—,L,P0,Ready,,DISO,Fork handbook từ techcombank/handbook. BA-heavy: viết ~18 bài markdown + tài liệu nghiệm thu,0,0,0,8,4,0,40,4,56,,684
+,,,,,TOTAL,,,,,,,22,7,140,104,131,13,58,25,500,143,6732

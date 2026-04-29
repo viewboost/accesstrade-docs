@@ -1,0 +1,35 @@
+Group,Code,Category,Question / Topic,Decision,Source,Notes
+A. Language,A1,Ngôn ngữ,Default language khi user vào lần đầu?,Auto-detect by browser/IP,User,User chốt: auto-detect
+A. Language,A3,Ngôn ngữ,Filipino translation: partner cung cấp text hay DISO thuê translator?,Partner cung cấp text,Auto / Default,Cần ~3800 keys translation. Auto-resolved: Default theo logic - DISO không phải native Tagalog speaker
+A. Language,A4,Ngôn ngữ,Có giữ Indonesia/Vietnamese locale làm fallback không?,Chỉ EN + Filipino,Auto / Default,"Default - giảm bundle size, không cần ID/VI cho PH market"
+B. Branding,B1,Thương hiệu,Tên app hiển thị (APP_NAME)?,Green SM Creator (theo Brand Guideline),Onboarding doc,Field §2 Onboarding để trống. Auto-resolved: Default theo brand. Lấy từ Brand Guideline PDF + Figma
+B. Branding,B2,Thương hiệu,Banner home + campaign — đã có file design chưa?,Figma: https://www.figma.com/design/9j52U0cygugj0b4ajkLn5j/-P--GreenGSM-PHIL---Creators,Onboarding doc,§16-22 Onboarding. Đã có Figma link
+B. Branding,B3,Thương hiệu,OG title + description — text cụ thể?,Dịch từ trang Indo Gen Green (DISO tự extract + dịch),Onboarding doc,Partner chốt §13-14 Onboarding: dịch từ trang Indo Gen Green đang chạy
+B. Branding,B4,Thương hiệu,SEO Keywords?,Lấy từ Brand Guideline / Materials Drive,Onboarding doc,§24. Auto-resolved: Optional theo Onboarding §24. Optional - extract từ assets có sẵn
+B. Branding,B5,Thương hiệu,OG Image (1200x630)?,Lấy từ Figma / Materials Drive,Onboarding doc,§25. Auto-resolved: Optional theo Onboarding §25. Optional - render từ design có sẵn
+D. Payout & Tax,D1,Payout,Confirm GreenSM PH tự payout commission qua payroll (offline mode)?,,Onboarding doc,§48 đã chốt
+D. Payout & Tax,D4,Payout,Frequency export commission?,Monthly,Auto / Default,Default - hợp lý với chu kỳ payroll
+D. Payout & Tax,D5,Payout,Có cần hide hoàn toàn Bank Account form trong app không?,Hide hoàn toàn,Confirmed,Đã chốt offline payout mode
+D. Payout & Tax,D6,Payout,Admin có dùng Reconciliation module để verify commission trước khi export không?,Có (giữ Reconciliation - vẫn cần đối soát),User,"User chốt: vẫn cần đối soát, chỉ ẩn thanh toán"
+D. Payout & Tax,D7,Payout,Admin có dùng Transfer module không?,Không (hide menu Transfer),User,User chốt: chỉ ẩn thanh toán
+D. Payout & Tax,D8,Tax,Confirm tax % = 0 trong hệ thống (partner tự lo BIR compliance)?,,Onboarding doc,§48 đã chốt
+F. SMS,F3,Thông báo,Telegram admin notification: tạo channel PH mới hay reuse VN?,Reuse VN room (default - không block launch),Auto / Default,"Optional — không block launch. Default reuse, partner có thể đổi sau"
+G. Repo & Infra,G1,Hạ tầng,Tên repo mới?,greensm-ph,Auto / Default,Default theo brand
+G. Repo & Infra,G2,Hạ tầng,Git host?,GitHub (cùng org AT),AT,Cùng org với vcreator-philippines?. AT cung cấp
+G. Repo & Infra,G3,Hạ tầng,AWS account?,AT cung cấp AWS account,AT,IP 54.169.3.115 đã có. AT setup
+G. Repo & Infra,G4,Hạ tầng,MongoDB cluster?,AT cung cấp MongoDB cluster,AT,AT setup
+G. Repo & Infra,G6,Hạ tầng,Domain DNS provider confirm?,,Onboarding doc,§6 Onboarding đã chốt
+I. Scope edge cases,I1,Chức năng,Reconciliation logic có cần thay đổi gì cho PH không?,Giữ 100%,Confirmed,"Reconciliation logic generic, không VN-specific"
+I. Scope edge cases,I2,Chức năng,Multi-currency support trong app?,,Onboarding doc,§47 Onboarding đã chốt Peso
+I. Scope edge cases,I3,Chức năng,Contract auto-sign sau OTP?,Auto-sign (giữ source),Onboarding doc,RA 8792 § 8 PH công nhận click-to-sign
+I. Scope edge cases,I4,Chức năng,Có cần Right to access/erasure flow (DPA 2012)?,Có (BẮT BUỘC theo DPA 2012),Auto / Default,17h dev — cần consent từ partner. Auto-resolved: Required theo luật PH - phạt ₱5M nếu thiếu
+I. Scope edge cases,I5,Chức năng,Branch card feature trong source bị comment out — restore hay remove?,Remove (delete code),Confirmed,Đã chốt offline payout - không cần bank card
+I. Scope edge cases,I6,Chức năng,Hide page Tax declaration trong FE creator (offline mode)?,Hide hoàn toàn,Onboarding doc,§D - tax = 0. Auto-resolved: Đã chốt tax=0 + offline payout
+J. Timeline,J1,Tiến độ,Deadline launch production?,22/5/2026,User,User chốt
+K. Communication,K1,Liên hệ,Confirm hotline hỗ trợ creator hiển thị trên app?,,Onboarding doc,§K1 Onboarding đã có
+K. Communication,K2,Liên hệ,Confirm email hỗ trợ creator?,,Onboarding doc,§K2 Onboarding đã có
+K. Communication,K3,Liên hệ,Email sender domain?,noreply@gen-green.ph,Auto / Default,Default theo domain
+C. Legal & Compliance,C9,Pháp lý,DPA 2012 có yêu cầu data residency PH không (data lưu trên đất PH)?,Không (Singapore region OK),Auto / Default,"Quyết định AWS Singapore vs Manila region. Auto-resolved: Default - DPA 2012 không bắt buộc localize, có thể verify với legal sau"
+G. Repo & Infra,G7,Hạ tầng,content-catcher service có support content PH không?,AT setup content-catcher cho PH,AT,Block crawl content TikTok/FB/YouTube PH. AT lo - service của AT
+G. Repo & Infra,G8,Hạ tầng,TikTok Developer App: đăng ký mới hay reuse Indo?,Đăng ký mới (region PH),Auto / Default,Approval 5-10 ngày — submit ngay. Auto-resolved: Default - TikTok app per-region
+G. Repo & Infra,G9,Hạ tầng,Firebase project: đăng ký mới hay reuse?,Mới,Auto / Default,Cần cho push notification. Auto-resolved: FCM tokens không cross-project

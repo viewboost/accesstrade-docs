@@ -1,0 +1,17 @@
+TIMELINE — KẾ HOẠCH ĐẠT DEADLINE 22/05/2026
+
+Ngày bắt đầu (effective),2026-05-04 (Mon)
+Deadline,2026-05-22 (Fri)
+Ngày nghỉ,"29/04 (đã qua), 30/04, 01/05 (lễ), Thứ 7 + Chủ nhật"
+Working days thực tế,15 (3 tuần × 5 ngày)
+Capacity 1 full-time,120h (15 × 8h)
+
+CAPACITY TEAM ĐỀ XUẤT (DISO)
+Người,Vai trò,Headcount,Capacity (h),Cần (h),Tỷ lệ,Đánh giá
+Person 1,BE + DevOps,1 full-time + OT,120,162,135%,Vượt 42h → cần 1 BE full-time + 0.3 BE part-time HOẶC OT ~3h/ngày
+Person 2,FE,1 full-time,120,104,87%,Vừa đủ — không có buffer
+Person 3,QC + BA,2 full-time,240,189,79%,Cần 2 người (1 QC full-time + 1 BA full-time tuần 4 cho handbook)
+Person 4,SA + PM,0.3 oversee,36,32,89%,Đủ — oversee part-time
+Design,(AT cung cấp),—,—,13,—,"AT bill, không thuộc DISO"
+
+TỔNG NHÂN SỰ DISO,4-5 người (BE×1.3 + FE×1 + QC+BA×2 + PM×0.3)

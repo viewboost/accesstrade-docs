@@ -1,0 +1,25 @@
+Phase,Task ID,Task,File / Module,Description,Source Evidence,Effort,Priority,Status,Blockers,PIC,Notes,DevOps,SA,BE,FE,QC,Design,BA,PM,Total (hours),AT Cost ($),DISO Cost ($)
+1. Setup,SETUP-01,Tạo repo + clone source,GitHub repo,"Tạo repo mới (greensm-ph hoặc tên TBD) trên GitHub cùng org AT.
+Push initial commit từ vcreator-philippines master.",§B5,S,P0,Ready,,AT,AT cung cấp Git host,2,0,1,0,0,0,0,1,4,69,
+1. Setup,SETUP-02,Setup hạ tầng AWS + MongoDB + Redis + MinIO + Domain + SES,Infra (AT-managed),"Setup hạ tầng PH (AT cung cấp):
+• AWS account/cluster (IP 54.169.3.115 sẵn)
+• MongoDB cluster mới + data fresh
+• Redis instance mới
+• MinIO 4 buckets (public/private/video/contract)
+• Domain gen-green.ph → IP qua Cloudflare DNS + SSL
+• AWS SES Singapore region (verify domain + DKIM + SPF)","§H3, §H4, §B4, §H5, §K2",L,P0,Ready,,AT,AT cung cấp toàn bộ hạ tầng,38,2,2,0,2,0,0,4,48,812,
+1. Setup,SETUP-03,Setup OAuth credentials + 3rd-party services,Google/TikTok/Firebase/reCAPTCHA admin portals,"Đăng ký + setup các service 3rd-party cho PH:
+• Google OAuth client (verify domain gen-green.ph) → GOOGLE_CLIENT_ID
+• TikTok Developer App (KYB review 5-10 ngày) → TIKTOK_CLIENT_KEY/SECRET
+• Firebase project mới (FCM tokens không cross-project) → FIREBASE_CREDENTIALS
+• reCAPTCHA v3 site key cho gen-green.ph → CAPTCHA_SECRET_KEY
+• TOTP config → TOTP_ISSUER + APPLICATION_NAME + PASS_PHRASE
+• Verify content-catcher service hỗ trợ region PH",gaps-review §1,M,P0,Blocked,TikTok app approval 5-10 ngày,AT,TikTok URGENT - submit ngay tuần 1,7,1,8,1,6,0,0,1,24,357,
+1. Setup,SETUP-04,Setup monitoring + backup,Sentry + CloudWatch + MongoDB Atlas,"Setup monitoring + backup infrastructure:
+• Sentry project mới cho PH + integrate SDK BE + FE + admin
+• CloudWatch alarms (CPU/RAM/disk/errors) + Telegram notification on critical events
+• Daily auto backup MongoDB + retention 30 ngày + test restore procedure","gaps-review §5, §6",M,P0,Ready,,AT,,12,0,1,1,2,0,0,1,17,276,
+1. Setup,SETUP-05,Setup Telegram channel admin PH,Telegram,Tạo channel mới hoặc reuse VN room. Update TELEGRAM_TOKEN + ROOM_ID.,§G3,S,P1,Ready,,AT,"Default reuse VN, không block launch",1,0,0,0,0,0,0,0,1,17,
+10. Compliance (Partner-side),COMP-01,DPA 2012 DPO appointment,—,Partner appoint Data Protection Officer,§C3,—,P0,Blocked,Partner-side,AT,Partner action,0,0,0,0,0,0,0,0,0,,
+10. Compliance (Partner-side),COMP-02,NPC registration,—,Đăng ký National Privacy Commission,§C4,—,P0,Blocked,Partner-side,AT,Partner action,0,0,0,0,0,0,0,0,0,,
+,,,,,TOTAL,,,,,,"AT/Partner scope: 7 tasks, 94h (~12pd) → $1531",60,3,12,2,10,0,0,7,94,1531,0

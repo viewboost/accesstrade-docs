@@ -1,0 +1,57 @@
+Group,Code,Category,Question,Suggested Options,Default / Recommendation,Answer,Status,PIC,Notes
+H. Data Init,H4,Data,CMS article content (Support/Q&A/Term/Condition)?,—,Partner cung cấp text,,Pending,Partner,§I11 — 4 articles
+I. Scope edge cases,I7,Chức năng,"Content moderation rules theo luật PH (DOH/FDA cho health/cosmetics, etc.)?",—,Tham khảo Indonesia rules + adapt,,Pending,Partner,Reconciliation checklist + Term article
+C. Legal & Compliance,C-LEGAL,Pháp lý,Partner soạn các tài liệu pháp lý cho creator GreenSM PH,—,"Cần soạn:
+1. Terms of Service (TOS)
+2. Privacy Policy theo DPA 2012
+3. DPA 2012 consent text (cho registration form: data collection, sharing, marketing)
+4. DPO appointment + NPC registration (partner-side action, không cần text)",,Pending,Partner Legal,"Cần trước tuần 4. DISO start work với placeholder, hot-swap khi nhận text"
+C. Legal & Compliance,C-DPA-CONSENT,Pháp lý + Chức năng,"DPA 2012 explicit consent flow — phải sửa luồng đăng ký, partner xác nhận yêu cầu cụ thể?",—,"CONTEXT:
+DPA 2012 (Data Privacy Act of 2010 — RA 10173) BẮT BUỘC explicit consent riêng cho từng mục đích sử dụng data. Không cho phép 1 checkbox ""Đồng ý điều khoản"" chung chung.
+
+HIỆN TẠI source ID:
+[Form] Họ tên / Email / Phone / Password
+☐ Tôi đồng ý với Điều khoản và Điều kiện  ← VI PHẠM DPA 2012
+
+ĐỀ XUẤT theo DPA 2012:
+[Form] Họ tên / Email / Phone / Password
+Sumasang-ayon ako (I consent to):
+☐ Collection và xử lý personal data của tôi (BẮT BUỘC — không tick = không tạo được account)
+☐ Sharing data với GreenSM Philippines để nhận hoa hồng (BẮT BUỘC)
+☐ Nhận marketing emails/SMS/push notifications (TÙY CHỌN — default unchecked)
+
+CODE CHANGES:
+1. Frontend register page:
+   • Thêm 3 checkbox riêng (consent_data + consent_sharing + consent_marketing)
+   • Validate 2 checkbox bắt buộc phải tick → enable nút Đăng ký
+   • Marketing checkbox default UNCHECKED (DPA cấm pre-tick optional)
+
+2. Backend:
+   • RegisterBody: thêm consentData, consentSharing, consentMarketing (bool)
+   • UserRaw model: thêm struct Consents [{type, agreed, timestamp, ipAddress, userAgent, version}]
+   • Validate: 2 consent bắt buộc phải true mới register thành công
+   • Audit log lưu consent với IP + timestamp + user agent (DPA yêu cầu prove consent)
+
+3. Settings page:
+   • User xem lại + thay đổi consent marketing
+   • Withdraw consent flow (DPA: user có quyền rút consent bất kỳ lúc nào)
+   • Audit log mỗi lần thay đổi
+
+4. Privacy text:
+   • Partner Legal cung cấp text mỗi checkbox (English + Filipino)
+   • Version consent text (re-prompt khi text thay đổi)
+
+CÂU HỎI CHO PARTNER:
+1. Confirm có 3 mục consent như đề xuất không? Hay partner muốn split khác (vd thêm ""Profile sharing với brand"" riêng)?
+2. Marketing channel: Email + SMS + Push notification riêng từng channel hay gộp 1 checkbox?
+3. Re-consent khi privacy policy update — flow thế nào? (force re-tick hay banner thông báo?)
+4. Withdraw consent: user rút consent data collection (BẮT BUỘC) → có nghĩa delete account hoàn toàn?
+5. Lưu trữ consent log bao lâu? (DPA mặc định: theo retention period của data, recommend 5 năm sau khi user inactive)
+6. Audit consent format export khi NPC kiểm tra? (CSV/PDF)
+
+PHẠT NẾU THIẾU:
+• ₱500K – ₱5M penalty
+• 1-6 năm tù DPO + officers
+• NPC có thể stop operations
+
+URGENCY: BẮT BUỘC trước launch, không thể defer.",,Pending,Partner Legal,Block LEGAL-04 (Build DPA consent flow). Cần partner confirm 6 questions + cung cấp consent text.
