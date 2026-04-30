@@ -421,6 +421,49 @@ Manual `umi g tmp` cũng fix được nhưng Node version mismatch (Node 20 + no
 
 **Decision:** Hide `id-ID` khỏi PH dropdown nhưng KHÔNG xóa `id-ID.json`. Indonesia team vẫn maintain translations cho deployment ID. Filter qua `HIDDEN_LOCALES` Set ở [SelectLang.tsx](accesstrade-projects/vcreator-philippines/frontend/src/components/common/select-lang-custom/SelectLang.tsx) — re-enable bằng cách remove key khỏi Set.
 
+### 5. ⚠️ DUAL `localeExports.ts` — gotcha lớn nhất
+
+**Symptom:** Đã rename `fil-PH.json` → `tl-PH.json`, đã regenerate `.umi/`, đã add map vào `SelectLang.tsx`, đã hard refresh + Incognito. Bundle `umi.js` chứa string `tl-PH` (10 lần) và `Filipino` (4 lần). NHƯNG dropdown vẫn chỉ hiển thị 2 options (English + Vietnamese).
+
+**Root cause:** Project có **2 file `localeExports.ts`** với purpose khác nhau:
+
+1. **Umi auto-gen** — [src/.umi/plugin-locale/localeExports.ts](accesstrade-projects/vcreator-philippines/frontend/src/.umi/plugin-locale/localeExports.ts)
+   - Auto-regenerate mỗi lần `umi dev` start
+   - Scan `src/locales/*.json` để build `localeInfo`
+   - Cấp `useIntl()`, `formatMessage()`, in-app translation lookup
+   - **Có đầy đủ tl-PH** sau khi regenerate
+
+2. **Manual copy** — [src/components/common/select-lang-custom/localeExports.ts](accesstrade-projects/vcreator-philippines/frontend/src/components/common/select-lang-custom/localeExports.ts)
+   - Copy thủ công từ Umi template cũ (commit lịch sử)
+   - `localeInfo` HARDCODED: chỉ có `en-US`, `id-ID`, `vi-VN`
+   - `SelectLang.tsx` import `getAllLocales` TỪ FILE NÀY (không phải từ `umi`)
+   - Đây là cái dropdown UI thực sự dùng
+
+`SelectLang.tsx` line 6: `import { getLocale, getAllLocales, setLocale } from './localeExports';` → trỏ về file manual copy, KHÔNG về Umi auto-gen. Nên dù Umi biết về `tl-PH`, dropdown vẫn không thấy.
+
+**Fix:** Update CẢ 2 file. Manual copy phải mirror Umi auto-gen mỗi khi add/rename locale. Cụ thể với tl-PH:
+
+```ts
+// src/components/common/select-lang-custom/localeExports.ts
+import lang_tlPH0 from "@/locales/tl-PH.json";
+
+export const localeInfo: Record<string, any> = {
+  // ... existing en-US, id-ID, vi-VN
+  'tl-PH': {
+    messages: { ...lang_tlPH0 },
+    locale: 'tl-PH',
+    antd: {},  // empty — antd v4 không có fil_PH (xem Lesson #2)
+    momentLocale: 'tl-ph',
+  },
+};
+```
+
+**Why dual exists:** Vẫn chưa rõ historical reason. Có thể team gốc copy file để override `getLocale()` SSR-safe logic (file manual có try/catch + browser language detection custom). Đáng lẽ refactor để re-export từ `'umi'` nhưng risk vỡ existing flow.
+
+**TODO future:**
+- [ ] **LOCALE-DEDUP**: Refactor `select-lang-custom/localeExports.ts` để re-export từ Umi auto-gen thay vì duplicate `localeInfo`. Giữ custom SSR-safe `getLocale()` wrapper. ~3h work. Defer cho post-launch — risk hiện tại quá cao.
+- [ ] Nếu add locale mới (ví dụ `th-TH` cho Thailand expansion), nhớ update CẢ 2 file. Add comment cảnh báo trong cả 2 file.
+
 ---
 
 ## 📌 Khuyến nghị thứ tự bắt đầu
