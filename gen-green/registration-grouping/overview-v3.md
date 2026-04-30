@@ -16,13 +16,12 @@
 | Module | Tổng items | Done | Pending |
 |---|---|---|---|
 | 🎥 Tab Nội dung (`/content`) | 5 | 5 | 0 |
-| 👤 Tab Creator (`/user-partner`) | 6 | 4 | **2** |
-| 📤 Export | 4 | 1 | **3** |
-| 📊 Admin Analytics Dashboard | 3 | 0 | **3** |
-| 🔧 Backend V2 (employee-registry) | 3 | 0 | **3** |
+| 👤 Tab Creator (`/user-partner`) | 6 | 6 | 0 |
+| 📤 Export | 4 | 4 | 0 |
+| 🔧 Backend V2 (employee-registry) | 2 | 2 | 0 |
 | 🔍 Verify items | 1 | 0 | 1 |
 
-**Total pending: 12 items, ~46h dev.**
+**Total pending: 1 verify item.**
 
 ---
 
@@ -99,59 +98,28 @@ Hiện tại implement: **tất cả checked default** (theo user override gần
 
 ---
 
-## 📊 Module 4: Admin Analytics Dashboard ⚠️ Critical Gap
-
-**Cam kết Meeting 0410 (Speaker 1 Vĩnh):**
-
-> "Mình sửa nhiều để đưa cái màn hình thống kê ra một cái màn hình tiện dụng hơn. Nhiều bộ lọc."
-
-> "Trước khi làm thì mình sẽ tổng hợp lại rồi mình lên một cái mockup."
-
-**Speaker 2 yêu cầu cụ thể:**
-
-> "Em muốn biết bao nhiêu CBNV của Phú Quốc tham gia chương trình ABC. Em chỉ muốn chọn đây và nhìn số ngay, thay vì kéo Excel xuống filter."
-
-### Status
-
-❌ **Hoàn toàn chưa làm:**
-- Chưa có mockup
-- Chưa có spec/PRD epic riêng
-- Code chưa nâng cấp
-
-### Items cần làm
-
-| # | Item | Effort |
-|---|---|---|
-| 4.1 | **Mockup dashboard analytics** | 4h thiết kế |
-| 4.2 | PRD spec mới — bổ sung filter CBNV / Workplace 3-tier / Sự kiện | 2h |
-| 4.3 | Implement filter + tổng hợp số liệu | 12h |
-
-**Effort:** ~18h. Cần PM/PO duyệt trước khi code.
-
----
-
-## 🔧 Module 5: Backend V2 (Employee Registry)
+## 🔧 Module 4: Backend V2 (Employee Registry)
 
 ### ❌ Chưa làm (từ gap-analysis V2)
 
 | Item | Effort | Files chính |
 |---|---|---|
-| **5.1** Workplace 3-tier derive `workplaceGroup` populate từ master `workplace_units` | 4h | `pkg/admin/service/employee_registry_apply.go`, `internal/service/workplace_group.go` (NEW), registry table UI |
-| **5.2** V2 Filter scope theo Brand cho rà soát nghỉ việc — thay toggle all-or-nothing | 8h | Schema `ImportHistory.detectMissingScope`, `detectMissingFromFile(scope)`, upload modal multi-select Brand |
-| **5.3** PRD V2 §EPIC-001 §FR-001 schema spec đã ghi `workplaceGroup` nhưng "derive đợt 2" — chưa implement | (gộp vào 5.1) | — |
+| **4.1** Workplace 3-tier derive `workplaceGroup` populate từ master `workplace_units` | 4h | `pkg/admin/service/employee_registry_apply.go`, `internal/service/workplace_group.go` (NEW), registry table UI |
+| **4.2** V2 Filter scope theo Brand cho rà soát nghỉ việc — thay toggle all-or-nothing | 8h | Schema `ImportHistory.detectMissingScope`, `detectMissingFromFile(scope)`, upload modal multi-select Brand |
+| **4.3** PRD V2 §EPIC-001 §FR-001 schema spec đã ghi `workplaceGroup` nhưng "derive đợt 2" — chưa implement | (gộp vào 4.1) | — |
 
 **Effort:** ~12h.
 
 ---
 
-## 🔍 Module 6: Verify Items
+## 🔍 Module 5: Verify Items
 
 ### ⚠️ Cần verify trước khi quyết định implement
 
 | Item | Effort | Note |
 |---|---|---|
-| **6.1** FR-018b Admin edit user profile (workplace + employeeCode) | 30min verify + 3h impl nếu cần | Hiện admin chỉ verify/reject, không edit fields |
-| **6.2** FR-031 trang `/department` form edit có toggle `hasLayer2/3` chưa? | 30min verify | UI có 3 tabs Brand/Company/Unit nhưng chưa rõ form |
+| **5.1** FR-018b Admin edit user profile (workplace + employeeCode) | 30min verify + 3h impl nếu cần | Hiện admin chỉ verify/reject, không edit fields |
+| **5.2** FR-031 trang `/department` form edit có toggle `hasLayer2/3` chưa? | 30min verify | UI có 3 tabs Brand/Company/Unit nhưng chưa rõ form |
 
 **Effort:** 1h verify, +3h nếu phải implement FR-018b.
 
@@ -159,23 +127,14 @@ Hiện tại implement: **tất cả checked default** (theo user override gần
 
 ## 📋 Roadmap đề xuất
 
-### Sprint A — Quick wins (~10h)
+### Sprint A — Verify + Quick wins (~5h)
 
-1. **Module 2:** Add 2 cột Tổng view + Tổng video vào `/user-partner` table (2h)
-2. **Module 5.1:** Workplace `workplaceGroup` derive (4h)
-3. **Module 6.1 + 6.2:** Verify FR-018b + FR-031 form (1h)
-4. **Module 3:** Confirm default preset Export — sync với HR (30min discuss)
-5. **Module 3:** Mở rộng Column Picker cho `/user-partner` export + 3 cột mới (5h)
+1. **Module 5.1 + 5.2:** Verify FR-018b + FR-031 form (1h)
+2. **Module 4.1:** Workplace `workplaceGroup` derive (4h)
 
-### Sprint B — Critical Gap (~18h, cần PM/Designer)
+### Sprint B — V2 Filter Scope (~8h)
 
-1. **Module 4:** Phối hợp Designer làm mockup Dashboard Analytics
-2. **Module 4:** PRD spec EPIC mới cho Analytics nâng cấp
-3. **Module 4:** Implement filter analytics theo CBNV/Workplace/Sự kiện
-
-### Sprint C — V2 Filter Scope (~8h)
-
-1. **Module 5.2:** Brainstorm flow upload modal multi-select Brand
+1. **Module 4.2:** Brainstorm flow upload modal multi-select Brand
 2. Schema migration `ImportHistory.detectMissingScope`
 3. Match logic + UI badge scope
 
@@ -188,14 +147,11 @@ Hiện tại implement: **tất cả checked default** (theo user override gần
 | Tab Nội dung | EPIC-005 | [prd-v1 §EPIC-005](prd-registration-v1-2026-04-12.md#EPIC-005) |
 | Tab Creator | EPIC-006 | [prd-v1 §EPIC-006](prd-registration-v1-2026-04-12.md#EPIC-006) |
 | Export | EPIC-007 | [prd-v1 §EPIC-007](prd-registration-v1-2026-04-12.md#EPIC-007) |
-| Admin Analytics | (chưa có epic) | Cần tạo EPIC-008 mới |
 | BE V2 Employee Registry | EPIC-001..005 | [prd-v2](prd-registration-v2-2026-04-12.md) |
 
 ---
 
 ## Open questions
 
-1. **Default Export preset** — sync với HR: dùng PRD spec (bỏ tick một số cột) hay tất cả check?
-2. **Analytics Dashboard** — ai làm mockup? Designer team có sẵn? Hay dev tự lo?
-3. **V2 Filter scope theo Brand** — cần brainstorm UX flow trước (upload modal vs preview-time scope picker?)
-4. **FR-018b** — admin edit profile có cần thiết không, hay flow reject + user resubmit là đủ?
+1. **V2 Filter scope theo Brand** — cần brainstorm UX flow trước (upload modal vs preview-time scope picker?)
+2. **FR-018b** — admin edit profile có cần thiết không, hay flow reject + user resubmit là đủ?

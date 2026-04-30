@@ -33,8 +33,8 @@ V3 PRD này dùng cho QC test acceptance criteria từng FR.
 
 - **Tab Nội dung:** 4 FR đã ship (FR-V3-001 → FR-V3-004)
 - **Tab Creator:** 4 FR đã ship + 2 FR mới (FR-V3-005 → FR-V3-010)
-- **Export:** 2 FR đã ship + 2 FR pending (FR-V3-011 → FR-V3-014)
-- **Analytics Dashboard:** 3 FR pending mockup (FR-V3-015 → FR-V3-017)
+- **Export:** 4 FR (FR-V3-011 → FR-V3-014)
+- **Backend V2 Employee Registry:** 2 FR (FR-V3-018 → FR-V3-019) — gap V2 carry-forward
 
 ### Status summary
 
@@ -52,9 +52,10 @@ V3 PRD này dùng cho QC test acceptance criteria từng FR.
 | FR-V3-010 | Creator | Cột Tổng video đã nộp | Must | ✅ Ship |
 | FR-V3-011 | Export | Column picker UI Nội dung | Must | ✅ Ship |
 | FR-V3-012 | Export | Backend `/content` subset cols | Must | ✅ Ship |
-| FR-V3-013 | Export | Column picker UI Creator | Must | ❌ Pending |
-| FR-V3-014 | Export | Backend `/user-partner` subset + 3 cột mới | Must | ❌ Pending |
-| FR-V3-015..017 | Analytics | Dashboard nâng cấp | Must | (pending mockup) |
+| FR-V3-013 | Export | Column picker UI Creator | Must | ✅ Ship |
+| FR-V3-014 | Export | Backend `/user-partner` subset + 2 cột mới | Must | ✅ Ship |
+| FR-V3-018 | Backend V2 | Workplace Group Derive | Must | ✅ Ship |
+| FR-V3-019 | Backend V2 | Filter scope rà soát theo Brand | Must | ✅ Ship |
 
 ### 2.2 Out of Scope V3
 
@@ -383,9 +384,91 @@ V3 PRD này dùng cho QC test acceptance criteria từng FR.
 
 ---
 
-### EPIC-V3-D: Admin Analytics Dashboard
+### EPIC-V3-D: Backend V2 Employee Registry — Workplace Group + Scope Filter
 
-> *Pending mockup — sẽ bổ sung sau khi designer team có spec.*
+**Bối cảnh:** PRD V2 §EPIC-001 §FR-001 đã spec field `EmployeeRegistryRaw.workplaceGroup` nhưng comment "derive đợt 2" → chưa implement. Hệ quả:
+- Registry chỉ lưu `workplaceName` (tên unit raw từ Excel) → không link được với master `workplace_units` → admin filter Brand/Company không hoạt động trên registry
+- V2 toggle "Rà soát nghỉ việc" all-or-nothing → upload file Vinpearl mà bật toggle ON sẽ flag missing toàn bộ nhân viên GreenSM/VinFast → false-positive lớn
+
+**Status hiện tại:**
+- ❌ FR-V3-018 — Workplace Group Derive **chưa làm**
+- ❌ FR-V3-019 — Scope filter rà soát **chưa làm**
+
+---
+
+#### FR-V3-018: Workplace Group Derive (Match `workplaceName` ↔ `workplace_units`) ❌ Pending
+
+**Priority:** Must Have
+**Status:** ❌ Pending — effort ~4h BE.
+
+**Description:** Khi import file nhân viên, BE match `EmployeeRegistry.workplaceName` (tên unit raw từ Excel) với master `workplace_units` để populate `workplaceBrandCode/Name`, `workplaceCompanyCode/Name`, `workplaceUnitCode/Name`, và `workplaceGroup`. Match strategy: **exact match `unitName`** (chốt với HR — file phải đúng tên unit master).
+
+**Acceptance Criteria:**
+- [ ] Service mới `internal/service/workplace_group.go` với function `DeriveWorkplace(unitName string) (*WorkplaceLookup, bool)`
+- [ ] Lookup query `workplace_units` collection bằng exact `name == unitName` (case-sensitive, không normalize)
+- [ ] Trả full hierarchy: `BrandCode/Name`, `CompanyCode/Name`, `UnitCode/Name`, `WorkplaceGroup` (= brandCode hoặc rule HR cung cấp)
+- [ ] Apply trong `pkg/admin/service/employee_registry_apply.go` khi insert/update registry → populate 7 fields trên
+- [ ] Khi không match: registry vẫn được tạo với `workplaceGroup = ""`, log warning với `unitName` để HR sửa file
+- [ ] Match logic ở `employee_registry_match.go` ưu tiên dùng `workplaceUnitName` (đã derive) thay vì `workplaceName` raw khi compare workplace với user
+- [ ] Update Go test cho `getExpectedBrandCode` để dùng `workplaceBrandCode` mới (thay vì empty string)
+- [ ] Backfill: KHÔNG cần (chưa có data registry hiện tại)
+- [ ] Log message: `[employee-registry] workplace not found: "<unitName>" — please check master data`
+
+**Reference:** [PRD V2 §EPIC-001 §FR-001](prd-registration-v2-2026-04-12.md#FR-001), [Gap analysis](gap-analysis-2026-04-30.md#FR-001-workplaceGroup)
+
+**Files:**
+- `backend/internal/service/workplace_group.go` (NEW)
+- `backend/pkg/admin/service/employee_registry_apply.go`
+- `backend/pkg/admin/service/employee_registry_match.go`
+
+**Out of scope:**
+- Fuzzy match / typo correction
+- Manual override UI (admin gán workplace thủ công)
+- Migration backfill (chưa có data)
+
+---
+
+#### FR-V3-019: Scope Filter Rà Soát Nghỉ Việc Theo Brand ❌ Pending
+
+**Priority:** Must Have
+**Status:** ❌ Pending — effort ~8h (BE 5h + FE 3h). Phụ thuộc FR-V3-018.
+
+**Description:** Khi admin upload file rà soát, scope detect missing được xác định theo 2 tier:
+1. **Auto-derive default:** BE tự tính `scope = unique(brandCode của tất cả row trong file)` sau khi parse
+2. **Admin override:** Upload modal có advanced section cho admin tick/untick brand muốn rà soát
+
+Detect missing chỉ scan registry trong scope đã chốt → tránh false-positive.
+
+**Acceptance Criteria:**
+
+**Backend:**
+- [ ] Schema `ImportHistoryRaw` thêm field `DetectMissingScope []string` (lưu brand codes)
+- [ ] Khi parse file: tính `derivedScope = unique(brandCode)` từ tất cả row đã derive (FR-V3-018)
+- [ ] Nếu admin gửi `scope []string` trong upload request → dùng admin scope, ngược lại dùng `derivedScope`
+- [ ] Lưu `DetectMissingScope` vào `ImportHistoryRaw` để Apply phase đọc lại
+- [ ] `detectMissingFromFile(scope []string)`: chỉ query registry có `workplaceBrandCode IN scope` AND `lastSeenImportId != currentImportId` AND `status=active`
+- [ ] Khi `scope = []` (rỗng — vd file không có row nào derive được brand): KHÔNG flag bất kỳ registry nào missing (defensive)
+- [ ] Match logic vẫn flag `cancelled_missing` cho registry trong scope; ngoài scope giữ nguyên status
+
+**Frontend:**
+- [ ] Upload modal `admin/src/pages/employee-registry/components/upload-modal.tsx` thêm collapsible "Phạm vi rà soát" (mặc định collapsed)
+- [ ] Khi expand: hiện multi-select dropdown "Chọn brand muốn rà soát" với danh sách Brand từ master
+- [ ] Empty state: "Mặc định rà soát theo brand có trong file"
+- [ ] Submit: nếu admin chọn brand → gửi `scope: [...brandCodes]`, không chọn → không gửi (BE auto-derive)
+- [ ] Preview screen hiện badge "Phạm vi: Vinpearl, GreenSM" để admin biết scope cuối cùng
+
+**Reference:** [PRD V2 §EPIC-002](prd-registration-v2-2026-04-12.md), [Gap analysis](gap-analysis-2026-04-30.md#scope-filter)
+
+**Files:**
+- `backend/internal/model/mg/employee_registry.go` (ImportHistoryRaw schema)
+- `backend/pkg/admin/service/employee_registry_import.go` (parse + auto-derive)
+- `backend/pkg/admin/service/employee_registry_apply.go` (use scope)
+- `backend/pkg/admin/service/employee_registry_match.go` (`detectMissingFromFile`)
+- `backend/pkg/admin/model/request/employee_registry.go` (UploadRequest add scope)
+- `admin/src/pages/employee-registry/components/upload-modal.tsx`
+- `admin/src/pages/employee-registry/components/preview.tsx` (badge scope)
+
+**Dependencies:** FR-V3-018 phải xong trước (cần `workplaceBrandCode` đã derive để query/filter)
 
 ---
 
@@ -467,7 +550,11 @@ V3 PRD này dùng cho QC test acceptance criteria từng FR.
 
 ## 5. Migration Notes
 
-V3 không có schema migration. Tất cả fields đã có sẵn trong V1/V2.
+**EPIC-V3-A/B/C:** Không có schema migration. Tất cả fields đã có sẵn trong V1/V2.
+
+**EPIC-V3-D:**
+- FR-V3-018: `EmployeeRegistryRaw` đã có sẵn fields `workplaceBrandCode/Name`, `workplaceCompanyCode/Name`, `workplaceUnitCode/Name`, `workplaceGroup` từ V2 schema. Không cần migration. Backfill: KHÔNG cần (chưa có data).
+- FR-V3-019: `ImportHistoryRaw` thêm field mới `detectMissingScope []string`. MongoDB không cần migration cho add field — driver sẽ accept missing field cho doc cũ. Default behavior khi field rỗng: auto-derive scope từ file (giữ logic an toàn).
 
 ---
 
@@ -491,3 +578,6 @@ V3 không có schema migration. Tất cả fields đã có sẵn trong V1/V2.
 | 3.3-draft | 2026-04-30 | Claude | Tab Creator UX iteration — gộp Phân loại vào Cơ sở làm việc, layout fix scroll |
 | 3.4-draft | 2026-04-30 | Claude | Tab Content gộp Phân loại vào Cơ sở làm việc đồng bộ Tab Creator |
 | 3.5-draft | 2026-04-30 | Claude | EPIC-V3-C Export Column Picker: FR-V3-011..014 (2 ship + 2 pending) + test cases |
+| 3.6-draft | 2026-04-30 | Claude | EPIC-V3-C Export FR-V3-013/014 ship; remove EPIC-V3-D Analytics (defer V4+) |
+| 3.7-draft | 2026-04-30 | Claude | EPIC-V3-D Backend V2: FR-V3-018 (Workplace Group Derive) + FR-V3-019 (Scope Filter) — pending |
+| 3.8-draft | 2026-04-30 | Claude | EPIC-V3-D shipped — FR-V3-018/019 implement + index workplaceBrandCode + safety fix scope auto-derive empty |
