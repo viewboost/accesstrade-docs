@@ -44,7 +44,7 @@ V2 xây Employee Registry + Import Pipeline trên nền V1 (user popup khai mã 
 - **Storage:** MinIO bucket `PrivateFile` với prefix `employee-registry-imports/`
 - **Cron:** Daily 00:00 (staff removal) + 01:00 (TTL cleanup preview 24h)
 
-### 2.3 8 Action Types
+### 2.3 9 Action Types
 
 ```
 ┌──────────────────────┬───────┬──────────┬──────────────────────────────┐
@@ -188,12 +188,17 @@ Logic match chi tiết → [overview-v2-import-logic.md §3](overview-v2-import-
   - `CreateImportInput.DetectMissing bool` → chỉ chạy `detectMissingFromFile` khi true
   - Frontend Checkbox với hint "Bật khi file đầy đủ tháng. Tắt nếu file delta"
 - **Layer 2 — Checkbox confirm trong preview:** Hiện khi `missingFromFile > 0`. Admin tick = lên lịch terminate, không tick = skip records này khi apply.
+- **Case orphan registry (post-ship fix):** Apply `missing_from_file` cho record không có user claim (`genGreenUserId=null`) → terminate registry record NGAY (không qua grace period vì không có user để gỡ tag). Tránh loop missing flag ở các import sau khi orphan record không bao giờ được terminate.
 
 #### FR-013: Grace Period 7 Ngày ✅
 - `UserRaw.StaffRemovalScheduledAt *time.Time` field
 - Constant `StaffStatusPendingRemoval = "pending_removal"`
-- Cron daily 00:00 VN: scan `staffRemovalScheduledAt < now() AND staffStatus=pending_removal` → gỡ staff tag, clear workplace, account_type=creator
-- File: `pkg/admin/service/staff_removal_cron.go` + register trong `pkg/admin/schedule/init.go`
+- Cron scan `staffRemovalScheduledAt < now() AND staffStatus=pending_removal` → gỡ staff tag, clear workplace, account_type=creator.
+- **Cron schedule + grace period configurable qua env (post-ship):**
+  - `STAFF_REMOVAL_CRON` (default `0 0 8 * * *` — daily 08:00 VN, tránh 00:00 khó debug)
+  - `STAFF_REMOVAL_GRACE_PERIOD` (default `168h` = 7 ngày). Dev có thể set `2m`/`5m` để test nhanh.
+- **Cron auto-terminate registry (post-ship fix):** Khi cron gỡ staff tag user, đồng thời terminate các registry record link với user đó (`genGreenUserId=userID + status=active` → `status=terminated` + unset `genGreenUserId`). Tránh stale "Đã khớp" badge ở admin UI cho user đã chuyển về creator.
+- File: `pkg/admin/service/staff_removal_cron.go` + register trong `pkg/admin/schedule/init.go` (đọc env config).
 
 #### FR-014: Notification Wire-up ✅
 - 5 constants mới trong `internal/constants/notification.go`:
