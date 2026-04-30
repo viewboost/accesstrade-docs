@@ -11,7 +11,9 @@
 
 ## ⏸ Deferred (skip lúc này)
 
-- Frontend creator (port 8002) — `React is not defined` chưa fix, để sau khi làm BRAND-01 refactor giao diện
+- ~~Frontend creator (port 8002)~~ → **UNBLOCKED** (commit fix sass + node-sass)
+- BRAND-01 design rebrand (96h) — đợi design final
+- Filipino native review pass (~1h native speaker pass qua AI draft)
 
 ---
 
@@ -99,7 +101,7 @@
 
 ---
 
-## 🟢 Phase 3 — Replace hardcode (sau FOUND-01)
+## ✅ Phase 3 — Replace hardcode (sau FOUND-01) — DONE (BE+admin FE; creator FE deferred)
 
 ### REPL-01: Replace +84 hardcode (5h, 12 chỗ)
 
@@ -200,7 +202,7 @@
 
 ---
 
-## 🟢 Phase 4 — Bug fixes (làm bất kỳ lúc nào, độc lập)
+## ✅ Phase 4 — Bug fixes (BE only) — DONE
 
 ### BUG-01: P0 Security bugs admin staff (9h) — BẮT BUỘC TRƯỚC LAUNCH
 
@@ -241,16 +243,17 @@
 
 ---
 
-## 🟢 Phase 5 — i18n infrastructure (không cần Filipino text)
+## ✅ Phase 5 — i18n infrastructure (admin FE) — DONE
 
-### I18N-02: Language toggle UI + format date/number (11h)
+### I18N-02: Language toggle UI + format date/number (~2h thực tế)
 
-- [ ] Wire `SelectLang` component vào header (component đã có sẵn 316 lines)
-- [ ] Add language option `fil-PH` vào dropdown
-- [ ] Verify auto-detect browser language work
-- [ ] Persist language choice trong localStorage
-- [ ] Update date format `dd/MM/yyyy` → `MM/dd/yyyy` (12 chỗ trong configs)
-- [ ] Update number format → `en-PH` style (comma thousands + 2 decimals)
+- [x] `SelectLang` đã wire sẵn từ source (RightContent header) — Umi-generated dropdown hardcode 3 keys
+- [x] Add `fil-PH` vào dropdown — Umi auto-gen menu chỉ list en-US/id-ID/vi-VN, replace bằng custom `LangDropdown` component (4 options: en-US/fil-PH/vi-VN/id-ID) ở [admin/src/components/RightContent/index.tsx](accesstrade-projects/vcreator-philippines/admin/src/components/RightContent/index.tsx)
+- [x] `src/locales/fil-PH.json` — copy từ en-US baseline (Filipino translation chờ partner — I18N-01)
+- [x] Auto-detect browser language: Umi `locale.baseNavigator: true` ở [admin/config/config.ts](accesstrade-projects/vcreator-philippines/admin/config/config.ts#L23) — không cần code thêm
+- [x] localStorage persist: Umi `locale.useLocalStorage: true` (cùng config) — key `umi_locale`, không cần code thêm
+- [x] Date format DD/MM/YYYY: PH dùng cả DD/MM và MM/DD → giữ nguyên + TODO comment từ Phase 3 (đổi sau khi có spec rõ)
+- [x] Number format: `cashValue`/`cashValuePositive` đã đọc `process.env.CASH_CURRENCY_STYLE='en-PH'` + `CASH_CURRENCY_UNIT='PHP'` từ Phase 3 FE-01 → `Intl.NumberFormat('en-PH','PHP')` tự ra `₱1,234.56`
 
 ---
 
@@ -333,7 +336,7 @@
 | BRAND-01, BRAND-02 (96h) | Đợi confirm design final + sẵn sàng rebrand |
 | SETUP-D01..03 (38h) | DevOps task, làm sau |
 | LEGAL-03 (11h) | Đợi partner cung cấp TOS + Privacy Policy text |
-| I18N-01 (24h) | Đợi partner cung cấp Filipino translation ~3,800 keys |
+| I18N-01 (24h) | ~~Đợi partner cung cấp Filipino translation ~3,800 keys~~ → **AI-translated draft cho BE (346 keys) + admin FE (407 keys) đã ship**. Còn ~3,000 keys creator FE chờ unblock + native PH review pass.|
 | DATA-01 (10h) | Đợi partner cung cấp CMS article content |
 
 ## 📌 Khuyến nghị thứ tự bắt đầu
