@@ -247,8 +247,8 @@
 ### I18N-02: Language toggle UI + format date/number (~2h thực tế)
 
 - [x] `SelectLang` đã wire sẵn từ source (RightContent header) — Umi-generated dropdown hardcode 3 keys
-- [x] Add `fil-PH` vào dropdown — Umi auto-gen menu chỉ list en-US/id-ID/vi-VN, replace bằng custom `LangDropdown` component (4 options: en-US/fil-PH/vi-VN/id-ID) ở [admin/src/components/RightContent/index.tsx](accesstrade-projects/vcreator-philippines/admin/src/components/RightContent/index.tsx)
-- [x] `src/locales/fil-PH.json` — copy từ en-US baseline (Filipino translation chờ partner — I18N-01)
+- [x] Add Filipino vào dropdown — Umi auto-gen menu chỉ list en-US/id-ID/vi-VN, replace bằng custom `LangDropdown` component ở [admin/src/components/RightContent/index.tsx](accesstrade-projects/vcreator-philippines/admin/src/components/RightContent/index.tsx). Filter `id-ID` ở creator FE picker (giữ JSON cho team Indonesia, hide UI cho PH).
+- [x] `src/locales/tl-PH.json` — Filipino translation (Taglish style, 224 keys). **Note: file dùng key `tl-PH` thay vì `fil-PH`** (xem Lessons Learned bên dưới). UI label vẫn hiển thị "Filipino".
 - [x] Auto-detect browser language: Umi `locale.baseNavigator: true` ở [admin/config/config.ts](accesstrade-projects/vcreator-philippines/admin/config/config.ts#L23) — không cần code thêm
 - [x] localStorage persist: Umi `locale.useLocalStorage: true` (cùng config) — key `umi_locale`, không cần code thêm
 - [x] Date format DD/MM/YYYY: PH dùng cả DD/MM và MM/DD → giữ nguyên + TODO comment từ Phase 3 (đổi sau khi có spec rõ)
@@ -335,7 +335,7 @@
 | BRAND-01, BRAND-02 (96h) | Đợi confirm design final + sẵn sàng rebrand |
 | SETUP-D01..03 (38h) | DevOps task, làm sau |
 | LEGAL-03 (11h) | ✅ AI dev draft seeded (TOS + Privacy + FAQ) qua `cmd/seed_articles` — IDs khớp FE constants. **Cần partner legal review trước production**. |
-| I18N-01 (24h) | ~~Đợi partner cung cấp Filipino translation ~3,800 keys~~ → **AI-translated draft cho BE (346 keys) + admin FE (407 keys) đã ship**. Còn ~3,000 keys creator FE chờ unblock + native PH review pass.|
+| I18N-01 (24h) | ~~Đợi partner cung cấp Filipino translation ~3,800 keys~~ → **AI-translated draft đầy đủ đã ship**: BE (346 keys, `locales/server/fil.json`) + admin FE (407 keys, `admin/src/locales/fil-PH.json`) + creator FE (224 keys, `frontend/src/locales/tl-PH.json`). Native PH speaker pass còn pending.|
 | DATA-01 (10h) | ✅ AI dev draft seeded (Welcome + About) qua `cmd/seed_articles` — `showOn: home_notice` + `home_list`. **Marketing review trước launch**. |
 
 ## 🆕 Pending content tasks — discovered post-Phase-5
@@ -368,6 +368,58 @@
 
 - [x] Filter `id-ID` khỏi dropdown picker (chỉ ẩn UI, JSON locale giữ — commit chuẩn bị) — Indonesia team không impacted
 - [ ] BRAND-01 audit reverify khi user đã check FE: 4 critical issues từ Phase 5 audit (cream bg, yellow accent, font weights, 1160px min-width)
+
+---
+
+## 📚 Lessons Learned — Filipino locale wiring
+
+> Tổng hợp các pitfalls gặp phải khi wire Filipino translation vào creator FE. Chia sẻ cho ai làm thêm locale khác sau này.
+
+### 1. Locale key phải dùng `tl-PH` (KHÔNG `fil-PH`)
+
+**Symptom:** Tạo `frontend/src/locales/fil-PH.json` đầy đủ + add vào SelectLang map → dropdown vẫn KHÔNG hiển thị Filipino. Hệ thống silently ignore.
+
+**Root cause:** Umi v3 plugin-locale ([node_modules/@umijs/plugin-locale/lib/utils.js](https://github.com/umijs/umi/blob/v3/packages/plugin-locale/src/utils.ts)) regex filter file locale:
+
+```js
+const localeFileMath = new RegExp(`^([a-z]{2})${separator}?([A-Z]{2})?\.(js|json|ts)$`);
+```
+
+Pattern yêu cầu **đúng 2 ký tự lowercase** cho language code. `fil` (3 ký tự, ISO 639-2) bị reject. `tl` (Tagalog, ISO 639-1, 2 ký tự) OK.
+
+**Fix:** Rename `fil-PH.json` → `tl-PH.json`. UI label giữ "Filipino" (user-recognizable name); chỉ internal key đổi.
+
+**Trade-off:** "Filipino" và "Tagalog" có khác biệt nhỏ (Filipino = Tagalog + 8 chữ cái thêm + loanwords từ tiếng Anh/Tây Ban Nha). Browsers + i18n libraries treat `tl-PH` ≈ `fil-PH` cho mục đích locale resolution → acceptable cho launch.
+
+### 2. antd v4 không ship Filipino locale module
+
+**Symptom:** Sau khi rename → tl-PH, antd component (DatePicker, Table empty state, etc.) vẫn render English thay vì Filipino kể cả khi user chọn Filipino.
+
+**Root cause:** antd `node_modules/antd/es/locale/` chỉ có `en_US`, `id_ID`, `vi_VN`, etc. — KHÔNG có `tl_PH` hoặc `fil_PH`. Umi plugin generate empty `antd: {}` block cho tl-PH → built-in component fall back to default English.
+
+**Workaround hiện tại:** Acceptable vì:
+- App-level strings (224 keys trong `tl-PH.json`) vẫn render Filipino đúng
+- antd built-in text chỉ xuất hiện ở admin-style components ít dùng (DatePicker placeholder, Table "No data", etc.)
+- Default English fallback graceful
+
+**Future fix nếu cần Filipino antd:** Stub file `node_modules/antd/es/locale/tl_PH.js` qua `patch-package` hoặc webpack alias resolution. ~2h work, defer cho QA-02 phase.
+
+### 3. `umi g tmp` không tự chạy khi rename file locale
+
+**Symptom:** Sau khi rename file, restart `yarn start`, vẫn không thấy Filipino.
+
+**Root cause:** Umi cache `src/.umi/plugin-locale/localeExports.ts` (auto-generated). Webpack hot-reload không re-scan generated files. Process `umi dev` chạy từ trước rename giữ in-memory bundle stale.
+
+**Fix:**
+1. Kill umi dev process: `pkill -9 -f "umi/lib/forkedDev"` (3 child processes — cross-env wrapper, umi binary, forkedDev)
+2. `yarn start` lại từ đầu → Umi scan src/locales fresh + re-generate `.umi/`
+3. Hard refresh browser (`Cmd+Shift+R`) — browser cũng cache JS bundle
+
+Manual `umi g tmp` cũng fix được nhưng Node version mismatch (Node 20 + node-sass v4 incompat) sẽ crash. Phải dùng Node 14: `PATH="/usr/.nvm/versions/node/v14.21.3/bin:$PATH" umi g tmp`.
+
+### 4. `id-ID` filter ở picker, JSON giữ nguyên
+
+**Decision:** Hide `id-ID` khỏi PH dropdown nhưng KHÔNG xóa `id-ID.json`. Indonesia team vẫn maintain translations cho deployment ID. Filter qua `HIDDEN_LOCALES` Set ở [SelectLang.tsx](accesstrade-projects/vcreator-philippines/frontend/src/components/common/select-lang-custom/SelectLang.tsx) — re-enable bằng cách remove key khỏi Set.
 
 ---
 
