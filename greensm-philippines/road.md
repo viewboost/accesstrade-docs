@@ -50,16 +50,15 @@
 
 ## 🟢 Phase 2 — Cleanup ẩn modules ngoài scope (song song với Phase 1)
 
-### PAYOUT-01: Ẩn payment / bank / withdraw / tax / KYC / FB-IG / OTP (28h) ⏳ BE+Admin xong, Creator FE deferred
+### PAYOUT-01: Ẩn payment / bank / withdraw / tax / KYC / FB-IG / OTP (28h) ✅ DONE
 
-**Frontend Creator:** ⏸ deferred (frontend bị block bởi React-not-defined)
-- [ ] Hide Withdraw button trong cashflow page
-- [ ] Hide Bank account form (page `/bank`)
-- [ ] Hide Tax declaration page (`/khai-bao-thue` / tax)
-- [ ] Hide KYC Identification upload page
-- [ ] Hide Facebook login button + route `/login-with-facebook`
-- [ ] Hide Instagram login button + route `/login-with-instagram`
-- [ ] Update label "Số dư có thể rút" → "Hoa hồng đã tích lũy"
+**Frontend Creator:** ✅ done (commit `35b15ec`)
+- [x] Hide Withdraw button + Bank account page — route `/payment-info` commented out
+- [x] Hide Tax declaration page — route `/tax-declaration` commented out
+- [x] Hide KYC Identification + Connect Account — route `/connect-account` commented out
+- [x] Hide Facebook + Instagram login buttons — already commented in source `modal-login.tsx`
+- [x] Profile dropdown items `payment` / `accountLink` / `eContract` set `visible: false`
+- [ ] Update label "Số dư có thể rút" → "Hoa hồng đã tích lũy" — string trong `bank/index.tsx`, route đã disable nên unreachable. Cần làm khi I18N-01 partner submit translation (handle qua locale key thay vì hardcode replace).
 
 **Frontend Admin:**
 - [x] Transfer/Payout menu — **GIỮ** (cần cho PAYOUT-02 approve commission + export)
@@ -74,7 +73,7 @@
 - [x] Skip `UpdateInfoContract` cron — guard country-code != VN
 - [x] Disable admin `identification` route group ở [pkg/admin/router/router.go](accesstrade-projects/vcreator-philippines/backend/pkg/admin/router/router.go) (transfers giữ enable cho PAYOUT-02)
 
-### LEGAL-01: Ẩn/xóa contract sign flow (16h) ⏳ BE+Admin xong, Creator FE deferred
+### LEGAL-01: Ẩn/xóa contract sign flow (16h) ✅ DONE
 
 **Backend:**
 - [x] Comment `/users/contract/info` (POST upsert info) — [pkg/public/router/user.go](accesstrade-projects/vcreator-philippines/backend/pkg/public/router/user.go)
@@ -84,9 +83,9 @@
 - [x] Skip `UploadContract` (Drive + MinIO upload PDF) — guard `if ContractTemplate == "" { return "", nil }` ở cả [admin](accesstrade-projects/vcreator-philippines/backend/pkg/admin/service/user.go#L156) + [public](accesstrade-projects/vcreator-philippines/backend/pkg/public/service/user.go#L666) services + GetContractEstimate
 - [x] Empty `constants/contract.go` template (219 dòng Bahasa → 9 dòng stub) — [internal/constants/contract.go](accesstrade-projects/vcreator-philippines/backend/internal/constants/contract.go)
 
-**Frontend Creator:** ⏸ deferred
-- [ ] Hide Contract sign page + flow
-- [ ] Hide Profile section "Hợp đồng" (status + download PDF)
+**Frontend Creator:** ✅ done (commit `35b15ec`)
+- [x] Contract sign page + flow — route `/e-contract` commented out
+- [x] Profile section "Hợp đồng" — menu item `eContract` `visible: false` trong profile dropdown
 
 **Frontend Admin:**
 - [x] Không có Contract management menu trong admin routes hiện tại — không cần action.
@@ -105,100 +104,100 @@
 
 ### REPL-01: Replace +84 hardcode (5h, 12 chỗ)
 
-- [ ] `format/string.go:31, 70-71, 77` (PhoneNumberFormatFromPhone)
-- [ ] `model/mg/user.go:152` (search string)
-- [ ] `service/otp.go:108` (OTP send)
-- [ ] `public/service/user.go:113, 616` (contract)
-- [ ] `public/service/identification.go:83`
-- [ ] `public/service/schedule.go:413`
-- [ ] `admin/service/user.go:184`
-- [ ] Verify pass test sau khi replace
+- [x] `format/string.go:31, 70-71, 77` (PhoneNumberFormatFromPhone)
+- [x] `model/mg/user.go:152` (search string)
+- [x] `service/otp.go:108` (OTP send)
+- [x] `public/service/user.go:113, 616` (contract)
+- [x] `public/service/identification.go:83`
+- [x] `public/service/schedule.go:413`
+- [x] `admin/service/user.go:184`
+- [x] Verify pass test sau khi replace
 
 ### REPL-02: Replace HCM timezone (36h, 91 chỗ)
 
 **Refactor utility:**
-- [ ] `util/time.go` — refactor 15 HCM functions → Region functions
-- [ ] `util/ptime/parse.go`
+- [x] `util/time.go` — refactor 15 HCM functions → Region functions
+- [x] `util/ptime/parse.go`
 
 **Public services callsite:**
-- [ ] `public/service/schedule.go`
-- [ ] `public/service/user.go`
-- [ ] `public/service/withdraw.go`
-- [ ] `public/service/identification.go`
+- [x] `public/service/schedule.go`
+- [x] `public/service/user.go`
+- [x] `public/service/withdraw.go`
+- [x] `public/service/identification.go`
 
 **Admin services callsite:**
-- [ ] `admin/service/transfer.go`
-- [ ] `admin/service/reconciliation.go`
-- [ ] `admin/service/content.go`
-- [ ] `admin/service/event.go`
-- [ ] `admin/service/exports.go`
-- [ ] `admin/service/migration.go`
-- [ ] `admin/service/user.go`
-- [ ] `admin/service/schedule.go`
+- [x] `admin/service/transfer.go`
+- [x] `admin/service/reconciliation.go`
+- [x] `admin/service/content.go`
+- [x] `admin/service/event.go`
+- [x] `admin/service/exports.go`
+- [x] `admin/service/migration.go`
+- [x] `admin/service/user.go`
+- [x] `admin/service/schedule.go`
 
 **Handlers:**
-- [ ] `admin/handler/event.go`
+- [x] `admin/handler/event.go`
 
 **Cleanup:**
-- [ ] Remove constant `timezoneHCM`
+- [x] Remove constant `timezoneHCM`
 
 ### REPL-03: Replace Vietnamese accent functions (6h, 38 chỗ)
 
-- [ ] `admin/service/reconciliation.go` (3 chỗ)
-- [ ] `admin/service/transfer.go` (2 chỗ)
-- [ ] `admin/service/event.go` (slug generators - 2 chỗ)
-- [ ] `admin/service/partner.go` (slug - 2 chỗ)
-- [ ] `admin/service/export.go` (filename - 2 chỗ)
-- [ ] `admin/service/common.go` (bank search)
-- [ ] `admin/model/request/notification.go`
-- [ ] `admin/model/request/article.go`
-- [ ] `admin/model/request/news.go`
-- [ ] `admin/model/request/segment.go`
-- [ ] `admin/model/request/tag.go`
-- [ ] `admin/server/initialize/dummy_db.go` (3 chỗ)
-- [ ] Verify search/sort vẫn work sau replace
+- [x] `admin/service/reconciliation.go` (3 chỗ)
+- [x] `admin/service/transfer.go` (2 chỗ)
+- [x] `admin/service/event.go` (slug generators - 2 chỗ)
+- [x] `admin/service/partner.go` (slug - 2 chỗ)
+- [x] `admin/service/export.go` (filename - 2 chỗ)
+- [x] `admin/service/common.go` (bank search)
+- [x] `admin/model/request/notification.go`
+- [x] `admin/model/request/article.go`
+- [x] `admin/model/request/news.go`
+- [x] `admin/model/request/segment.go`
+- [x] `admin/model/request/tag.go`
+- [x] `admin/server/initialize/dummy_db.go` (3 chỗ)
+- [x] Verify search/sort vẫn work sau replace
 
 ### REPL-04: Replace constants + slug VN-specific (4h)
 
-- [ ] Move `RegexPhoneNumber` (line 40) → đọc từ ENV
-- [ ] Remove constant `timezoneHCM` (line 72)
-- [ ] Remove `PercentTaxIndonesia` + `PercentTaxVietNam` (line 226-227) → config-driven
-- [ ] Remove `ConvertSlugProvince` + `ConvertSlugProvinceFind` (ho-chi-minh ⇄ tp-ho-chi-minh logic)
+- [x] Move `RegexPhoneNumber` (line 40) → đọc từ ENV
+- [x] Remove constant `timezoneHCM` (line 72)
+- [x] Remove `PercentTaxIndonesia` + `PercentTaxVietNam` (line 226-227) → config-driven
+- [x] Remove `ConvertSlugProvince` + `ConvertSlugProvinceFind` (ho-chi-minh ⇄ tp-ho-chi-minh logic)
 
 ### REPL-05: Replace VN error messages + Indonesia/VN-specific code (11h)
 
-- [ ] Vietnamese error messages → locale keys (3 chỗ):
-  - [ ] `public/service/identification.go:453`
-  - [ ] `public/service/schedule.go:739`
-  - [ ] `public/service/schedule.go:1775`
-- [ ] Remove hardcode `if typeBank != "indo"` (admin/common.go:150)
-- [ ] Refactor `BeneficiaryForVietinbank` field → generic (admin/common.go:182 + bank model)
-- [ ] Update tax cron firstMonth date (schedule.go:760) hardcode 2024-03-31 → ENV var
+- [x] Vietnamese error messages → locale keys (3 chỗ):
+  - [x] `public/service/identification.go:453`
+  - [x] `public/service/schedule.go:739`
+  - [x] `public/service/schedule.go:1775`
+- [x] Remove hardcode `if typeBank != "indo"` (admin/common.go:150)
+- [x] Refactor `BeneficiaryForVietinbank` field → generic (admin/common.go:182 + bank model)
+- [x] Update tax cron firstMonth date (schedule.go:760) hardcode 2024-03-31 → ENV var
 
 ### FE-01: Replace FE hardcode (12h)
 
 **Phone format:**
-- [ ] `frontend/src/configs/app.tsx:58` — phoneNumberPrefix `+84` → `+63`
-- [ ] `frontend/src/configs/form.ts:3` — phoneRegExp Indonesia → PH
-- [ ] `admin/src/utils/format.ts:69-70` — +84 hardcode
+- [x] `frontend/src/configs/app.tsx:58` — phoneNumberPrefix `+84` → `+63`
+- [x] `frontend/src/configs/form.ts:3` — phoneRegExp Indonesia → PH
+- [x] `admin/src/utils/format.ts:69-70` — +84 hardcode
 
 **Currency:**
-- [ ] `admin/src/utils/format.ts:112` — unit `VND` → `PHP`
+- [x] `admin/src/utils/format.ts:112` — unit `VND` → `PHP`
 
 **Default locale config:**
-- [ ] `frontend/config/config.ts` — `id-ID` → auto-detect
-- [ ] `admin/config/config.ts` — `id-ID` → auto-detect
+- [x] `frontend/config/config.ts` — `id-ID` → auto-detect
+- [x] `admin/config/config.ts` — `id-ID` → auto-detect
 
 **Tiếng Việt hardcode (~7 chỗ):**
-- [ ] `frontend/src/pages/bank/components/user-cards/index.tsx:107, 123`
-- [ ] `frontend/src/pages/account/management/index.tsx:64`
-- [ ] `frontend/src/pages/main-home/index.tsx:116`
-- [ ] `admin/src/utils/format.ts` comments
-- [ ] `admin/src/utils/upload.ts:38` error message
-- [ ] `frontend/src/utils/breadcrumb-utils.ts` (~10 comments)
+- [x] `frontend/src/pages/bank/components/user-cards/index.tsx:107, 123`
+- [x] `frontend/src/pages/account/management/index.tsx:64`
+- [x] `frontend/src/pages/main-home/index.tsx:116`
+- [x] `admin/src/utils/format.ts` comments
+- [x] `admin/src/utils/upload.ts:38` error message
+- [x] `frontend/src/utils/breadcrumb-utils.ts` (~10 comments)
 
 **Cleanup:**
-- [ ] Verify `admin/format.ts` Vietnamese accent funcs còn cần không
+- [x] Verify `admin/format.ts` Vietnamese accent funcs còn cần không
 
 ---
 
@@ -206,40 +205,40 @@
 
 ### BUG-01: P0 Security bugs admin staff (9h) — BẮT BUỘC TRƯỚC LAUNCH
 
-- [ ] `staff.go:264` — `GetMe()` permission check (validate userID==tokenOwner OR isRoot)
-- [ ] `staff.go:339` — UpdateInfo isRoot escalation (block isRoot field từ user-controlled body)
-- [ ] `staff.go:325` — `$nin` syntax error (MongoDB syntax `$nin` → `$ne`)
-- [ ] `staff.go:214` — reCAPTCHA score validation (validate score threshold)
+- [x] `staff.go:264` — `GetMe()` permission check (validate userID==tokenOwner OR isRoot)
+- [x] `staff.go:339` — UpdateInfo isRoot escalation (block isRoot field từ user-controlled body)
+- [x] `staff.go:325` — `$nin` syntax error (MongoDB syntax `$nin` → `$ne`)
+- [x] `staff.go:214` — reCAPTCHA score validation (validate score threshold)
 
 ### BUG-02: Staff hardening (9h)
 
-- [ ] `staff.go:118` — Add TOTP rate limit (lock after N attempts)
-- [ ] `staff.go:207` — Normalize email lowercase trong login
-- [ ] `transfer_processing.go:56` — Fix transfer math.Max logic bug (filter inverted)
+- [x] `staff.go:118` — Add TOTP rate limit (lock after N attempts)
+- [x] `staff.go:207` — Normalize email lowercase trong login
+- [x] `transfer_processing.go:56` — Fix transfer math.Max logic bug (filter inverted)
 
 ### BUG-03: Event + Content + Schedule logic bugs (25h)
 
 **Event:**
-- [ ] `event.go:296-298` — GetList sort bug (boolean sort)
-- [ ] `event.go:574` — GetLeaderBoard sort (add SortInterface)
-- [ ] `event.go:314-319` — Commented schema time-window (decide enable/remove)
+- [x] `event.go:296-298` — GetList sort bug (boolean sort)
+- [x] `event.go:574` — GetLeaderBoard sort (add SortInterface)
+- [x] `event.go:314-319` — Commented schema time-window (decide enable/remove)
 
 **Content & Schedule:**
-- [ ] `transcript.go:28, 38` — Loop return → continue
-- [ ] `referral.go:76` — Referral cash always 0 (populate value)
-- [ ] `news.go:38` — Fix typo "new" → "news"
-- [ ] `user.go:1797` — `isExistedEmail` incomplete (check tất cả email fields)
-- [ ] `reconciliation_running.go:304` — Reconciliation rollback on failure
-- [ ] `schedule.go:1408` — OOM protection `UpdateSearchStringContent` (pagination)
+- [x] `transcript.go:28, 38` — Loop return → continue
+- [x] `referral.go:76` — Referral cash always 0 (populate value)
+- [x] `news.go:38` — Fix typo "new" → "news"
+- [x] `user.go:1797` — `isExistedEmail` incomplete (check tất cả email fields)
+- [x] `reconciliation_running.go:304` — Reconciliation rollback on failure
+- [x] `schedule.go:1408` — OOM protection `UpdateSearchStringContent` (pagination)
 
 ### BUG-04: Cleanup tech debt (7h, P2 — có thể defer)
 
-- [ ] `user.go:1639` — Add max recursion guard cho `GenerateCode`
-- [ ] `user.go:662` — Add PDF cleanup sau `UploadContract`
-- [ ] Cleanup withdraw dead code (route không wire)
-- [ ] Implement `event_reward` stub hoặc remove
-- [ ] Branch card feature decide — uncomment & fix HOẶC remove
-- [ ] Tax double-charge verify — code không crash khi rate=0
+- [x] `user.go:1639` — Add max recursion guard cho `GenerateCode`
+- [x] `user.go:662` — Add PDF cleanup sau `UploadContract`
+- [x] Cleanup withdraw dead code (route không wire)
+- [x] Implement `event_reward` stub hoặc remove
+- [x] Branch card feature decide — uncomment & fix HOẶC remove
+- [x] Tax double-charge verify — code không crash khi rate=0
 
 ---
 
@@ -335,9 +334,9 @@
 |---|---|
 | BRAND-01, BRAND-02 (96h) | Đợi confirm design final + sẵn sàng rebrand |
 | SETUP-D01..03 (38h) | DevOps task, làm sau |
-| LEGAL-03 (11h) | Đợi partner cung cấp TOS + Privacy Policy text |
+| LEGAL-03 (11h) | ✅ AI dev draft seeded (TOS + Privacy + FAQ) qua `cmd/seed_articles` — IDs khớp FE constants. **Cần partner legal review trước production**. |
 | I18N-01 (24h) | ~~Đợi partner cung cấp Filipino translation ~3,800 keys~~ → **AI-translated draft cho BE (346 keys) + admin FE (407 keys) đã ship**. Còn ~3,000 keys creator FE chờ unblock + native PH review pass.|
-| DATA-01 (10h) | Đợi partner cung cấp CMS article content |
+| DATA-01 (10h) | ✅ AI dev draft seeded (Welcome + About) qua `cmd/seed_articles` — `showOn: home_notice` + `home_list`. **Marketing review trước launch**. |
 
 ## 📌 Khuyến nghị thứ tự bắt đầu
 
