@@ -338,6 +338,39 @@
 | I18N-01 (24h) | ~~Đợi partner cung cấp Filipino translation ~3,800 keys~~ → **AI-translated draft cho BE (346 keys) + admin FE (407 keys) đã ship**. Còn ~3,000 keys creator FE chờ unblock + native PH review pass.|
 | DATA-01 (10h) | ✅ AI dev draft seeded (Welcome + About) qua `cmd/seed_articles` — `showOn: home_notice` + `home_list`. **Marketing review trước launch**. |
 
+## 🆕 Pending content tasks — discovered post-Phase-5
+
+### CONTACT-01: Contact page company info (đợi partner)
+
+> Trang `/contact` đang hiển thị thông tin **PT XANHSM Green and Smart Mobility Indonesia** từ source. Đã thay placeholder PH ở [pages/contact/index.tsx](accesstrade-projects/vcreator-philippines/frontend/src/pages/contact/index.tsx). Cần partner cung cấp:
+
+- [ ] Legal entity name của Green SM Philippines (Inc. / Corp. / etc.)
+- [ ] Registered office address (Metro Manila full address — placeholder hiện "[Office address — to be confirmed by partner]")
+- [ ] Consumer hotline number PH (placeholder `+63 2 0000 0000`)
+- [ ] Creator support hotline (placeholder `+63 917 000 0000`)
+- [ ] Email address chính thức (suggested: `support@gen-green.ph`)
+- [ ] Social media handles (FB/IG/TikTok official PH accounts) — code đang có Zalo/FB/YouTube icons từ source ID
+
+### Q&A enrichment (đợi marketing review)
+
+> AI dev draft FAQ đã seed (`qaArticleId = 687a18b9919af82534216256`). 8 Q&A sections generic — partner marketing nên customize:
+
+- [ ] Reward formula thực tế (per-view rate cho PH market, milestone amounts in PHP)
+- [ ] Min payout threshold (campaign-specific)
+- [ ] Reconciliation cycle (weekly? bi-weekly? monthly?)
+- [ ] BIR tax interpretation Green SM khuyến nghị cho creators
+- [ ] Local PH social platform behaviors (TikTok PH, Lazada Live, Shopee Live nếu cần)
+- [ ] Customer support contact info (depends on CONTACT-01)
+
+**Reference:** VN FAQ tại https://creator.gen-green.global/bai-viet/6821b1d49e085188151bf6d8 — có thể model theo style VN nhưng PH context.
+
+### Other small UX polish
+
+- [x] Filter `id-ID` khỏi dropdown picker (chỉ ẩn UI, JSON locale giữ — commit chuẩn bị) — Indonesia team không impacted
+- [ ] BRAND-01 audit reverify khi user đã check FE: 4 critical issues từ Phase 5 audit (cream bg, yellow accent, font weights, 1160px min-width)
+
+---
+
 ## 📌 Khuyến nghị thứ tự bắt đầu
 
 **Day 1-3:** FOUND-01 (BE) + LEGAL-01 (BE+FE) — dọn contract trước
