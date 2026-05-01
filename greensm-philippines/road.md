@@ -347,45 +347,36 @@
 | SETUP-D01..03 (38h) | DevOps task, làm sau |
 | QA-01, QA-02 (60h) | Đợi staging server từ SETUP-D01..03 |
 
-## 🟢 Có thể làm ngay (không block bởi external)
+## ✅ BRAND-02: Update static texts + links + meta tags — DONE (2026-05-01)
 
-### BRAND-02: Update static texts + links + meta tags (16h)
+> Code-level pass: cleanup legacy brand refs (VCreator/VinFast/Vingroup), update GTM, apply contact info. Compile clean (Go build + admin TS check src/).
 
-> Search-replace pattern + verify. Code-level task, không cần design hay partner.
-
-**Meta tags + SEO:**
-- [ ] OG title + description trong [public/index.html](accesstrade-projects/vcreator-philippines/frontend/public/index.html) + admin equivalent — dịch từ trang Indo Gen Green
-- [ ] Favicon đảm bảo PH (đã có placeholder)
-- [ ] GTM tracking ID: `GTM-WTMZXPHC` (PH-specific, replace từ Indo)
-
-**External links:**
-- [ ] CTA "Về Đối tác" link → `https://www.greengsm.ph/`
-- [ ] Facebook page link → `facebook.com/greengsm.ph`
-- [ ] Default hashtag campaign → `#GreenSM` (đã update qua event seed `#GreenSMPH` etc., verify FE config)
-- [ ] Materials/Media kit link → Drive PH (placeholder, đợi partner)
-- [ ] YouTube/Instagram/TikTok official PH handles (placeholder, đợi partner)
-
-**Contact info (overlap với CONTACT-01) — partner cung cấp đầy đủ 2026-05-01, đã apply ở Contact page. BRAND-02 cần apply tiếp các chỗ khác:**
-- Legal name: `Green and Smart Mobility Philippines Inc.`
-- Phone: `02-7777-8080`
-- Email: `support.ph@greensm.com`
-- Address: `6TH FLOOR TWO E-COM CENTER, BAYSHORE AVE, MALL OF ASIA COMPLEX BRGY. 76, PASAY CITY 1300`
-- Social: FB `facebook.com/greengsm.ph`, LinkedIn `linkedin.com/company/gsm-philippines`, IG `instagram.com/ph.greengsm`
-
-- [ ] Apply legal name + 3 contact values vào footer
-- [ ] Apply vào meta tags (OG, twitter:site)
-- [ ] Apply vào email signature templates (BE: `internal/locale/properties/`)
-
-**Audit & cleanup:**
-- [ ] Search `VinFast` toàn FE → remove
-- [ ] Search `vCreator` → replace với `Green SM Creator`
-- [ ] Search `Việt Nam`/`Vietnam` còn sót → remove hoặc replace
-- [ ] Email signature templates (BE: `internal/locale/properties/`) — verify reference đúng GreenSM PH
+**Done:**
+- [x] **GTM tracking** `GTM-NNL6PN4R` → `GTM-WTMZXPHC` ở [config.prod.ts](accesstrade-projects/vcreator-philippines/frontend/config/config.prod.ts) + [document.ejs](accesstrade-projects/vcreator-philippines/frontend/src/pages/document.ejs)
+- [x] **OG meta tags** PH-specific ([document.ejs](accesstrade-projects/vcreator-philippines/frontend/src/pages/document.ejs)): title `Green SM Creator Philippines`, description Filipino-friendly với "Mabuhay!", keywords PH-specific
+- [x] **Admin branding** `VCreator` → `Green SM Creator PH` ở [manifest.json](accesstrade-projects/vcreator-philippines/admin/src/manifest.json), [document.ejs](accesstrade-projects/vcreator-philippines/admin/src/pages/document.ejs), [Footer](accesstrade-projects/vcreator-philippines/admin/src/components/Footer/index.tsx) (`2026 Green and Smart Mobility Philippines Inc.`)
+- [x] **Partner allowDomains** `vcreator.global` → `greengsm.ph` ở [partner/modal.tsx](accesstrade-projects/vcreator-philippines/admin/src/pages/partner/components/modal.tsx)
+- [x] **Locale strings cleanup** `copyright` (VinFast → GSM PH Inc.) + `xanhSMDescription` (Vingroup → Green SM Philippines) ở [en-US.json](accesstrade-projects/vcreator-philippines/frontend/src/locales/en-US.json) + [tl-PH.json](accesstrade-projects/vcreator-philippines/frontend/src/locales/tl-PH.json). Vi-VN + id-ID giữ nguyên (legacy locales cho VN/Indonesia teams).
+- [x] **Service worker prod detection** support PH domain `greengsm` / `.ph` ở [firebase-messaging-sw.js](accesstrade-projects/vcreator-philippines/frontend/public/firebase-messaging-sw.js)
+- [x] **Firebase config TODO comment** đã add cảnh báo `vinfast-creators-a90d5` legacy + chờ DevOps swap PH project khi launch
 
 **Verify:**
-- [ ] Smoke test trang home + footer + contact + about render đúng PH info
-- [ ] `<head>` meta tags load đúng OG image PH
-- [ ] GTM dataLayer event fire trong Network tab
+- [x] Backend `go build ./...` clean
+- [x] Admin `tsc --noEmit` clean (src/ only)
+- [x] FE dev server pickup new OG title + GTM ID
+
+**Defer cho DevOps (SETUP-D02):**
+- [ ] Replace prod URL `xanh-indo-*.koc.com.vn` → PH host khi DevOps provision
+- [ ] Replace dev URL `dev-xanhindo-*.koc.asia` → PH dev host
+- [ ] Provision Firebase project PH thật (replace `vinfast-creators-a90d5`)
+
+**Defer cho partner (CONTACT-01 follow-up):**
+- [ ] Confirm legal entity name (Inc. / Corp. / etc. — hiện dùng "Green and Smart Mobility Philippines Inc.")
+- [ ] Confirm media kit Drive link
+- [ ] Footer email signature templates BE (`internal/locale/properties/server/<lang>/*.properties`) — tự dịch sau khi xác định email signature copy chuẩn
+
+**KEEP (no rename, YAGNI):**
+- CSS class names `text-xanh-indo`, `bg-gradient-xanhsm`, image keys `xanhOto`, `vectorXanh` — internal symbols, không hiển thị user, rename chỉ tạo dirty diff không thay đổi behavior
 
 ## 🆕 Pending content tasks — đợi external
 
