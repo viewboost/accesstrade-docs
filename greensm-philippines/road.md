@@ -61,7 +61,8 @@
 - [x] Hide KYC Identification + Connect Account — route `/connect-account` commented out
 - [x] Hide Facebook + Instagram login buttons — already commented in source `modal-login.tsx`
 - [x] Profile dropdown items `payment` / `accountLink` / `eContract` set `visible: false`
-- [ ] Update label "Số dư có thể rút" → "Hoa hồng đã tích lũy" — string trong `bank/index.tsx`, route đã disable nên unreachable. Cần làm khi I18N-01 partner submit translation (handle qua locale key thay vì hardcode replace).
+- [x] Fix `paymentThresholdInfo` leak Rupiah `Rp 50.000` → `₱500` ở [en-US.json](accesstrade-projects/vcreator-philippines/frontend/src/locales/en-US.json) + [tl-PH.json](accesstrade-projects/vcreator-philippines/frontend/src/locales/tl-PH.json)
+- [x] Translate `paymentInfo` Filipino: "Payment information" → "Impormasyon sa pagbabayad" ở [tl-PH.json](accesstrade-projects/vcreator-philippines/frontend/src/locales/tl-PH.json)
 
 **Frontend Admin:**
 - [x] Transfer/Payout menu — **GIỮ** (cần cho PAYOUT-02 approve commission + export)
@@ -373,7 +374,8 @@
 **Defer cho partner (CONTACT-01 follow-up):**
 - [ ] Confirm legal entity name (Inc. / Corp. / etc. — hiện dùng "Green and Smart Mobility Philippines Inc.")
 - [ ] Confirm media kit Drive link
-- [ ] Footer email signature templates BE (`internal/locale/properties/server/<lang>/*.properties`) — tự dịch sau khi xác định email signature copy chuẩn
+
+> **Note (2026-05-01):** "BE email signature templates" trong scope cũ đã verified KHÔNG TỒN TẠI. Backend dùng push notifications (Firebase), không có HTML email templates hoặc signature files. BE i18n file `locales/server/fil.json` đã đủ 346 keys.
 
 **KEEP (no rename, YAGNI):**
 - CSS class names `text-xanh-indo`, `bg-gradient-xanhsm`, image keys `xanhOto`, `vectorXanh` — internal symbols, không hiển thị user, rename chỉ tạo dirty diff không thay đổi behavior
