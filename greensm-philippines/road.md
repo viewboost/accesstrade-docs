@@ -8,12 +8,15 @@
 
 - [x] Setup local env: backend (3010/3011/3012) + admin FE (8000) + DB `vcreator-philippines` + captcha + TOTP + seed staff `vinhnguyen@diso.vn`
 - [x] Symlink locales (backend + admin)
+- [x] Frontend creator (port 8000) — UNBLOCKED (sass + node-sass + tl-PH locale)
+- [x] BRAND-01 — giao diện thực tế match Figma, không cần rework
+- [x] I18N-01 — AI Filipino translation = final draft, partner review trên UI sau khi deploy
 
-## ⏸ Deferred (skip lúc này)
+## ⏸ Deferred (đợi external)
 
-- ~~Frontend creator (port 8002)~~ → **UNBLOCKED** (commit fix sass + node-sass)
-- BRAND-01 design rebrand (96h) — đợi design final
-- Filipino native review pass (~1h native speaker pass qua AI draft)
+- BRAND-02 (16h) — code-level, có thể làm ngay (xem section bên dưới)
+- Partner content reviews (LEGAL-03, DATA-01, Q&A) — sau deploy staging
+- DevOps (SETUP-D01..03, QA-01, QA-02) — đợi infra team
 
 ---
 
@@ -328,46 +331,85 @@
 
 ---
 
-## 🚫 Chưa làm bây giờ (đợi)
+## ✅ Branding & Translation — Done (partner review on UI)
+
+| Task | Status |
+|---|---|
+| **BRAND-01** (72h) | ✅ DONE — sau khi check thực tế giao diện đã match Figma (lúc đầu nghĩ design khác nhưng giờ y hệt). Không cần rework. |
+| **I18N-01** (24h) | ✅ DONE — AI translation = final draft. Partner sẽ review trực tiếp trên UI sau khi deploy staging, không cần native translator round trước. BE 346 + admin FE 407 + creator FE 224 keys. |
+| **LEGAL-03** (11h) | ✅ AI draft seeded (TOS + Privacy + FAQ + Welcome + About) qua `cmd/seed_articles` + Q&A 18 questions từ gen-green.id translated → English + PH localized (Rupiah→Peso, BIR/TRAIN tax, Viber/Messenger). **Partner legal review trên UI sau deploy staging**. |
+| **DATA-01** (10h) | ✅ AI draft seeded (5 articles + 2 events `customer-experience-with-greensm` + `joy-of-being-greensm-driver-partner` với covers từ Indonesia CDN dev placeholder). **Marketing review trên UI sau deploy staging**. |
+
+## 🚫 Chưa làm bây giờ (đợi infra)
 
 | Task | Lý do đợi |
 |---|---|
-| BRAND-01, BRAND-02 (96h) | Đợi confirm design final + sẵn sàng rebrand |
 | SETUP-D01..03 (38h) | DevOps task, làm sau |
-| LEGAL-03 (11h) | ✅ AI dev draft seeded (TOS + Privacy + FAQ) qua `cmd/seed_articles` — IDs khớp FE constants. **Cần partner legal review trước production**. |
-| I18N-01 (24h) | ~~Đợi partner cung cấp Filipino translation ~3,800 keys~~ → **AI-translated draft đầy đủ đã ship**: BE (346 keys, `locales/server/fil.json`) + admin FE (407 keys, `admin/src/locales/fil-PH.json`) + creator FE (224 keys, `frontend/src/locales/tl-PH.json`). Native PH speaker pass còn pending.|
-| DATA-01 (10h) | ✅ AI dev draft seeded (Welcome + About) qua `cmd/seed_articles` — `showOn: home_notice` + `home_list`. **Marketing review trước launch**. |
+| QA-01, QA-02 (60h) | Đợi staging server từ SETUP-D01..03 |
 
-## 🆕 Pending content tasks — discovered post-Phase-5
+## 🟢 Có thể làm ngay (không block bởi external)
 
-### CONTACT-01: Contact page company info (đợi partner)
+### BRAND-02: Update static texts + links + meta tags (16h)
 
-> Trang `/contact` đang hiển thị thông tin **PT XANHSM Green and Smart Mobility Indonesia** từ source. Đã thay placeholder PH ở [pages/contact/index.tsx](accesstrade-projects/vcreator-philippines/frontend/src/pages/contact/index.tsx). Cần partner cung cấp:
+> Search-replace pattern + verify. Code-level task, không cần design hay partner.
 
-- [ ] Legal entity name của Green SM Philippines (Inc. / Corp. / etc.)
-- [ ] Registered office address (Metro Manila full address — placeholder hiện "[Office address — to be confirmed by partner]")
-- [ ] Consumer hotline number PH (placeholder `+63 2 0000 0000`)
-- [ ] Creator support hotline (placeholder `+63 917 000 0000`)
-- [ ] Email address chính thức (suggested: `support@gen-green.ph`)
-- [ ] Social media handles (FB/IG/TikTok official PH accounts) — code đang có Zalo/FB/YouTube icons từ source ID
+**Meta tags + SEO:**
+- [ ] OG title + description trong [public/index.html](accesstrade-projects/vcreator-philippines/frontend/public/index.html) + admin equivalent — dịch từ trang Indo Gen Green
+- [ ] Favicon đảm bảo PH (đã có placeholder)
+- [ ] GTM tracking ID: `GTM-WTMZXPHC` (PH-specific, replace từ Indo)
+
+**External links:**
+- [ ] CTA "Về Đối tác" link → `https://www.greengsm.ph/`
+- [ ] Facebook page link → `facebook.com/greengsm.ph`
+- [ ] Default hashtag campaign → `#GreenSM` (đã update qua event seed `#GreenSMPH` etc., verify FE config)
+- [ ] Materials/Media kit link → Drive PH (placeholder, đợi partner)
+- [ ] YouTube/Instagram/TikTok official PH handles (placeholder, đợi partner)
+
+**Contact info (overlap với CONTACT-01) — partner cung cấp đầy đủ 2026-05-01, đã apply ở Contact page. BRAND-02 cần apply tiếp các chỗ khác:**
+- Legal name: `Green and Smart Mobility Philippines Inc.`
+- Phone: `02-7777-8080`
+- Email: `support.ph@greensm.com`
+- Address: `6TH FLOOR TWO E-COM CENTER, BAYSHORE AVE, MALL OF ASIA COMPLEX BRGY. 76, PASAY CITY 1300`
+- Social: FB `facebook.com/greengsm.ph`, LinkedIn `linkedin.com/company/gsm-philippines`, IG `instagram.com/ph.greengsm`
+
+- [ ] Apply legal name + 3 contact values vào footer
+- [ ] Apply vào meta tags (OG, twitter:site)
+- [ ] Apply vào email signature templates (BE: `internal/locale/properties/`)
+
+**Audit & cleanup:**
+- [ ] Search `VinFast` toàn FE → remove
+- [ ] Search `vCreator` → replace với `Green SM Creator`
+- [ ] Search `Việt Nam`/`Vietnam` còn sót → remove hoặc replace
+- [ ] Email signature templates (BE: `internal/locale/properties/`) — verify reference đúng GreenSM PH
+
+**Verify:**
+- [ ] Smoke test trang home + footer + contact + about render đúng PH info
+- [ ] `<head>` meta tags load đúng OG image PH
+- [ ] GTM dataLayer event fire trong Network tab
+
+## 🆕 Pending content tasks — đợi external
+
+### CONTACT-01: Contact page company info ✅ DONE (2026-05-01)
+
+> **CONTACT-01 = task fix nội dung trang Contact**. Source dùng "PT XANHSM Green and Smart Mobility Indonesia" (legal entity Indonesia). Đã apply đầy đủ data thật từ partner vào [pages/contact/index.tsx](accesstrade-projects/vcreator-philippines/frontend/src/pages/contact/index.tsx).
+
+**Partner data applied:**
+- [x] Legal name: `Green and Smart Mobility Philippines Inc.`
+- [x] Address: `6TH FLOOR TWO E-COM CENTER, BAYSHORE AVE, MALL OF ASIA COMPLEX BRGY. 76, PASAY CITY 1300`
+- [x] Phone: `02-7777-8080`
+- [x] Email: `support.ph@greensm.com`
+- [x] Social: Facebook (`facebook.com/greengsm.ph`) + LinkedIn (`linkedin.com/company/gsm-philippines`) + Instagram (`instagram.com/ph.greengsm`) — replaced source ID's Zalo + YouTube placeholders. Added LinkedIn icon ở [assets/icons/color/ic_linkedin.svg](accesstrade-projects/vcreator-philippines/frontend/src/assets/icons/color/ic_linkedin.svg) + export `LinkedinTintColor`.
+
+> **Note:** CONTACT-01 done. BRAND-02 sẽ tái sử dụng data này cho footer + meta tags + email signature templates (search-replace).
 
 ### Q&A enrichment (đợi marketing review)
 
-> AI dev draft FAQ đã seed (`qaArticleId = 687a18b9919af82534216256`). 8 Q&A sections generic — partner marketing nên customize:
-
-- [ ] Reward formula thực tế (per-view rate cho PH market, milestone amounts in PHP)
-- [ ] Min payout threshold (campaign-specific)
-- [ ] Reconciliation cycle (weekly? bi-weekly? monthly?)
-- [ ] BIR tax interpretation Green SM khuyến nghị cho creators
-- [ ] Local PH social platform behaviors (TikTok PH, Lazada Live, Shopee Live nếu cần)
-- [ ] Customer support contact info (depends on CONTACT-01)
-
-**Reference:** VN FAQ tại https://creator.gen-green.global/bai-viet/6821b1d49e085188151bf6d8 — có thể model theo style VN nhưng PH context.
+> AI dev draft FAQ đã seed (`qaArticleId = 687a18b9919af82534216256`) — 18 questions translated từ gen-green.id sang English + PH localized. Partner marketing review trên UI sau deploy staging.
 
 ### Other small UX polish
 
-- [x] Filter `id-ID` khỏi dropdown picker (chỉ ẩn UI, JSON locale giữ — commit chuẩn bị) — Indonesia team không impacted
-- [ ] BRAND-01 audit reverify khi user đã check FE: 4 critical issues từ Phase 5 audit (cream bg, yellow accent, font weights, 1160px min-width)
+- [x] Filter `id-ID` khỏi dropdown picker (chỉ ẩn UI, JSON locale giữ) — Indonesia team không impacted
+- [x] BRAND-01 audit — sau khi user check FE thực tế: giao diện đã match Figma, không cần rework. 4 issues từ audit Phase 5 (cream bg, yellow accent, font weights, 1160px min-width) đã có sẵn trong source.
 
 ---
 
