@@ -264,12 +264,16 @@
 
 ### QA-05: Build handbook site (56h, BA-heavy)
 
-> Source: fork từ `accesstrade-projects/techcombank/handbook`
+> Source: fork từ `accesstrade-projects/techcombank/handbook` → `vcreator-philippines/handbook/` (2026-05-01)
 
-**Setup (FE):**
-- [ ] Fork code TCB handbook
-- [ ] Adjust branding (logo, theme color)
-- [ ] Deploy
+**Setup (FE):** ✅ DONE
+- [x] Fork code TCB handbook (wiki only) tới [`vcreator-philippines/handbook/`](accesstrade-projects/vcreator-philippines/handbook/)
+- [x] Bilingual i18n: routes `/wiki/{en,vi}/...` + folder-per-locale content (`content/wiki/en/`, `content/wiki/vi/`) + language switcher UI
+- [x] Strip srs section (out of scope), simplify sidebar, refactor search index per-locale
+- [x] Branding: emerald accent, "PH" logo placeholder, app title "GreenSM PH Handbook"
+- [x] 3 placeholder pages mỗi locale (welcome, creator/getting-started, admin/getting-started)
+- [x] Smoke test pass: `npm run build` clean, dev server `/wiki/en` + `/wiki/vi` 200 OK
+- [ ] Deploy (defer cho DevOps SETUP-D02 — standalone Next build sẵn sàng)
 
 **Content Creator (~10 bài, BA):**
 - [ ] 00. Getting started
