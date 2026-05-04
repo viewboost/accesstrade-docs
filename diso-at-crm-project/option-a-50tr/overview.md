@@ -8,6 +8,29 @@
 
 ---
 
+## 🎬 Demo MVP click-through (xem trước)
+
+**👉 https://vcreator.demo.accesstrade.click/mvp-demo**
+
+Demo mockup đầy đủ 6 màn hình theo đúng scope MVP để AT click qua từng bước trước khi quyết định:
+
+| # | Màn hình | URL trực tiếp |
+|---|---|---|
+| 01 | Landing sự kiện 7/5 | [/mvp-demo/landing](https://vcreator.demo.accesstrade.click/mvp-demo/landing) |
+| 02 | Form đăng ký 2 bước + mật khẩu | [/mvp-demo/register](https://vcreator.demo.accesstrade.click/mvp-demo/register) |
+| 03 | Email kích hoạt + activate | [/mvp-demo/activate](https://vcreator.demo.accesstrade.click/mvp-demo/activate) |
+| 04 | Trang creator `/me` (sau đăng nhập) | [/mvp-demo/me](https://vcreator.demo.accesstrade.click/mvp-demo/me) |
+| 05 | Admin Care đăng nhập | [/mvp-demo/admin/login](https://vcreator.demo.accesstrade.click/mvp-demo/admin/login) |
+| 06 | CRM Creator List + chi tiết kênh từ influence-meter | [/mvp-demo/admin/creators](https://vcreator.demo.accesstrade.click/mvp-demo/admin/creators) |
+
+**Demo credentials:**
+- Admin: `admin@accesstrade.vn` / `demo123`
+- Creator login (đã có tài khoản): chọn nhanh từ 3 demo creators tại [/mvp-demo/login](https://vcreator.demo.accesstrade.click/mvp-demo/login)
+
+> **Lưu ý:** Demo này chỉ thể hiện scope MVP. Các tính năng "wow" như tier badge, profile card share, curriculum, FOMO countdown... thuộc Phase 1B+ và **không** nằm trong MVP 4 tuần. Nếu muốn xem flow pitch tổng (4 phase đầy đủ), AT có thể mở [/event/creator-for-vietnam](https://vcreator.demo.accesstrade.click/event/creator-for-vietnam).
+
+---
+
 ## Mục tiêu Option A
 
 Trong 4 tuần, deliver được 4 mảng chính phục vụ song song hai mục đích:
@@ -263,7 +286,7 @@ AT cam kết sử dụng dịch vụ tối thiểu **3 tháng** sau khi go-live.
 - [tasks.csv](./tasks.csv) — chi tiết 9 task group theo từng vai trò
 - [pricing.csv](./pricing.csv) — báo giá khởi tạo + cam kết 3 tháng (import vào Excel)
 - [../data-commitment.md](../data-commitment.md) — cam kết chi tiết dữ liệu từ influence-meter
-- **🎬 MVP Demo (clickable, 6 màn hình):** https://vcreator.demo.accesstrade.click/mvp-demo — landing → register → activate → /me → admin login → CRM creator detail
-- **Trang MVP overview (interactive):** https://vcreator.demo.accesstrade.click/mvp
-- **Demo tham chiếu (4 phase đầy đủ):** https://vcreator.demo.accesstrade.click/
+- **🎬 Demo MVP click-through:** https://vcreator.demo.accesstrade.click/mvp-demo (xem mục đầu doc)
+- **Trang MVP overview interactive:** https://vcreator.demo.accesstrade.click/mvp
+- **Demo pitch tổng (4 phase đầy đủ):** https://vcreator.demo.accesstrade.click/
 - **Influence-meter (Diso):** internal API doc cần lấy trước tuần 1
