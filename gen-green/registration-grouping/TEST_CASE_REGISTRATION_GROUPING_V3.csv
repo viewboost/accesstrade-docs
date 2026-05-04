@@ -1,0 +1,477 @@
+Mã trường hợp kiểm thử,Chức năng (FR),Mục đích kiểm thử,Độ ưu tiên,Điều kiện,Các bước thực hiện,Kết quả mong muốn,Dev verify,QA dev,QA stag,QA prod,Dev note
+TC_RG_001,FR-V3-001,Kiểm thử Filter Cơ sở làm việc 3 layer cascading trên Tab Nội dung - Chọn Brand,Critical,Admin user đã login vào /content tab có dữ liệu video từ multiple brands,"1. Mở Tab Nội dung (/content)
+2. Kiểm tra Filter section có 3 dropdown: Thương hiệu / Công ty / Cơ sở
+3. Click dropdown Thương hiệu (Brand)
+4. Chọn 1 brand (vd: Vinpearl)","Dropdown Brand hiển thị đầy đủ danh sách brand
+Sau khi chọn Brand:
+- Dropdown Công ty được enable và load list companies của brand đó
+- Dropdown Cơ sở được enable và load list units của brand đó
+- Table reload chỉ hiển thị video từ creator thuộc brand Vinpearl",,,,,"Component shared <WorkplaceFilter> được dùng
+Test với 5 video - 2 từ Vinpearl, 3 từ brands khác"
+TC_RG_002,FR-V3-001,Kiểm thử Filter Cơ sở làm việc 3 layer cascading - Chọn Company,Critical,Admin đã chọn Brand = Vinpearl,"1. Với Brand = Vinpearl đã chọn
+2. Click dropdown Công ty (Company)
+3. Chọn 1 company (vd: VinPalace)","Dropdown Company chỉ hiển thị companies của Vinpearl
+Sau khi chọn Company:
+- Dropdown Cơ sở reload và lọc units của brand Vinpearl + company VinPalace
+- Table reload chỉ hiển thị video từ creator Vinpearl.VinPalace",,,,,"Test data: Vinpearl → VinPalace, VinFun (2 companies)
+VinPalace → 2 units"
+TC_RG_003,FR-V3-001,Kiểm thử Filter Cơ sở làm việc 3 layer cascading - Chọn Unit,Critical,Admin đã chọn Brand=Vinpearl Company=VinPalace,"1. Với Brand=Vinpearl Company=VinPalace đã chọn
+2. Click dropdown Cơ sở (Unit)
+3. Chọn 1 unit (vd: VinPalace Cổ Loa)","Dropdown Unit chỉ hiển thị units của Vinpearl.VinPalace
+Sau khi chọn Unit:
+- Table reload chỉ hiển thị video từ creator Vinpearl.VinPalace.VinPalace Cổ Loa (1 video expected)",,,,,"Test data: VinPalace → Cổ Loa, Ocean City (2 units)"
+TC_RG_004,FR-V3-001,Kiểm thử Clear filter reset về all,High,Admin đã filter Brand=Vinpearl Company=VinPalace Unit=Cổ Loa,"1. Kiểm tra filter đã apply
+2. Click nút Clear / Reset
+3. Kiểm tra dropdown trở về trạng thái initial
+4. Verify table reload toàn bộ data","Tất cả dropdown reset về rỗng (---)
+Company + Unit dropdown quay lại disabled state
+Table hiển thị 5 video ban đầu",,,,,"Nút Clear nên có icon + text rõ ràng
+Debounce reload table tránh multiple API calls"
+TC_RG_005,FR-V3-001,Kiểm thử Filter không làm việc khi Company dropdown disabled,High,Admin chưa chọn Brand,"1. Mở /content tab
+2. Kiểm tra dropdown Company + Unit
+3. Thử click dropdown Company","Dropdown Company disabled (greyed out)
+Không thể chọn
+Tooltip: 'Vui lòng chọn Thương hiệu trước'",,,,,"UX validation: prevent invalid filter state"
+TC_RG_002,FR-V3-002,Kiểm thử cột Loại tài khoản hiển thị đúng - Value staff,High,Tab Nội dung có video từ creator CBNV,"1. Mở Tab Nội dung
+2. Kiểm tra cột Loại tài khoản (sát cột Tên creator)
+3. Tìm row video từ creator CBNV (accountType=staff)","Cột Loại tài khoản hiển thị tag:
+- Value 'staff' → Tag 'Cán bộ/Nhân viên' màu blue
+- Tag có icon badge riêng",,,,,"Color code: blue = #1890ff (Ant Design primary)
+Label mapping: staff = 'Cán bộ/Nhân viên'"
+TC_RG_003,FR-V3-002,Kiểm thử cột Loại tài khoản - Value creator,High,Tab Nội dung có video từ creator non-CBNV,"1. Tìm row video từ creator non-CBNV (accountType=creator)
+2. Kiểm tra cột Loại tài khoản","Cột Loại tài khoản hiển thị tag:
+- Value 'creator' → Tag 'Không phải là nhân viên' màu green
+- Tag có style khác biệt vs staff",,,,,"Color code: green = #52c41a
+Label mapping: creator = 'Không phải là nhân viên'"
+TC_RG_004,FR-V3-002,Kiểm thử cột Loại tài khoản - Value rỗng,Medium,Tab Nội dung có video từ creator chưa phân loại,"1. Tìm row video từ creator accountType=null/empty
+2. Kiểm tra cột Loại tài khoản","Tag hiển thị 'Chưa phân loại' màu default (xám)
+Hoặc hiển thị '--' nếu null",,,,,"Default color: #999 (neutral)
+Backward compat: handle null/undefined gracefully"
+TC_RG_005,FR-V3-003,Kiểm thử cột Cơ sở làm việc - CBNV có full hierarchy,High,Tab Nội dung có video từ creator CBNV đầy đủ info,"1. Tìm row video từ creator CBNV có workplaceBrandName, workplaceCompanyName, workplaceUnitName
+2. Kiểm tra cột Cơ sở làm việc","Cột Cơ sở làm việc hiển thị format:
+'Brand - Company - Unit' (vd 'Vinpearl - VinPalace - VinPalace Cổ Loa')
+Text không bị truncate (hoặc có tooltip full text)",,,,,"Format template: ${brand} - ${company} - ${unit}
+Test với: Vinpearl - VinPalace - VinPalace Cổ Loa"
+TC_RG_006,FR-V3-003,Kiểm thử cột Cơ sở làm việc - Auto skip empty parts,Medium,Tab Nội dung có creator CBNV không có Company,"1. Tìm creator có workplaceBrandName + workplaceUnitName nhưng company=empty
+2. Kiểm tra cột Cơ sở làm việc","Format tự động skip phần rỗng:
+'Brand - Unit' (bỏ phần Company rỗng)
+Không hiển thị dấu '- -'",,,,,"Logic: filter parts.filter(x => x).join(' - ')
+Edge case: all empty → '--' màu xám"
+TC_RG_007,FR-V3-003,Kiểm thử cột Cơ sở làm việc - Empty data,Low,Tab Nội dung có creator non-CBNV không có workplace info,"1. Tìm row creator non-CBNV hoặc workplace=empty
+2. Kiểm tra cột Cơ sở làm việc","Cột hiển thị '--' màu xám
+Hoặc typography secondary color",,,,,"Test data: creator=creator accountType hoặc workplace fields rỗng
+Source: createdBy.workplaceBrandName/CompanyName/UnitName"
+TC_RG_008,FR-V3-004,Kiểm thử cột Hashtag cá nhân - User có hashtag,High,Tab Nội dung có creator có hashtag,"1. Tìm row creator có hashtag (vd: '#vinpearl-content')
+2. Kiểm tra cột Hashtag cá nhân","Cột Hashtag cá nhân hiển thị: '#{hashtag}' dạng link (Typography.Link)
+Link có thể click (navigate hoặc copy hashtag)
+Text format: #{hashtag}",,,,,"Color: primary blue
+Type: Typography.Link component
+Source: createdBy.hashtag"
+TC_RG_009,FR-V3-004,Kiểm thử cột Hashtag cá nhân - User không có hashtag,Low,Tab Nội dung có creator chưa setup hashtag,"1. Tìm row creator hashtag=empty
+2. Kiểm tra cột Hashtag cá nhân","Cột hiển thị '--' màu xám
+Không có link",,,,,"Default render khi empty: '--' hoặc gray text"
+TC_RG_010,FR-V3-005,Kiểm thử Filter Cơ sở làm việc 3 layer trên Tab Creator - Chọn Brand,Critical,Admin vào Tab Creator (/user-partner) có dữ liệu creators từ multiple brands,"1. Mở Tab Creator (/user-partner)
+2. Kiểm tra Filter section có 3 dropdown cascading giống Tab Nội dung
+3. Click dropdown Brand
+4. Chọn Brand=Vinpearl","Dropdown Brand hiển thị đầy đủ danh sách
+Sau chọn Brand:
+- Dropdown Company load & enable
+- Dropdown Unit load & enable
+- Table reload chỉ hiển thị 2 creator CBNV Vinpearl
+- Total count cập nhật đúng",,,,,"Component shared <WorkplaceFilter>
+Sync với Tab Nội dung
+Test data: 5 creators - 2 Vinpearl, 1 GreenSM, 2 non-CBNV"
+TC_RG_011,FR-V3-005,Kiểm thử Filter Tab Creator - Chọn Company,Critical,Admin Tab Creator đã chọn Brand=Vinpearl,"1. Click dropdown Company
+2. Chọn Company=VinPalace","Dropdown Company chỉ filter companies của Vinpearl
+Sau chọn Company:
+- Dropdown Unit reload với units của Vinpearl.VinPalace
+- Table reload chỉ hiển thị creators Vinpearl.VinPalace (expected: 2)",,,,,"Backend query: filter by workplaceCompanyCode
+Pagination cập nhật tương ứng"
+TC_RG_012,FR-V3-005,Kiểm thử Filter Tab Creator - Chọn Unit,High,Admin Tab Creator Brand=Vinpearl Company=VinPalace,"1. Click dropdown Unit
+2. Chọn Unit=VinPalace Cổ Loa","Dropdown Unit chỉ filter units của Vinpearl.VinPalace
+Table reload chỉ hiển thị creators Unit Cổ Loa (expected: 1)",,,,,"Filter in backend: workplaceUnitCode match
+Test data: Cổ Loa=1 creator, Ocean City=1 creator"
+TC_RG_013,FR-V3-006,Kiểm thử Filter Phân loại creator - Chọn Tất cả (mặc định),High,Admin Tab Creator mặc định state,"1. Mở Tab Creator
+2. Kiểm tra dropdown Phân loại (dưới hoặc cạnh workplace filter)
+3. Verify trạng thái mặc định","Dropdown Phân loại mặc định: empty (Tất cả)
+Table hiển thị tất cả 5 creators (2 CBNV Vinpearl + 1 CBNV GreenSM + 2 creator)
+Workplace filter enabled",,,,,"Options: [empty='Tất cả', 'staff'='CBNV', 'creator'='Không phải CBNV']
+Dropdown position: dưới filter workspace"
+TC_RG_014,FR-V3-006,Kiểm thử Filter Phân loại - Chọn CBNV (staff),High,Admin Tab Creator,"1. Click dropdown Phân loại
+2. Chọn 'Cán bộ/Nhân viên' (staff)","Table chỉ hiển thị 3 creators CBNV:
+- 2 từ Vinpearl (1 Cổ Loa, 1 Ocean City)
+- 1 từ GreenSM
+Total count = 3
+Workplace filter vẫn enabled",,,,,"Filter: accountType = 'staff'
+Workplace filter state giữ lại (nếu user chọn trước)"
+TC_RG_015,FR-V3-006,Kiểm thử Filter Phân loại - Chọn Không phải CBNV (creator),High,Admin Tab Creator,"1. Click dropdown Phân loại
+2. Chọn 'Không phải là nhân viên' (creator)","Table chỉ hiển thị 2 creators non-CBNV
+Workplace filter disabled/hidden (greyed out hoặc ẩn)
+Total count = 2
+UX: Có message 'Phạm vi workplace không áp dụng cho loại này'",,,,,"Filter: accountType = 'creator'
+Reset workplace filter state (brand/company/unit)
+Workspace filter disabled state"
+TC_RG_016,FR-V3-006,Kiểm thử Filter Phân loại + Workplace kết hợp,High,Admin Tab Creator chọn Brand + Phân loại,"1. Chọn Brand=Vinpearl (workplace filter)
+2. Sau đó chọn Phân loại=creator (non-CBNV)","Expected: kết hợp filter
+- Phân loại reset về 'Tất cả' (vì creator không có workplace relevance)
+HOẶC show warning: 'Workplace filter không áp dụng'
+Workplace filter disable
+Table reload chỉ hiển thị 2 creators non-CBNV
+Vinpearl brand selection được reset",,,,,"Logic: chọn 'creator' → auto-reset workplace
+Alternative: chọn workplace → auto-reset Phân loại nếu=creator"
+TC_RG_017,FR-V3-007,Kiểm thử cột Cơ sở làm việc Tab Creator - CBNV full hierarchy,High,Tab Creator table hiển thị creators,"1. Tìm row creator CBNV Vinpearl.VinPalace.Cổ Loa (accountType=staff)
+2. Kiểm tra cột Cơ sở làm việc","Cột Cơ sở làm việc hiển thị:
+'Vinpearl - VinPalace - VinPalace Cổ Loa' (format Brand - Company - Unit)
+Text không truncate, có tooltip đầy đủ",,,,,"Design note: Cột Phân loại đã bỏ (gộp vào cột này)
+Source: createdBy.workplace* fields
+Test với 2 CBNV Vinpearl: 1 Cổ Loa, 1 Ocean City"
+TC_RG_018,FR-V3-007,Kiểm thử cột Cơ sở làm việc Tab Creator - Creator non-CBNV,High,Tab Creator có creators non-CBNV,"1. Tìm row creator non-CBNV (accountType=creator)
+2. Kiểm tra cột Cơ sở làm việc","Cột Cơ sở làm việc hiển thị text:
+'Không phải nhân viên' màu xanh (green)
+Không hiển thị workplace dù creator có workplace data",,,,,"Fallback text: 'Không phải nhân viên'
+Color: #52c41a (green)
+Logic: if accountType=creator → show fallback text"
+TC_RG_019,FR-V3-007,Kiểm thử cột Hashtag Tab Creator,High,Tab Creator creators có/không hashtag,"1. Tìm row creator có hashtag
+2. Kiểm tra cột Hashtag
+3. Tìm row creator không hashtag
+4. Kiểm tra cột Hashtag lần 2","Cột Hashtag hiển thị:
+- Nếu có: '#{hashtag}' dạng link (Typography.Link)
+- Nếu rỗng: '--' màu xám
+Link clickable, navigate hoặc copy",,,,,"Source: user.hashtag
+Color link: primary blue
+Empty default: '--' gray text"
+TC_RG_020,FR-V3-008,Kiểm thử cột Ngày tạo ẩn khỏi Tab Creator table,Medium,Tab Creator table hiển thị,"1. Mở Tab Creator /user-partner
+2. Inspect table columns
+3. Kiểm tra danh sách columns hiển thị","Cột 'Ngày tạo' (createdAt) KHÔNG hiển thị trong table
+Cột 'Ngày tham gia' (joinedAt) hiển thị bình thường
+Cột 'Ngày tạo' vẫn available trong export modal (nếu admin tick)",,,,,"Cột ẩn: createdAt (tạo) - not in UI
+Cột hiển thị: joinedAt (tham gia) - visible
+Export: cột này có thể tick nếu cần"
+TC_RG_021,FR-V3-009,Kiểm thử cột Tổng view Tab Creator,High,Tab Creator có creators với content statistics,"1. Mở Tab Creator
+2. Tìm row creator A có view statistics: 50K
+3. Kiểm tra cột Tổng view
+4. Tìm row creator B có view: 12K","Cột 'Tổng view' hiển thị:
+- Creator A: '50,000' (format thousand separator)
+- Creator B: '12,000'
+- Sortable (nếu BE support): có thể sort by view descending
+- Creator không có content: '0'",,,,,"Source: userPartner.contentStatistic.view.total
+Format: Intl.NumberFormat('vi-VN')
+Sort: optional feature (check BE capability)"
+TC_RG_022,FR-V3-010,Kiểm thử cột Tổng video đã nộp Tab Creator,High,Tab Creator có creators với video statistics,"1. Mở Tab Creator
+2. Tìm row creator A: 10 videos
+3. Kiểm tra cột Tổng video
+4. Tìm row creator B: 5 videos
+5. Creator không có video: kiểm tra","Cột 'Tổng video' hiển thị:
+- Creator A: '10'
+- Creator B: '5'
+- Creator không có: '0'
+- Tooltip: 'Tổng tất cả video đã nộp (kể cả pending/rejected)'",,,,,"Source: userPartner.contentStatistic.total
+Số nguyên (integer), không format
+Tooltip giải thích: all states included
+Range check: 0-9999+"
+TC_RG_023,FR-V3-009-010,Kiểm thử cột Tổng view + Tổng video kết hợp,High,Tab Creator có creators với content data,"1. Mở Tab Creator
+2. Verify cột Tổng view + Tổng video cùng hiển thị
+3. Kiểm tra data match với admin user detail page
+4. Navigate vào creator detail → xem contentStatistic","Cột Tổng view + Tổng video đều hiển thị
+Data match với creator detail page
+Không có redundancy hoặc conflict
+Format consistent (thousand separator cho view, integer cho video)",,,,,"Columns layout: [..., Tổng view, Tổng video, ...]
+Verify data sync: table ≈ detail page
+Stat source: contentStatistic object"
+TC_RG_024,FR-V3-011,Kiểm thử Export Column Picker Tab Nội dung - Modal hiển thị,Critical,Admin /content tab click Xuất file,"1. Mở Tab Nội dung (/content)
+2. Click nút Xuất file / Export
+3. Modal Export hiển thị","Modal Export hiển thị section:
+- 'Chọn cột xuất file'
+- 25 checkbox tương ứng 25 cột
+- 3 cột mới (accountType, workplace, hashtag) có badge 'MỚI' màu xanh
+- Counter 'Đã chọn 25/25 cột' (default all check)",,,,,"Modal title: 'Xuất file'
+Section label: 'Chọn cột xuất file'
+3 NEW columns: accountType, workplace, hashtag
+Total 25 columns"
+TC_RG_025,FR-V3-011,Kiểm thử Export Column Picker - Default state,High,Modal Export Tab Nội dung mở,"1. Verify default checkbox state
+2. Kiểm tra counter","Tất cả 25 checkbox default check ☑
+Counter hiển thị: 'Đã chọn 25/25 cột'
+Button 'Chọn tất cả' + 'Mặc định' visible",,,,,"Default behavior: all checked
+Counter update real-time
+Icons: ☑ checked, ☐ unchecked"
+TC_RG_026,FR-V3-011,Kiểm thử Export Column Picker - Untick columns,High,Modal Export Tab Nội dung,"1. Untick 5 cột bất kỳ (vd: cột A, B, C, D, E)
+2. Kiểm tra counter cập nhật
+3. Untick 5 cột khác
+4. Verify counter lại","Counter cập nhật real-time:
+- Untick 5 cột → 'Đã chọn 20/25 cột'
+- Untick 5 cột nữa → 'Đã chọn 15/25 cột'
+Form state reactive",,,,,"Real-time validation
+Counter format: 'Đã chọn X/25 cột'
+Untick button toggle state"
+TC_RG_027,FR-V3-011,Kiểm thử Export Column Picker - Select all / Default buttons,High,Modal Export Tab Nội dung,"1. Untick 10 cột
+2. Click 'Chọn tất cả'
+3. Verify tất cả check lại → counter '25/25'
+4. Untick 8 cột
+5. Click 'Mặc định'
+6. Verify reset về 25/25","Button 'Chọn tất cả': check hết 25 cột
+Button 'Mặc định': reset về DEFAULT (tất cả 25 check)
+Counter reflect changes: 25/25",,,,,"Both buttons reset state to full
+'Chọn tất cả' ≈ 'Mặc định' (same behavior)
+Confirm behavior with PM if needed"
+TC_RG_028,FR-V3-011,Kiểm thử Export validation - Phải chọn ít nhất 1 cột,High,Modal Export Tab Nội dung,"1. Untick tất cả 25 cột
+2. Kiểm tra nút Export / Xác nhận","Nút Export disable (greyed out) hoặc hiển thị error:
+'Vui lòng chọn ít nhất 1 cột'
+Không cho submit khi 0 cột select",,,,,"FE validation: prevent empty export
+Message clear + actionable
+Icon disabled state"
+TC_RG_029,FR-V3-012,Kiểm thử Export submit - Full columns (25/25),Critical,Modal Export Tab Nội dung có 25/25 cột check,"1. Tất cả 25 cột check sẵn (default)
+2. Click nút Export / Xác nhận
+3. Kiểm tra API request
+4. File CSV tải về","Request API:
+- Không có field `filter.columns` (skip nếu 25/25)
+- Backend default export đủ 25 cột
+CSV file:
+- Header: 25 cột
+- Data rows: chứa 25 cột đúng
+- File download thành công",,,,,"API optimization: skip columns field khi full
+Backend backward compat: no breaking change
+CSV encoding: UTF-8 BOM"
+TC_RG_030,FR-V3-012,Kiểm thử Export submit - Subset columns,High,Modal Export Tab Nội dung,"1. Untick 10 cột (keep 15 cột)
+2. Click Export
+3. Kiểm tra API request
+4. CSV download","Request API:
+- `filter.columns = ['col1', 'col2', ..., 'col15']` (15 keys)
+CSV file:
+- Header: 15 cột được chọn
+- Data rows: 15 cột đúng thứ tự gốc
+- Không có cột bị untick",,,,,"API: truyền columns array khi < 25
+Column order: respect original order (không sort alpha)
+Test with mixed columns (early + late)"
+TC_RG_031,FR-V3-012,Kiểm thử Export - 3 cột mới (accountType, workplace, hashtag),High,Modal Export Tab Nội dung submit 3 cột mới,"1. Keep chỉ 3 cột mới: accountType, workplace, hashtag (uncheck hết 22 cột khác)
+2. Click Export
+3. CSV download
+4. Kiểm tra data","CSV header: accountType, workplace, hashtag
+Data rows:
+- accountType: 'Cán bộ/Nhân viên' / 'Không phải là nhân viên' / 'Chưa phân loại'
+- workplace: 'Brand - Company - Unit' (Vinpearl case) hoặc '' (creator case)
+- hashtag: '#{hashtag}' hoặc '' (empty)
+Data chính xác per creator",,,,,"3 new columns source:
+- accountType: createdBy.accountType
+- workplace: createdBy.workplace*
+- hashtag: createdBy.hashtag
+Rendering: same logic as table UI"
+TC_RG_032,FR-V3-011,Kiểm thử Export modal - State reset sau khi submit hoặc đóng,Medium,Modal Export Tab Nội dung submit hoặc close,"1. Untick 10 cột + Submit
+2. File download
+3. Mở lại modal Export
+4. Kiểm tra state
+HOẶC
+1. Untick 10 cột + Close modal (X button)
+2. Mở lại modal
+3. Kiểm tra state","Scenario Submit: Modal reset về 25/25 (default)
+Scenario Close: Modal reset về 25/25 (default)
+Next open: fresh state, not retain previous selection",,,,,"State cleanup: reset selection after submit/close
+UX: user expect fresh modal next time
+Test both paths: submit + close"
+TC_RG_033,FR-V3-013,Kiểm thử Export Column Picker Tab Creator - Modal hiển thị,Critical,Admin /user-partner tab click Xuất file,"1. Mở Tab Creator (/user-partner)
+2. Click nút Xuất file / Export
+3. Modal Export hiển thị","Modal Export hiển thị section:
+- 'Chọn cột xuất file'
+- Checkbox list (N cột tương ứng statistic mode)
+- 3 cột mới có badge 'MỚI': accountType, workplace, hashtag
+- Counter 'Đã chọn X/N cột' (default all check)
+- Nút 'Chọn tất cả' + 'Mặc định'",,,,,"Column count: depends on mode
+Full mode: 17 existing + 3 new = 20 cột
+Brief mode: 6 existing + 3 new = 9 cột
+Test with toggle 'Hiện thống kê'"
+TC_RG_034,FR-V3-013,Kiểm thử Export Tab Creator - Untick + Select all / Default,High,Modal Export Tab Creator,"1. Untick 5 cột
+2. Verify counter update
+3. Click 'Chọn tất cả' → counter reset
+4. Untick 3 cột + 'Mặc định' → reset full","Counter real-time update:
+- Untick 5 → 'Đã chọn (N-5)/N'
+- Click 'Chọn tất cả' → 'Đã chọn N/N'
+- Click 'Mặc định' → 'Đã chọn N/N'
+All buttons work same as Tab Nội dung",,,,,"N varies per mode (20 or 9)
+Logic shared: same component or config-based
+Code DRY: extract to helper"
+TC_RG_035,FR-V3-013,Kiểm thử Export Tab Creator mode toggle - Full vs Brief,High,Modal Export Tab Creator toggle 'Hiện thống kê',"1. Modal mở (statistic mode toggle default OFF → brief)
+2. Checkbox list hiển thị ~9 cột
+3. Click toggle 'Hiện thống kê' ON
+4. Checkbox list update → ~20 cột
+5. Counter update tương ứng
+6. Untick 3 cột ở mode 20 → toggle OFF
+7. Verify state reset / preserve","Mode switch:
+- OFF (brief): 9 cột (6 basic + 3 new)
+- ON (full): 20 cột (17 statistic + 3 new)
+Counter update: 'Đã chọn 20/20' → 'Đã chọn 20/9' (reset to default next mode)
+New columns (accountType, workplace, hashtag) appear in both modes",,,,,"Mode toggle affects column list
+New columns in both modes
+UX: reset selection when toggle (safe default)
+Test column name/order stability"
+TC_RG_036,FR-V3-014,Kiểm thử Export Tab Creator submit - Full / Subset columns,High,Modal Export Tab Creator submit with column selection,"1. Keep 20/20 cột (full mode) click Export
+2. File download → CSV 20 cột
+3. Mở modal lần 2: brief mode (9 cột) keep 7 cột
+4. Export → CSV 7 cột","Scenario 1 (20/20):
+- Request: no `columns` field (skip if full)
+- CSV: 20 columns
+Scenario 2 (7/9):
+- Request: `columns=[key1, key2, ..., key7]`
+- CSV: 7 columns in original order
+Both successful",,,,,"API: same optimization as Tab Nội dung
+CSV encoding: UTF-8
+Column order: preserved from original list"
+TC_RG_037,FR-V3-014,Kiểm thử Export Tab Creator - 3 cột mới data,High,Modal Export Tab Creator export với 3 cột mới,"1. Export với 3 cột mới: accountType, workplace, hashtag
+2. CSV download
+3. Kiểm tra data","CSV data:
+- accountType: 'Cán bộ/Nhân viên' / 'Không phải CBNV' / 'Chưa phân loại'
+- workplace:
+  - CBNV: 'Vinpearl - VinPalace - Cổ Loa' / 'Vinpearl - VinPalace - Ocean City'
+  - non-CBNV: '' (rỗng)
+- hashtag: '#{hashtag}' hoặc '' (empty)
+All rows render correctly per creator type",,,,,"Data source: UserRaw fields
+- accountType: field directly
+- workplace: 3 components (brand/company/unit)
+- hashtag: field directly
+No render errors"
+TC_RG_038,FR-V3-014,Kiểm thử Export Tab Creator Backward Compatibility,Medium,Legacy API call export không truyền columns,"1. Call export API /user-partner không truyền `columns` field (legacy)
+2. File CSV return
+3. Kiểm tra CSV có tất cả cột default (N cột full/brief mode)","CSV export thành công
+- Full mode: 20 cột (existing 17 + new 3)
+- Brief mode: 9 cột (existing 6 + new 3)
+No breaking change
+Request backward compatible",,,,,"Test legacy client (old version)
+API: handle missing columns field gracefully
+Default: return full columns per mode"
+TC_RG_039,FR-V3-018,Kiểm thử Workplace Group Derive - Match exact unitName,Critical,Admin import Employee Registry file có workplaceName,"1. Prepare Excel file: 3 rows
+   - Row 1: workplaceName='VinPalace Cổ Loa'
+   - Row 2: workplaceName='VinPalace Ocean City'
+   - Row 3: workplaceName='GreenSM Quảng Ninh'
+2. Upload file via Admin Dashboard
+3. Backend parse + match với workplace_units master
+4. Kiểm tra derived fields được populate","Expected derived:
+- Row 1: brandCode='VINPEARL', companyCode='VINPALACE', unitCode='VP_CO', workplaceGroup='VINPEARL'
+- Row 2: brandCode='VINPEARL', companyCode='VINPALACE', unitCode='VP_OC', workplaceGroup='VINPEARL'
+- Row 3: brandCode='GREENSM', companyCode='GREENSM', unitCode='GM_QN', workplaceGroup='GREENSM'
+Registry created with full hierarchy",,,,,"Match strategy: exact unitName (case-sensitive)
+If no match: workplaceGroup='' + warning log
+Test data: master workplace_units phải sẵn sàng"
+TC_RG_040,FR-V3-018,Kiểm thử Workplace Group Derive - No match handling,High,Import file có workplaceName không match master,"1. Excel file: workplaceName='Unknown Unit XYZ' (not in master)
+2. Upload file
+3. Backend parse
+4. Kiểm tra log + registry state","Expected:
+- Registry được tạo nhưng workplaceGroup='' (empty)
+- Log warning: '[employee-registry] workplace not found: ""Unknown Unit XYZ"" — please check master data'
+- HR team receive alert
+- Data saved (không block import)",,,,,"Defensive: không fail import, cho HR fix file
+Logging: clear error message với unitName
+Next iteration: HR provide correct unitName"
+TC_RG_041,FR-V3-019,Kiểm thử Scope Filter - Auto-derive default,Critical,Admin import Employee Registry file rà soát,"1. Upload file: 5 rows từ 2 brands (3 Vinpearl, 2 GreenSM)
+2. Backend parse + derive workplaceBrandCode
+3. Admin không set scope (skip advanced section)
+4. Upload modal: Preview screen
+5. Kiểm tra scope derived","Expected:
+- Auto-derive scope = unique(brandCodes) = [VINPEARL, GREENSM]
+- Preview badge: 'Phạm vi: Vinpearl, GreenSM'
+- Admin confirm
+- Detect missing: chỉ scan registry VINPEARL + GREENSM scope
+- Registry khác brand (VinFast) không flag missing",,,,,"Auto-derive: safe default
+Scope display: clear for admin confirmation
+Detect logic: respects scope (prevent false-positive)"
+TC_RG_042,FR-V3-019,Kiểm thử Scope Filter - Admin override scope,High,Admin import với scope selection,"1. Upload modal: Advanced section 'Phạm vi rà soát' expand
+2. Multi-select: ['Vinpearl', 'GreenSM', 'VinFast'] (select all 3)
+3. File có 2 brands (Vinpearl, GreenSM)
+4. Submit
+5. Detect missing: scan all 3 brands","Expected:
+- Admin scope override: [VINPEARL, GREENSM, VINFAST]
+- Detect missing: scan 3 brands (even VinFast không có row trong file)
+- Registry VinFast status có thể flag missing nếu lỏng
+- Preview badge: 'Phạm vi: Vinpearl, GreenSM, VinFast'",,,,,"Admin override take precedence
+Scope can be broader than file content
+Use case: admin sure không quên brand nào
+Select widget: multi-select dropdown"
+TC_RG_043,FR-V3-019,Kiểm thử Scope Filter - Empty file handling,Medium,Import file empty hoặc không match master,"1. Upload file: 3 rows nhưng tất cả workplaceName không match
+2. All rows: workplaceGroup='' (no derive)
+3. Auto-derive scope = [] (empty)
+4. Admin không override
+5. Submit + Detect missing
+6. Kiểm tra không flag false-positive","Expected:
+- Scope detect missing = [] (rỗng)
+- Detect missing: KHÔNG flag bất kỳ registry nào missing (defensive)
+- Warning: 'Không tìm thấy nhân viên nào để rà soát'
+- Import thành công nhưng không detect missing nào",,,,,"Defensive behavior: empty scope → no missing
+Prevent mass false-positive
+Admin fix file + retry recommended"
+TC_RG_044,FR-V3-019,Kiểm thử Import Preview - Scope display,High,Admin import file xem preview,"1. Upload file: 3 Vinpearl + 1 GreenSM
+2. Preview screen mở
+3. Kiểm tra scope badge / info","Preview hiển thị:
+- Badge hoặc section: 'Phạm vi rà soát: Vinpearl, GreenSM'
+- Nếu admin customize scope: 'Phạm vi (custom): Vinpearl, GreenSM, VinFast'
+- Clear indication scope sẽ dùng",,,,,"Badge position: top of preview
+Format: 'Phạm vi: Brand1, Brand2, ...'
+Help admin confirm before submit"
+TC_RG_045,FR-V3-019,Kiểm thử Detect Missing - Scope-aware query,Critical,Detect missing khi import file rà soát,"1. Pre-condition: Registry active records:
+   - VINPEARL: emp1, emp2, emp3 (active)
+   - GREENSM: emp4, emp5 (active)
+   - VINFAST: emp6, emp7 (active)
+2. Import file: Vinpearl (emp1, emp2) GreenSM (emp4)
+3. Scope: [VINPEARL, GREENSM]
+4. Detect missing query
+5. Kiểm tra flag nào missing","Expected:
+- Query filter: workplaceBrandCode IN [VINPEARL, GREENSM]
+- Scan: emp1, emp2, emp3 (Vinpearl) + emp4, emp5 (GreenSM)
+- Found in file: emp1, emp2 (Vinpearl), emp4 (GreenSM)
+- Missing: emp3, emp5 (flag status = cancelled_missing)
+- emp6, emp7 (VINFAST) NOT scanned, status unchanged
+Result: 2 missing, not 5",,,,,"Scope filtering critical
+Test with 3 brands in system
+Verify query: workplaceBrandCode IN scope
+Status update: flag only in scope"
+TC_RG_046,Integration,Kiểm thử Tab Nội dung + Tab Creator filter consistency,High,Admin chọn Brand=Vinpearl trên Tab Nội dung sau đó chuyển Tab Creator,"1. Mở Tab Nội dung
+2. Filter: Brand=Vinpearl, Company=VinPalace
+3. Switch sang Tab Creator
+4. Kiểm tra filter state (reset hay giữ?)","Expected:
+- Tab Creator filter reset về rỗng (independent state)
+HOẶC
+- Filter shared (brand=Vinpearl carry over)
+Confirm with PM product spec",,,,,"Filter scope: per-tab hay global?
+Current design: independent state
+If shared needed: refactor provider context"
+TC_RG_047,Integration,Kiểm thử Export dữ liệu consistency,High,Export từ Tab Nội dung + Tab Creator data match,"1. Export Tab Nội dung (tất cả 5 video)
+2. Export Tab Creator (tất cả 5 creators)
+3. Compare dữ liệu:
+   - creator name, hashtag, workplace, accountType match
+   - view count, video count per creator match","Expected:
+- CSV Nội dung: creator A hashtag = CSV Creator: creator A hashtag
+- CSV Nội dung: creator A workplace = CSV Creator: creator A workplace
+- Creator A view/video count match
+All data consistent",,,,,"Data source validation
+Integrity check: no discrepancy
+Test sample 3-5 creators"
+TC_RG_048,Edge Case,Kiểm thử creator không có workplace hierarchy fill,Medium,Tab Nội dung creator CBNV không có company name,"1. Creator: brandName=Vinpearl, companyName=null, unitName=Cổ Loa
+2. Mở Tab Nội dung
+3. Kiểm tra cột Cơ sở làm việc
+4. Export column picker
+5. Export CSV","Expected:
+- Table: 'Vinpearl - Cổ Loa' (skip empty company)
+- Export: same format
+- No error, graceful fallback",,,,,"Edge case: incomplete hierarchy
+Logic: auto skip empty parts
+Test with various combinations"
+TC_RG_049,Edge Case,Kiểm thử special characters trong hashtag,Medium,Creator hashtag contains special chars (emoji, unicode),"1. Creator hashtag: '#{Vinpearl🎉2026}'
+2. Tab Nội dung + Creator table
+3. Export CSV
+4. Open CSV in Excel
+5. Kiểm tra display","Expected:
+- Table display: '#{Vinpearl🎉2026}' render correctly
+- Export: UTF-8 BOM encoding
+- Excel open: no encoding error
+- Character preserve: no mojibake",,,,,"UTF-8 encoding: critical
+Test emoji + Vietnamese unicode
+Excel compatibility: test open in Excel"
+TC_RG_050,Performance,Kiểm thử filter performance - large dataset,Low,System có 10K creators + 100K videos,"1. /content tab filter Brand=Vinpearl (1K videos)
+2. Measure load time
+3. /user-partner tab filter Brand=Vinpearl (100 creators)
+4. Measure load time
+5. Export 1K records
+6. Measure file generation time","Expected:
+- Filter load: < 2s (accept: < 3s)
+- Table render: smooth, no freeze
+- Export 1K rows: < 10s
+- No memory leak (browser tab)
+- Pagination work smooth",,,,,"Performance baseline: VM/test environment
+Monitor: memory, CPU, network
+Optimize if slow: pagination, lazy load"
