@@ -17,7 +17,7 @@ PRD này định nghĩa requirements cho **Admin Setup** — phần back-office 
 **Related Documents:**
 - Overview: [admin-setup-overview.md](admin-setup-overview.md)
 - Reference Ambassador V1: [`pub2-affiliate-integration/prd-affiliate-v1-2026-03-31.md`](../../pub2-affiliate-integration/prd-affiliate-v1-2026-03-31.md) — FR-001, FR-002, FR-003, FR-015
-- API Integration (next): [api-integration-overview.md](api-integration-overview.md)
+- Scalef API spec (cho Phase 2): [scalef-api.md](scalef-api.md)
 - FE Display (next): [fe-display-generate-link-report-overview.md](fe-display-generate-link-report-overview.md)
 
 ---

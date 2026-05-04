@@ -1,430 +1,224 @@
-# Affiliate — FE Display + Generate Link + Report — Overview
+# Affiliate — FE Creator (Display + Generate Link + Report) — Overview
 
-> **Project:** Gen-Green × Affiliate Integration — Phase 2 (Affiliate trong Gen-Green)
 > **Ngày:** 2026-05-04
 > **Trạng thái:** Đang thiết kế
-> **Phụ thuộc:** [Admin Setup](admin-setup-overview.md) + [API Integration](api-integration-overview.md) + [Scalef Linking Phase 1](../scalef-integration/overview.md)
-> **Tham chiếu Ambassador V1:** [`prd-affiliate-v1-2026-03-31.md`](../../pub2-affiliate-integration/prd-affiliate-v1-2026-03-31.md) — FR-004, FR-005, FR-013, FR-017, FR-018
+> **PRD chi tiết:** chưa có (sẽ tạo sau khi spec stable)
+> **Reference triển khai:** [`accesstrade-projects/ambassabor/frontend/src/pages/affiliate-*`](../../../ambassabor/frontend/src/pages/) — clone use case + UI từ Ambassador
+> **Đối tượng:** Product, Operations, Stakeholders (non-tech)
 
 ---
 
-## 1. Bối cảnh
+## Đây là gì?
 
-Đây là **lớp tiếp xúc với creator** — nơi affiliate biến từ concept thành thu nhập thật:
+**FE Creator** là phần creator Gen-Green nhìn thấy: **browse chiến dịch affiliate, tham gia, tạo link để gắn vào nội dung, theo dõi hoa hồng**.
 
-1. **Display:** Creator browse campaign affiliate ngay trong Event hiện có
-2. **Join:** Tham gia chiến dịch (tạo contract với Pub2 qua sso_id Scalef)
-3. **Generate Link:** Tạo affiliate link cá nhân để gắn vào nội dung
-4. **Report (V2):** Theo dõi click, đơn hàng, hoa hồng, thu nhập
-
-**Nguyên tắc UX:**
-- Affiliate là **giá trị cộng thêm**, không thay đổi flow chính của creator
-- Touchpoint liên kết Scalef đặt sát nơi creator có động lực (banner trong event detail)
-- 1 click để copy link, không bắt creator hiểu thuật ngữ kỹ thuật
-- Trạng thái phải minh bạch (PENDING/APPROVED/REJECTED + countdown retry)
+Hiểu đơn giản: nếu Admin Setup là "xếp hàng lên kệ", thì FE Creator là **cửa hàng đã mở cửa** — creator vào lấy sản phẩm (link affiliate) đem đi bán, cuối tháng đếm tiền.
 
 ---
 
-## 2. Scope
+## Tại sao cần?
 
-### Phase 2a — Display + Join + Generate Link (V1)
+Sau khi:
+- ✅ Admin đã chuẩn bị catalog affiliate ([Admin Setup](admin-setup-overview.md))
+- ✅ Creator đã liên kết tài khoản Scalef ([Account Linking](account-linking-overview.md))
 
-- Hiển thị affiliate campaign trong Event Detail
-- Trang chi tiết Affiliate Campaign
+→ Cần UI cho creator **dùng affiliate** để kiếm hoa hồng. Không có FE = data đã setup không ai dùng = không tạo doanh thu.
+
+**Mục tiêu:** 40% creator active tạo affiliate link trong 3 tháng đầu (theo target Ambassador).
+
+---
+
+## Clone use case từ Ambassador
+
+Toàn bộ chức năng + UI/UX **clone từ Ambassador frontend** (đã production, đã verified với 150K creators tương tự). Source: [`ambassabor/frontend/src/pages/`](../../../ambassabor/frontend/src/pages/).
+
+| Chức năng | File reference Ambassador |
+|-----------|---------------------------|
+| Section affiliate trong Event detail | `affiliate-campaigns/index.tsx` |
+| Trang chi tiết chiến dịch affiliate | `affiliate-campaign-detail/index.tsx` |
+| Trang "Link affiliate của tôi" | `affiliate-links/index.tsx` |
+| Trang "Hoa hồng của tôi" + báo cáo | `affiliate-commission/index.tsx` |
+| Service layer (gọi BE proxy) | `services/affiliate.ts` |
+
+→ Dev tham khảo trực tiếp source code, **không build từ đầu**. Tiết kiệm ~50% effort, giảm risk UX edge case.
+
+---
+
+## Creator làm gì?
+
+### 1. Browse chiến dịch affiliate trong Event
+
+Khi creator vào chi tiết Event (page hiện có) → thấy thêm **section "Chiến dịch Affiliate liên kết"**:
+
+- Hiển thị card chiến dịch: banner, tên, hoa hồng, thưởng thêm, thời gian
+- Grid 1 cột mobile, 2 cột desktop
+- Click card → vào trang chi tiết affiliate
+- Nếu Event không có affiliate liên kết → ẩn section luôn
+
+### 2. Trang chi tiết chiến dịch affiliate
+
+Layout 2 cột (desktop), stack dọc (mobile):
+
+- **Cột trái:** Banner lớn + 3 badge (Hoa hồng / Thưởng thêm / Thời gian)
+- **Cột phải:** Tên, mô tả ngắn, nút action chính, accordion sections (Thể lệ / Hướng dẫn — parse từ markdown)
+- **Touchpoint AT linking:** Banner "Liên kết tài khoản Scalef" hiện trên đầu nếu chưa link
+
+### 3. Tham gia chiến dịch
+
+Trước khi tạo link, creator phải **tham gia** chiến dịch (BE gọi Scalef tạo contract):
+
+- Nút "Tham gia chiến dịch" → BE proxy Scalef API
+- Trạng thái contract:
+  - **APPROVED** — duyệt ngay → hiện nút "Tạo link"
+  - **PENDING** — banner vàng "Đang xử lý, thử lại sau X giờ" + countdown 24h
+  - **REJECTED** — banner đỏ "Chưa đủ điều kiện, thử lại sau X ngày" + countdown 14 ngày
+
+### 4. Tạo link affiliate
+
+Sau khi APPROVED:
+
+- Bấm "Tạo link" → modal nhập (optional) URL sản phẩm cụ thể
+- BE gọi Scalef → trả `affiliate_link` (full) + `short_affiliate_link` (rút gọn)
+- Hiển thị link với nút **Copy** + **Tạo link mới**
+- Lưu vào danh sách "Link của tôi"
+
+### 5. Xem danh sách link đã tạo
+
+Trang riêng `/affiliate-links`:
+
+- Group theo chiến dịch
+- Tìm kiếm + filter
+- Mỗi row: link rút gọn + link đầy đủ + nút Copy + ngày tạo
+- (V2) Hiển thị số click + đơn hàng cho mỗi link
+
+### 6. Xem báo cáo hoa hồng
+
+Trang `/affiliate-commission`:
+
+- **3 card tổng quan** ở đầu trang:
+  - Hoa hồng **chờ duyệt** (pending)
+  - Hoa hồng **tạm duyệt** (pre-approved)
+  - Hoa hồng **đã xác nhận** (approved)
+- **Filter thời gian** preset: 7 ngày / 1 tháng / 3 tháng / custom (max 3 tháng — limit Scalef)
+- **Filter theo chiến dịch:** sidebar list các campaign đã tham gia
+- **Danh sách đơn hàng:** table chi tiết đơn (order ID, sản phẩm, sale amount, commission, status, ngày)
+- (V2) Chart chuyển đổi theo ngày, breakdown theo trạng thái
+
+---
+
+## Touchpoint liên kết Scalef trên Gen-Green
+
+Khi creator **chưa liên kết** Scalef nhưng cố dùng affiliate, hệ thống chặn lại bằng touchpoint:
+
+| Vị trí | Loại | Hành vi |
+|--------|------|---------|
+| Section affiliate trong Event | Banner | "Liên kết Scalef để kiếm hoa hồng" + CTA |
+| Trang chi tiết affiliate | Banner | Hiển thị trên cùng cột phải |
+| Bấm "Tham gia chiến dịch" | Popup chặn | "Cần liên kết Scalef trước" |
+| Bấm "Tạo link affiliate" | Popup chặn | Tương tự |
+
+CTA → redirect sang flow [account linking](account-linking-overview.md). Sau khi link xong → quay lại đúng trang trước đó.
+
+---
+
+## Trạng thái creator trên FE
+
+| Trạng thái | UI hiển thị |
+|------------|-------------|
+| Chưa liên kết Scalef | Banner + popup chặn ở mọi action affiliate |
+| Đã liên kết, chưa tham gia chiến dịch | Nút "Tham gia chiến dịch" |
+| Đang chờ duyệt (PENDING) | Banner vàng + countdown 24h, disable "Tạo link" |
+| Bị từ chối (REJECTED) | Banner đỏ + countdown 14 ngày |
+| Đã duyệt, chưa tạo link | Nút "Tạo link" hoạt động |
+| Đã có link | Hiển thị link + nút Copy + nút "Tạo link mới" |
+
+---
+
+## Vai trò trong hệ thống tổng
+
+| Phase | Track | Trạng thái |
+|-------|-------|-----------|
+| Track độc lập | **[Admin Setup](admin-setup-overview.md)** — chuẩn bị catalog | Có thể start sớm nhất |
+| 1 | **[Account Linking](account-linking-overview.md)** — liên kết Scalef | Cần spec SSO Scalef |
+| 2 | **FE Creator** (track này) — Display + Generate + Report | Cần Phase 1 + Admin Setup xong |
+| 3 | Hợp nhất tài khoản (Vin Creator Portal) | Future |
+
+→ Track này **launch sau cùng**, vì cần data từ Admin Setup + identity từ Account Linking.
+
+---
+
+## Phân chia V1 / V2
+
+### V1 (Must Have — launch initial)
+
+- Section affiliate trong Event detail
+- Trang chi tiết chiến dịch affiliate
+- Tham gia + retry logic (PENDING/REJECTED)
+- Tạo link + copy
+- Trang "Link của tôi" (chưa có click/order count)
 - Touchpoint liên kết Scalef (banner + popup)
-- Join campaign + retry logic PENDING/REJECTED
-- Generate affiliate link + copy
-- Trang "Link affiliate của tôi"
 
-### Phase 2b — Report (V2)
+### V2 (Should Have — launch sau)
 
-- Dashboard cá nhân (clicks / orders / commission / total income)
-- Filter theo thời gian (3 tháng max — limit Pub2)
-- Breakdown theo campaign / theo trạng thái đơn
-- Export CSV
-- Notification khi có đơn mới / hoa hồng được duyệt
+- Trang "Hoa hồng của tôi" với 3 card + filter thời gian
+- Danh sách đơn hàng chi tiết
+- Click count + order count cho mỗi link
+- Chart chuyển đổi theo ngày (nếu Scalef cung cấp data)
+- Export CSV báo cáo
 
 ### Out of Scope
 
-| Feature | Phase |
+| Feature | Lý do |
 |---------|-------|
-| Withdraw hoa hồng affiliate | Phase 3 (gộp với cashflow) |
-| Affiliate dashboard real-time | Future |
-| Recommend campaign cho creator dựa trên content | Future |
+| Withdraw hoa hồng affiliate | Phase 3 — gộp với cashflow Gen-Green |
+| Affiliate dashboard real-time | Future — Scalef report API delay vài giờ |
+| Recommend campaign theo content creator | Future — cần ML |
 | Affiliate cho story / live | Future |
 
 ---
 
-## 3. User Flows
+## Thời gian & nguồn lực
 
-### 3.1 Happy path — đã link Scalef
+### V1
+- **Effort:** ~7.5 ngày (~1.5 tuần) cho 1 BE + 1 FE
+- **Output:**
+  - 4 components mới: Section, Card, Banner Scalef, Popup chặn
+  - 2 page mới: campaign detail, my-links
+  - Service layer + interfaces
 
-```
-Creator vào Event Detail
-  → Thấy section "Chiến dịch Affiliate liên kết" (1-2 cột)
-  → Click vào Affiliate Card
-  → Trang chi tiết Affiliate Campaign (2-col desktop, stack mobile)
-  → Bấm "Tham gia chiến dịch"
-  → BE gọi Pub2 API 1.2 → contract APPROVED ngay
-  → Hiện nút "Tạo link affiliate"
-  → Bấm → BE gọi Pub2 API 2 → trả về affiliate_link + short_link
-  → Creator copy link → paste vào video/bio
-```
+### V2 (Report)
+- **Effort:** ~5 ngày (~1 tuần)
+- **Output:**
+  - Trang commission dashboard
+  - Filter thời gian + campaign
+  - Table đơn hàng
 
-### 3.2 Chưa link Scalef
+→ Tổng V1+V2 ~12.5 ngày (~2.5 tuần).
 
-```
-Creator vào Event Detail
-  → Thấy banner "Liên kết tài khoản Scalef để kiếm hoa hồng"
-  → Bấm CTA → redirect sang trang link Scalef (Phase 1 flow)
-  → Hoàn tất linking → quay lại Event Detail
-  → Banner ẩn, affiliate section hiển thị bình thường
-```
-
-Nếu creator click "Tham gia" / "Tạo link" mà chưa link → popup chặn:
-
-```
-"Bạn cần liên kết tài khoản Scalef trước khi tham gia chiến dịch affiliate"
-[Liên kết ngay] [Để sau]
-```
-
-### 3.3 Contract PENDING
-
-```
-Creator bấm "Tham gia"
-  → Pub2 trả PENDING
-  → UI: banner vàng "Yêu cầu đang được xử lý. Thử lại sau X giờ"
-  → Sau 24h: nút "Thử lại" enable
-  → Bấm → BE gọi lại Pub2 → có thể APPROVED hoặc tiếp tục PENDING
-```
-
-### 3.4 Contract REJECTED
-
-```
-Creator bấm "Tham gia"
-  → Pub2 trả REJECTED
-  → UI: banner đỏ "Bạn chưa đủ điều kiện. Thử lại sau X ngày"
-  → Sau 14 ngày: nút "Thử lại" enable
-```
-
-### 3.5 Generate link
-
-```
-Creator (đã APPROVED) bấm "Tạo link affiliate"
-  → Modal nhập (optional) URL gốc cụ thể (deep-link sản phẩm)
-  → Nếu để trống → dùng pub2_campaign_url default
-  → BE gọi Pub2 API 2 với sub2='GENGREEN', sub3=campaign_id, sub4=event_id
-  → Trả affiliate_link + short_affiliate_link
-  → Lưu MongoDB local
-  → Hiển thị link với nút Copy
-  → Toast "Đã copy link"
-```
-
-### 3.6 Xem report (V2)
-
-```
-Creator vào "Thu nhập của tôi" → tab "Hoa hồng affiliate"
-  → Default: 30 ngày gần nhất
-  → Card: Tổng hoa hồng / Số đơn / Số click / Tỉ lệ chuyển đổi
-  → Chart: theo ngày
-  → Table breakdown: theo campaign
-  → Filter: thời gian (max 3 tháng), campaign, trạng thái đơn
-```
+Effort thực tế thấp hơn estimate Ambassador build từ đầu (~24 ngày) vì **clone trực tiếp source code** — chỉ cần thay API endpoints + adapt cho Gen-Green design system.
 
 ---
 
-## 4. Pages & Components
+## Phụ thuộc
 
-### 4.1 `AffiliateCampaignsSection` (component nhúng vào Event Detail)
+### Cần data sẵn sàng (đã có khi Admin Setup + Account Linking xong)
+- Affiliate campaigns active + mapping với Event ([Admin Setup](admin-setup-overview.md))
+- `scalef_user_id` trên user Gen-Green ([Account Linking](account-linking-overview.md))
 
-**Vị trí:** Trong page Event Detail của creator (Gen-Green frontend).
+### Cần BE proxy
+- BE Gen-Green proxy gọi Scalef APIs theo spec [`scalef-api.md`](scalef-api.md)
+- Endpoints chính: `POST /campaigns/join`, `POST /campaigns/generate-link`, `POST /report/click`, `POST /report/overview`, `GET /publisher/conversion`
 
-**Hiển thị:**
-- Section title "Chiến dịch Affiliate liên kết"
-- Banner liên kết Scalef (nếu chưa link) — **BẮT ĐẦU SECTION**
-- Grid 1 cột mobile / 2 cột desktop
-- Mỗi item = `AffiliateItemCard`
-- Empty state: nếu không có affiliate link với event → ẩn cả section
-
-**Logic:**
-- Fetch `GET /events/:id/affiliate-campaigns` (Phase 2a API)
-- Cache response với TanStack Query / DVA
-- Auto-refresh khi user thay đổi link Scalef status
-
-### 4.2 `AffiliateItemCard`
-
-**Layout:**
-```
-┌─────────────────────────────────┐
-│ [Banner image]                   │
-├─────────────────────────────────┤
-│ Title campaign                   │
-│ Short description                │
-│ [💰 Hoa hồng tới 8%]             │
-│ [🎁 Thưởng +50K]                 │
-│ [⏰ Đến 31/12/2026]               │
-│                                  │
-│ [Khám phá ngay →]                │
-└─────────────────────────────────┘
-```
-
-**Click → navigate sang trang chi tiết.**
-
-### 4.3 Page `affiliate-campaign-detail/:id`
-
-**Layout desktop (2 cột):**
-```
-┌─────────────────────┬──────────────────────────┐
-│ [Banner image]      │ Title                    │
-│                     │ Description short        │
-│ 💰 Hoa hồng         │                          │
-│ 🎁 Thưởng           │ [Tham gia chiến dịch]    │
-│ ⏰ Thời gian         │ (hoặc state khác)        │
-│                     │                          │
-│                     │ [AT Linking Banner]      │
-│                     │ (nếu chưa link)          │
-│                     │                          │
-│                     │ Tabs:                    │
-│                     │  [Thể lệ] [Hướng dẫn]    │
-│                     │                          │
-│                     │ Accordion sections từ    │
-│                     │ markdown (## headings)   │
-│                     │ — section đầu mặc định mở │
-└─────────────────────┴──────────────────────────┘
-```
-
-**Mobile:** stack dọc, banner ở trên cùng.
-
-**States chính:**
-
-| State | UI |
-|-------|-----|
-| Chưa link Scalef | Nút "Tham gia" disable + AT Linking Banner |
-| Chưa join | Nút "Tham gia chiến dịch" |
-| Joining | Spinner, disable click |
-| PENDING | Banner vàng + countdown + nút "Thử lại" (sau 24h) |
-| REJECTED | Banner đỏ + countdown + nút "Thử lại" (sau 14 ngày) |
-| APPROVED | Nút "Tạo link affiliate" |
-| Đã có link | Hiển thị link đã tạo + Copy + nút "Tạo link mới" |
-
-### 4.4 Modal `GenerateLinkModal`
-
-**Input:**
-- (Optional) URL cụ thể trong campaign (VD: link sản phẩm cụ thể trên Shopee)
-- Nếu để trống → dùng `pub2_campaign_url`
-
-**Output:**
-- `affiliate_link` (full)
-- `short_affiliate_link` (rút gọn — ưu tiên hiển thị)
-- Nút Copy + nút "Tạo thêm"
-
-### 4.5 Page `account/my-affiliate-links`
-
-Danh sách link đã tạo của creator:
-
-```
-┌────────────────────────────────────────────────┐
-│ Filter: [campaign] [date range] [search]        │
-├────────────────────────────────────────────────┤
-│ Campaign │ Link │ Tạo lúc │ Click │ Đơn │ Action │
-├────────────────────────────────────────────────┤
-│ Shopee   │ s.io/abc │ 1/5  │ 12 │ 2 │ Copy/Del │
-│ Lazada   │ s.io/xyz │ 2/5  │ 5  │ 0 │ Copy/Del │
-└────────────────────────────────────────────────┘
-```
-
-Click count + đơn hàng = Phase Report (V2). V1 hiển thị `—`.
-
-### 4.6 Page `account/affiliate-income` (V2)
-
-Dashboard hoa hồng — thiết kế chi tiết ở doc Report riêng (sẽ tạo sau khi V1 launch).
-
-### 4.7 `ScalefLinkingBanner` (touchpoint)
-
-**Vị trí:** Trong AffiliateCampaignsSection + đầu trang affiliate-campaign-detail.
-
-**Visibility:** chỉ khi `user.scalef_user_id == null`.
-
-**Layout:**
-```
-┌──────────────────────────────────────────────┐
-│ 🔗 Liên kết tài khoản Scalef để kiếm hoa hồng │
-│    affiliate trên các đơn hàng                 │
-│                                                │
-│ [Liên kết ngay →]              [Tìm hiểu thêm] │
-└──────────────────────────────────────────────┘
-```
-
-### 4.8 `ScalefLinkingPopup` (chặn action)
-
-Trigger khi user chưa link mà bấm "Tham gia" / "Tạo link":
-
-```
-┌──────────────────────────────────┐
-│ Liên kết Scalef trước khi tham gia│
-│                                   │
-│ Để tham gia chiến dịch affiliate  │
-│ và kiếm hoa hồng, bạn cần liên    │
-│ kết tài khoản Scalef.             │
-│                                   │
-│ [Liên kết ngay] [Để sau]          │
-└──────────────────────────────────┘
-```
+### Cần từ design
+- Adapt UI Ambassador → Gen-Green design system (màu, typography, spacing)
+- Logo + branding Gen-Green
 
 ---
 
-## 5. State Management
+## Liên quan
 
-### Local state (UI)
-- Modal open/close
-- Form inputs
-
-### Server state (cache via TanStack Query / DVA)
-- `affiliate-campaigns-by-event/:eventId` — TTL 5'
-- `affiliate-campaign-detail/:id` — TTL 10'
-- `my-contract/:campaignId` — TTL 1' (vì có retry timer)
-- `my-affiliate-links` — TTL 1'
-- `me` (user info, để check `scalef_user_id`) — invalidate sau linking
-
-### Persistent (LocalStorage)
-- Không lưu nhạy cảm. Chỉ lưu UI preferences (đã đóng banner X).
-
----
-
-## 6. Responsive
-
-| Breakpoint | Layout |
-|-----------|--------|
-| ≥ 1024px | 2-col grid + 2-col detail page |
-| 768-1024px | 2-col grid + stack detail |
-| < 768px | 1-col grid + stack detail, banner full-width |
-| ≥ 320px | Đảm bảo mọi action (copy, join, retry) hoạt động |
-
----
-
-## 7. Accessibility
-
-- All buttons có `aria-label`
-- Modal có focus trap + ESC to close
-- Color contrast ≥ 4.5:1 (banner vàng/đỏ vẫn đọc được)
-- Keyboard navigation cho list + tabs
-- Screen reader announce trạng thái contract change
-
----
-
-## 8. Tracking events (Analytics)
-
-| Event | Khi nào |
-|-------|---------|
-| `affiliate_section_viewed` | Section hiển thị trong event detail |
-| `affiliate_campaign_clicked` | Click vào card |
-| `at_linking_banner_clicked` | Click banner Scalef |
-| `at_linking_popup_shown` | Popup chặn hiển thị |
-| `affiliate_join_clicked` | Bấm "Tham gia" |
-| `affiliate_join_result` | Kèm status APPROVED/PENDING/REJECTED |
-| `affiliate_link_generated` | Tạo link thành công |
-| `affiliate_link_copied` | Bấm copy |
-| `affiliate_retry_clicked` | Bấm "Thử lại" |
-
-Mục đích: đo conversion funnel `view → click → join → generate → copy`.
-
----
-
-## 9. Error Handling
-
-| Lỗi | UI |
-|-----|-----|
-| BE timeout | Toast "Có lỗi, vui lòng thử lại" + retry button |
-| Pub2 timeout | Như trên (BE đã handle) |
-| Pub2 reject với code lạ | Hiển thị message từ BE + ticket support |
-| Network offline | Banner "Mất kết nối" |
-| User chưa login | Redirect login |
-| User chưa link Scalef | Popup linking |
-
-Không bao giờ hiển thị raw error message từ Pub2.
-
----
-
-## 10. Performance
-
-| Yêu cầu | Target |
-|---------|--------|
-| Affiliate section render | < 500ms (cache hit) / < 2s (cache miss) |
-| Detail page first paint | < 1.5s |
-| Generate link API | < 3s (BE proxy Pub2) |
-| Copy link | Instant |
-| Mobile bundle size | < 50KB gzipped tăng thêm |
-
-Lazy-load detail page + `my-affiliate-links` page (route-level code split).
-
----
-
-## 11. Phụ thuộc
-
-### Có sẵn
-- Gen-Green frontend (creator-facing)
-- User session + me API trả về `scalef_user_id`
-- Event Detail page
-
-### Cần build
-- 4 components mới (Section, Card, Banner, Popup)
-- 2 pages mới (campaign-detail, my-affiliate-links)
-- Service layer (`services/affiliate.ts`) + interfaces
-- Markdown parser cho description (reuse từ news/article nếu có)
-- Toast / Modal (reuse component lib)
-
-### Cần từ BE (xem [API Integration](api-integration-overview.md))
-- Public APIs join/contract/generate-link/list-links/list-by-event
-- `me` endpoint trả `scalef_user_id`
-
----
-
-## 12. Estimate
-
-### Phase 2a — V1
-
-| Module | Effort |
-|--------|--------|
-| Service layer + interfaces | 0.5d |
-| AffiliateCampaignsSection + Card | 1.5d |
-| Affiliate campaign detail page | 1.5d |
-| Join + retry logic + states | 1d |
-| Generate link modal + copy | 0.5d |
-| `my-affiliate-links` page | 0.5d |
-| ScalefLinkingBanner + Popup | 0.5d |
-| Responsive + accessibility | 0.5d |
-| QA + bug fix | 1d |
-| **Tổng V1** | **~7.5d (~1.5 tuần)** |
-
-### Phase 2b — V2 Report
-
-| Module | Effort |
-|--------|--------|
-| Service + interfaces | 0.5d |
-| Income dashboard (cards + chart + filter) | 2d |
-| Breakdown table | 1d |
-| Export CSV | 0.5d |
-| QA | 1d |
-| **Tổng V2** | **~5d (~1 tuần)** |
-
----
-
-## 13. Edge Cases
-
-| Case | Xử lý |
-|------|-------|
-| User link Scalef giữa flow | Re-fetch user + ẩn banner ngay |
-| Campaign deactivate khi user đang xem | Banner "Campaign đã ngừng" + disable action |
-| Creator đã có link, sau đó admin xóa campaign | Link cũ vẫn hoạt động (Pub2 side), nhưng FE ẩn campaign |
-| Generate link nhiều lần với cùng URL | Cho phép, mỗi lần tạo bản ghi mới |
-| Mobile copy fail (browser old) | Fallback: hiển thị input + select all + manual copy |
-| User dùng 2 device | State PENDING/APPROVED sync qua server, mỗi device fetch lại |
-
----
-
-## 14. Liên quan
-
-- [Admin Setup Overview](admin-setup-overview.md)
-- [API Integration Overview](api-integration-overview.md)
-- [Scalef Linking Phase 1](../scalef-integration/overview.md)
-- Ambassador reference UI: `frontend/src/pages/affiliate-campaign-detail/`, `frontend/src/pages/home/components/affiliate-campaigns-section/`, `frontend/src/pages/home/components/affiliate-item-card/`
+- [Admin Setup Overview](admin-setup-overview.md) — chuẩn bị data nguồn
+- [Account Linking Overview](account-linking-overview.md) — Phase 1, cần xong trước
+- [Scalef API Reference](scalef-api.md) — BE integration spec
+- [Ambassador frontend source](../../../ambassabor/frontend/src/pages/) — clone reference
+- [PRD admin setup](prd-admin-setup-2026-05-04.md) — track admin (nếu PRD FE viết sau, sẽ ở cùng folder)

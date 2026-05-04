@@ -120,6 +120,6 @@ Chi tiết kỹ thuật: xem [PRD](prd-admin-setup-2026-05-04.md).
 ## Liên quan
 
 - [PRD chi tiết](prd-admin-setup-2026-05-04.md) — cho dev
-- [API Integration Overview](api-integration-overview.md) — track sau, đọc data từ track này
+- [Scalef API Reference](scalef-api.md) — spec backend integration với Scalef (cho Phase 2)
 - [FE Display Overview](fe-display-generate-link-report-overview.md) — track sau, hiển thị cho creator
 - [Pub2 Affiliate V1 — Ambassador](../../pub2-affiliate-integration/prd-affiliate-v1-2026-03-31.md) — reference đã làm trên Ambassador
