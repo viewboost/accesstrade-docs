@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>DISO - Cập nhật kế hoạch tuần 04/05 - 10/05/2026</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #202124; line-height: 1.6; max-width: 900px; margin: 20px auto; padding: 0 16px; }
+  h1 { font-size: 18px; margin-top: 28px; border-bottom: 2px solid #1a73e8; padding-bottom: 6px; }
+  h2 { font-size: 16px; margin-top: 24px; color: #1a73e8; }
+  h3 { font-size: 14px; margin-top: 16px; }
+  .status-done { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-testing { background: #cce5ff; color: #004085; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-progress { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-notstarted { background: #e2e3e5; color: #383d41; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  ul.detail { margin: 6px 0 6px 20px; }
+  ul.detail li { margin-bottom: 4px; }
+  .task-block { margin: 14px 0; padding: 10px 14px; background: #f8f9fa; border-left: 3px solid #1a73e8; }
+  .task-block .meta { color: #5f6368; font-size: 13px; margin-bottom: 6px; }
+  .summary-box { background: #e8f0fe; padding: 12px 16px; border-left: 4px solid #1a73e8; margin: 16px 0; }
+  .summary-box ul { margin: 6px 0 0 20px; }
+  a { color: #1a73e8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .signature { margin-top: 24px; }
+  .subject-hint { background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: #856404; }
+</style>
+</head>
+<body>
+
+<div class="subject-hint"><strong>Gợi ý Subject:</strong> [DISO] Cập nhật kế hoạch tuần 04/05 – 10/05/2026</div>
+
+<p>Kính gửi Quý anh/chị,</p>
+
+<p>Tiếp nối báo cáo Kế hoạch Tháng 5/2026 đã được gửi trước đó, đội ngũ DISO xin cập nhật chi tiết Kế hoạch công việc trong tuần từ <strong>04/05 đến 10/05/2026</strong>. Trong tuần này, đội ngũ tập trung triển khai các hạng mục đang ở trạng thái <strong>Dev Testing</strong> và <strong>In Progress</strong> thuộc dự án VCreator, cụ thể như sau:</p>
+
+<div class="summary-box">
+  <strong>📌 Tổng quan các hạng mục triển khai trong tuần:</strong>
+  <ul>
+    <li><strong>Admin Dashboard v3</strong> — Dev Testing → Nghiệm thu & release ngày 06/05</li>
+    <li><strong>Affiliate Center v1</strong> — In Progress, deadline 15/05</li>
+    <li><strong>Affiliate Center v1 – Liên kết tài khoản ScaleF & GenGreen</strong> — In Progress, deadline 15/05</li>
+  </ul>
+</div>
+
+<h1>KẾ HOẠCH TUẦN 04/05 – 10/05/2026</h1>
+
+<h2>Dự án VCreator</h2>
+
+<h3>1. Hạng mục dự kiến nghiệm thu & release trong tuần</h3>
+
+<div class="task-block">
+  <div class="meta"><strong>Admin Dashboard v3</strong> · Workload: 16h · Deadline: 06/05 · <span class="status-testing">Dev Testing</span></div>
+  <strong>Chi tiết phạm vi:</strong>
+  <ul class="detail">
+    <li>Bổ sung các thông tin vào dashboard theo yêu cầu từ Bình VinPearl.</li>
+    <li>Tính năng <strong>Export Column Picker</strong>: cho phép admin lựa chọn các trường dữ liệu phù hợp khi xuất báo cáo (25 cột Tab Nội dung / 19 cột Tab Creator).</li>
+  </ul>
+  <strong>Kế hoạch trong tuần:</strong> Hoàn tất Dev Testing nội bộ trong 04-05/05 → bàn giao nghiệm thu với phía nghiệp vụ ngày <strong>06/05</strong> → release production ngay sau khi nghiệm thu thành công.<br>
+  <strong>Tài liệu:</strong> <a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/registration-grouping/prd-registration-v3-2026-04-30.md">PRD v3</a>
+</div>
+
+<h3>2. Hạng mục đang triển khai</h3>
+
+<div class="task-block">
+  <div class="meta"><strong>Affiliate Center v1</strong> · Workload: 64h · Deadline: 15/05 · <span class="status-progress">In Progress</span></div>
+  <strong>Chi tiết phạm vi triển khai:</strong>
+  <ul class="detail">
+    <li><strong>Phía Admin:</strong> Xây dựng giao diện setup các chương trình Affiliate — bao gồm cấu hình thông tin chương trình, chính sách hoa hồng, thời gian áp dụng; liên kết Affiliate Program với các Ambassador Campaign hiện có để đồng bộ dữ liệu sản phẩm và tracking.</li>
+    <li><strong>Phía Creator:</strong> Xây dựng giao diện hiển thị danh sách chương trình Affiliate khả dụng, cho phép Creator đăng ký tham gia trực tiếp; sau khi được duyệt, Creator có thể lấy link affiliate cá nhân để chia sẻ.</li>
+    <li><strong>Kiến trúc kỹ thuật:</strong> Kế thừa luồng nghiệp vụ và database schema từ dự án Ambassador (vốn đã production ổn định), tuy nhiên thay thế lớp tích hợp với hệ thống ngoài bằng API mới từ ScaleF — đây là điểm khác biệt cốt lõi, đảm bảo dữ liệu sản phẩm, đơn hàng và hoa hồng được đồng bộ chính xác giữa VCreator ↔ ScaleF.</li>
+  </ul>
+  <strong>Công việc trong tuần:</strong> Hoàn thiện luồng setup admin, hiển thị danh sách chương trình phía Creator, tích hợp API ScaleF cho phần lấy danh sách sản phẩm và sinh link affiliate.<br>
+  <strong>Tài liệu:</strong> <a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/affiliate/admin-setup-overview.md">PRD admin</a> / <a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/affiliate/fe-display-generate-link-report-overview.md">PRD creator</a>
+</div>
+
+<div class="task-block">
+  <div class="meta"><strong>Affiliate Center v1 – Liên kết tài khoản ScaleF & GenGreen</strong> · Workload: 72h · Deadline: 15/05 · <span class="status-progress">In Progress</span></div>
+  <strong>Chi tiết phạm vi triển khai:</strong>
+  <ul class="detail">
+    <li><strong>Luồng liên kết tài khoản:</strong> Cho phép user GenGreen khởi tạo liên kết với tài khoản ScaleF tương ứng — bao gồm các bước xác thực, đồng bộ thông tin profile (email, số điện thoại, thông tin thanh toán) giữa hai hệ thống.</li>
+    <li><strong>Xử lý xung đột dữ liệu (Conflict Resolution):</strong> Định nghĩa và xử lý các tình huống mismatch giữa 2 hệ thống — ví dụ: trùng email với 2 user khác nhau, trùng số điện thoại, thông tin profile không nhất quán; hệ thống cần đưa ra các cảnh báo, đề xuất phương án merge hoặc yêu cầu user xác nhận trước khi hoàn tất liên kết.</li>
+    <li><strong>Phạm vi áp dụng:</strong> Tính năng này <strong>chỉ triển khai phía GenGreen</strong> (GenGreen Only) — không áp dụng cho các nhãn hàng khác trong giai đoạn v1.</li>
+  </ul>
+  <strong>Công việc trong tuần:</strong> Hoàn thiện luồng xác thực và đồng bộ dữ liệu profile, xây dựng các quy tắc phát hiện và xử lý conflict, kiểm thử các kịch bản edge case trước khi chuyển sang Dev Testing.<br>
+  <strong>Tài liệu:</strong> <a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/scalef-integration/prd-scalef-integration-v1-2026-04-12.md">PRD</a>
+</div>
+
+<hr style="margin: 24px 0; border: none; border-top: 1px solid #dadce0;">
+
+<p><strong>Lưu ý chung:</strong> Chi tiết kế hoạch triển khai, phân bổ nguồn lực cũng như các tài liệu liên quan của dự án, kính mời Quý anh/chị tham khảo tại: <strong><a href="#">LINK</a></strong></p>
+
+<p>Trong quá trình triển khai, nếu có bất kỳ vướng mắc, thay đổi phạm vi hoặc cần điều chỉnh deadline, đội ngũ DISO sẽ chủ động cập nhật và trao đổi kịp thời với các bên liên quan.</p>
+
+<p>Rất mong tiếp tục nhận được sự phối hợp và hỗ trợ từ Quý anh/chị.</p>
+
+<div class="signature">
+  <p>Trân trọng cảm ơn,<br>
+  <strong>Đội ngũ DISO</strong></p>
+</div>
+
+</body>
+</html>

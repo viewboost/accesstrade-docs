@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>DISO - Kế hoạch Tháng 5/2026</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #202124; line-height: 1.6; max-width: 900px; margin: 20px auto; padding: 0 16px; }
+  h1 { font-size: 18px; margin-top: 28px; border-bottom: 2px solid #1a73e8; padding-bottom: 6px; }
+  h2 { font-size: 16px; margin-top: 24px; color: #1a73e8; }
+  h3 { font-size: 14px; margin-top: 16px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+  th, td { border: 1px solid #dadce0; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f1f3f4; font-weight: 600; }
+  .status-done { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-testing { background: #cce5ff; color: #004085; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-progress { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-notstarted { background: #e2e3e5; color: #383d41; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .total-row { background: #fef7e0; font-weight: 600; }
+  .total-summary { background: #e8f0fe; padding: 12px 16px; border-left: 4px solid #1a73e8; margin: 16px 0; font-weight: 600; }
+  .warning { background: #fce8e6; padding: 16px; border-left: 4px solid #d93025; margin: 16px 0; }
+  .warning ol { margin: 8px 0 0 20px; }
+  a { color: #1a73e8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .signature { margin-top: 24px; }
+  .subject-hint { background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: #856404; }
+</style>
+</head>
+<body>
+
+<div class="subject-hint"><strong>Gợi ý Subject:</strong> [DISO] Kế hoạch triển khai Tháng 5/2026</div>
+
+<p>Kính gửi Quý anh/chị,</p>
+
+<p>Đội ngũ DISO xin gửi đến Quý anh/chị báo cáo Kế hoạch triển khai Tháng 5/2026, bao gồm danh sách các hạng mục, mô tả chi tiết, deadline, workload ước tính và trạng thái hiện tại của từng dự án. Nội dung cụ thể như sau:</p>
+
+<h1>KẾ HOẠCH THÁNG 5/2026</h1>
+
+<h2>1. Dự án VCreator</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 40px;">STT</th>
+      <th style="width: 200px;">Hạng mục</th>
+      <th>Mô tả</th>
+      <th style="width: 110px;">PRD</th>
+      <th style="width: 80px;">Deadline</th>
+      <th style="width: 80px;">Workload (giờ)</th>
+      <th style="width: 100px;">Trạng thái</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Import danh sách nhân viên, duyệt nhân viên tự động</td>
+      <td>Cho phép admin import hàng loạt nhân viên (CBNV) qua file, hệ thống tự động duyệt và phân bổ vào cơ sở làm việc theo cấu trúc 3 tầng (Brand / Company / Unit), hỗ trợ điều chuyển nhân viên giữa các phòng ban. Hạng mục P5 cam kết với ADV, được đẩy lên triển khai sớm cùng nghiệp vụ Employee Registry.</td>
+      <td><a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/registration-grouping/prd-registration-v2-2026-04-12.md">PRD</a></td>
+      <td>30/05</td>
+      <td>38</td>
+      <td><span class="status-done">Done</span></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Estimate Onboard GreenSM Philippines</td>
+      <td>Phân tích yêu cầu, estimate workload và báo cáo phương án triển khai cho việc mở rộng hệ thống sang thị trường Philippines.</td>
+      <td><a href="https://docs.google.com/spreadsheets/d/1cCt9rlEPfKIZpCg6tODQyvS2fMye5mV9xcr18o_c5Zo/edit?gid=0#gid=0">Estimation</a> / <a href="https://docs.google.com/spreadsheets/d/1Tk9-2PJBOesZRj8H4eDqTiR6IqWWBarB0Vn0A_YJ7IQ/edit?gid=72901499#gid=72901499">Yêu cầu ban đầu</a></td>
+      <td>22/05</td>
+      <td>8</td>
+      <td><span class="status-done">Done</span></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Admin Dashboard v3</td>
+      <td>Bổ sung các thông tin vào dashboard theo yêu cầu từ Bình VinPearl. Cho phép lựa chọn các trường dữ liệu phù hợp khi export.</td>
+      <td><a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/registration-grouping/prd-registration-v3-2026-04-30.md">PRD v3</a></td>
+      <td>06/05</td>
+      <td>16</td>
+      <td><span class="status-testing">Dev Testing</span></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Affiliate Center v1</td>
+      <td>Cho phép admin setup các chương trình affiliate, liên kết với các Ambassador Campaign. Hiển thị lên cho Creator có thể đăng ký tham gia và lấy link. <em>(Clone từ dự án Ambassador nhưng với API mới từ ScaleF.)</em></td>
+      <td><a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/affiliate/admin-setup-overview.md">PRD admin</a> / <a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/affiliate/fe-display-generate-link-report-overview.md">PRD creator</a></td>
+      <td>15/05</td>
+      <td>64</td>
+      <td><span class="status-progress">In Progress</span></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Affiliate Center v1 – Liên kết tài khoản ScaleF & GenGreen (phía GenGreen Only)</td>
+      <td>Liên kết tài khoản ScaleF với GenGreen, xử lý các vấn đề khi có xung đột thông tin. <em>(Clone từ dự án Ambassador nhưng với API mới từ ScaleF.)</em></td>
+      <td><a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/scalef-integration/prd-scalef-integration-v1-2026-04-12.md">PRD</a></td>
+      <td>15/05</td>
+      <td>72</td>
+      <td><span class="status-progress">In Progress</span></td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Affiliate Center v2</td>
+      <td>Hiển thị báo cáo hiệu quả tham gia Affiliate cho Creator. <em>(Clone từ dự án Ambassador nhưng với API mới từ ScaleF.)</em></td>
+      <td><a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/affiliate/fe-display-generate-link-report-overview.md">PRD</a></td>
+      <td>20/05</td>
+      <td>48</td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="total-row">
+      <td colspan="5" style="text-align: right;"><strong>Tổng VCreator</strong></td>
+      <td><strong>246</strong></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2. Dự án Ambassador</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 40px;">STT</th>
+      <th style="width: 200px;">Hạng mục</th>
+      <th>Mô tả</th>
+      <th style="width: 110px;">PRD</th>
+      <th style="width: 80px;">Deadline</th>
+      <th style="width: 80px;">Workload (giờ)</th>
+      <th style="width: 100px;">Trạng thái</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>7</td>
+      <td>Onboard ADV 1</td>
+      <td>Onboard định kỳ một ADV mới — đang chờ kế hoạch phân bổ và xác nhận nhãn hàng từ phía ADV.</td>
+      <td>–</td>
+      <td>TBD</td>
+      <td>25</td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Onboard ADV 2</td>
+      <td>Onboard định kỳ một ADV mới — đang chờ kế hoạch phân bổ và xác nhận nhãn hàng từ phía ADV.</td>
+      <td>–</td>
+      <td>TBD</td>
+      <td>25</td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>Onboard ADV 3</td>
+      <td>Onboard định kỳ một ADV mới — đang chờ kế hoạch phân bổ và xác nhận nhãn hàng từ phía ADV.</td>
+      <td>–</td>
+      <td>TBD</td>
+      <td>25</td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="total-row">
+      <td colspan="5" style="text-align: right;"><strong>Tổng Ambassador</strong></td>
+      <td><strong>75</strong></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>3. Dự án GreenSM Philippines</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 40px;">STT</th>
+      <th style="width: 200px;">Hạng mục</th>
+      <th>Mô tả</th>
+      <th style="width: 110px;">PRD</th>
+      <th style="width: 80px;">Deadline</th>
+      <th style="width: 80px;">Workload (giờ)</th>
+      <th style="width: 100px;">Trạng thái</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>10</td>
+      <td>Onboard GreenSM Philippines</td>
+      <td>Mở rộng hệ thống sang thị trường Philippines cho GreenSM: localize giao diện, cấu hình quốc gia/tiền tệ, onboard nhãn hàng. Phase Estimate đã hoàn thành (xem mục VCreator #2), đang chờ AccessTrade phê duyệt phương án và chốt kế hoạch triển khai chính thức.</td>
+      <td><a href="https://docs.google.com/spreadsheets/d/1cCt9rlEPfKIZpCg6tODQyvS2fMye5mV9xcr18o_c5Zo/edit?gid=0#gid=0">Estimation</a> / <a href="https://docs.google.com/spreadsheets/d/1Tk9-2PJBOesZRj8H4eDqTiR6IqWWBarB0Vn0A_YJ7IQ/edit?gid=72901499#gid=72901499">Yêu cầu ban đầu</a></td>
+      <td>22/05</td>
+      <td>TBD</td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="total-row">
+      <td colspan="5" style="text-align: right;"><strong>Tổng GreenSM Philippines</strong></td>
+      <td><strong>TBD</strong></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="total-summary">
+  🔢 Tổng workload Tháng 5/2026: <strong>~321 giờ</strong> (chưa tính workload triển khai chính thức Onboard GreenSM Philippines, sẽ được chốt sau khi AccessTrade phê duyệt phương án)
+</div>
+
+<div class="warning">
+  <strong>⚠️ Lưu ý quan trọng về kế hoạch tháng</strong>
+  <p style="margin: 8px 0;">Danh sách trên là <strong>kế hoạch dự kiến</strong>. Tuy nhiên, <strong>tổng workload hiện đang vượt so với tiêu chuẩn cam kết</strong> của đội ngũ. Để đảm bảo chất lượng và tiến độ các hạng mục trọng yếu, đội ngũ DISO đề xuất Quý anh/chị xem xét:</p>
+  <ol>
+    <li><strong>Tạm chưa đưa vào tháng 5 các hạng mục Onboard ADV</strong> (ADV 1, ADV 2, ADV 3) — chờ kế hoạch phân bổ chính thức từ phía ADV và sắp xếp lại sau khi cân đối nguồn lực.</li>
+    <li><strong>Dời hạng mục VCreator – Affiliate Center v2</strong> sang <strong>Tháng 6/2026</strong> để tập trung hoàn thiện Affiliate Center v1 (cả 2 hạng mục) đúng deadline 15/05.</li>
+  </ol>
+  <p style="margin: 8px 0 0 0;">Sau khi điều chỉnh, scope ưu tiên triển khai trong tháng 5 sẽ tập trung vào: Import nhân viên (đã Done), Estimate Onboard GreenSM Philippines (đã Done), Admin Dashboard v3 (Dev Testing), và Affiliate Center v1 (2 hạng mục đang In Progress).</p>
+</div>
+
+<hr style="margin: 24px 0; border: none; border-top: 1px solid #dadce0;">
+
+<p><strong>Lưu ý chung:</strong> Chi tiết kế hoạch triển khai, phân bổ nguồn lực cũng như các tài liệu liên quan của dự án, kính mời Quý anh/chị tham khảo tại: <strong><a href="#">LINK</a></strong></p>
+
+<p>Báo cáo cập nhật tiến độ tuần sẽ được gửi riêng vào đầu mỗi tuần. Trong quá trình triển khai, nếu có bất kỳ vướng mắc, thay đổi phạm vi hoặc cần điều chỉnh deadline, đội ngũ DISO sẽ chủ động cập nhật và trao đổi kịp thời với các bên liên quan.</p>
+
+<p>Rất mong tiếp tục nhận được sự phối hợp và hỗ trợ từ Quý anh/chị.</p>
+
+<div class="signature">
+  <p>Trân trọng cảm ơn,<br>
+  <strong>Đội ngũ DISO</strong></p>
+</div>
+
+</body>
+</html>
