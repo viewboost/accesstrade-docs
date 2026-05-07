@@ -29,9 +29,21 @@
 
 <div class="subject-hint"><strong>Gợi ý Subject:</strong> [DISO] Kế hoạch triển khai Tháng 5/2026</div>
 
-<p>Kính gửi Quý anh/chị,</p>
+<p>Dear team,</p>
 
-<p>Đội ngũ DISO xin gửi đến Quý anh/chị báo cáo Kế hoạch triển khai Tháng 5/2026, bao gồm danh sách các hạng mục, mô tả chi tiết, deadline, workload ước tính và trạng thái hiện tại của từng dự án. Nội dung cụ thể như sau:</p>
+<p>DISO gửi team bản <strong>cập nhật Kế hoạch triển khai Tháng 5/2026</strong>, gồm danh sách hạng mục, mô tả, deadline, workload ước tính và trạng thái hiện tại của từng dự án.</p>
+
+<div class="warning" style="background: #e8f0fe; border-left-color: #1a73e8;">
+  <strong>📋 Changelog – Các thay đổi so với bản kế hoạch trước</strong>
+  <ol>
+    <li><strong>Bổ sung 01 hạng mục phát sinh sau nghiệm thu</strong>: <em>VCreator – Admin – Fix issue sau nghiệm thu</em> (7h, đã Done) — fix thứ tự hàng khi export và lỗi file export 1 cell/0 row mở thẳng bằng trình duyệt.</li>
+    <li><strong>Chính thức loại VCreator – Affiliate Center v2 khỏi kế hoạch tháng 5</strong>, dời sang <strong>đầu tháng 6/2026</strong> để tập trung hoàn thiện Affiliate Center v1 đúng deadline 15/05.</li>
+    <li><strong>Điều chỉnh workload hạng mục VCreator – Affiliate Center v1 – Liên kết tài khoản ScaleF & GenGreen</strong> từ <strong>72h → 56h</strong>: hai bên đã thống nhất <strong>không xử lý nghiệp vụ giải quyết xung đột thông tin</strong> trong v1 do đánh giá không khả thi ở thời điểm hiện tại.</li>
+    <li><strong>Chính thức bổ sung 01 hạng mục Onboard ADV mới</strong> vào tháng 5 (29h, deadline 28/05).</li>
+  </ol>
+</div>
+
+<p>Chi tiết như sau:</p>
 
 <h1>KẾ HOẠCH THÁNG 5/2026</h1>
 
@@ -61,11 +73,11 @@
     </tr>
     <tr>
       <td>2</td>
-      <td>Estimate Onboard GreenSM Philippines</td>
+      <td>Estimate Onboard Gen-Green Philippines</td>
       <td>Phân tích yêu cầu, estimate workload và báo cáo phương án triển khai cho việc mở rộng hệ thống sang thị trường Philippines.</td>
       <td><a href="https://docs.google.com/spreadsheets/d/1cCt9rlEPfKIZpCg6tODQyvS2fMye5mV9xcr18o_c5Zo/edit?gid=0#gid=0">Estimation</a> / <a href="https://docs.google.com/spreadsheets/d/1Tk9-2PJBOesZRj8H4eDqTiR6IqWWBarB0Vn0A_YJ7IQ/edit?gid=72901499#gid=72901499">Yêu cầu ban đầu</a></td>
       <td>22/05</td>
-      <td>8</td>
+      <td>12</td>
       <td><span class="status-done">Done</span></td>
     </tr>
     <tr>
@@ -75,38 +87,38 @@
       <td><a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/registration-grouping/prd-registration-v3-2026-04-30.md">PRD v3</a></td>
       <td>06/05</td>
       <td>16</td>
-      <td><span class="status-testing">Dev Testing</span></td>
+      <td><span class="status-done">Done</span></td>
     </tr>
     <tr>
       <td>4</td>
+      <td>Admin – Fix issue sau nghiệm thu</td>
+      <td>Sửa các lỗi cũ đã tồn tại nhưng phát hiện khi nghiệm thu:<br>- Export cần lấy thứ tự hàng giống khi hiển thị.<br>- Fix lỗi khi export cho có 1 cell hoặc không có row nào thì đang mở thẳng bằng trình duyệt.</td>
+      <td><a href="#">File nghiệm thu</a></td>
+      <td>06/05</td>
+      <td>7</td>
+      <td><span class="status-done">Done</span></td>
+    </tr>
+    <tr>
+      <td>5</td>
       <td>Affiliate Center v1</td>
-      <td>Cho phép admin setup các chương trình affiliate, liên kết với các Ambassador Campaign. Hiển thị lên cho Creator có thể đăng ký tham gia và lấy link. <em>(Clone từ dự án Ambassador nhưng với API mới từ ScaleF.)</em></td>
+      <td>Cho phép admin setup các chương trình affiliate, liên kết với các Ambassador Campaign. Hiển thị lên cho Creator có thể đăng ký tham gia và lấy link.</td>
       <td><a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/affiliate/admin-setup-overview.md">PRD admin</a> / <a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/affiliate/fe-display-generate-link-report-overview.md">PRD creator</a></td>
       <td>15/05</td>
       <td>64</td>
       <td><span class="status-progress">In Progress</span></td>
     </tr>
     <tr>
-      <td>5</td>
+      <td>6</td>
       <td>Affiliate Center v1 – Liên kết tài khoản ScaleF & GenGreen (phía GenGreen Only)</td>
-      <td>Liên kết tài khoản ScaleF với GenGreen, xử lý các vấn đề khi có xung đột thông tin. <em>(Clone từ dự án Ambassador nhưng với API mới từ ScaleF.)</em></td>
+      <td>Liên kết tài khoản ScaleF với GenGreen, xử lý các vấn đề khi có xung đột thông tin.<br><strong>Ghi chú:</strong> Workload điều chỉnh từ 72h → 56h do hai bên đã thống nhất <strong>không xử lý nghiệp vụ giải quyết xung đột thông tin</strong> (không khả thi ở thời điểm hiện tại); phần scope này được loại khỏi v1.</td>
       <td><a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/scalef-integration/prd-scalef-integration-v1-2026-04-12.md">PRD</a></td>
       <td>15/05</td>
-      <td>72</td>
+      <td>56</td>
       <td><span class="status-progress">In Progress</span></td>
-    </tr>
-    <tr>
-      <td>6</td>
-      <td>Affiliate Center v2</td>
-      <td>Hiển thị báo cáo hiệu quả tham gia Affiliate cho Creator. <em>(Clone từ dự án Ambassador nhưng với API mới từ ScaleF.)</em></td>
-      <td><a href="https://github.com/viewboost/accesstrade-docs/blob/main/gen-green/affiliate/fe-display-generate-link-report-overview.md">PRD</a></td>
-      <td>20/05</td>
-      <td>48</td>
-      <td><span class="status-notstarted">Not Started</span></td>
     </tr>
     <tr class="total-row">
       <td colspan="5" style="text-align: right;"><strong>Tổng VCreator</strong></td>
-      <td><strong>246</strong></td>
+      <td><strong>193</strong></td>
       <td></td>
     </tr>
   </tbody>
@@ -129,96 +141,70 @@
   <tbody>
     <tr>
       <td>7</td>
-      <td>Onboard ADV 1</td>
-      <td>Onboard định kỳ một ADV mới — đang chờ kế hoạch phân bổ và xác nhận nhãn hàng từ phía ADV.</td>
+      <td>Onboard ADV</td>
+      <td>Tiếp nhận và onboard 1 ADV mới trong tháng 5 (chính thức bổ sung vào kế hoạch).</td>
       <td>–</td>
-      <td>TBD</td>
-      <td>25</td>
-      <td><span class="status-notstarted">Not Started</span></td>
-    </tr>
-    <tr>
-      <td>8</td>
-      <td>Onboard ADV 2</td>
-      <td>Onboard định kỳ một ADV mới — đang chờ kế hoạch phân bổ và xác nhận nhãn hàng từ phía ADV.</td>
-      <td>–</td>
-      <td>TBD</td>
-      <td>25</td>
-      <td><span class="status-notstarted">Not Started</span></td>
-    </tr>
-    <tr>
-      <td>9</td>
-      <td>Onboard ADV 3</td>
-      <td>Onboard định kỳ một ADV mới — đang chờ kế hoạch phân bổ và xác nhận nhãn hàng từ phía ADV.</td>
-      <td>–</td>
-      <td>TBD</td>
-      <td>25</td>
+      <td>28/05</td>
+      <td>29</td>
       <td><span class="status-notstarted">Not Started</span></td>
     </tr>
     <tr class="total-row">
       <td colspan="5" style="text-align: right;"><strong>Tổng Ambassador</strong></td>
-      <td><strong>75</strong></td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
-
-<h2>3. Dự án GreenSM Philippines</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th style="width: 40px;">STT</th>
-      <th style="width: 200px;">Hạng mục</th>
-      <th>Mô tả</th>
-      <th style="width: 110px;">PRD</th>
-      <th style="width: 80px;">Deadline</th>
-      <th style="width: 80px;">Workload (giờ)</th>
-      <th style="width: 100px;">Trạng thái</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>10</td>
-      <td>Onboard GreenSM Philippines</td>
-      <td>Mở rộng hệ thống sang thị trường Philippines cho GreenSM: localize giao diện, cấu hình quốc gia/tiền tệ, onboard nhãn hàng. Phase Estimate đã hoàn thành (xem mục VCreator #2), đang chờ AccessTrade phê duyệt phương án và chốt kế hoạch triển khai chính thức.</td>
-      <td><a href="https://docs.google.com/spreadsheets/d/1cCt9rlEPfKIZpCg6tODQyvS2fMye5mV9xcr18o_c5Zo/edit?gid=0#gid=0">Estimation</a> / <a href="https://docs.google.com/spreadsheets/d/1Tk9-2PJBOesZRj8H4eDqTiR6IqWWBarB0Vn0A_YJ7IQ/edit?gid=72901499#gid=72901499">Yêu cầu ban đầu</a></td>
-      <td>22/05</td>
-      <td>TBD</td>
-      <td><span class="status-notstarted">Not Started</span></td>
-    </tr>
-    <tr class="total-row">
-      <td colspan="5" style="text-align: right;"><strong>Tổng GreenSM Philippines</strong></td>
-      <td><strong>TBD</strong></td>
+      <td><strong>29</strong></td>
       <td></td>
     </tr>
   </tbody>
 </table>
 
 <div class="total-summary">
-  🔢 Tổng workload Tháng 5/2026: <strong>~321 giờ</strong> (chưa tính workload triển khai chính thức Onboard GreenSM Philippines, sẽ được chốt sau khi AccessTrade phê duyệt phương án)
+  🔢 Tổng workload Tháng 5/2026: <strong>~222 giờ</strong>
 </div>
 
-<div class="warning">
-  <strong>⚠️ Lưu ý quan trọng về kế hoạch tháng</strong>
-  <p style="margin: 8px 0;">Danh sách trên là <strong>kế hoạch dự kiến</strong>. Tuy nhiên, <strong>tổng workload hiện đang vượt so với tiêu chuẩn cam kết</strong> của đội ngũ. Để đảm bảo chất lượng và tiến độ các hạng mục trọng yếu, đội ngũ DISO đề xuất Quý anh/chị xem xét:</p>
-  <ol>
-    <li><strong>Tạm chưa đưa vào tháng 5 các hạng mục Onboard ADV</strong> (ADV 1, ADV 2, ADV 3) — chờ kế hoạch phân bổ chính thức từ phía ADV và sắp xếp lại sau khi cân đối nguồn lực.</li>
-    <li><strong>Dời hạng mục VCreator – Affiliate Center v2</strong> sang <strong>Tháng 6/2026</strong> để tập trung hoàn thiện Affiliate Center v1 (cả 2 hạng mục) đúng deadline 15/05.</li>
-  </ol>
-  <p style="margin: 8px 0 0 0;">Sau khi điều chỉnh, scope ưu tiên triển khai trong tháng 5 sẽ tập trung vào: Import nhân viên (đã Done), Estimate Onboard GreenSM Philippines (đã Done), Admin Dashboard v3 (Dev Testing), và Affiliate Center v1 (2 hạng mục đang In Progress).</p>
-</div>
+<h2>Đề xuất bù trừ giờ vượt tiêu chuẩn tháng 4/2026</h2>
+
+<p>Tháng 4/2026, DISO đã triển khai vượt tiêu chuẩn cam kết tổng cộng <strong>205 giờ</strong>, chi tiết:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Hạng mục</th>
+      <th style="width: 80px; text-align: right;">BE</th>
+      <th style="width: 80px; text-align: right;">FE</th>
+      <th style="width: 80px; text-align: right;">QC</th>
+      <th style="width: 80px; text-align: right;">PM</th>
+      <th style="width: 100px; text-align: right;">Tổng (giờ)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Số giờ bù trừ vượt chuẩn tháng 4</td>
+      <td style="text-align: right;">108</td>
+      <td style="text-align: right;">38</td>
+      <td style="text-align: right;">48</td>
+      <td style="text-align: right;">17</td>
+      <td style="text-align: right;"><strong>205</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>DISO đề xuất AT xem xét <strong>phương án bù trừ 205h vượt chuẩn tháng 4</strong> sang các tháng tiếp theo. Mong team phản hồi giúp về hướng xử lý.</p>
 
 <hr style="margin: 24px 0; border: none; border-top: 1px solid #dadce0;">
 
-<p><strong>Lưu ý chung:</strong> Chi tiết kế hoạch triển khai, phân bổ nguồn lực cũng như các tài liệu liên quan của dự án, kính mời Quý anh/chị tham khảo tại: <strong><a href="#">LINK</a></strong></p>
+<div class="warning" style="background: #fef7e0; border-left-color: #f9ab00;">
+  <strong>✅ Đề nghị xác nhận kế hoạch</strong>
+  <p style="margin: 8px 0 0 0;">Nhờ team <strong>xác nhận lại bản kế hoạch Tháng 5/2026</strong> ở trên để DISO làm <strong>cơ sở nghiệm thu cuối tháng 5</strong>. Mọi thay đổi phát sinh sau khi xác nhận hai bên sẽ thống nhất và cập nhật lại bằng văn bản.</p>
+</div>
 
-<p>Báo cáo cập nhật tiến độ tuần sẽ được gửi riêng vào đầu mỗi tuần. Trong quá trình triển khai, nếu có bất kỳ vướng mắc, thay đổi phạm vi hoặc cần điều chỉnh deadline, đội ngũ DISO sẽ chủ động cập nhật và trao đổi kịp thời với các bên liên quan.</p>
+<p><strong>Lưu ý:</strong> Chi tiết kế hoạch triển khai, phân bổ nguồn lực và các tài liệu liên quan, team xem tại: <strong><a href="#">LINK</a></strong></p>
 
-<p>Rất mong tiếp tục nhận được sự phối hợp và hỗ trợ từ Quý anh/chị.</p>
+<p>Báo cáo tiến độ tuần sẽ gửi riêng vào đầu mỗi tuần. Trong quá trình triển khai, nếu có vướng mắc, thay đổi scope hoặc cần điều chỉnh deadline, DISO sẽ chủ động cập nhật và trao đổi với các bên liên quan kịp thời.</p>
+
+<p>Cảm ơn team đã phối hợp.</p>
 
 <div class="signature">
-  <p>Trân trọng cảm ơn,<br>
-  <strong>Đội ngũ DISO</strong></p>
+  <p>Thanks &amp; Regards,<br>
+  <strong>DISO Team</strong></p>
 </div>
 
 </body>

@@ -1,0 +1,39 @@
+Cụm,ID,Tính năng,User dùng để...,Priority,Notes
+1. Quét & Làm giàu pool creator,F1.1,Quét tự động creator từ TikTok / Instagram / Facebook,Mỗi tuần thêm 5000+ creator mới vào pool sourcing,P0,Reuse Metric POC đã có
+1. Quét & Làm giàu pool creator,F1.2,Lọc thô khi quét (≥10K follower / nội dung tiếng Việt / engagement ≥2% / hoạt động trong 90 ngày),Loại bỏ tài khoản rác - không lưu trữ lãng phí,P0,
+1. Quét & Làm giàu pool creator,F1.3,Quét bổ sung Threads (kênh mới),Theo trend creator chuyển sang Threads,P2,
+1. Quét & Làm giàu pool creator,F1.4,Tự động làm giàu hồ sơ (engagement / audience demographics / content category / brand-safety),Có đủ thông tin để chấm điểm + đánh giá rủi ro,P0,Dùng influence-meter
+1. Quét & Làm giàu pool creator,F1.5,Tự cập nhật profile định kỳ (hàng tháng) + ngay khi outreach,Data luôn mới khi BD/Care cần,P1,
+1. Quét & Làm giàu pool creator,F1.6,Upload danh sách creator thủ công từ Excel,BD đã có sẵn list - không cần đợi quét,P1,
+2. Chấm điểm & Sàng lọc,F2.1,Chấm điểm phù hợp 0-100 cho mỗi creator (5 tiêu chí: Follower fit / Engagement / Niche match / Brand-safety / Behavioral),Xếp hạng creator phù hợp nhất cho từng campaign,P0,
+2. Chấm điểm & Sàng lọc,F2.2,Phân loại tự động ngành creator (Beauty / F&B / Tech / Travel...),Lọc nhanh theo ngành campaign,P0,NLP + image classification
+2. Chấm điểm & Sàng lọc,F2.3,Dự đoán tier (Bronze / Silver / Gold / Diamond) trước khi creator vào AT,BD biết creator có tiềm năng VIP hay không,P1,
+2. Chấm điểm & Sàng lọc,F2.4,Tính match score riêng cho từng campaign cụ thể (TCB Visa / Innisfree / VinPearl...),Match chính xác hơn theo context campaign,P1,
+2. Chấm điểm & Sàng lọc,F2.5,Hiển thị lý do tại sao creator được suggest (UI minh bạch),BD trust hệ thống - không thấy black-box,P0,
+2. Chấm điểm & Sàng lọc,F2.6,Cải tiến mô hình theo thời gian (feedback loop từ outreach success/fail),Hệ thống học từ kết quả thực tế,P2,Retrain weekly
+3. BD gửi yêu cầu tìm creator,F3.1,Form yêu cầu BD (brand / industry / follower range / quantity / deadline / special requirements),BD nhập nhu cầu trong 2 phút,P0,
+3. BD gửi yêu cầu tìm creator,F3.2,AI gợi ý top creator phù hợp trong 5 giây,BD không phải tự lọc thủ công,P0,
+3. BD gửi yêu cầu tìm creator,F3.3,BD review + chọn subset từ top suggestion,Quyết định cuối vẫn ở BD - hệ thống chỉ hỗ trợ,P0,
+3. BD gửi yêu cầu tìm creator,F3.4,Cảnh báo khi creator đang được BD khác outreach,Tránh trùng lặp - bảo vệ pool creator,P0,Cross-BD coordination
+3. BD gửi yêu cầu tìm creator,F3.5,Save request thành template + reuse,BD lặp campaign tương tự không phải nhập lại,P1,
+3. BD gửi yêu cầu tìm creator,F3.6,Theo dõi trạng thái batch BD đã submit (pending review / outreach / completed),BD biết tiến độ campaign mình,P0,
+4. Duyệt & Kiểm soát chất lượng,F4.1,Lead Care duyệt batch BD (24h SLA),Đảm bảo chất lượng outreach trước khi gửi,P0,
+4. Duyệt & Kiểm soát chất lượng,F4.2,Compliance auto-pass theo rule + sample manual 10% trường hợp,Cân bằng tốc độ + an toàn brand,P0,
+4. Duyệt & Kiểm soát chất lượng,F4.3,Bulk approve / reject creator trong batch,Lead xử lý nhanh batch lớn,P0,
+4. Duyệt & Kiểm soát chất lượng,F4.4,Re-route creator có rủi ro sang Compliance review chi tiết,Creator có flag scandal / drama không được outreach vội,P0,
+4. Duyệt & Kiểm soát chất lượng,F4.5,Lịch sử batch đã xử lý + tỷ lệ approve/reject theo BD,Đo lường + cải thiện chất lượng input BD,P1,
+5. Gửi tin ngỏ lời hợp tác,F5.1,Thư viện template tin nhắn theo ngành / brand / mục đích,Outreach cá nhân hoá nhưng vẫn nhanh,P0,
+5. Gửi tin ngỏ lời hợp tác,F5.2,Cá nhân hoá nội dung tin (tên / ngành / lý do / link landing campaign),Tăng tỷ lệ phản hồi vs tin generic,P0,
+5. Gửi tin ngỏ lời hợp tác,F5.3,Lịch warm-up tự động (Tuần 1: 50 tin/ngày → Tuần 4: 200 tin/ngày),Bảo vệ Zalo OA không bị flag spam,P0,Critical - tránh mất kênh
+5. Gửi tin ngỏ lời hợp tác,F5.4,Throttling + scheduling (cách 30 phút - giờ làm việc - không cuối tuần),Gửi tự nhiên - không bị bot detect,P0,
+5. Gửi tin ngỏ lời hợp tác,F5.5,Suppression list (creator opt-out / fail-lock 90 ngày / đang active CRM),Tránh outreach trùng + tuân thủ luật bảo vệ dữ liệu,P0,
+5. Gửi tin ngỏ lời hợp tác,F5.6,Link opt-out tự động trong mỗi tin,Compliance + cho creator quyền từ chối,P0,
+5. Gửi tin ngỏ lời hợp tác,F5.7,Phân loại sentiment phản hồi (positive / neutral / negative) + auto-route positive sang CRM Phase 2,Không phải read manual từng tin để route,P1,NLP
+5. Gửi tin ngỏ lời hợp tác,F5.8,A/B test template + đo response rate,Tối ưu nội dung dần theo data thực,P2,
+6. Theo dõi chuyển đổi & Tối ưu,F6.1,Tracking funnel (Outreach → Read → Responded → Met → Active → First GMV),Đo từng bước drop-off để tối ưu,P0,
+6. Theo dõi chuyển đổi & Tối ưu,F6.2,UTM tracking mỗi outreach (creator click landing - đăng ký - active),Attribution chính xác - biết outreach nào ra số,P0,
+6. Theo dõi chuyển đổi & Tối ưu,F6.3,Dashboard ROI cho BD (response rate / conversion / GMV per batch),BD thấy rõ giá trị tool - không bỏ tool quay lại Excel,P0,
+6. Theo dõi chuyển đổi & Tối ưu,F6.4,Cost per acquired creator (CAC) tracking,Tối ưu chi phí - so sánh với BD tự tìm thủ công,P1,
+6. Theo dõi chuyển đổi & Tối ưu,F6.5,Báo cáo tự động cho brand (số creator mới / GMV / ROI hàng tuần - hàng tháng),Brand không phải hỏi - data tự đến,P1,
+6. Theo dõi chuyển đổi & Tối ưu,F6.6,Bảng xếp hạng BD (response rate / conversion / GMV),Tạo động lực + công nhận BD top,P2,
+6. Theo dõi chuyển đổi & Tối ưu,F6.7,Feedback loop dữ liệu cho ML (good lead / bad lead label),Mô hình scoring tự cải thiện hàng tuần,P2,

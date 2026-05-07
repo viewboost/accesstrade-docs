@@ -1,0 +1,31 @@
+Cụm,ID,Tính năng,User dùng để...,Priority,Notes
+1. Quản lý hồ sơ Creator,F1.1,Danh sách Creator với filter/search/sort,Tìm nhanh creator theo tên / ngành / tier / người phụ trách,P0,Reuse pattern dashboard hiện tại
+1. Quản lý hồ sơ Creator,F1.2,Trang chi tiết Creator (3 tab: Profile + Channels + Lịch sử),Xem toàn bộ thông tin 1 creator trong 1 chỗ,P0,
+1. Quản lý hồ sơ Creator,F1.3,Chi tiết kênh social (engagement / recent content / performance từ influence-meter),Đánh giá creator có phù hợp campaign không,P0,Data từ influence-meter
+1. Quản lý hồ sơ Creator,F1.4,Import danh sách creator từ Excel / xlsm,Migration creator hiện tại từ Excel sang CRM,P0,Theo xlsm Pipeline Tracking
+1. Quản lý hồ sơ Creator,F1.5,Đa nền tảng MCN (Meta / Shopee / TAP riêng),Track creator đã join MCN nào / chưa join cái gì,P1,3 cột riêng theo pattern xlsm Nhung
+2. Phân công & Công việc Care,F2.1,Hàng đợi cá nhân (My Queue),Care thấy creator của riêng mình - không bị overwhelm,P0,Per-Care view như sheet Nhung
+2. Phân công & Công việc Care,F2.2,Phân công tự động theo ngành / tier / capacity,Lead phân creator mới cho Care phù hợp,P1,
+2. Phân công & Công việc Care,F2.3,Phân công thủ công + bulk reassign,Lead chuyển creator giữa Care khi cần,P0,
+2. Phân công & Công việc Care,F2.4,Bảng tải công việc team (Workload Dashboard),Lead theo dõi Care nào đang quá tải,P1,
+2. Phân công & Công việc Care,F2.5,Hộp thư task tự động (creator vừa đăng ký / SLA sắp breach / follow-up...),Care biết việc gì cần làm trước,P0,13 Next Action enum theo xlsm
+3. Theo dõi tiến độ & Quy trình KOC,F3.1,Trạng thái lifecycle creator (New → Contacted → Applied → Approved → Active → Inactive),Biết creator đang ở bước nào của hành trình,P0,8 status A theo xlsm
+3. Theo dõi tiến độ & Quy trình KOC,F3.2,Trạng thái trong từng campaign (Shortlisted → Invited → Accepted → In Progress → Completed),Quản lý creator trong nhiều campaign cùng lúc,P0,10 status B theo xlsm
+3. Theo dõi tiến độ & Quy trình KOC,F3.3,Đồng hồ SLA + cảnh báo sắp trễ deadline,Không để vỡ commitment với creator / brand,P1,SLA theo tier (VIP 8h / Normal 48h)
+3. Theo dõi tiến độ & Quy trình KOC,F3.4,Leo thang tự động khi SLA quá hạn (L1 → L2 → Manager),Vấn đề được escalate đúng người - đúng lúc,P1,
+3. Theo dõi tiến độ & Quy trình KOC,F3.5,Lịch sử thay đổi trạng thái + audit,Audit + đánh giá quy trình,P0,
+4. Phân hạng VIP & Quyền lợi,F4.1,Phân tier 5 cấp (VIP / Gold / Normal / New / Watchlist),Quyết định mức chăm sóc và policy,P0,Theo KOC V2 Process 1.2 + 7.2
+4. Phân hạng VIP & Quyền lợi,F4.2,Bảng quyền lợi theo tier (học bổng / sample / travel fee / Mega Live slot / GMV Max / ưu tiên campaign),Care biết offer gì cho từng creator,P1,Theo slide chương trình - 6 nguồn lực
+4. Phân hạng VIP & Quyền lợi,F4.3,Track quyền lợi đã claim per creator,Tránh trùng + tracking ROI,P1,
+4. Phân hạng VIP & Quyền lợi,F4.4,Lên / xuống tier với lý do,Creator mới đạt tier - Lead approve manual,P0,
+4. Phân hạng VIP & Quyền lợi,F4.5,VIP Care Plan (kế hoạch chăm sóc riêng + monthly business review),Giữ chân VIP,P2,
+5. Trao đổi & Lịch sử quan hệ,F5.1,Lịch sử trao đổi Zalo OA + email (lưu tập trung - không phải Zalo cá nhân Care),Mọi conversation thuộc về AT - không phải Care cá nhân,P0,Anti-poach core
+5. Trao đổi & Lịch sử quan hệ,F5.2,Soạn thư hàng loạt từ template,Outreach hiệu quả - brand consistency,P1,
+5. Trao đổi & Lịch sử quan hệ,F5.3,Ghi chú nội bộ về creator (relationship memo),Knowledge transfer khi đổi Care,P0,
+5. Trao đổi & Lịch sử quan hệ,F5.4,Quy trình bàn giao 6 bước khi Care nghỉ việc,Anti-poach - quan hệ ở lại với AT,P0,AT chat lần 1 nhấn mạnh
+5. Trao đổi & Lịch sử quan hệ,F5.5,Audit log tương tác Care-creator,Compliance + minh bạch,P0,
+6. Báo cáo & Cổng thương hiệu,F6.1,Dashboard KPI cho AM (số creator active / GMV / response rate / SLA breach),Sếp đánh giá performance từng AM,P1,AT confirmed defer Sprint 2
+6. Báo cáo & Cổng thương hiệu,F6.2,Bảng xếp hạng AM (leaderboard),Tạo động lực + công nhận,P2,
+6. Báo cáo & Cổng thương hiệu,F6.3,Cổng riêng cho từng brand đối tác (TCB / Traphaco / VinPearl staff đăng nhập xem),Brand tự xem creator của mình - không cần email Care,P1,Multi-tenant value prop
+6. Báo cáo & Cổng thương hiệu,F6.4,Báo cáo tự động weekly / monthly cho brand,Tiết kiệm thời gian Care làm report tay,P1,
+6. Báo cáo & Cổng thương hiệu,F6.5,Export PDF / Excel,Stakeholder quen Excel,P0,

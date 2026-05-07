@@ -1,0 +1,52 @@
+Hạng mục,Mã,Khoản mục,Loại,Mô tả,Đơn giá (VND),Số lượng,Đơn vị,Thành tiền (VND),Ghi chú
+1. PHASE 1 - KHỞI TẠO,P1-INIT,Build Phase 1 - Cổng đăng ký + CRM cơ bản,One-time,"Phát triển toàn bộ scope Phase 1 theo task list:
+
+- Frontend Creator VN clone từ Ambassador (theo pattern hdbank/lusso) - landing + đăng ký + campaign list/detail
+- Module đăng ký user-socials clone từ TCB + tích hợp influence-meter
+- Conditional validation user-social trên submit content (require Creator VN - không require các FE khác)
+- Dashboard CRM v1 clone từ TCB (Creator List + Trang chi tiết)
+- Backend admin endpoints + bulk import xlsm
+- Production deploy + bàn giao + training Care
+
+LƯU Ý: Design do AT cung cấp - Diso không bao gồm thiết kế trong báo giá này. Diso chỉ thực hiện adapt theo design AT đưa.
+
+Effort: 232h × rate role = $3.462 ≈ 90.012.000đ (rate 26.000 VND/USD).",90000000,1,gói,90000000,8 task groups - 232h ~29 person-days - chưa bao gồm Design (AT lo)
+2. PHASE 1 - INFLUENCE-METER,P1-IM-INIT,Khởi tạo Influence-meter mới cho Creator VN,One-time,"Khởi tạo Influence-meter mới cho Creator VN - dùng chung license với T-Fluencers. Tính 1 lần.
+
+Bao gồm: cấu hình tenant + API key + tích hợp endpoint enrich.
+
+Quota Phase 1: tối đa 1.000 hồ sơ / tháng.",10000000,1,lần,10000000,Áp dụng riêng cho scope Phase 1
+3. PHASE 1 - HẠ TẦNG,P1-INFRA,Hạ tầng AWS,Do AT cung cấp,AT cung cấp hạ tầng AWS theo chuẩn các dự án khác đang chạy ở AT. Diso không phụ trách chi phí hosting.,0,1,gói,0,Không tính vào báo giá
+4. PHASE 1 - VẬN HÀNH,P1-OPS,Vận hành hệ thống hằng tháng,Free,"Vận hành hệ thống hằng tháng - MIỄN PHÍ do kết hợp với scope vận hành dự án Ambassador.
+
+Bao gồm: monitoring + alert + hotfix critical bugs.
+
+Phí Influence-meter monthly: 0đ (gộp chung license T-Fluencers - không phát sinh phí riêng).",0,12,tháng,0,Áp dụng riêng cho scope Phase 1
+,,,,,,,TỔNG CAM KẾT PHASE 1,100000000,Chưa bao gồm VAT
+,,,,,,,,,
+5. PHASE 2 - CRM PLATFORM,P2-TBD,Build Phase 2 - CRM platform đầy đủ,Sẽ báo giá sau,"30 use case chia 6 cụm:
+1. Quản lý hồ sơ Creator
+2. Phân công và Công việc Care
+3. Theo dõi tiến độ và Quy trình KOC
+4. Phân hạng VIP và Quyền lợi
+5. Trao đổi và Lịch sử quan hệ (anti-poach)
+6. Báo cáo và Cổng thương hiệu
+
+Sẽ pitch giá sau khi AT confirm scope chi tiết.",,,,TBD,Phase 2 - chưa estimate
+6. PHASE 3 - SOURCING,P3-TBD,Build Phase 3 - Sourcing và Outreach tự động,Sẽ báo giá sau,"38 use case chia 6 cụm:
+1. Quét và Làm giàu pool creator
+2. Chấm điểm và Sàng lọc
+3. BD gửi yêu cầu tìm creator
+4. Duyệt và Kiểm soát chất lượng
+5. Gửi tin ngỏ lời hợp tác (Zalo OA + warm-up + suppression)
+6. Theo dõi chuyển đổi và Tối ưu
+
+Sẽ pitch giá sau khi Phase 2 go-live + có data thực.",,,,TBD,Phase 3 - chưa estimate
+,,,,,,,,,
+,,,GHI CHÚ,,,,,,
+,,,Influence-meter license,Phase 1 - gộp chung với T-Fluencers - quota 1.000 hồ sơ / tháng. Vượt quota báo giá riêng theo bậc thang.,,,,,
+,,,Vận hành dự án,Phase 1 - tính chung vào scope vận hành Ambassador (đã có team Diso vận hành sẵn). Không phát sinh phí riêng.,,,,,
+,,,Hạ tầng,AT cung cấp AWS theo pattern dự án khác - Diso không charge.,,,,,
+,,,Design,AT cung cấp design - Diso không bao gồm thiết kế trong báo giá. Diso chỉ thực hiện adapt theo design AT đưa.,,,,,
+,,,Tỷ giá quy chiếu,USD/VND = 26.000 (dùng để đối chiếu effort - báo giá chính bằng VND).,,,,,
+,,,Phase 2 + 3,Sẽ báo giá riêng sau khi AT confirm scope. Phase 2 estimate sau khi review 30 use case. Phase 3 estimate sau khi Phase 2 go-live + có data thực.,,,,,

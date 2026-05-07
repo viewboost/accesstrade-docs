@@ -1,0 +1,58 @@
+Phase,Task ID,Task,File / Module,Description,Effort,Priority,Status,Blockers,DevOps,SA,BE,FE Creator,FE Admin,QC,Design,BA,PM,Total (hours),Cost (USD),Notes
+1. Setup,SETUP,Khởi tạo dự án + hạ tầng,All,"Tạo 2 repo Creator VN:
+- creator-vn-frontend
+- creator-vn-dashboard
+
+Setup hạ tầng AWS + 2 domain + SSL + DNS + CI/CD.",M,P0,Ready,§A1 access source,12,1,2,1,1,2,0,0,2,21,$340,Tuần 1
+2. Clone Frontend,CLONE-FE,Clone giao diện ambassador/frontend theo thiết kế mới,creator-vn-frontend,"Clone từ ambassabor/frontend (theo pattern hdbank/lusso/mbbank đã có).
+
+Adapt theo thiết kế mới (AT cung cấp design - Diso không thiết kế):
+- Branding Creator VN (logo, color, copy)
+- Trang chủ + campaign list/detail (reuse từ Ambassador)
+- Account/profile pages
+- OAuth login (Google/Facebook/TikTok)
+- Audit + xoá legacy (hdbank/lusso refs)",L,P0,Blocked,§D1 thiết kế từ AT + §A1 access source,0,0,8,32,0,12,0,0,4,56,$684,Tuần 1-2 - AT cung cấp design
+3. Clone Profile,CLONE-PROFILE,Clone module đăng ký user-socials từ TCB + tích hợp influence-meter,creator-vn-frontend + backend,"Clone từ techcombank (frontend creator-info + backend user-socials).
+
+Bao gồm tích hợp influence-meter để enrich profile creator (engagement / followers / content / brand-safety) sau khi creator submit social handles.
+
+Estimate có sẵn từ team Diso:
+- Backend: 4h
+- Frontend: 16h
+- QC: 8h
+- PM: 4h",S,P0,Blocked,§A1 access TCB + §C1 IM API key cho Creator VN,0,0,4,16,0,8,0,0,4,32,$444,Tuần 1 - tích hợp IM trong scope
+4. Clone Dashboard,CLONE-DASH,Clone TCB dashboard - giữ menu Creator + Detail,creator-vn-dashboard,"Clone từ techcombank/dashboard. Giữ:
+- Menu Creator (influencers list)
+- Trang chi tiết creator
+- Login username + password đơn giản
+
+Bỏ:
+- Menu khác không liên quan (campaign/budget/payment/contract của TCB)
+- Branding TCB",M,P0,Ready,§A1 access TCB,0,0,4,0,16,8,0,0,4,32,$444,Tuần 1-2 - estimate có sẵn từ team
+5. Backend Conditional Validation,BE-VALIDATION,Conditional validation user-social trên submit content,backend Ambassador (extend),"Sửa code Ambassador backend để validation user-social_id linh hoạt theo nguồn submit:
+
+- FE Creator VN submit: REQUIRE user_social_id (reject empty)
+- FE Ambassador / 10 ADV cũ: KHÔNG require (giữ nguyên optional như hiện tại)
+
+Cách phân biệt nguồn: check theo header / partner / domain (chốt detail tuần 1).
+
+KHÔNG sửa gì TCB - không động chạm đến hệ thống TCB hiện hành.
+
+QA quan trọng: regression test 10 ADV cũ vẫn submit content được không user_social.",S,P0,Ready,§A1 confirm cách phân biệt source request,0,0,6,0,0,2,0,0,0,8,$112,Tuần 2 - đảm bảo không break 10 ADV
+6. Backend Admin Endpoints,BE-ADMIN,Endpoint admin cho dashboard,creator-vn-backend,"Build admin endpoints cho dashboard cloned:
+- GET /admin/creators (list + filter/search/pagination)
+- GET /admin/creators/:id (detail 3 tabs)
+- POST /admin/creators/import (bulk xlsm)
+- PATCH /admin/creators/:id
+- POST /admin/auth/login
+
+Schema theo xlsm Pipeline Tracking (5 Tier, 8 Lifecycle, Multi-MCN 3 cột).
+Cache Redis 1 ngày data IM.",L,P0,Ready,§B1 schema xlsm,0,1,32,0,0,6,0,0,1,40,$594,Tuần 2
+7. Bàn giao,HANDOVER,Production deploy + bàn giao,All,"Deploy 3 service (frontend + backend + dashboard).
+Doc hướng dẫn + demo session + monitoring 1 tuần.",M,P0,Ready,,6,0,4,2,2,4,0,2,3,23,$369,Tuần 3
+8. PM + BA,PM,PM coordination + Discovery,All,Discovery + sprint coordination + stakeholder mgmt xuyên suốt.,M,P0,Ready,,0,0,0,0,0,0,0,8,12,20,$328,Xuyên suốt 3 tuần
+,,,TOTAL HOURS,,,,,,=SUM(J2:J9),=SUM(K2:K9),=SUM(L2:L9),=SUM(M2:M9),=SUM(N2:N9),=SUM(O2:O9),=SUM(P2:P9),=SUM(Q2:Q9),=SUM(R2:R9),=SUM(J10:R10),,8 task groups - tổng giờ theo vai trò
+,,,ĐƠN GIÁ ($/h),,,,,,17,17,15,15,15,11,11,11,20,,,Rate USD per hour
+,,,COST USD,,,,,,=J10*J11,=K10*K11,=L10*L11,=M10*M11,=N10*N11,=O10*O11,=P10*P11,=Q10*Q11,=R10*R11,,=SUM(J12:R12),Tổng cost USD theo vai trò
+,,,COST VND (rate 26k),,,,,,=J12*26000,=K12*26000,=L12*26000,=M12*26000,=N12*26000,=O12*26000,=P12*26000,=Q12*26000,=R12*26000,,=SUM(J13:R13),Tổng cost VND theo vai trò - đây là chi phí build
+,,,TỔNG PHASE 1,,,,,,,,,,,,,,,,=T13+10000000,Build (T13) + 10tr khởi tạo IM = 100tr (Design do AT lo)

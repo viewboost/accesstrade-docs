@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Creator VN — Roadmap & Báo giá Phase 1</title>
+</head>
+<body style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #222; max-width: 720px; margin: 0 auto; padding: 20px;">
+
+<p>Dear chị,</p>
+
+<p>Em đã có phân tích sơ bộ và xây dựng lộ trình cho dự án <strong>Creator VN</strong> theo <strong>3 phase</strong>, kèm chi tiết task và báo giá cho Phase 1. Em xin tóm tắt như sau:</p>
+
+<hr style="border: 0; border-top: 1px solid #e5e5e5; margin: 24px 0;">
+
+<h2 style="color: #d95a00; font-size: 18px; margin: 24px 0 12px;">🎯 Phase 1 — Khởi tạo Creator VN (5 tuần)</h2>
+
+<p>Khởi tạo Creator VN <strong>dính chặt vào backend Ambassador</strong> hiện hành để dễ mở rộng sau này, mở sẵn đầu mối liên kết để có thể tích hợp thêm vào <strong>T-Fluencers</strong> (đã có) và <strong>Gen-Green</strong> nếu sau này cần.</p>
+
+<p><strong>Phase này gồm các deliverable chính:</strong></p>
+<ul style="margin: 8px 0 16px; padding-left: 24px;">
+  <li><strong>Frontend Creator VN</strong> — clone từ Ambassador (theo pattern hdbank/lusso/mbbank đã có), adapt branding theo design AT cung cấp</li>
+  <li><strong>Module đăng ký creator</strong> + tích hợp influence-meter để enrich profile sau khi creator submit social handles</li>
+  <li><strong>CRM phiên bản đơn giản (v1)</strong> — clone từ TCB dashboard, giữ menu Creator List + Trang chi tiết creator (3 tabs Profile / Channels / Lịch sử). Đủ để Care AT xem và quản lý danh sách creator</li>
+  <li><strong>Conditional validation user-social</strong> — Creator VN strict nhưng không ảnh hưởng 10 ADV cũ đang chạy production</li>
+</ul>
+
+<p style="background: #fff7e6; border-left: 3px solid #f26a00; padding: 10px 14px; margin: 16px 0;">
+<strong>📅 Mốc cứng:</strong> Frontend + cổng đăng ký go-live trước <strong>5/5/2026</strong> để kịp event 7/5.
+</p>
+
+<p style="background: #f0f9ff; border-left: 3px solid #0ea5e9; padding: 10px 14px; margin: 16px 0;">
+<strong>💰 Báo giá Phase 1: 100 triệu VND</strong> (chưa bao gồm VAT)<br>
+&bull; 90tr xây dựng (8 task groups, ~232h, đã trừ phần Design AT cung cấp)<br>
+&bull; 10tr khởi tạo influence-meter (gộp chung license T-Fluencers, quota 1.000 hồ sơ/tháng)<br>
+&bull; Hạ tầng AWS: AT cung cấp<br>
+&bull; Vận hành hằng tháng: <strong>miễn phí</strong> (kết hợp với scope vận hành Ambassador hiện tại)
+</p>
+
+<hr style="border: 0; border-top: 1px solid #e5e5e5; margin: 24px 0;">
+
+<h2 style="color: #d95a00; font-size: 18px; margin: 24px 0 12px;">🎯 Phase 2 — CRM Platform đầy đủ</h2>
+
+<p>Mở rộng CRM v1 thành nền tảng chăm sóc creator hoàn chỉnh, <strong>dùng chung cho Creator VN + Ambassador + T-Fluencers + các partner sau này</strong>. Phase này gồm <strong>30 use case chia 6 cụm tính năng</strong>:</p>
+
+<ol style="margin: 8px 0 16px; padding-left: 24px;">
+  <li><strong>Quản lý hồ sơ Creator</strong> — list / search / filter / chi tiết kênh social từ influence-meter</li>
+  <li><strong>Phân công và Công việc Care</strong> — hàng đợi cá nhân, phân công tự động/thủ công, hộp thư task</li>
+  <li><strong>Theo dõi tiến độ và Quy trình KOC</strong> — lifecycle 8 trạng thái + đồng hồ SLA + leo thang</li>
+  <li><strong>Phân hạng VIP và Quyền lợi</strong> — tier 5 cấp, bảng quyền lợi, track claim</li>
+  <li><strong>Trao đổi và Lịch sử quan hệ</strong> — lưu Zalo/email, anti-poach khi Care nghỉ việc</li>
+  <li><strong>Báo cáo và Cổng thương hiệu</strong> — Dashboard KPI cho AM, brand portal cho TCB / Traphaco / VinPearl</li>
+</ol>
+
+<p><em>Báo giá Phase 2 sẽ gửi sau khi chị confirm scope chi tiết.</em></p>
+
+<hr style="border: 0; border-top: 1px solid #e5e5e5; margin: 24px 0;">
+
+<h2 style="color: #d95a00; font-size: 18px; margin: 24px 0 12px;">🎯 Phase 3 — Sourcing và Outreach tự động</h2>
+
+<p>Đảo chiều <strong>inbound → outbound</strong>. AT chủ động tìm creator phù hợp campaign, không chờ creator đăng ký. Phase này gồm <strong>38 use case chia 6 cụm</strong>:</p>
+
+<ol style="margin: 8px 0 16px; padding-left: 24px;">
+  <li><strong>Quét &amp; Làm giàu pool creator</strong> — 5K+ creator/tuần từ TikTok / IG / FB</li>
+  <li><strong>Chấm điểm &amp; Sàng lọc</strong> — 5 tiêu chí scoring inspired by CreatorIQ</li>
+  <li><strong>BD gửi yêu cầu tìm creator</strong> — form BD Request, AI suggest top creator phù hợp</li>
+  <li><strong>Duyệt &amp; Kiểm soát chất lượng</strong> — Lead Care + Compliance review trước outreach</li>
+  <li><strong>Gửi tin ngỏ lời hợp tác</strong> — Zalo OA outreach với warm-up + suppression</li>
+  <li><strong>Theo dõi chuyển đổi &amp; Tối ưu</strong> — UTM tracking, funnel, ROI dashboard</li>
+</ol>
+
+<p><em>Báo giá Phase 3 sẽ gửi sau khi Phase 2 go-live và có data thực để estimate chính xác.</em></p>
+
+<hr style="border: 0; border-top: 1px solid #e5e5e5; margin: 24px 0;">
+
+<h2 style="color: #d95a00; font-size: 18px; margin: 24px 0 12px;">📎 Tài liệu tham khảo</h2>
+
+<p>Em đã upload đầy đủ tài liệu để chị review:</p>
+
+<table cellpadding="8" cellspacing="0" style="border-collapse: collapse; margin: 12px 0;">
+  <tr>
+    <td style="border: 1px solid #e5e5e5; background: #fafafa;"><strong>📂 Roadmap chi tiết + báo giá Phase 1</strong></td>
+    <td style="border: 1px solid #e5e5e5;">
+      <a href="https://drive.google.com/drive/u/7/folders/1SKo8_mlCSl66cKtVRNcRSsQ-8A8PzsPf" style="color: #f26a00; text-decoration: none; font-weight: bold;">
+        Mở Google Drive →
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td style="border: 1px solid #e5e5e5; background: #fafafa;"><strong>🎬 Mockup giao diện Creator VN + CRM</strong></td>
+    <td style="border: 1px solid #e5e5e5;">
+      <a href="https://vcreator.demo.accesstrade.click/mockup" style="color: #f26a00; text-decoration: none; font-weight: bold;">
+        Xem demo →
+      </a>
+    </td>
+  </tr>
+</table>
+
+<p>Em sẵn sàng book một cuộc họp ngắn để chị feedback và làm rõ thêm scope nếu cần. Chị xem qua và cho em ý kiến nhé.</p>
+
+<p>Cảm ơn chị,<br>
+<strong>[Tên anh]</strong></p>
+
+</body>
+</html>

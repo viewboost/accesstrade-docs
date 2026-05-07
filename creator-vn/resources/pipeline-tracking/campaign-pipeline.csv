@@ -1,0 +1,9 @@
+Pipeline ID,Creator ID,Creator Name,Campaign/List/Program,Platform,Tier at Assignment,List/Campaign Status,Owner,Start Date,Due Date,SLA Target (hrs),SLA Status,Next Action,Performance Note,GMV,Orders,CR,Last Updated
+P001,C001,Fanpage Ăn Gì Hôm Nay,Meta Fanpage Shopee Pilot,Fanpage/Meta,VIP,Activated,Care Lead 01,01/05/2026,05/05/2026,24,On Track,Scale,"Reels có click tốt, tiếp tục comment ghim","120,000,000",820,4.5%,04/05/2026
+P002,C002,KOC Beauty Lan Anh,TAP Beauty May,TikTok/TAP,VIP,In Progress,Senior Care 02,02/05/2026,06/05/2026,12,At Risk,Send sample,Đang chờ sample để lên video thứ 2,"65,000,000",420,5.2%,04/05/2026
+P003,C003,Shopee Review Nhà Xinh,Shopee FMCG List,Shopee,Gold,Accepted,Care 03,03/05/2026,07/05/2026,24,On Track,Send guideline,"Đã nhận campaign, cần gửi sản phẩm win",0,0,0.0%,04/05/2026
+P004,C004,Mẹ Bé Tips,Mom & Baby Fanpage List,Fanpage/Meta,Normal,Need Setup,Care 04,02/05/2026,05/05/2026,48,Overdue,Setup platform,Chưa thiết lập nền tảng quảng bá,0,0,0.0%,04/05/2026
+P005,C005,Travel KOC Minh,Travel Creator Outreach,TikTok/TAP,Normal,Invited,Care 05,01/05/2026,04/05/2026,48,Overdue,Follow-up,Chưa phản hồi lời mời,0,0,0.0%,04/05/2026
+P006,C006,Live Host Hương,Beauty Live Test,Livestream,Gold,In Progress,Care 03,02/05/2026,08/05/2026,24,On Track,Activate,Đã có lịch live test,"30,000,000",210,3.9%,04/05/2026
+P007,C007,Deal Săn Sale,Reactivation Fanpage,Fanpage/Meta,Watchlist,Paused,Care 06,25/04/2026,03/05/2026,72,Overdue,Reactivate,"Reach giảm, cần test lộ trình 10% commercial",0,0,0.0%,04/05/2026
+P008,C008,KOC Dược Sĩ An,Health Expert Onboarding,TikTok/TAP,VIP,Need Setup,Senior Care 02,04/05/2026,05/05/2026,8,On Track,Setup platform,"VIP candidate, cần onboard nhanh",0,0,0.0%,04/05/2026

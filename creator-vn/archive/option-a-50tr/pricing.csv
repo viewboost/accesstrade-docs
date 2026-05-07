@@ -1,0 +1,23 @@
+Hạng mục,Mã,Khoản mục,Loại,Mô tả,Đơn giá (VND),Số lượng,Đơn vị,Thành tiền (VND),Ghi chú
+1. Khởi tạo dự án,INIT-01,Build MVP 4 tuần,One-time,"Phát triển toàn bộ scope MVP theo task list (xem tasks.csv):
+
+- Landing page sự kiện 7/5
+- Form đăng ký 2 bước + tài khoản creator
+- Trang creator /me (sau đăng nhập)
+- CRM Care: list + Trang chi tiết creator + chi tiết kênh social
+- Tích hợp influence-meter
+- QA + Bàn giao + Training
+
+Effort thực tế: 254h × rate role = $3648 ≈ 94.848.000đ (rate 26.000 VND/USD).
+Giảm giá ~14.848.000đ (~15.7%) để build relationship dài hạn với AT.",80000000,1,gói,80000000,"GIẢM GIÁ: 14.848.000đ (-15.7%) so với effort thực tế 94.848.000đ trong tasks.csv"
+2. Hạ tầng,INFRA-01,Hạ tầng AWS,Do AT cung cấp,"AT cung cấp hạ tầng AWS theo chuẩn các dự án khác đang chạy ở AT. Diso không phụ trách chi phí hosting.",0,1,gói,0,Không tính vào báo giá
+3. Influence-meter,IM-INIT,Khởi tạo influence-meter,One-time,"Khởi tạo influence-meter cho dự án — tính 1 lần, gộp chung phí với T-Fluencers.",10000000,1,lần,10000000,"Gộp chung license với T-Fluencers"
+3. Influence-meter,IM-MONTHLY,Phí tháng influence-meter,Gộp chung,"Gộp chung license với T-Fluencers — không tính phí riêng cho dự án này. Tối đa 10.000 hồ sơ.",0,1,gói,0,"Quota 10.000 hồ sơ — vượt thì báo giá riêng"
+4. Vận hành,OPS-01,Vận hành hệ thống,Tính chung,"Tính chung vào scope vận hành dự án Ambassador. Dự phòng tối thiểu 8h/vị trí (PM + Dev + QC) để xử lý vấn đề phát sinh cho dự án này.",0,1,gói,0,"Không tính phí riêng — đã có trong scope Ambassador"
+,,,,,,,TỔNG CAM KẾT,90000000,Chưa bao gồm VAT
+,,,,,,,,,
+,,,GHI CHÚ,,,,,,
+,,,Influence-meter license,Gộp chung với T-Fluencers — quota 10.000 hồ sơ. Vượt quota báo giá riêng.,,,,,
+,,,Vận hành dự án,"Tính chung vào scope vận hành Ambassador, dự phòng tối thiểu 8h/vị trí cho việc xử lý phát sinh.",,,,,
+,,,Tỷ giá quy chiếu,USD/VND = 26.000 (dùng để đối chiếu tasks.csv - báo giá chính bằng VND),,,,,
+,,,GIẢM GIÁ KHỞI TẠO,Effort thực tế 254h × rate role = $3648 ≈ 94.848.000đ. Báo giá AT 80.000.000đ → giảm 14.848.000đ (~15.7%).,,,,,
