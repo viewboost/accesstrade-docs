@@ -91,7 +91,7 @@ API public:
 - `HostCoverToMinio(ctx, contentID, coverURL) (string, error)` — download + upload + trả URL MinIO public.
 
 **Điểm quan trọng:**
-- Set header `User-Agent: facebookexternalhit/1.1` khi fetch — bypass anti-bot của Meta CDN, đồng thời TikTok/YouTube cũng accept.
+- Set header `User-Agent` = Chrome browser thường khi fetch — CDN binary endpoints (fbcdn.net, tiktokcdn.com, ytimg.com) accept browser UA. **Không** impersonate bot của Meta/TikTok để tránh ToS gray area.
 - Object name: `content-cover/{contentID.Hex()}.{ext}` — idempotent theo contentID.
 - Size limit 5MB qua `io.LimitReader` — chống OOM.
 - Detect Content-Type → extension (`.jpg`/`.png`/`.webp`/`.gif`), fallback `.jpg`.
@@ -208,7 +208,7 @@ Ví dụ: `content-cover/68f48c96753ef5c3a39bb695.jpg`
 | Case | Xử lý |
 |------|-------|
 | Download timeout (>10s) | Log error, skip content đó. Lần cache miss kế tiếp retry |
-| HTTP 4xx/5xx từ nền tảng gốc | Log error, skip. Có thể URL đã expired hoặc bị block (FB/Meta đặc biệt strict — cần UA `facebookexternalhit/1.1`) |
+| HTTP 4xx/5xx từ nền tảng gốc | Log warn, skip silently. Thường vì URL đã expired (campaign đóng lâu). User thấy ảnh vỡ cho video đó nhưng không break flow — content khác trong batch vẫn host được. |
 | MinIO PutObject fail | Log error, skip. Không update DB → giữ nguyên URL cũ |
 | Update MongoDB fail | Log error. Object đã upload MinIO nhưng DB không update — lần sau retry sẽ ghi đè cùng object → idempotent OK |
 | Content `cover` rỗng | Skip — fallback logic FE/BE dùng `Thumbnail.Medium.URL` |
