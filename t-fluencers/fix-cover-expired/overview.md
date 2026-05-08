@@ -23,30 +23,29 @@ Tình trạng này xảy ra **ngẫu nhiên** — cùng một video, hôm nay xe
 
 ### Cơ chế hiện tại
 
-Khi hệ thống "bắt" một video TikTok về:
-1. Lấy URL ảnh thumbnail từ TikTok (qua API oEmbed của TikTok)
+Khi hệ thống "bắt" một video về:
+1. Lấy URL ảnh thumbnail từ nền tảng gốc (TikTok, Facebook, Instagram, YouTube...)
 2. Lưu URL đó vào database
 3. Khi user vào trang, frontend dùng URL này để load ảnh
 
-### Vấn đề: TikTok URL có hạn sử dụng
+### Vấn đề: URL của các nền tảng đều có hạn sử dụng
 
-URL ảnh thumbnail do TikTok cung cấp **không phải URL vĩnh viễn**. TikTok gắn vào URL một tham số `x-expires` (thời điểm hết hạn) — thường là **vài giờ tới ~24 giờ** kể từ lúc cấp.
+URL ảnh thumbnail do các nền tảng cung cấp **không phải URL vĩnh viễn**:
+- **TikTok** gắn `x-expires` — hết hạn sau ~2 ngày
+- **Facebook** gắn `oe=` (expires) — hết hạn sau ~3-4 ngày
+- **Instagram** tương tự Facebook (cùng hạ tầng Meta CDN)
 
-Sau thời điểm đó:
-- Ảnh không load được nữa
-- Browser hiển thị ảnh vỡ
+Sau thời điểm đó: ảnh không load được, browser hiển thị ảnh vỡ.
 
 ### Vì sao hệ thống không tự refresh?
 
-Hệ thống có **lưu** thời điểm hết hạn (`coverExpiredAt`) khi crawl video, nhưng:
-- ❌ **Không có cơ chế tự động refresh** khi sắp hết hạn
-- ❌ **Không có job kiểm tra định kỳ** để cập nhật URL mới
-
-→ URL chết nằm trong DB mãi cho đến khi video được crawl lại vì lý do nào khác (ví dụ user chủ động re-import).
+- Khi **campaign đã đóng**, hệ thống không crawl content nữa → URL cũ hết hạn nhưng không có URL mới thay thế
+- **Không có job kiểm tra định kỳ** để cập nhật URL mới
+- URL chết nằm trong DB mãi mãi
 
 ### Tại sao càng để lâu càng nhiều video bị lỗi?
 
-Mỗi ngày có thêm video mới được approve và đẩy lên top. Mỗi ngày cũng có URL cũ hết hạn. Tỷ lệ ảnh hỏng **tích lũy theo thời gian** — đặc biệt với top content cũ (đã ổn định ở top vài ngày/vài tuần).
+Top 8 content nổi bật hiển thị trên trang chủ partner thường thuộc các campaign đã đóng (vì campaign đang chạy có volume thấp hơn). Theo thời gian, gần như 100% top content sẽ rơi vào trạng thái "URL hết hạn".
 
 ---
 
@@ -67,7 +66,9 @@ Mỗi ngày có thêm video mới được approve và đẩy lên top. Mỗi ng
 
 ### Phạm vi áp dụng
 
-**Chỉ áp dụng cho 8 video** ở khu vực "Nội dung nổi bật" của trang chủ partner.
+**Áp dụng cho mọi nền tảng** (TikTok, Facebook Reels, Instagram, YouTube...) — không phân biệt nguồn video. Bất kỳ URL nào không phải của hệ thống mình thì đều tải về MinIO.
+
+**Phạm vi**: Chỉ 8 video ở khu vực "Nội dung nổi bật" của trang chủ partner.
 
 **Không áp dụng cho:**
 - Trang chi tiết partner / trang content (vì có cơ chế load ảnh khác hoặc tần suất truy cập thấp)
@@ -81,11 +82,11 @@ Mỗi ngày có thêm video mới được approve và đẩy lên top. Mỗi ng
 - Lần thứ 2 trở đi → URL đã có trong DB, dùng luôn
 - **Upload 1 lần, giữ vĩnh viễn** — không re-upload, không dọn dẹp
 
-### Trường hợp video bị xóa khỏi TikTok?
+### Trường hợp video bị xóa khỏi nền tảng gốc?
 
 - Ảnh trên MinIO **vẫn còn** — user vẫn thấy thumbnail
 - Đây là tradeoff chấp nhận được: thà hiển thị ảnh "cuối cùng" còn hơn ảnh vỡ
-- Video bị xóa khỏi TikTok là case hiếm, đã có flow riêng xử lý (admin có thể ẩn content)
+- Video bị xóa là case hiếm, đã có flow riêng xử lý (admin có thể ẩn content)
 
 ---
 

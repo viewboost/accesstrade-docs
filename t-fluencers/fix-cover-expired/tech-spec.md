@@ -31,12 +31,16 @@
 
 ### 1.2. Vấn đề
 
-URL TikTok cover có dạng:
-```
-https://p16-sign-sg.tiktokcdn.com/.../tos-alisg-p-0037/...?x-expires=1715250000&x-signature=...
-```
+Mọi nền tảng đều cấp URL có expires:
 
-Param `x-expires` (Unix timestamp) → URL chết sau **vài giờ tới ~24h**. System đã lưu `coverExpiredAt` ([`content_catcher/common.go:67`](../../../techcombank/backend/internal/module/social/content_catcher/common.go)) nhưng **không có job re-crawl**.
+| Nền tảng | Pattern | TTL |
+|----------|---------|-----|
+| TikTok | `tiktokcdn.com/...?x-expires=<unix>&x-signature=...` | ~2 ngày |
+| Facebook | `fbcdn.net/...?oe=<hex_unix>&oh=...` | ~3-4 ngày |
+| Instagram | `cdninstagram.com/...?oe=...` (cùng Meta CDN) | ~3-4 ngày |
+| YouTube | `i.ytimg.com/vi/<id>/...` (URL ổn định, hiếm khi đổi) | rất lâu |
+
+System đã lưu `coverExpiredAt` cho TikTok ([`content_catcher/common.go:67`](../../../techcombank/backend/internal/module/social/content_catcher/common.go)) nhưng **không có job re-crawl**. Khi campaign đóng → không crawl mới → URL chết.
 
 ### 1.3. FE consume
 
@@ -62,8 +66,10 @@ Trong service `GetListContentLeaderboard`, sau khi build xong response 8 content
 |-------------|---------------|
 | API `GET /partners/content-features` | API `GET /events/{id}/content/leaderboards` (xét sau) |
 | Field `cover` | Field `thumbnail` (FE không dùng) |
-| Source = TikTok | YouTube (URL ổn định, không cần) |
-| Cover URL có `x-expires` hoặc match domain `tiktokcdn.com` | URL đã là MinIO (host khớp `FileHost`) |
+| Mọi nền tảng (TikTok, Facebook, Instagram, YouTube...) | URL đã là MinIO (host khớp `FileHost`) |
+| Mọi cover URL HTTP(S) bên ngoài | URL rỗng / malformed / scheme khác http(s) |
+
+**Logic đơn giản**: cover URL nào không trỏ tới MinIO của mình → tải về và host. Không cần whitelist domain — vì bất kỳ CDN bên thứ 3 nào cũng có thể đổi URL.
 
 ### 2.3. Strategy
 
@@ -79,112 +85,18 @@ Trong service `GetListContentLeaderboard`, sau khi build xong response 8 content
 
 **File:** `backend/internal/module/social/content_catcher/cover_host.go` (mới)
 
-```go
-package contentcatcher
+API public:
+- `ShouldHostCover(url string) bool` — true nếu URL là http(s) hợp lệ và **không** thuộc MinIO của mình. Không whitelist platform.
+- `IsMinioCoverURL(url string) bool` — kiểm tra URL đã trỏ tới `FileHost` của mình (đã host).
+- `HostCoverToMinio(ctx, contentID, coverURL) (string, error)` — download + upload + trả URL MinIO public.
 
-import (
-    "context"
-    "fmt"
-    "io"
-    "net/http"
-    "net/url"
-    "os"
-    "path/filepath"
-    "strings"
-    "time"
-
-    "viewboost/internal/config"
-    "viewboost/internal/module/minio"
-
-    "go.mongodb.org/mongo-driver/bson/primitive"
-)
-
-const (
-    coverObjectPrefix = "content-cover/"
-    coverDownloadTimeout = 10 * time.Second
-)
-
-// IsTikTokCoverURL kiểm tra URL có phải URL TikTok có hạn không
-func IsTikTokCoverURL(coverURL string) bool {
-    if coverURL == "" {
-        return false
-    }
-    u, err := url.Parse(coverURL)
-    if err != nil {
-        return false
-    }
-    // Match TikTok CDN domains
-    if !strings.Contains(u.Host, "tiktokcdn") && !strings.Contains(u.Host, "tiktok.com") {
-        return false
-    }
-    return true
-}
-
-// IsMinioCoverURL kiểm tra URL đã là URL MinIO (đã migrate) chưa
-func IsMinioCoverURL(coverURL string) bool {
-    fileHost := config.GetENV().FileHost
-    return fileHost != "" && strings.HasPrefix(coverURL, fileHost)
-}
-
-// HostCoverToMinio download URL về và upload lên MinIO public bucket.
-// Trả về URL MinIO public, error.
-func HostCoverToMinio(ctx context.Context, contentID primitive.ObjectID, coverURL string) (string, error) {
-    // 1. Download
-    client := &http.Client{Timeout: coverDownloadTimeout}
-    req, _ := http.NewRequestWithContext(ctx, http.MethodGet, coverURL, nil)
-    resp, err := client.Do(req)
-    if err != nil {
-        return "", fmt.Errorf("download cover: %w", err)
-    }
-    defer resp.Body.Close()
-    if resp.StatusCode != http.StatusOK {
-        return "", fmt.Errorf("download cover status: %d", resp.StatusCode)
-    }
-
-    // 2. Detect ext (fallback .jpg)
-    ext := ".jpg"
-    if ct := resp.Header.Get("Content-Type"); strings.HasPrefix(ct, "image/") {
-        switch ct {
-        case "image/png":
-            ext = ".png"
-        case "image/webp":
-            ext = ".webp"
-        }
-    }
-
-    // 3. Save to temp file
-    filename := fmt.Sprintf("%s%s%s", coverObjectPrefix, contentID.Hex(), ext)
-    tmpPath := filepath.Join(os.TempDir(), strings.ReplaceAll(filename, "/", "_"))
-    f, err := os.Create(tmpPath)
-    if err != nil {
-        return "", fmt.Errorf("create temp file: %w", err)
-    }
-    if _, err := io.Copy(f, resp.Body); err != nil {
-        f.Close()
-        os.Remove(tmpPath)
-        return "", fmt.Errorf("copy temp file: %w", err)
-    }
-    f.Close()
-
-    // 4. Upload MinIO (PutObject sẽ tự os.Remove)
-    bucketName := config.GetENV().MinioCfg.BucketName.PublicFile
-    contentType := resp.Header.Get("Content-Type")
-    if contentType == "" {
-        contentType = "image/jpeg"
-    }
-    if err := minio.PutObject(tmpPath, filename, contentType, bucketName); err != nil {
-        return "", fmt.Errorf("minio put: %w", err)
-    }
-
-    // 5. Build public URL
-    publicURL := fmt.Sprintf("%s/%s/%s",
-        config.GetENV().FileHost,
-        bucketName,
-        filename,
-    )
-    return publicURL, nil
-}
-```
+**Điểm quan trọng:**
+- Set header `User-Agent: facebookexternalhit/1.1` khi fetch — bypass anti-bot của Meta CDN, đồng thời TikTok/YouTube cũng accept.
+- Object name: `content-cover/{contentID.Hex()}.{ext}` — idempotent theo contentID.
+- Size limit 5MB qua `io.LimitReader` — chống OOM.
+- Detect Content-Type → extension (`.jpg`/`.png`/`.webp`/`.gif`), fallback `.jpg`.
+- Reject scheme khác `http(s)` (chống `file://`, `ftp://`, `javascript:`...).
+- Idempotent: cùng `contentID` ghi đè cùng object → không tăng dung lượng khi retry.
 
 ### 3.2. Tích hợp vào service
 
@@ -208,12 +120,8 @@ func (p partnerImpl) hostCoversAsync(contents []*modelmg.ContentRaw) {
             if content == nil || content.Cover == "" {
                 continue
             }
-            // Skip nếu đã là URL MinIO
-            if contentcatcher.IsMinioCoverURL(content.Cover) {
-                continue
-            }
-            // Chỉ xử lý TikTok URL
-            if !contentcatcher.IsTikTokCoverURL(content.Cover) {
+            // Skip nếu URL không cần host (rỗng, đã là MinIO, hoặc malformed)
+            if !contentcatcher.ShouldHostCover(content.Cover) {
                 continue
             }
 
@@ -265,7 +173,7 @@ Trong cả 2 nhánh (leaderboard aggregation + fallback `GetContentFeature`), sa
 Cover string `bson:"cover,omitempty"`
 ```
 
-Chỉ ghi đè giá trị từ URL TikTok → URL MinIO.
+Chỉ ghi đè giá trị từ URL nền tảng gốc → URL MinIO.
 
 ### 4.2. Environment variables
 
@@ -300,12 +208,12 @@ Ví dụ: `content-cover/68f48c96753ef5c3a39bb695.jpg`
 | Case | Xử lý |
 |------|-------|
 | Download timeout (>10s) | Log error, skip content đó. Lần cache miss kế tiếp retry |
-| HTTP 4xx/5xx từ TikTok | Log error, skip. Có thể URL đã expired hoặc bị block |
+| HTTP 4xx/5xx từ nền tảng gốc | Log error, skip. Có thể URL đã expired hoặc bị block (FB/Meta đặc biệt strict — cần UA `facebookexternalhit/1.1`) |
 | MinIO PutObject fail | Log error, skip. Không update DB → giữ nguyên URL cũ |
 | Update MongoDB fail | Log error. Object đã upload MinIO nhưng DB không update — lần sau retry sẽ ghi đè cùng object → idempotent OK |
 | Content `cover` rỗng | Skip — fallback logic FE/BE dùng `Thumbnail.Medium.URL` |
 | Cover đã là URL MinIO | Skip — `IsMinioCoverURL()` check |
-| Cover không phải TikTok URL (YouTube, FB...) | Skip — `IsTikTokCoverURL()` check. YouTube URL ổn định, không cần host |
+| Cover URL malformed/scheme khác http(s) | Skip — `ShouldHostCover()` reject |
 | Goroutine panic | Phải có `recover()` ở đầu goroutine để tránh crash service |
 | Goroutine leak khi service shutdown | `context.WithTimeout(60s)` đảm bảo goroutine tự cleanup |
 
@@ -409,8 +317,9 @@ Nếu có sự cố:
 ## 10. Open questions
 
 1. **Có cần host cover cho `/events/{id}/content/leaderboards` không?** — API tương tự, dùng cùng aggregation. Để phase sau, đo traffic trước.
-2. **Có cần resize/optimize ảnh trước khi upload không?** — Hiện tại upload nguyên bản. Cover TikTok ~720x1280, JPEG quality default. Nếu cần tối ưu bandwidth FE, phase 2 có thể resize 540x960.
+2. **Có cần resize/optimize ảnh trước khi upload không?** — Hiện tại upload nguyên bản. Cover ~720x1280, JPEG quality default. Nếu cần tối ưu bandwidth FE, phase 2 có thể resize 540x960.
 3. **Có cần CDN trước MinIO?** — Tùy infra. Hiện tại `FileHost` đã serve qua CDN/proxy nội bộ, không cần thêm.
+4. **Backfill cho content cũ?** — Hiện tại lazy migrate khi lọt top 8. Nếu muốn backfill 100% content `status=approved` để chuẩn bị cho future top, cần script one-shot riêng.
 
 ---
 
