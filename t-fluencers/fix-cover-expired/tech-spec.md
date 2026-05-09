@@ -57,8 +57,8 @@ FE chỉ dùng field `cover` ở [`frontend/src/pages/home/components/video-item
 ### 2.1. Tóm tắt
 
 Trong service `GetListContentLeaderboard`, sau khi build xong response 8 content:
-- **Async** (goroutine, không block response): với mỗi content có cover URL TikTok → download → upload MinIO → update DB field `cover` (ghi đè URL MinIO)
-- Lần cache miss kế tiếp (sau 4h) → DB đã có URL MinIO → response có URL MinIO
+- **Async** (goroutine, không block response): với mỗi content có cover URL ngoài → download → upload MinIO → update DB field `cover` (ghi đè URL MinIO)
+- Sau khi goroutine xong (nếu có ít nhất 1 cover được host) → **invalidate Redis cache** của partner → request kế tiếp lập tức trả URL MinIO mới (không phải đợi 4h cache TTL)
 
 ### 2.2. Phạm vi
 
@@ -112,39 +112,52 @@ API public:
 Thêm method private:
 
 ```go
-// hostCoversAsync chạy goroutine để host cover lên MinIO cho top content.
-// Fire-and-forget, không block response.
-func (p partnerImpl) hostCoversAsync(contents []*modelmg.ContentRaw) {
+// hostCoversAsync spawn goroutine fire-and-forget để host cover lên MinIO.
+// Sau khi xong (nếu có ít nhất 1 cover được host), invalidate Redis cache
+// để request kế tiếp lập tức trả URL MinIO mới (không phải đợi 4h cache TTL).
+func (p partnerImpl) hostCoversAsync(contents []*modelmg.ContentRaw, partnerID string) {
     if len(contents) == 0 {
         return
     }
     go func() {
+        defer func() {
+            if r := recover(); r != nil {
+                log.Printf("[hostCoversAsync] panic: %v", r)
+            }
+        }()
         ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
         defer cancel()
 
+        var success, skipped, failed int
         for _, content := range contents {
-            content := content
-            if content == nil || content.Cover == "" {
-                continue
+            if content == nil || content.ID.IsZero() || content.Cover == "" {
+                skipped++; continue
             }
-            // Skip nếu URL không cần host (rỗng, đã là MinIO, hoặc malformed)
             if !contentcatcher.ShouldHostCover(content.Cover) {
-                continue
+                skipped++; continue
             }
 
             newURL, err := contentcatcher.HostCoverToMinio(ctx, content.ID, content.Cover)
             if err != nil {
                 log.Printf("[hostCoversAsync] content=%s err=%v", content.ID.Hex(), err)
-                continue
+                failed++; continue
             }
 
-            // Update DB
-            err = daomongodb.ContentDAO().GetShare().UpdateOne(ctx, new(modelmg.ContentRaw),
+            if err := daomongodb.ContentDAO().GetShare().UpdateOne(ctx, new(modelmg.ContentRaw),
                 bson.M{"_id": content.ID},
                 bson.M{"$set": bson.M{"cover": newURL}},
-            )
-            if err != nil {
+            ); err != nil {
                 log.Printf("[hostCoversAsync] update db content=%s err=%v", content.ID.Hex(), err)
+                failed++; continue
+            }
+            success++
+        }
+
+        // Invalidate cache → request kế tiếp lập tức cache miss → trả URL MinIO mới
+        if success > 0 && partnerID != "" {
+            pattern := fmt.Sprintf("%s_*_*_%s", redis.CacheListContentFeature, partnerID)
+            if err := redis.DelAllKeyByPattern(pattern); err != nil {
+                log.Printf("[hostCoversAsync] cache invalidate err=%v", err)
             }
         }
     }()
@@ -153,7 +166,7 @@ func (p partnerImpl) hostCoversAsync(contents []*modelmg.ContentRaw) {
 
 **Sửa `GetListContentLeaderboard`:**
 
-Trong cả 2 nhánh (leaderboard aggregation + fallback `GetContentFeature`), sau khi build xong `res.Data`, gom các `*modelmg.ContentRaw` đã chọn rồi gọi `p.hostCoversAsync(...)` trước khi return.
+Trong cả 2 nhánh (leaderboard aggregation + fallback `GetContentFeature`), sau khi build xong `res.Data`, gom các `*modelmg.ContentRaw` đã chọn rồi gọi `p.hostCoversAsync(contents, query.PartnerID)` trước khi return.
 
 **Cụ thể vị trí gọi:**
 - Nhánh leaderboard: trước `return res` ở [`partner.go:188`](../../../techcombank/backend/pkg/public/service/partner.go) và sau loop `contentsBackup`
@@ -163,10 +176,10 @@ Trong cả 2 nhánh (leaderboard aggregation + fallback `GetContentFeature`), sa
 
 ### 3.3. Không thay đổi
 
-- Không thay đổi cache logic (Redis 4h vẫn giữ nguyên)
 - Không thay đổi response shape
 - Không thay đổi sort/filter logic
 - Không cần migration data — content cũ sẽ tự migrate dần khi lọt top
+- Cache TTL 4h giữ nguyên (chỉ thêm invalidate sau khi host xong)
 
 ---
 
@@ -223,6 +236,9 @@ Ví dụ: `content-cover/68f48c96753ef5c3a39bb695.jpg`
 | Cover URL malformed/scheme khác http(s) | Skip — `ShouldHostCover()` reject |
 | Goroutine panic | Phải có `recover()` ở đầu goroutine để tránh crash service |
 | Goroutine leak khi service shutdown | `context.WithTimeout(60s)` đảm bảo goroutine tự cleanup |
+| Redis DEL fail (cache invalidate lỗi) | Log error, không retry. Worst case: user phải đợi 4h cache TTL — fallback an toàn |
+| Concurrent request cùng partner | Cùng spawn 2 goroutine, cùng host MinIO (idempotent), cùng DEL cache (idempotent) → OK |
+| Goroutine xong nhưng tất cả fail (success=0) | Skip cache invalidate — tránh thừa 1 Redis op vô nghĩa |
 
 **Bổ sung recover:**
 ```go
@@ -258,7 +274,7 @@ go func() {
 ### 6.2. Concurrency
 
 - Mỗi request `GetListContentLeaderboard` spawn **1 goroutine** xử lý tuần tự 8 content
-- Tránh spam: cùng 1 partner trong 4h cache window chỉ tạo 1 goroutine
+- Sau khi goroutine xong + invalidate cache → request kế tiếp lập tức cache miss → spawn goroutine mới (nhưng `ShouldHostCover` skip cover đã là MinIO → không upload lại). 1 vòng "self-correcting" rồi ổn định
 - Không cần worker pool / rate limit ở giai đoạn này (load thấp)
 
 ### 6.3. API response time
@@ -272,10 +288,10 @@ go func() {
 ### 7.1. Log format
 
 ```
-[hostCoversAsync] start contents=8 partner=68f48c96753ef5c3a39bb695
-[hostCoversAsync] content=abc123 url=https://...tiktokcdn... result=hosted minio_url=https://...
 [hostCoversAsync] content=def456 err=download cover status: 403
-[hostCoversAsync] done success=6 skipped=1 failed=1 duration=2.3s
+[hostCoversAsync] update db content=ghi789 err=mongo timeout
+[hostCoversAsync] cache invalidate err=redis: connection refused  (nếu fail)
+[hostCoversAsync] done success=6 skipped=1 failed=1 duration=2.3s partner=68f48c96753ef5c3a39bb695
 ```
 
 ### 7.2. Metrics đề xuất (optional, phase 2)
@@ -334,8 +350,8 @@ Nếu có sự cố:
 
 | File | Loại | Mô tả |
 |------|------|-------|
-| `backend/internal/module/social/content_catcher/cover_host.go` | Mới | Helper download + upload MinIO |
-| `backend/pkg/public/service/partner.go` | Sửa | Thêm `hostCoversAsync`, gọi trong `GetListContentLeaderboard` |
-| `backend/internal/module/social/content_catcher/cover_host_test.go` | Mới | Unit test helper |
+| `backend/internal/module/social/content_catcher/cover_host.go` | Mới | Helper `ShouldHostCover` / `IsMinioCoverURL` / `HostCoverToMinio` |
+| `backend/internal/module/social/content_catcher/cover_host_test.go` | Mới | Unit test helper (~30 sub-tests) |
+| `backend/pkg/public/service/partner.go` | Sửa | Thêm `hostCoversAsync(contents, partnerID)`, gọi trong `GetListContentLeaderboard` (cả 2 nhánh) + invalidate Redis cache sau khi xong |
 
 **Estimated effort:** 2–3 ngày (1 dev), bao gồm code + test + deploy staging.
