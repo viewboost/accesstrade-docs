@@ -66,10 +66,17 @@ Trong service `GetListContentLeaderboard`, sau khi build xong response 8 content
 |-------------|---------------|
 | API `GET /partners/content-features` | API `GET /events/{id}/content/leaderboards` (xét sau) |
 | Field `cover` | Field `thumbnail` (FE không dùng) |
-| Mọi nền tảng (TikTok, Facebook, Instagram, YouTube...) | URL đã là MinIO (host khớp `FileHost`) |
+| TikTok, Facebook, Instagram, các CDN có signature/expires | URL đã là MinIO (host khớp `FileHost`) |
 | Mọi cover URL HTTP(S) bên ngoài | URL rỗng / malformed / scheme khác http(s) |
+| | **YouTube (ytimg.com, img.youtube.com)** — URL ổn định theo videoId, không expire |
 
-**Logic đơn giản**: cover URL nào không trỏ tới MinIO của mình → tải về và host. Không cần whitelist domain — vì bất kỳ CDN bên thứ 3 nào cũng có thể đổi URL.
+**Logic**: cover URL nào không trỏ tới MinIO của mình **và không phải CDN có URL ổn định** → tải về và host.
+
+**Skip list** (CDN có URL vĩnh viễn):
+- `ytimg.com` — YouTube (`https://i.ytimg.com/vi/{videoId}/maxresdefault.jpg`)
+- `img.youtube.com` — alias cũ của YouTube
+
+→ Tránh tốn storage + bandwidth không cần thiết.
 
 ### 2.3. Strategy
 
