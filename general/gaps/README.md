@@ -38,6 +38,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 7 | TCB Next.js Analytics Dashboard executive — TCB-only, vCr/Amb chỉ có dashboard cũ admin Umi | [p1/07-analytics-dashboard-port.md](./p1/07-analytics-dashboard-port.md) |
 | 20 | Affiliate suite — Amb mature, vCr đang làm (Scalef), TCB chờ chốt sale | [p1/20-ambassador-affiliate-suite.md](./p1/20-ambassador-affiliate-suite.md) |
 | 24 | TCB Campaign matching engine — đang dang dở, làm xong cần port ngay vCr/Amb | [p1/24-tcb-campaign-matching-engine.md](./p1/24-tcb-campaign-matching-engine.md) |
+| 34 | Liên kết tài khoản Threads cho creator — TCB chưa có, vCr partial, Amb đầy đủ | [p1/34-threads-account-binding.md](./p1/34-threads-account-binding.md) |
 
 
 ---

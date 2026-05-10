@@ -62,6 +62,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 31 | **TCB cho phép admin tạo creator + import content giúp họ; vCreator/Ambassador không có** — TCB có flow 3 bước (CreateUser admin với flag IsCreateByAdmin → CreateUserSocial → ImportContent + tracking). vCr không có gì. Amb có CreateUser nhưng cho referral seed, khác mục đích. Rescoped + reclassified P2→P1 2026-05-07. [Detail](./gaps/p1/31-admin-proxy-creator-flow.md) | Content & Media | TCB → vCr/Amb (selective) | 4 | 3 | 2 | 4 | **13** | 🟠 P1 |
 | 33 | **Ambassador có cơ chế "tạo user giả để reserve referral code", TCB và vCreator không có** — admin có thể reserve referral code cho campaign promotion. User thật register với code này → attach inviter relation. TCB/vCr cùng có `Referral.Codes` model nhưng không có flow admin tạo seed user. Phát hiện khi verify gap #31 (2026-05-07). [Detail](./gaps/p2/33-ambassador-referral-seed-user.md) | User & Auth | Ambassador → TCB/vCr | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 32 | **Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn nhiều, Ambassador chưa có** — vCreator EmployeeRegistry 18 fields + match engine 10 ChangeActions là source of truth. TCB chỉ ManageCode 9 fields. Ambassador không có. Tách từ gap #13 + revoke gap #23 P3 + reclassified P2→P1 (2026-05-07). [Detail](./gaps/p1/32-staff-code-employee-binding.md) | User & Auth | vCreator → Amb (port full) + vCreator → TCB (extend) | 4 | 3 | 3 | 5 | **15** | 🟠 P1 |
+| 34 | **Liên kết tài khoản Threads cho creator** — Ambassador đầy đủ (~263 LOC module + UserThreadsData struct + content tracking). vCreator partial (chỉ regex post URL 10 LOC, KHÔNG có user struct binding). TCB chưa có gì. Threads đang growth, cần parity 3 sản phẩm. Initial P1 (2026-05-10) — user self-listed gap. [Detail](./gaps/p1/34-threads-account-binding.md) | User & Auth | Ambassador → vCr (bổ sung) + Amb → TCB (port full) | 4 | 3 | 4 | 5 | **16** | 🟠 P1 |
 
 ---
 
@@ -81,7 +82,7 @@ Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** 
 - Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
 - Gap #2 ban đầu P1 (auto-approve influencer + notification) → rescoped thành gap kiến trúc → reclassified P0 sau khi user confirm business intent "creator pool unification".
 
-### 🟠 P1 — Sprint tới (8 items, sau khi reclassify #25→P3, #28→P3, #07 P2→P1, #18 P2→P1, #20 P2→P1, #24 P3→P1 — 2026-05-10)
+### 🟠 P1 — Sprint tới (9 items, sau khi reclassify #25→P3, #28→P3, #07 P2→P1, #18 P2→P1, #20 P2→P1, #24 P3→P1, +#34 mới — 2026-05-10)
 
 **🔝 Top P1**: Gap #15 (Reconciliation engine + snapshot, gộp #6+#15) — user confirm là quan trọng nhất, port full stack (~5-7 tuần mỗi sản phẩm).
 Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
@@ -96,6 +97,7 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 18 | **BudgetInfo struct unify** Amb → TCB + vCr | <1 ngày backend | **Liên quan #8** — làm chung lúc port budget sang vCr. Pre-compute UsedPercent cho dashboard nhanh + 3 sản phẩm consistent |
 | 20 | **Affiliate suite** Amb (mature) → vCr (đang làm) → TCB (chờ chốt sale) | 6-8 tuần TCB sau khi chốt sale | vCr active dev với Scalef API, TCB blocker ở sales |
 | 24 | **Campaign matching engine** TCB (dang dở) → vCr/Amb (sau khi TCB stable) | TCB stable 2-3 tuần + vCr/Amb mỗi cái 3-4 tuần | AI-assisted creator selection, AT-Core integration |
+| 34 | **Threads binding** Amb → vCr (bổ sung user struct) + Amb → TCB (port full) | vCr 3-5 ngày + TCB 1-2 tuần | Threads growing fast, vCr partial chỉ track view chứ chưa bind, TCB chưa có gì |
 
 ### 🟡 P2 — Backlog (8 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 #21 P3→P2, #29 dropped)
 Score 8-11. Làm khi có resource.
