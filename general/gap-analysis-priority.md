@@ -57,7 +57,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 26 | **TCB transcript scoring (LLM)** vs vCr/Amb — Có khác biệt nhưng không cần gộp/port: cả 3 sản phẩm đã có **OpsHub** thay thế cho content scoring/moderation. Note only. | Content & Media | (note only — OpsHub đã thay) | - | - | - | - | - | ⚪ P3 |
 | 27 | **Ambassador chưa có user_social_partner config check** (comment "not yet ported") — duplicate với gap #2 | User & Auth | (gộp với #2) | - | - | - | - | - | - |
 | 28 | **Multi-tenant Partner concept khác nhau 3 sản phẩm** — Architectural debt, không port. Note only. | User & Auth | (note only — không port) | - | - | - | - | - | ⚪ P3 |
-| 29 | **`load_data.go` synced TCB↔Ambassador chưa có process** — đang copy thủ công khi update, dễ drift | Infrastructure & Misc | Process improvement | 2 | 3 | 4 | 2 | **11** | 🟡 P2 |
+| 29 | ~~**`load_data.go` synced TCB↔Ambassador chưa có process**~~ — Dropped 2026-05-10: chỉ là master reference data (file JSON tĩnh demographic.json để dropdown UI), KHÔNG liên quan gì đến features chính. Không gộp được với #2 (InfluencerProfile audience demographic là feature khác hoàn toàn). | Infrastructure & Misc | (dropped — invalid gap) | - | - | - | - | - | (removed) |
 | 30 | **TCB telegram alert có dùng** — Ambassador đã có nhưng label `[Ambassador]`, chưa unify infrastructure | Campaign & Event | Process improvement | 2 | 2 | 4 | 2 | **10** | 🟡 P2 |
 | 31 | **TCB cho phép admin tạo creator + import content giúp họ; vCreator/Ambassador không có** — TCB có flow 3 bước (CreateUser admin với flag IsCreateByAdmin → CreateUserSocial → ImportContent + tracking). vCr không có gì. Amb có CreateUser nhưng cho referral seed, khác mục đích. Rescoped + reclassified P2→P1 2026-05-07. [Detail](./gaps/p1/31-admin-proxy-creator-flow.md) | Content & Media | TCB → vCr/Amb (selective) | 4 | 3 | 2 | 4 | **13** | 🟠 P1 |
 | 33 | **Ambassador có cơ chế "tạo user giả để reserve referral code", TCB và vCreator không có** — admin có thể reserve referral code cho campaign promotion. User thật register với code này → attach inviter relation. TCB/vCr cùng có `Referral.Codes` model nhưng không có flow admin tạo seed user. Phát hiện khi verify gap #31 (2026-05-07). [Detail](./gaps/p2/33-ambassador-referral-seed-user.md) | User & Auth | Ambassador → TCB/vCr | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
@@ -97,14 +97,14 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 20 | **Affiliate suite** Amb (mature) → vCr (đang làm) → TCB (chờ chốt sale) | 6-8 tuần TCB sau khi chốt sale | vCr active dev với Scalef API, TCB blocker ở sales |
 | 24 | **Campaign matching engine** TCB (dang dở) → vCr/Amb (sau khi TCB stable) | TCB stable 2-3 tuần + vCr/Amb mỗi cái 3-4 tuần | AI-assisted creator selection, AT-Core integration |
 
-### 🟡 P2 — Backlog (9 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 #21 P3→P2)
+### 🟡 P2 — Backlog (8 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 #21 P3→P2, #29 dropped)
 Score 8-11. Làm khi có resource.
 
 | # | Gap | Lý do P2 |
 |---|---|---|
 | 6 | TCB Reconciliation engine port | Effort lớn (~1380 LOC + models + admin), business value chưa rõ với vCr/Amb |
 | 14 | ContentImportTracking | Chỉ làm nếu vCr/Amb có nhu cầu bulk import |
-| 29-30 | Process improvement (load_data sync, telegram unify) | Không tính năng product, là DevOps task |
+| 30 | Telegram alert infrastructure unify | Không tính năng product, là DevOps task |
 
 ### ⚪ P3 — Defer/skip
 
