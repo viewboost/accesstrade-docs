@@ -29,7 +29,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 
 | # | Gap | Source group | Direction port | BV | Risk | Effort | XProd | **Total** | **Priority** |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|
-| 1 | **Withdraw cả 3 đều admin-driven thực tế, có dead code endpoint** — TCB/vCr có `POST /withdraw` + frontend service nhưng 0 caller pages. UI `/bank` chỉ hiển thị "Bạn chưa đến kỳ thanh toán". Đề xuất xóa endpoint sau khi verify không có client mobile/external. [Detail](./gaps/p2/01-ambassador-withdraw-bank-validation.md) | Financial | Cleanup dead code 3 dự án | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
+| 1 | **Withdraw cả 3 đều admin-driven thực tế, có dead code endpoint** — TCB/vCr có `POST /withdraw` + frontend service nhưng 0 caller pages. UI `/bank` chỉ hiển thị "Bạn chưa đến kỳ thanh toán". Đề xuất xóa endpoint sau khi verify không có client mobile/external. Reclassified P2→P3 (2026-05-10): user confirm "không cần làm, mà là dọn dẹp để tránh bug". [Detail](./gaps/p3/01-ambassador-withdraw-bank-validation.md) | Financial | Cleanup dead code 3 dự án | 2 | 1 | 4 | 4 | **11** | ⚪ P3 |
 | 2 | **Khái niệm "Influencer Profile" — Ambassador BẮT BUỘC port, vCreator ĐỀ XUẤT port (chia sẻ creator pool)** — TCB có collection riêng + brand portal mạnh; Ambassador có scaffolding simplified (đọc từ user_social) + per-partner application flow + special channels (facebook_post, threads); vCreator không có concept. Reclassified P1→P0 (2026-05-07) sau khi user confirm business intent: Ambassador bắt buộc, vCreator để long-term chia sẻ creator pool. [Detail](./gaps/p0/02-influencer-profile-concept.md) | User & Auth | TCB → Ambassador (mandatory) + TCB → vCreator (recommended) | 5 | 4 | 2 | 5 | **16** | 🔴 P0 |
 | 3 | ~~**vCreator dùng reward V1 (naive)**~~ — **gộp vào gap #8** (cùng scope: budget control + reward V2 engine cần làm chung 1 task). Xem [gap #8 detail](./gaps/p0/08-budget-alert-system.md) | Campaign & Event | (gộp #8) | - | - | - | - | - | (merged → #8) |
 | 4 | **Float precision rounding chỉ vCreator có** (`pfloat.RoundToOneDecimal`) — TCB/Amb có thể bị bug làm tròn cash. Tuy nhiên 2 sản phẩm kia chạy campaign tiền to (không có fractional cents) → risk thực tế thấp. Reclassified P0→P2 (2026-05-07) | Financial | vCreator → TCB/Amb | 2 | 2 | 5 | 2 | **11** | 🟡 P2 |
@@ -94,7 +94,7 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 32 | **Mã nhân viên + binding partner** vCreator → Amb (full) + vCr → TCB (extend) | 3-4 tuần | EmployeeRegistry 18 fields + match engine |
 | 7 | **TCB Next.js Dashboard executive** → vCr/Amb | 4-6 tuần mỗi sản phẩm | Executive view ~10 sections, cần stakeholder confirm. Note: dashboard cũ admin Umi vCr có filter 3 tầng workplace cải tiến hơn |
 
-### 🟡 P2 — Backlog (5 items, sau khi #7 lên P1)
+### 🟡 P2 — Backlog (4 items, sau khi #7 lên P1, #1 xuống P3)
 Score 8-11. Làm khi có resource.
 
 | # | Gap | Lý do P2 |

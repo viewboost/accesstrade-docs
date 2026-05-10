@@ -1,9 +1,9 @@
 # Gap #1 — Code rút tiền user là dead code, cần dọn để gọn codebase
 
-> **Priority**: 🟡 **P2** (cleanup task — không khẩn cấp)
+> **Priority**: ⚪ **P3** (cleanup task — không cần làm, dọn dẹp tránh bug khi có resource)
 > **Source**: [semantic-diff-financial.md](../../semantic-diff-financial.md)
-> **Last verified**: 2026-05-07 (sau khi user catch frontend không có UI rút tiền)
-> **Reclassified**: P1 → P3 → P2 (chi tiết trong section "Lịch sử phân loại")
+> **Last verified**: 2026-05-10 (user confirm "không cần làm, mà là dọn dẹp để tránh bug")
+> **Reclassified**: P1 → P3 → P2 → P3 (chi tiết trong section "Lịch sử phân loại")
 
 ---
 
@@ -434,7 +434,7 @@ Sau khi confirm dead code:
 
 ---
 
-## Lịch sử phân loại (3 lần update)
+## Lịch sử phân loại (4 lần update)
 
 ### Lần 1 (2026-05-07 sáng): Đánh giá ban đầu — SAI
 - Priority: 🟠 P1 (Total 15)
@@ -450,6 +450,11 @@ Sau khi confirm dead code:
 - Priority: ⚪ P3 (giữ nguyên)
 - Insight mới: **Cả 3 dự án đều admin-driven trong thực tế**. TCB/vCr có endpoint + frontend service nhưng **0 caller** trong pages → dead code legacy
 - Direction action: chuyển từ "fix Ambassador" sang "**cleanup dead code TCB/vCr + cleanup legacy Ambassador**"
+
+### Lần 4 (2026-05-10): User confirm dứt khoát giữ P3
+- Priority: ⚪ **P3** (final)
+- User quote: "không cần làm, mà là dọn dẹp để tránh bug"
+- Note: badge file trước đây bị set nhầm P2, nay đồng bộ lại với row trong gap-analysis-priority.md (vốn vẫn là P2 từ lần đánh giá lại không rõ thời điểm). Move file p2/ → p3/.
 
 ### Bài học methodology (cập nhật mỗi sai lầm)
 

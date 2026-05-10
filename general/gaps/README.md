@@ -44,7 +44,6 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 
 | # | Gap | File |
 |---|---|---|
-| 1 | Withdraw — 3 dự án đều admin-driven, dead code endpoint | [p2/01-ambassador-withdraw-bank-validation.md](./p2/01-ambassador-withdraw-bank-validation.md) |
 | 4 | Float precision rounding (reclassified) | _(không cần file riêng — chỉ là 10 LOC backport)_ |
 | 5 | Audit ActorType field metadata | [p2/05-audit-actor-type.md](./p2/05-audit-actor-type.md) |
 | ~~6~~ | ~~Reconciliation engine port~~ — **gộp vào gap #15** (P1 top) | (merged → #15) |
@@ -61,6 +60,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 10 | TCB gửi cảnh báo Telegram lặp khi campaign vượt ngân sách (alert fatigue) | [p3/10-telegram-alert-deduplication.md](./p3/10-telegram-alert-deduplication.md) |
 | 12 | vCreator/Ambassador thiếu lớp bảo vệ cho admin login | [p3/12-admin-login-security.md](./p3/12-admin-login-security.md) |
 | 25 | TCB/Ambassador không có helper `GetRoot()` cho staff root account (vCreator có) | [p3/25-staff-root-account-helper.md](./p3/25-staff-root-account-helper.md) |
+| 1 | Withdraw — 3 dự án đều admin-driven, dead code endpoint cần dọn dẹp | [p3/01-ambassador-withdraw-bank-validation.md](./p3/01-ambassador-withdraw-bank-validation.md) |
 
 Các gap P3 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chưa có file detail:
 - Gap #19 — vCreator Extended Period mode
