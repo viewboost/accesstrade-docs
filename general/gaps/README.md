@@ -40,6 +40,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 20 | Affiliate suite — Amb mature, vCr đang làm (Scalef), TCB chờ chốt sale | [p1/20-ambassador-affiliate-suite.md](./p1/20-ambassador-affiliate-suite.md) |
 | 24 | TCB Campaign matching engine — đang dang dở, làm xong cần port ngay vCr/Amb | [p1/24-tcb-campaign-matching-engine.md](./p1/24-tcb-campaign-matching-engine.md) |
 | 34 | Liên kết tài khoản Threads cho creator — TCB chưa có, vCr partial, Amb đầy đủ | [p1/34-threads-account-binding.md](./p1/34-threads-account-binding.md) |
+| 40 | Staff account password lifecycle (invite email + forgot + self-service) — TCB có đầy đủ, vCr/Amb chỉ admin tạo + copy password thủ công | [p1/40-staff-account-password-and-invite-flow.md](./p1/40-staff-account-password-and-invite-flow.md) |
 
 
 ---

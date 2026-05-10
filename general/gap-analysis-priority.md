@@ -68,6 +68,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 37 | **Chuẩn hóa lý do từ chối content (rejection tags)** — TCB có 14 tag chuẩn hóa i18n vi/en + field `Content.RejectionTags + RejectionComment` + analytics aggregate per-tag. vCr/Amb chỉ có `RejectedBy + RejectedAt`, không có tag/comment, không thống kê được. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/37-standardize-content-rejection-tags.md) | Content & Media | TCB → vCreator + Ambassador | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 38 | **Thêm tên/mã nội bộ cho campaign (event code)** — TCB có field `Event.Code` + wire vào tất cả display layer (admin, dashboard, email, export, search). Format `[code] name`. vCr/Amb không có → BTC khó communicate, dễ nhầm campaign khi nhiều cái chạy song song. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/38-event-code-internal-name.md) | Campaign & Event | TCB → vCreator + Ambassador | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
 | 39 | **Tag phân loại cho campaign (event tags)** — TCB có `Event.EventTags []AppID` + 7 default seed tag (Nhận diện thương hiệu, Ra mắt sản phẩm, Theo mùa, ...) + admin filter/display với color. vCr/Amb có model `TagRaw` đã sẵn nhưng `EventRaw` chưa wire field `EventTags`. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/39-event-tags-categorization.md) | Campaign & Event | TCB → vCreator + Ambassador | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
+| 40 | **Staff account password lifecycle (invite email + forgot password + self-service)** — TCB có 18 methods (980 LOC) đầy đủ: `InviteStaff`, `ResendInvite`, `BulkInvite`, `VerifyInviteToken`, `AcceptInvite`, `ForgotPassword`, `ResetPassword`, `UpdateMyPassword`, `GenerateAuthCode/ExchangeAuthCode` + fields `InviteToken/ResetToken` + email templates SendGrid. vCr/Amb chỉ có 8 methods (453 LOC ~46%) — admin tạo password thủ công, copy gửi qua chat. **Vấn đề bảo mật + ops**. Initial P1 (2026-05-10) — user self-listed gap. [Detail](./gaps/p1/40-staff-account-password-and-invite-flow.md) | Infrastructure & Misc | TCB → vCreator + Ambassador | 4 | 4 | 3 | 4 | **15** | 🟠 P1 |
 
 ---
 
@@ -88,7 +89,7 @@ Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** 
 - Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
 - Gap #2 ban đầu P1 (auto-approve influencer + notification) → rescoped thành gap kiến trúc → reclassified P0 sau khi user confirm business intent "creator pool unification".
 
-### 🟠 P1 — Sprint tới (9 items, sau khi reclassify #25→P3, #28→P3, #07 P2→P1, #18 P2→P1, #20 P2→P1, #24 P3→P1, +#34 mới — 2026-05-10)
+### 🟠 P1 — Sprint tới (10 items, sau khi reclassify #25→P3, #28→P3, #07 P2→P1, #18 P2→P1, #20 P2→P1, #24 P3→P1, +#34 #40 mới — 2026-05-10)
 
 **🔝 Top P1**: Gap #15 (Reconciliation engine + snapshot, gộp #6+#15) — user confirm là quan trọng nhất, port full stack (~5-7 tuần mỗi sản phẩm).
 Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
@@ -104,6 +105,7 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 20 | **Affiliate suite** Amb (mature) → vCr (đang làm) → TCB (chờ chốt sale) | 6-8 tuần TCB sau khi chốt sale | vCr active dev với Scalef API, TCB blocker ở sales |
 | 24 | **Campaign matching engine** TCB (dang dở) → vCr/Amb (sau khi TCB stable) | TCB stable 2-3 tuần + vCr/Amb mỗi cái 3-4 tuần | AI-assisted creator selection, AT-Core integration |
 | 34 | **Threads binding** Amb → vCr (bổ sung user struct) + Amb → TCB (port full) | vCr 3-5 ngày + TCB 1-2 tuần | Threads growing fast, vCr partial chỉ track view chứ chưa bind, TCB chưa có gì |
+| 40 | **Staff password lifecycle (invite + forgot + self-service)** TCB → vCr + Amb | ~1 tuần mỗi sản phẩm | Vấn đề bảo mật: password truyền qua chat. TCB có 980 LOC, vCr/Amb mới 453 LOC (~46%) |
 
 ### 🟡 P2 — Backlog (12 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 #21 P3→P2, #29 dropped, +#36 #37 #38 #39 mới)
 Score 8-11. Làm khi có resource.
