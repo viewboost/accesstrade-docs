@@ -13,6 +13,17 @@
 • Phase 2: Build engine tính thưởng có check ngân sách + chống trùng (1.5-2 tuần)
 • Phase 3: Setup channel Telegram riêng cho vCreator để nhận cảnh báo (3 ngày)
 • Phase 4: Test thực tế với campaign nhỏ trước khi rollout production (3 ngày)","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p0/08-budget-alert-system.md"
+"#15","🔝 TOP P1 — vCreator/Ambassador thiếu hệ thống đối chiếu (reconciliation) tiền thưởng + audit trail crawl chống fraud (combined #6 + #15)","Sau khi platform trả tiền thưởng cho creator dựa trên metric tại thời điểm crawl, có 4 vấn đề có thể phát sinh: (1) creator boost view giả → trả tiền sai, (2) TikTok/YouTube revise số liệu sau vài ngày → tiền đã trả không match, (3) cron crawl bị lỗi → thiếu data → reward sai, (4) audit compliance hỏi 'tại sao trả creator X số tiền Y?' → cần tra ngược
+TCB: Có hệ thống đối chiếu (reconciliation) đầy đủ — lưu snapshot metric mỗi lần crawl + cron crawl bù sau khi event hết hạn + cron crawl bù ngày thiếu + engine đối chiếu tự động phân loại (auto-approved / auto-rejected / needs-review) + admin tools (processing, running, export)
+vCreator/Ambassador: 'Có chân không có thân' — đã có 3 collections cơ bản + admin page reconciliation, NHƯNG KHÔNG có engine xử lý + 3 collections nâng cao + 3 admin handlers nâng cao. Admin page tồn tại có thể là dead UI
+Hệ quả: vCr/Amb không phát hiện được fraud (creator boost view), không xử lý được khi TikTok/YouTube revise số liệu, không tra ngược được khi audit compliance, không phát hiện được ngày crawl bị thiếu
+User confirm 2026-05-07: 'Cái này quan trọng, để ở P1 nhưng ở vị trí trên cùng luôn. Vì lúc làm TCB tôi đã đánh giá kỹ rồi, nó ảnh hưởng nhiều lắm.'","P1","Port toàn bộ stack reconciliation từ TCB sang vCreator + Ambassador (KHÔNG tách snapshot port riêng — vì snapshot không có engine = data lưu nhưng không dùng được)
+Effort tổng: ~5-7 tuần mỗi sản phẩm (làm song song được)
+Layer 1 (~1-2 tuần): Snapshot infrastructure — lưu lịch sử metric mỗi lần crawl per-day per-event
+Layer 2 (~1 tuần): Snapshot jobs — cron crawl bù sau event hết hạn + crawl bù ngày thiếu
+Layer 3 (~2-3 tuần): Engine đối chiếu tự động + 3 admin tools (processing, running, export)
+Phase 4 (~3-5 ngày): Test + rollout từng partner một
+Lưu ý: 3 collections cơ bản đã có ở vCr/Amb → cần align fields + migration data nếu có records cũ","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p1/15-reconciliation-engine-and-snapshot.md"
 "#31","TCB cho phép admin tạo creator + import content giúp họ; vCreator/Ambassador không có","• TCB: admin có flow 3 bước đầy đủ — (1) tạo creator account thay creator (flag IsCreateByAdmin), (2) link social channel cho creator, (3) bulk import content lịch sử của creator. Có theo dõi tiến độ + lưu lịch sử
 • vCreator: KHÔNG có flow nào — mọi creator phải tự đăng ký + tự link channel + tự submit content
 • Ambassador: có CreateUser admin nhưng KHÁC mục đích — chỉ tạo user dạng 'referral seed' (tên/email giả, password = refCode) để gen referral code cho người khác đăng ký. KHÔNG phải proxy creator thật

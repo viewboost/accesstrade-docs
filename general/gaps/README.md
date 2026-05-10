@@ -31,16 +31,11 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 
 | # | Gap | File |
 |---|---|---|
+| **15** ⭐ | **🔝 TOP P1** — vCreator/Ambassador thiếu hệ thống đối chiếu (reconciliation) + audit trail crawl chống fraud (combined #6 + #15) | [p1/15-reconciliation-engine-and-snapshot.md](./p1/15-reconciliation-engine-and-snapshot.md) |
 | 31 | TCB cho phép admin tạo creator + import content giúp họ; vCr/Amb không có | [p1/31-admin-proxy-creator-flow.md](./p1/31-admin-proxy-creator-flow.md) |
 | 32 | Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn | [p1/32-staff-code-employee-binding.md](./p1/32-staff-code-employee-binding.md) |
 
 Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chưa có file detail:
-- Gap #3 — Reward V2 cho vCreator
-- Gap #9 — `RecoverRecheckInProgress` cron (Amb → TCB)
-- Gap #10 — `isSendNotification` flag (Amb → TCB)
-- Gap #11 — Email transactional (TCB → vCr/Amb)
-- Gap #13 — Content moderation tools (TCB → vCr/Amb)
-- Gap #15 — ReconciliationSnapshot per crawl
 - Gap #16 — Profile Review + Rating
 - Gap #17 — Upload avatar cache MinIO
 - Gap #25 — Staff root account port
@@ -55,7 +50,7 @@ Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chư
 | 1 | Withdraw — 3 dự án đều admin-driven, dead code endpoint | [p2/01-ambassador-withdraw-bank-validation.md](./p2/01-ambassador-withdraw-bank-validation.md) |
 | 4 | Float precision rounding (reclassified) | _(không cần file riêng — chỉ là 10 LOC backport)_ |
 | 5 | Audit ActorType field metadata | [p2/05-audit-actor-type.md](./p2/05-audit-actor-type.md) |
-| 6 | Reconciliation engine port (chưa viết) | _(pending)_ |
+| ~~6~~ | ~~Reconciliation engine port~~ — **gộp vào gap #15** (P1 top) | (merged → #15) |
 | 7 | Analytics Dashboard port (chưa viết) | _(pending)_ |
 | 9 | TCB và vCreator thiếu cơ chế bảo vệ khi tính lại reward cho content đã thay đổi trạng thái | [p2/09-recheck-recovery-pattern.md](./p2/09-recheck-recovery-pattern.md) |
 | 33 | Ambassador có cơ chế "tạo user giả để reserve referral code", TCB và vCreator không có | [p2/33-ambassador-referral-seed-user.md](./p2/33-ambassador-referral-seed-user.md) |
