@@ -54,6 +54,7 @@ Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chư
 | 5 | Audit ActorType field metadata | [p2/05-audit-actor-type.md](./p2/05-audit-actor-type.md) |
 | 6 | Reconciliation engine port (chưa viết) | _(pending)_ |
 | 7 | Analytics Dashboard port (chưa viết) | _(pending)_ |
+| 9 | TCB và vCreator thiếu cơ chế bảo vệ khi tính lại reward cho content đã thay đổi trạng thái | [p2/09-recheck-recovery-pattern.md](./p2/09-recheck-recovery-pattern.md) |
 
 ---
 

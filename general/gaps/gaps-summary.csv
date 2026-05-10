@@ -13,6 +13,15 @@
 • Phase 2: Build engine tính thưởng có check ngân sách + chống trùng (1.5-2 tuần)
 • Phase 3: Setup channel Telegram riêng cho vCreator để nhận cảnh báo (3 ngày)
 • Phase 4: Test thực tế với campaign nhỏ trước khi rollout production (3 ngày)","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p0/08-budget-alert-system.md"
+"#9","TCB và vCreator thiếu cơ chế bảo vệ khi tính lại tiền thưởng cho content đã thay đổi trạng thái","• Khi content thay đổi trạng thái (vd: admin reject sau khi đã duyệt), hệ thống cần tính lại reward từ đầu cho từng ngày
+• Ambassador: có cơ chế bảo vệ — đánh dấu reward 'đang recheck' + reset cash về 0 trước khi loop tính lại. Có cron tự động hoàn thành recheck dở dang khi server restart
+• TCB: có dấu hiệu đã từng định build cơ chế này (có sẵn ô lưu 'đang recheck' trong DB) nhưng implementation dở dang — chỉ có logic xoá đánh dấu, KHÔNG có logic đánh dấu + cron recovery
+• vCreator: hoàn toàn không có gì — kể cả ô lưu trong DB cũng chưa có
+• Hệ quả: nếu server crash giữa quá trình recheck (deploy, OOM, scale) → reward bị tính sai lệch giữa các ngày. Không có cách phát hiện tự động → chỉ phát hiện khi creator khiếu nại hoặc finance audit","P2","• Port pattern recheck-with-safety từ Ambassador sang TCB và vCreator
+• TCB (~3-5 ngày): hoàn thiện partial implementation — thêm logic đánh dấu 'đang recheck' + reset cash + cron recovery khi server start
+• vCreator (~5-7 ngày): port full + migration data thêm ô lưu vào cấu trúc reward
+• Có thể combine với gap #8 cho vCreator — cùng touch reward engine
+• Defer P2 vì: tần suất crash thấp, impact 1 lần crash thường nhỏ (vài content), có workaround manual (admin trigger recheck lại)","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p2/09-recheck-recovery-pattern.md"
 "#10","TCB và Ambassador dùng 2 cơ chế khác nhau để chặn cảnh báo Telegram trùng lặp — cần unify","• Cả 2 đều giải quyết được vấn đề Telegram spam (KHÔNG phải bug)
 • TCB dùng cơ chế 'khóa cứng campaign': khi vượt ngân sách → block toàn bộ tính reward → vĩnh viễn không gửi Telegram lại. Hệ quả: campaign tê liệt, admin phải manual reset
 • Ambassador dùng cơ chế 'khóa thông minh + cờ alert': khi vượt → ghi nhận đã alert + chỉ block submit content. Reward calc vẫn chạy. Tự động unblock khi admin tăng budget

@@ -37,7 +37,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 6 | **TCB Reconciliation engine** (1380 LOC, 3 services) — chỉ TCB có. vCr/Amb có model + admin page nhưng không có evaluation engine → admin page có thể là dead UI | Reconciliation & Audit | TCB → vCr/Amb (chỉ nếu cần) | 4 | 3 | 1 | 3 | **11** | 🟡 P2 |
 | 7 | **TCB Analytics Dashboard** (Next.js, 2226 LOC backend) — TCB-only. vCr/Amb không có dashboard executive view | Analytics & Dashboard | TCB → vCr/Amb (strategic) | 4 | 2 | 1 | 3 | **10** | 🟡 P2 |
 | 8 | **vCreator thiếu budget control system** — TCB và Ambassador GẦN NHƯ TƯƠNG ĐƯƠNG (3-level Bpe/Bpu/Bpc + block + threshold + Telegram alert), chỉ vCreator thiếu hoàn toàn → chi tiền không giới hạn. Reclassified direction port (2026-05-07) sau user catch. [Detail](./gaps/p0/08-budget-alert-system.md) | Campaign & Event | TCB hoặc Amb → vCreator | 5 | 4 | 3 | 4 | **16** | 🔴 P0 |
-| 9 | **Ambassador `RecoverRecheckInProgress`** (cron recovery sau crash) — TCB không có → TCB có thể bị stuck `RecheckInProgress` flag sau crash | Campaign & Event | Ambassador → TCB | 4 | 4 | 4 | 2 | **14** | 🟠 P1 |
+| 9 | **TCB và vCreator thiếu cơ chế bảo vệ khi tính lại reward cho content đã thay đổi trạng thái** — Ambassador có safety state + cron recovery. TCB partial implementation (field tồn tại, không dùng), vCreator không có gì. Reclassified P1→P2 (2026-05-07): risk thấp-trung bình, có workaround manual. [Detail](./gaps/p2/09-recheck-recovery-pattern.md) | Campaign & Event | Ambassador → TCB + vCreator | 3 | 3 | 3 | 4 | **13** | 🟡 P2 |
 | 10 | **TCB và Ambassador dùng 2 cơ chế khác nhau để dedup Telegram alert** — TCB dùng cơ chế "khóa cứng campaign" (block toàn bộ reward calc), Ambassador dùng "khóa thông minh + cờ alert" (chỉ block submit, reward vẫn chạy). Cả 2 đều dedup OK (KHÔNG phải bug). Cần unify để 3 sản phẩm consistent — direction: TCB refactor theo pattern Ambassador. Reclassified scope (2026-05-07). [Detail](./gaps/p3/10-telegram-alert-deduplication.md) | Campaign & Event | Unify (TCB refactor theo Amb) | 2 | 2 | 3 | 4 | **11** | ⚪ P3 |
 | 11 | **TCB email transactional** (SendGrid + SMTP) — vCr/Amb chỉ có Firebase push, không có email | Infrastructure & Misc | TCB → vCr/Amb | 4 | 3 | 2 | 4 | **13** | 🟠 P1 |
 | 12 | **Security cho admin login (rate limit + audit)** — TCB có rate limit password attempts (7 lần/5 phút → block 2h) + audit log mọi login attempt + auth code exchange flow. vCr/Amb không có gì ở application layer. KHÔNG có OTP ở cả 3 (tên hàm `CheckRateLimitRequestOTP` chỉ là legacy naming). Reclassified P0→P3 (2026-05-07): vCr/Amb không phải target lớn, có thể defer | Infrastructure & Misc | TCB → vCr/Amb | 2 | 2 | 4 | 4 | **12** | ⚪ P3 |
@@ -78,7 +78,7 @@ Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** 
 - Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
 - Gap #2 ban đầu P1 (auto-approve influencer + notification) → rescoped thành gap kiến trúc → reclassified P0 sau khi user confirm business intent "creator pool unification".
 
-### 🟠 P1 — Sprint tới (8 items, sau khi gộp #3→#8 và reclassify #10→P3 — 2026-05-07)
+### 🟠 P1 — Sprint tới (7 items, sau khi gộp #3→#8, reclassify #10→P3 và #9→P2 — 2026-05-07)
 Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 
 | # | Gap | Effort | Highlights |
