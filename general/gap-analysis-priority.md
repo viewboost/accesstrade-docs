@@ -45,7 +45,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 14 | ~~**TCB ContentImportTracking**~~ — Trùng với gap #31 (cùng concept bulk content import + tracking). Đã rescope thành **gap #31** với business overview chi tiết hơn. | Content & Media | (merged → #31) | - | - | - | - | - | (merged → #31) |
 | 15 | **🔝 TOP P1 — vCreator/Ambassador thiếu hệ thống đối chiếu (reconciliation) tiền thưởng + audit trail crawl chống fraud** — Combined gap #6 + #15 (2026-05-07). vCr/Amb có 3 models cơ bản + admin page nhưng KHÔNG có 3 services chính + 3 models nâng cao + admin tools nâng cao. User confirm: "Cái này quan trọng, để ở P1 nhưng ở vị trí trên cùng luôn. Vì lúc làm TCB tôi đã đánh giá kỹ rồi, nó ảnh hưởng nhiều lắm." Port full stack 3 layers (snapshot + jobs + engine). [Detail](./gaps/p1/15-reconciliation-engine-and-snapshot.md) | Reconciliation & Audit | TCB → vCr/Amb (full stack) | 5 | 4 | 2 | 4 | **15** | 🟠 P1 (top) |
 | 16 | **vCreator/Ambassador thiếu hệ thống đánh giá creator (review + rating)** — TCB có ProfileReview (5 tiêu chí) + RatingCache aggregate per-creator. vCr/Amb không có gì. **Phần tiếp nối của gap #2** — phải có InfluencerProfile trước để reference profile_id. Position: sau #15, trước #31. [Detail](./gaps/p1/16-profile-review-rating.md) | Targeting & Matching | TCB → vCr/Amb (sau gap #2) | 4 | 3 | 2 | 4 | **13** | 🟠 P1 |
-| 17 | **TCB upload_avatar_social** (cache MinIO) — vCr/Amb dùng URL social trực tiếp → URL có thể expire, broken avatar | Content & Media | TCB → vCr/Amb | 3 | 4 | 3 | 4 | **14** | 🟠 P1 |
+| 17 | **vCreator/Ambassador có thể bị broken avatar khi URL social expire** — TCB cache về MinIO permanent + resize 3 sizes. vCr/Amb dùng URL social trực tiếp (TikTok/Google/FB có expire). Infrastructure (MinIO + resizeimage) đã có sẵn ở vCr/Amb, chỉ thiếu service layer. Reclassified P1→P2 (2026-05-07): risk theory chứ không phải bug active. [Detail](./gaps/p2/17-upload-avatar-cache.md) | Content & Media | TCB → vCr/Amb | 3 | 3 | 4 | 4 | **14** | 🟡 P2 |
 | 18 | **TCB BudgetInfo struct (vs Ambassador)** — Ambassador đã có pre-compute UsedPercent giúp dashboard query nhanh, TCB chưa | Campaign & Event | Ambassador → TCB | 2 | 2 | 4 | 1 | **9** | 🟡 P2 |
 | 19 | **vCreator Extended Period mode** — feature đặc thù single-brand, TCB/Amb không có | Campaign & Event | KHÔNG port (vCreator-specific) | 2 | 1 | 1 | 1 | **5** | ⚪ P3 |
 | 20 | **Ambassador Affiliate suite** (campaign + contract + links + mapping) — Ambassador-only, KHÔNG port được | Infrastructure | KHÔNG port | 5 | 1 | 1 | 1 | **8** | 🟡 P2 |
@@ -53,7 +53,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 22 | **vCreator Workplace 3-tier (Brand→Company→Unit)** — vCreator-specific B2B onboarding | User & Auth | KHÔNG port | 2 | 1 | 1 | 1 | **5** | ⚪ P3 |
 | 23 | ~~**vCreator registry_match HR engine**~~ — Reclassified 2026-05-07: KHÔNG phải vCreator-specific, là pattern tốt cần port. Đã rescope thành **gap #32** với business intent rõ. | Targeting & Matching | (rescoped → #32) | - | - | - | - | - | (merged → #32) |
 | 24 | **TCB Campaign matching engine + filtered_campaigns** — TCB flagship feature riêng (T-Fluencers) | Campaign & Event | KHÔNG port | 4 | 1 | 1 | 1 | **7** | ⚪ P3 |
-| 25 | **vCreator Staff root account** — utility cho automation flows, có thể backport | Infrastructure & Misc | vCreator → TCB/Amb | 2 | 2 | 5 | 4 | **13** | 🟠 P1 |
+| 25 | **TCB/Ambassador không có helper `GetRoot()` cho staff root account** — vCreator có helper với filter active + warning multi-root + sort. TCB/Amb dùng raw bson query inline ở `opshub_webhook.go`. Reclassified P1→P3 (2026-05-07): tech debt cleanup, không có business impact. [Detail](./gaps/p3/25-staff-root-account-helper.md) | Infrastructure & Misc | vCreator → TCB/Amb | 1 | 1 | 5 | 4 | **11** | ⚪ P3 |
 | 26 | **TCB transcript scoring (LLM-based)** vs vCr/Amb (Senlyzer sentiment) — không thể chia sẻ service, business model khác | Content & Media | KHÔNG port | 3 | 2 | 1 | 1 | **7** | ⚪ P3 |
 | 27 | **Ambassador chưa có user_social_partner config check** (comment "not yet ported") — duplicate với gap #2 | User & Auth | (gộp với #2) | - | - | - | - | - | - |
 | 28 | **Multi-tenant Partner concept khác nhau 3 sản phẩm** — TCB partner / vCr workplace / Amb Partner — long-term cần unify | User & Auth | Strategic decision | 3 | 3 | 1 | 5 | **12** | 🟠 P1 |
@@ -81,7 +81,7 @@ Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** 
 - Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
 - Gap #2 ban đầu P1 (auto-approve influencer + notification) → rescoped thành gap kiến trúc → reclassified P0 sau khi user confirm business intent "creator pool unification".
 
-### 🟠 P1 — Sprint tới (7 items, sau khi gộp #3→#8, #6→#15, reclassify #9→P2, #10→P3, #11→P3, #13→note, #15 top P1, #31+#32 lên P1 — 2026-05-07)
+### 🟠 P1 — Sprint tới (6 items, sau khi gộp #3→#8, #6→#15, reclassify #9→P2, #10→P3, #11→P3, #13→note, #17→P2, #15 top P1, #31+#32 lên P1 — 2026-05-07)
 
 **🔝 Top P1**: Gap #15 (Reconciliation engine + snapshot) — user confirm là quan trọng nhất, port full stack (~5-7 tuần mỗi sản phẩm).
 Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.

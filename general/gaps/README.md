@@ -37,8 +37,6 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 32 | Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn | [p1/32-staff-code-employee-binding.md](./p1/32-staff-code-employee-binding.md) |
 
 Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chưa có file detail:
-- Gap #17 — Upload avatar cache MinIO
-- Gap #25 — Staff root account port
 - Gap #28 — Multi-tenant Partner unify
 
 ---
@@ -53,6 +51,7 @@ Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chư
 | ~~6~~ | ~~Reconciliation engine port~~ — **gộp vào gap #15** (P1 top) | (merged → #15) |
 | 7 | Analytics Dashboard port (chưa viết) | _(pending)_ |
 | 9 | TCB và vCreator thiếu cơ chế bảo vệ khi tính lại reward cho content đã thay đổi trạng thái | [p2/09-recheck-recovery-pattern.md](./p2/09-recheck-recovery-pattern.md) |
+| 17 | vCreator/Ambassador có thể bị broken avatar khi URL social expire | [p2/17-upload-avatar-cache.md](./p2/17-upload-avatar-cache.md) |
 | 33 | Ambassador có cơ chế "tạo user giả để reserve referral code", TCB và vCreator không có | [p2/33-ambassador-referral-seed-user.md](./p2/33-ambassador-referral-seed-user.md) |
 
 ---
@@ -63,6 +62,7 @@ Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chư
 |---|---|---|
 | 10 | TCB gửi cảnh báo Telegram lặp khi campaign vượt ngân sách (alert fatigue) | [p3/10-telegram-alert-deduplication.md](./p3/10-telegram-alert-deduplication.md) |
 | 12 | vCreator/Ambassador thiếu lớp bảo vệ cho admin login | [p3/12-admin-login-security.md](./p3/12-admin-login-security.md) |
+| 25 | TCB/Ambassador không có helper `GetRoot()` cho staff root account (vCreator có) | [p3/25-staff-root-account-helper.md](./p3/25-staff-root-account-helper.md) |
 
 Các gap P3 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chưa có file detail:
 - Gap #19 — vCreator Extended Period mode

@@ -93,6 +93,19 @@
 • vCreator (~5-7 ngày): port full + migration data thêm ô lưu vào cấu trúc reward
 • Có thể combine với gap #8 cho vCreator — cùng touch reward engine
 • Defer P2: tần suất crash thấp, impact 1 lần crash thường nhỏ, có workaround manual","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p2/09-recheck-recovery-pattern.md"
+"#17","vCreator/Ambassador có thể bị broken avatar khi URL social expire","• Cache avatar về MinIO permanent + resize 3 sizes (small/medium/large)
+• Field User.Avatar lưu URL MinIO permanent
+• Service upload_avatar_social.go (~250 LOC) — async non-blocking khi user login social","• KHÔNG cache avatar
+• Field User.Avatar lưu URL social trực tiếp (Google/TikTok/Facebook)
+• Module MinIO + resizeimage đã có sẵn — chỉ thiếu service layer","• KHÔNG cache avatar
+• Hiển thị fallback dùng user.Google.Photo / user.Tiktok.Photo (URL social)
+• Module MinIO + resizeimage đã có sẵn — chỉ thiếu service layer","Brand browse profile creator → ảnh hỏng → giảm trust platform; creator self-profile → ảnh hỏng → khiếu nại support; marketing campaign screenshot → broken ngày sau khi URL social expire","P2","• Port service upload_avatar_social.go từ TCB sang vCr/Amb
+• Effort: ~1 tuần mỗi sản phẩm (~250 LOC)
+• Phase 1 (~3 ngày): Service port
+• Phase 2 (~2 ngày): Caller integration vào 3 social login flows
+• Phase 3 (~2 ngày): Test + rollout
+• Migration: chỉ apply cho creator mới, không backfill
+• Reclassified P1→P2: risk theory chứ không phải bug active","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p2/17-upload-avatar-cache.md"
 "#33","Ambassador có cơ chế ""tạo user giả để reserve referral code"", TCB và vCreator không có","• Có model Referral.Codes giống Ambassador
 • KHÔNG có flow admin tạo seed user
 • Code chỉ tạo khi user thật đăng ký (không reserve trước được)","• Admin có thể tạo ""user giả"" sở hữu referral code mong muốn
