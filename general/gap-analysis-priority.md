@@ -49,7 +49,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 18 | **TCB BudgetInfo struct (vs Ambassador) — pre-compute UsedPercent** — Ambassador có `BudgetInfo{Total,Used,Remain,UsedPercent}` pre-compute sẵn, TCB rải flat fields phải tính % mỗi request, vCr không có budget. Reclassified P2→P1 (2026-05-10): **liên quan #8** — làm chung lúc port budget control system sang vCr (cùng refactor BudgetInfo cho cả 3 sản phẩm consistent). | Campaign & Event | Ambassador → TCB + vCr (gắn theo #8) | 2 | 2 | 4 | 4 | **12** | 🟠 P1 |
 | 19 | **vCreator Extended Period mode** — cho phép content post sau event endAt được ghi nhận với ngày map về kỳ kế toán cũ. TCB/Amb không có. Reclassified P3→P2 (2026-05-10): user confirm cần giữ trong backlog, feature có business value rõ (kỳ kế toán linh hoạt). [Detail](./gaps/p2/19-vcreator-extended-period-mode.md) | Campaign & Event | vCreator → TCB/Amb (selective, cần product confirm) | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 20 | **Affiliate suite (campaign + contract + links + tracking)** — Ambassador có (~1275 LOC mature, pub2). vCreator **đang làm** (~951 LOC active dev, Scalef API — verified bằng git log). TCB chưa có, **chờ chốt sale**. Reclassified P2→P1 (2026-05-10): có active development + sales-driven blocker. [Detail](./gaps/p1/20-ambassador-affiliate-suite.md) | Infrastructure | Amb → vCr (đang làm) → TCB (sau chốt sale) | 5 | 3 | 1 | 5 | **14** | 🟠 P1 |
-| 21 | **Ambassador Mission/WildRift gamification** — Ambassador-specific business model | Content & Media | KHÔNG port | 2 | 1 | 1 | 1 | **5** | ⚪ P3 |
+| 21 | **Ambassador Mission/Gamification system** — Hệ thống nhiệm vụ + thưởng + level (~1327 LOC, hashtag check + view threshold + time window). Tên gốc "WildRift" từ partner Wild Rift game. TCB/vCr không có. Reclassified P3→P2 (2026-05-10): user confirm giữ trong backlog cho khi có khách hàng gamification/loyalty. [Detail](./gaps/p2/21-ambassador-mission-gamification.md) | Content & Media | Ambassador → vCr/TCB (selective, cần product confirm) | 3 | 2 | 3 | 4 | **12** | 🟡 P2 |
 | 22 | **vCreator Workplace 3-tier (Brand→Company→Unit)** — vCreator-specific B2B onboarding | User & Auth | KHÔNG port | 2 | 1 | 1 | 1 | **5** | ⚪ P3 |
 | 23 | ~~**vCreator registry_match HR engine**~~ — Reclassified 2026-05-07: KHÔNG phải vCreator-specific, là pattern tốt cần port. Đã rescope thành **gap #32** với business intent rõ. | Targeting & Matching | (rescoped → #32) | - | - | - | - | - | (merged → #32) |
 | 24 | **TCB Campaign matching engine + filtered_campaigns** — TCB flagship feature riêng (T-Fluencers) | Campaign & Event | KHÔNG port | 4 | 1 | 1 | 1 | **7** | ⚪ P3 |
@@ -96,7 +96,7 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 18 | **BudgetInfo struct unify** Amb → TCB + vCr | <1 ngày backend | **Liên quan #8** — làm chung lúc port budget sang vCr. Pre-compute UsedPercent cho dashboard nhanh + 3 sản phẩm consistent |
 | 20 | **Affiliate suite** Amb (mature) → vCr (đang làm) → TCB (chờ chốt sale) | 6-8 tuần TCB sau khi chốt sale | vCr active dev với Scalef API, TCB blocker ở sales |
 
-### 🟡 P2 — Backlog (8 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 P3→P2)
+### 🟡 P2 — Backlog (9 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 #21 P3→P2)
 Score 8-11. Làm khi có resource.
 
 | # | Gap | Lý do P2 |
