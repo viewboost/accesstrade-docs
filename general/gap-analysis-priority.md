@@ -64,6 +64,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 32 | **Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn nhiều, Ambassador chưa có** — vCreator EmployeeRegistry 18 fields + match engine 10 ChangeActions là source of truth. TCB chỉ ManageCode 9 fields. Ambassador không có. Tách từ gap #13 + revoke gap #23 P3 + reclassified P2→P1 (2026-05-07). [Detail](./gaps/p1/32-staff-code-employee-binding.md) | User & Auth | vCreator → Amb (port full) + vCreator → TCB (extend) | 4 | 3 | 3 | 5 | **15** | 🟠 P1 |
 | 34 | **Liên kết tài khoản Threads cho creator** — Ambassador đầy đủ (~263 LOC module + UserThreadsData struct + content tracking). vCreator partial (chỉ regex post URL 10 LOC, KHÔNG có user struct binding). TCB chưa có gì. Threads đang growth, cần parity 3 sản phẩm. Initial P1 (2026-05-10) — user self-listed gap. [Detail](./gaps/p1/34-threads-account-binding.md) | User & Auth | Ambassador → vCr (bổ sung) + Amb → TCB (port full) | 4 | 3 | 4 | 5 | **16** | 🟠 P1 |
 | 35 | **Hỗ trợ crawl Facebook Post + camp tính tiền theo số bài post** — Ambassador đầy đủ (RegexFacebookPost + RegexFacebookProfile + content source + tracking + analytics). TCB/vCr chỉ có Facebook video/reel, KHÔNG có post. Reward schema `EventSchemaMilestone.NumberOfContent` ĐÃ SẴN cả 3 sản phẩm (KHÔNG cần build mới). **TCB đang yêu cầu làm ngay** → P0. [Detail](./gaps/p0/35-facebook-post-crawl-and-count-campaign.md) | Content & Media | Ambassador → TCB (urgent) + Amb → vCr | 5 | 4 | 4 | 5 | **18** | 🔴 P0 |
+| 36 | **vCreator cho phép resubmit link đã reject ở camp khác** — feature toggle per-partner `AllowResubmitRejectedContent` (47 LOC + field PartnerOpts). vCr có anti-spam guard (chặn resubmit cùng event, cho phép cross-event). TCB/Amb không có file `content_duplicate.go`, không có flag → block luôn cross-product. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/36-vcreator-allow-resubmit-rejected-content.md) | Content & Media | vCreator → TCB + Ambassador | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 
 ---
 
@@ -101,7 +102,7 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 24 | **Campaign matching engine** TCB (dang dở) → vCr/Amb (sau khi TCB stable) | TCB stable 2-3 tuần + vCr/Amb mỗi cái 3-4 tuần | AI-assisted creator selection, AT-Core integration |
 | 34 | **Threads binding** Amb → vCr (bổ sung user struct) + Amb → TCB (port full) | vCr 3-5 ngày + TCB 1-2 tuần | Threads growing fast, vCr partial chỉ track view chứ chưa bind, TCB chưa có gì |
 
-### 🟡 P2 — Backlog (8 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 #21 P3→P2, #29 dropped)
+### 🟡 P2 — Backlog (9 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 #21 P3→P2, #29 dropped, +#36 mới)
 Score 8-11. Làm khi có resource.
 
 | # | Gap | Lý do P2 |
