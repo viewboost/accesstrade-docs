@@ -29,18 +29,18 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 
 | # | Gap | Source group | Direction port | BV | Risk | Effort | XProd | **Total** | **Priority** |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|
-| 1 | **Withdraw cả 3 đều admin-driven thực tế, có dead code endpoint** — TCB/vCr có `POST /withdraw` + frontend service nhưng 0 caller pages. UI `/bank` chỉ hiển thị "Bạn chưa đến kỳ thanh toán". Đề xuất xóa endpoint sau khi verify không có client mobile/external. [Detail](./gaps/01-ambassador-withdraw-bank-validation.md) | Financial | Cleanup dead code 3 dự án | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
+| 1 | **Withdraw cả 3 đều admin-driven thực tế, có dead code endpoint** — TCB/vCr có `POST /withdraw` + frontend service nhưng 0 caller pages. UI `/bank` chỉ hiển thị "Bạn chưa đến kỳ thanh toán". Đề xuất xóa endpoint sau khi verify không có client mobile/external. [Detail](./gaps/p2/01-ambassador-withdraw-bank-validation.md) | Financial | Cleanup dead code 3 dự án | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
 | 2 | **Ambassador chưa có auto-approve influencer + notification** (comment "not yet ported") — creator phải chờ admin manual approve | User & Auth | TCB → Ambassador | 5 | 4 | 3 | 2 | **14** | 🟠 P1 |
 | 3 | **vCreator dùng reward V1 (naive)** — không có budget control, không có distributed lock → race condition khi nhiều creator cùng claim reward | Campaign & Event | TCB/Amb V2 → vCreator | 5 | 5 | 2 | 2 | **14** | 🟠 P1 |
 | 4 | **Float precision rounding chỉ vCreator có** (`pfloat.RoundToOneDecimal`) — TCB/Amb có thể bị bug làm tròn cash. Tuy nhiên 2 sản phẩm kia chạy campaign tiền to (không có fractional cents) → risk thực tế thấp. Reclassified P0→P2 (2026-05-07) | Financial | vCreator → TCB/Amb | 2 | 2 | 5 | 2 | **11** | 🟡 P2 |
-| 5 | **Audit ActorType field chỉ vCreator có** — Cả 3 dự án đều có flow dùng root account để audit, nhưng TCB/Amb không có field metadata phân biệt → query log không filter được automation vs manual. Reclassified P0→P2 (2026-05-07): không cấp bách, nice-to-have. [Detail](./gaps/05-audit-actor-type.md) | Reconciliation & Audit | vCreator → TCB/Amb | 3 | 2 | 5 | 4 | **14** | 🟡 P2 |
+| 5 | **Audit ActorType field chỉ vCreator có** — Cả 3 dự án đều có flow dùng root account để audit, nhưng TCB/Amb không có field metadata phân biệt → query log không filter được automation vs manual. Reclassified P0→P2 (2026-05-07): không cấp bách, nice-to-have. [Detail](./gaps/p2/05-audit-actor-type.md) | Reconciliation & Audit | vCreator → TCB/Amb | 3 | 2 | 5 | 4 | **14** | 🟡 P2 |
 | 6 | **TCB Reconciliation engine** (1380 LOC, 3 services) — chỉ TCB có. vCr/Amb có model + admin page nhưng không có evaluation engine → admin page có thể là dead UI | Reconciliation & Audit | TCB → vCr/Amb (chỉ nếu cần) | 4 | 3 | 1 | 3 | **11** | 🟡 P2 |
 | 7 | **TCB Analytics Dashboard** (Next.js, 2226 LOC backend) — TCB-only. vCr/Amb không có dashboard executive view | Analytics & Dashboard | TCB → vCr/Amb (strategic) | 4 | 2 | 1 | 3 | **10** | 🟡 P2 |
-| 8 | **vCreator thiếu budget control system** — TCB và Ambassador GẦN NHƯ TƯƠNG ĐƯƠNG (3-level Bpe/Bpu/Bpc + block + threshold + Telegram alert), chỉ vCreator thiếu hoàn toàn → chi tiền không giới hạn. Reclassified direction port (2026-05-07) sau user catch. [Detail](./gaps/08-budget-alert-system.md) | Campaign & Event | TCB hoặc Amb → vCreator | 5 | 4 | 3 | 4 | **16** | 🔴 P0 |
+| 8 | **vCreator thiếu budget control system** — TCB và Ambassador GẦN NHƯ TƯƠNG ĐƯƠNG (3-level Bpe/Bpu/Bpc + block + threshold + Telegram alert), chỉ vCreator thiếu hoàn toàn → chi tiền không giới hạn. Reclassified direction port (2026-05-07) sau user catch. [Detail](./gaps/p0/08-budget-alert-system.md) | Campaign & Event | TCB hoặc Amb → vCreator | 5 | 4 | 3 | 4 | **16** | 🔴 P0 |
 | 9 | **Ambassador `RecoverRecheckInProgress`** (cron recovery sau crash) — TCB không có → TCB có thể bị stuck `RecheckInProgress` flag sau crash | Campaign & Event | Ambassador → TCB | 4 | 4 | 4 | 2 | **14** | 🟠 P1 |
 | 10 | **Ambassador `isSendNotification` flag** (single-fire alert) — tránh spam Telegram khi crash loop. TCB chưa có | Campaign & Event | Ambassador → TCB | 3 | 4 | 5 | 2 | **14** | 🟠 P1 |
 | 11 | **TCB email transactional** (SendGrid + SMTP) — vCr/Amb chỉ có Firebase push, không có email | Infrastructure & Misc | TCB → vCr/Amb | 4 | 3 | 2 | 4 | **13** | 🟠 P1 |
-| 12 | **TCB rate limit OTP cho admin** — vCr/Amb không có → admin login có thể bị brute force | Infrastructure & Misc | TCB → vCr/Amb | 4 | 5 | 4 | 4 | **17** | 🔴 P0 |
+| 12 | **Security cho admin login (rate limit + audit)** — TCB có rate limit password attempts (7 lần/5 phút → block 2h) + audit log mọi login attempt + auth code exchange flow. vCr/Amb không có gì ở application layer. KHÔNG có OTP ở cả 3 (tên hàm `CheckRateLimitRequestOTP` chỉ là legacy naming). Reclassified P0→P3 (2026-05-07): vCr/Amb không phải target lớn, có thể defer | Infrastructure & Misc | TCB → vCr/Amb | 2 | 2 | 4 | 4 | **12** | ⚪ P3 |
 | 13 | **TCB blacklist-keyword + content moderation tools** — vCr/Amb không có → khó kiểm soát content vi phạm | Content & Media | TCB → vCr/Amb | 4 | 4 | 3 | 4 | **15** | 🟠 P1 |
 | 14 | **TCB ContentImportTracking** (admin bulk import audit) — vCr/Amb không có nếu họ có nhu cầu import bulk | Content & Media | TCB → vCr/Amb (nếu cần) | 2 | 2 | 3 | 2 | **9** | 🟡 P2 |
 | 15 | **TCB ReconciliationSnapshot insert per crawl** (anti-fraud audit trail) — vCr/Amb không track | Content & Media | TCB → vCr/Amb | 3 | 4 | 2 | 4 | **13** | 🟠 P1 |
@@ -64,15 +64,16 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 
 ## Priority breakdown
 
-### 🔴 P0 — Làm ngay (2 items, sau khi reclassify gap #4 và #5 sang P2 — 2026-05-07)
+### 🔴 P0 — Làm ngay (1 item, sau khi reclassify gap #4, #5, #12 — 2026-05-07)
 Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** hoặc **critical risk**.
 
 | # | Gap | Effort | Impact |
 |---|---|---|---|
 | 8 | **Budget control** — port từ Ambassador → vCreator (TCB và Amb đã có) | 3-4 ngày | vCreator hiện chi tiền không giới hạn (revenue protection) |
-| 12 | **Rate limit OTP admin** — port từ TCB → vCr/Amb | 2-3 ngày | Chống brute force admin login (security) |
 
-→ **Tổng ~5-8 ngày dev** cho 2 items. Nên làm trong **wave 1 (tuần 1-2)**.
+→ **Tổng ~3-4 ngày dev**. Nên làm trong **wave 1 (tuần 1-2)**.
+
+**Note**: Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
 
 ### 🟠 P1 — Sprint tới (10 items)
 Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
@@ -143,10 +144,10 @@ Những item lớn cần **PM + tech lead + business** quyết định trước 
 
 ### Wave 1 — Tuần 1-2: Quick wins + critical fixes
 - ~~pfloat.RoundToOneDecimal (P0 #4)~~ → **reclassified P2** 2026-05-07: campaign 2 sản phẩm khác chạy tiền to, không có case fractional
-- ~~Audit ActorType backport (P0 #5)~~ → **reclassified P2** 2026-05-07: gap thật nhưng không cấp bách (TCB/Amb đã dùng root account audit, chỉ thiếu field metadata phân biệt). [Detail](./gaps/05-audit-actor-type.md)
+- ~~Audit ActorType backport (P0 #5)~~ → **reclassified P2** 2026-05-07: gap thật nhưng không cấp bách (TCB/Amb đã dùng root account audit, chỉ thiếu field metadata phân biệt). [Detail](./gaps/p2/05-audit-actor-type.md)
 - ✅ isSendNotification flag (P1 #10)
 - ✅ Staff root account port (P1 #25)
-- ~~⚠️ Investigate Ambassador withdraw bug (P1 #1)~~ — **đã verify 2026-05-07**: 3 dự án đều admin-driven runtime, có dead code endpoint. Reclassified P2 cleanup. [Detail](./gaps/01-ambassador-withdraw-bank-validation.md).
+- ~~⚠️ Investigate Ambassador withdraw bug (P1 #1)~~ — **đã verify 2026-05-07**: 3 dự án đều admin-driven runtime, có dead code endpoint. Reclassified P2 cleanup. [Detail](./gaps/p2/01-ambassador-withdraw-bank-validation.md).
 
 → **Output**: 2 PR nhỏ, ~1-2 ngày dev tổng cộng. Cả 3 sản phẩm benefit.
 

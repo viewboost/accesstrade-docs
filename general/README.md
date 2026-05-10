@@ -34,6 +34,7 @@ Stack tài liệu này phục vụ:
 | File | Nội dung |
 |---|---|
 | [gap-analysis-priority.md](./gap-analysis-priority.md) | **30 gaps scored 4-chiều (business perspective)** + roadmap 3 wave + top 5 quick wins + top 5 strategic decisions |
+| [gaps/](./gaps/) | **Phân tích chi tiết từng gap** — chia theo priority (p0/p1/p2/p3). Xem [gaps/README.md](./gaps/README.md) cho danh sách. |
 
 ### 3. Semantic diff layer — "Khác biệt nghĩa là gì" (8 group)
 | Group | File | Effort | Highlights |

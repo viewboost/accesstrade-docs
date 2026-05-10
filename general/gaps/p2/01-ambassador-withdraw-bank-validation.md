@@ -1,11 +1,79 @@
-# Gap #1 — Withdraw flow 3 dự án khác nhau hoàn toàn (TCB/vCr cho user rút, Ambassador admin-driven)
+# Gap #1 — Code rút tiền user là dead code, cần dọn để gọn codebase
 
-> **Priority**: ⚪ **P3** (sau khi verify với business — không phải bug như tưởng ban đầu)
-> **Source**: [semantic-diff-financial.md](../semantic-diff-financial.md)
-> **Last verified**: 2026-05-07 (sau khi business clarify flow Ambassador)
-> **Reclassified**: P1 → P3 (initial misclassification — chi tiết trong section "Lịch sử phân loại")
+> **Priority**: 🟡 **P2** (cleanup task — không khẩn cấp)
+> **Source**: [semantic-diff-financial.md](../../semantic-diff-financial.md)
+> **Last verified**: 2026-05-07 (sau khi user catch frontend không có UI rút tiền)
+> **Reclassified**: P1 → P3 → P2 (chi tiết trong section "Lịch sử phân loại")
 
 ---
+
+# 📋 BUSINESS OVERVIEW
+
+## Vấn đề là gì?
+
+Trong AccessTrade, **việc trả tiền cho creator** không phải là user tự bấm "Rút tiền" mà là **admin xử lý theo đợt (batch)**:
+- Admin tạo "đợt thanh toán" (transfer batch)
+- Hệ thống tự động duyệt user đủ điều kiện (đã KYC, đã ký contract, đủ ngưỡng tối thiểu)
+- Admin xem lại + duyệt → tiền được chuyển qua hệ thống ngoài
+
+**Tuy nhiên**, trong code có **một mớ "code thừa"** từ thời kỳ trước:
+- TCB và vCreator: vẫn còn API `POST /withdraw` cho user tự rút + service frontend gọi API này — nhưng **không màn hình nào trong app gọi đến**. User vào màn hình `/bank` chỉ thấy thông báo *"Bạn chưa đến kỳ thanh toán"*
+- Ambassador: không có API backend nhưng frontend vẫn export hàm `withdrawCash()` (gọi sẽ lỗi 404 — may là không ai gọi)
+
+→ Đây không phải **bug** ảnh hưởng business, mà là **tech debt**: code thừa làm rối codebase, gây hiểu lầm cho developer mới.
+
+## Bảng so sánh 3 sản phẩm (góc nhìn business)
+
+| Khía cạnh | TCB | vCreator | Ambassador |
+|---|:---:|:---:|:---:|
+| **User có thể tự rút tiền không?** | ❌ Không | ❌ Không | ❌ Không |
+| **Có nút "Rút tiền" trên app/web không?** | ❌ Không | ❌ Không | ❌ Không |
+| **Trang `/bank` hiển thị gì?** | "Bạn chưa đến kỳ thanh toán" + lịch sử | Y hệt TCB | Y hệt TCB |
+| **Admin xử lý batch để trả tiền?** | ✅ Có | ✅ Có | ✅ Có |
+| **Còn tồn tại API rút tiền (dead code)?** | 🟡 Còn (không dùng) | 🟡 Còn (không dùng) | ❌ Đã xóa backend nhưng frontend còn |
+| **Frontend còn hàm `withdrawCash()` (dead code)?** | 🟡 Còn (không gọi) | 🟡 Còn (không gọi) | 🟡 Còn (orphan — gọi sẽ 404) |
+
+→ **3 sản phẩm có UX giống hệt nhau** (tất cả đều admin-driven). Khác biệt chỉ là mức độ "dọn dẹp" code dead.
+
+## Rủi ro nếu không dọn
+
+**Rủi ro thấp**:
+1. **Confuse developer mới**: dev nhìn thấy API `POST /withdraw` → tưởng là feature đang dùng → spend time đọc code
+2. **Confuse khi audit security**: pentest có thể flag endpoint `POST /withdraw` là attack surface (dù không gọi được từ UI)
+3. **Maintenance overhead**: refactor code phải care cả nhánh dead code
+4. **Frontend service `withdrawCash()` ở Ambassador** có thể gọi nhầm trong tương lai → 404 error → bug khó debug
+
+**Không có rủi ro về tiền hoặc bảo mật trực tiếp** vì không user nào trigger được flow này từ UI.
+
+## Đề xuất giải pháp (góc nhìn business)
+
+**Khuyến nghị**: **Dọn dẹp dead code 3 sản phẩm**, không thay đổi UX.
+
+**3 việc cần làm**:
+
+1. **Verify "không có client nào gọi"** trước khi xóa
+   - Check log API gateway: endpoint `POST /withdraw` có request thật trong N tháng gần đây không?
+   - Mobile app (nếu có): có gọi endpoint này không?
+   - → Nếu = 0 → an toàn xóa
+
+2. **Xóa code dead** ở 3 sản phẩm
+   - TCB và vCreator: xóa API backend `POST /withdraw` + frontend service `withdrawCash()`
+   - Ambassador: xóa frontend `services/withdraw.ts` orphan + cleanup comment-out trong `internal/service/withdraw.go`
+
+3. **Quyết định strategic** (cần PM)
+   - Tương lai có muốn cho user **tự rút tiền** không? Nếu có → revive endpoint + build UI mới
+   - Nếu không → dọn hẳn cho gọn, đỡ tech debt
+
+**Effort dự kiến**: 1-2 ngày developer (chủ yếu là verify + cleanup, không có business logic mới).
+
+**Cần product/business confirm**:
+1. Có roadmap nào trong 6 tháng tới muốn cho user tự rút tiền không? (Nếu có → giữ code, đừng xóa)
+2. Pentest team có yêu cầu xóa endpoint không dùng không? (compliance angle)
+3. Có team support hỏi "tại sao app không có nút rút tiền" không? Nếu có → có thể do user expect tính năng này → cần UX design lại trang `/bank`
+
+---
+
+# 🔧 TECHNICAL SPECIFICATION
 
 ## TL;DR (đã verify lại 2026-05-07 — pattern phức tạp hơn ban đầu nghĩ)
 

@@ -1,11 +1,79 @@
-# Gap #5 — TCB/Ambassador thiếu Audit ActorType (đã có ở vCreator)
+# Gap #5 — Audit log TCB/Ambassador không phân biệt được "tự động" vs "thủ công"
 
-> **Priority**: 🟡 **P2** (reclassified 2026-05-07 sau khi user clarify business context)
-> **Source**: [semantic-diff-reconciliation-audit.md](../semantic-diff-reconciliation-audit.md)
+> **Priority**: 🟡 **P2** (reclassified 2026-05-07 sau khi user clarify)
+> **Source**: [semantic-diff-reconciliation-audit.md](../../semantic-diff-reconciliation-audit.md)
 > **Direction port**: vCreator → TCB + Ambassador
-> **Last verified**: 2026-05-07 (3-layer verification: model + service + caller)
+> **Last verified**: 2026-05-07
 
 ---
+
+# 📋 BUSINESS OVERVIEW
+
+## Vấn đề là gì?
+
+Mọi thay đổi quan trọng trong AccessTrade (duyệt nội dung, chuyển tiền, verify user...) đều được **ghi vào audit log** với câu hỏi: *"Ai đã thực hiện hành động này?"*
+
+Có 2 loại "ai":
+- **Staff thật bấm tay** từ admin UI (vd: nhân viên duyệt nội dung)
+- **Hệ thống tự động** (vd: webhook nhận callback từ đối tác, cron job batch import HR, auto-verify user)
+
+**Vấn đề hiện tại**:
+- **vCreator** ✅ phân biệt được — có cột `actorType` ghi rõ `human_admin` (staff) hay `root_account` (tự động)
+- **TCB và Ambassador** ❌ không phân biệt — cả 2 loại trên đều ghi cùng định dạng → khi query log không lọc được
+
+→ Hậu quả khi audit/debug:
+- Khi compliance hỏi *"Ai duyệt KYC user X?"* → trả lời được "staff Y" — nhưng thực ra là **system tự duyệt qua webhook** rồi gán staff Y làm "đại diện" → **gây hiểu lầm**, có thể ảnh hưởng compliance
+- Khi có incident *"500 user bị reject nhầm"* → không biết là staff bấm sai hay bug automation → mất thời gian debug
+
+## Bảng so sánh 3 sản phẩm (góc nhìn business)
+
+| Khía cạnh | TCB | vCreator | Ambassador |
+|---|:---:|:---:|:---:|
+| **Có flow tự động ghi audit không?** (webhook, cron, batch) | ✅ Có | ✅ Có | ✅ Có |
+| **Audit log có cột "ai thực hiện"?** | ✅ Có | ✅ Có | ✅ Có |
+| **Phân biệt được "tự động" vs "thủ công"?** | ❌ Không | ✅ Có (`actorType`) | ❌ Không |
+| **Admin filter audit theo "tự động/thủ công"?** | ❌ Không | ✅ Có | ❌ Không |
+| **Có rủi ro hiểu lầm khi audit compliance?** | 🟡 Có | ❌ Không | 🟡 Có |
+| **Code automation đã tồn tại + đang chạy?** | ✅ Đang chạy | ✅ Đang chạy | ✅ Đang chạy |
+
+→ **Cả 3 đều có automation flow đang chạy**, chỉ khác ở **nhãn metadata**: vCreator gắn nhãn rõ ràng, TCB/Ambassador chưa gắn nhãn.
+
+## Rủi ro nếu không sửa
+
+**Rủi ro thấp đến trung bình**:
+1. **Compliance audit khó**: SOX/SOC/ISO 27001 thường yêu cầu phân biệt actor → nếu compliance team yêu cầu, phải implement gấp
+2. **Debug khó**: khi có bug automation, mất nhiều thời gian xác định nguyên nhân (do người hay máy)
+3. **Permission/RBAC sai**: nếu sau này muốn rule "chỉ manager mới được approve" → không phân biệt được automation đang fake permission
+
+**Không có rủi ro mất tiền hoặc bảo mật trực tiếp** — chỉ là khả năng truy vết & compliance friendliness.
+
+## Đề xuất giải pháp (góc nhìn business)
+
+**Khuyến nghị**: Backport feature `actorType` từ vCreator sang TCB và Ambassador.
+
+**Đây là feature đơn giản** — không thay đổi flow business, không cần migration phức tạp:
+- Thêm 1 cột `actorType` vào audit log
+- Tại các flow tự động (webhook, cron, batch), gắn nhãn `root_account` thay vì để mặc định
+- Audit log cũ vẫn xem được bình thường (không break)
+
+**Khi nào nên ưu tiên**:
+- Compliance team yêu cầu audit log phân biệt actor → upgrade lên P0/P1 ngay
+- Có incident query log không trace được flow automation → upgrade
+- Build feature mới ở TCB/Ambassador cần audit trace strict (vd: budget approval workflow) → upgrade
+
+**Effort dự kiến**: 1-2 ngày developer cho mỗi sản phẩm (~30 LOC backend mỗi cái).
+
+**Cần product/business confirm**:
+1. Compliance team TCB có chuẩn audit log cụ thể (SOX/SOC/ISO) không? Có yêu cầu phân biệt actor không?
+2. Có incident nào liên quan audit log query không phân biệt được actor không?
+3. Roadmap có feature cần audit trace strict (vd: budget approval, contract sign workflow) không?
+4. Compliance Ambassador (eKYC) có yêu cầu tương tự không?
+
+→ Nếu **3 câu trả lời "không"** → giữ P2, làm khi có resource. Nếu **có 1 câu "có"** → upgrade P0/P1.
+
+---
+
+# 🔧 TECHNICAL SPECIFICATION
 
 ## TL;DR
 

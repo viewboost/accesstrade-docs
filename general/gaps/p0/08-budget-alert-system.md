@@ -1,11 +1,79 @@
-# Gap #8 — vCreator thiếu budget control system (TCB và Ambassador đã có gần như tương đương)
+# Gap #8 — vCreator thiếu hệ thống kiểm soát ngân sách campaign
 
-> **Priority**: 🔴 **P0** (Total score 16) — vCreator thiếu hoàn toàn protection
-> **Source**: [semantic-diff-financial.md](../semantic-diff-financial.md), [semantic-diff-campaign-event.md](../semantic-diff-campaign-event.md)
+> **Priority**: 🔴 **P0** (Total score 16)
+> **Source**: [semantic-diff-financial.md](../../semantic-diff-financial.md), [semantic-diff-campaign-event.md](../../semantic-diff-campaign-event.md)
 > **Direction port**: TCB hoặc Ambassador → vCreator
-> **Last verified**: 2026-05-07 (sau khi user clarify TCB+Amb đều có 3-level + block)
+> **Last verified**: 2026-05-07
 
 ---
+
+# 📋 BUSINESS OVERVIEW
+
+## Vấn đề là gì?
+
+Mỗi campaign (chương trình thưởng nội dung) trong AccessTrade có một **ngân sách giới hạn** — số tiền tối đa platform sẽ trả thưởng cho creators. Khi campaign đạt giới hạn:
+
+- **Phải dừng nhận content mới** (không cho creator submit thêm)
+- **Phải dừng tạo phần thưởng mới** (không tính tiền cho content đã submit nhưng chưa duyệt)
+- **Phải báo cho team operations** biết để xử lý (gia hạn budget hoặc đóng campaign)
+
+Hiện tại:
+- **TCB**: Đã có ✅ — kiểm soát ở 3 mức (cả campaign / mỗi user / mỗi content) + tự động chặn + cảnh báo Telegram & Email
+- **Ambassador**: Đã có ✅ — gần như tương đương TCB (3 mức + chặn + cảnh báo Telegram)
+- **vCreator**: ❌ **KHÔNG có gì cả**
+
+→ vCreator đang chạy campaign **không có giới hạn chi tiêu**. Nếu một campaign vCreator nào đó có nhiều creator submit content tốt → platform có thể chi vượt budget mà không ai phát hiện cho đến khi báo cáo tài chính cuối tháng.
+
+## Bảng so sánh 3 sản phẩm (góc nhìn business)
+
+| Tính năng | TCB | vCreator | Ambassador |
+|---|:---:|:---:|:---:|
+| **Cài đặt ngân sách tổng cho campaign** | ✅ Có | ❌ Không | ✅ Có |
+| **Cài đặt ngân sách trần cho mỗi creator** | ✅ Có | ❌ Không | ✅ Có |
+| **Cài đặt ngân sách trần cho mỗi bài content** | ✅ Có | ❌ Không | ✅ Có |
+| **Tự động dừng nhận content khi hết budget** | ✅ Có | ❌ Không | ✅ Có |
+| **Tự động dừng tạo reward khi hết budget** | ✅ Có | ❌ Không | ✅ Có |
+| **Cảnh báo sớm tại 75% / 95% / 100% budget** | ✅ Có | ❌ Không | ✅ Có |
+| **Báo cáo Telegram khi vượt ngưỡng** | ✅ Có | ❌ Không | ✅ Có (label `[Ambassador]`) |
+| **Email cho creator: "Campaign sắp hết budget, submit nhanh"** | ✅ Có | ❌ Không | ❌ Không |
+| **Admin tự cấu hình email alert riêng cho stakeholder** | ✅ Có (`BudgetCampaign`) | ❌ Không | ❌ Không |
+| **Hiện sẵn % budget đã dùng trên dashboard** | 🟡 Phải tính lại mỗi lần | ❌ Không | ✅ Có sẵn (`BudgetInfo.UsedPercent`) |
+
+## Rủi ro nếu không sửa (cho vCreator)
+
+1. **Chi vượt ngân sách** — không có cơ chế gate, một campaign hot có thể trả thưởng vượt số tiền đã duyệt
+2. **Phát hiện muộn** — không có Telegram alert → ops team không biết campaign sắp cạn cho đến cuối kỳ
+3. **Khó audit** — không có lịch sử threshold tracking → khó báo cáo cho stakeholder "campaign này đạt 95% lúc nào"
+4. **Operations bị động** — admin phải manual check trên dashboard hàng ngày thay vì có cảnh báo tự động
+
+## Đề xuất giải pháp (góc nhìn business)
+
+**Khuyến nghị**: Port hệ thống budget từ **Ambassador sang vCreator** (KHÔNG phải từ TCB).
+
+**Lý do chọn Ambassador làm template**:
+- Ambassador và TCB có engine ngân sách giống nhau ~90%
+- Nhưng Ambassador đơn giản hơn (chỉ Telegram, không có email)
+- vCreator chưa có hệ thống gửi email transactional — port từ Ambassador không cần setup SendGrid mới
+- Kết quả tương đương về mặt protection (chặn chi vượt + cảnh báo team ops qua Telegram)
+
+**Effort dự kiến**: 3-4 ngày developer → có 1 release nhỏ tách riêng.
+
+**Cần product/business confirm 5 câu trước khi triển khai**:
+1. vCreator hiện có những campaign nào lớn cần kiểm soát? (Nếu chỉ là test campaigns nhỏ → có thể defer)
+2. Ai care về budget control ở vCreator? (CFO? Operations? Brand owner?)
+3. Có sẵn Telegram channel `[vCreator]` cho budget alert chưa? (cần tạo trước khi launch)
+4. Migration: các event vCreator hiện tại sẽ default budget = 0 (không giới hạn) — OK không?
+5. Ambassador đang có feature `RecoverRecheckInProgress` (tự khôi phục trạng thái sau crash). vCreator có cần feature này luôn không?
+
+**Tách 2 việc riêng (có thể defer P2)**:
+- Port `BudgetInfo` struct (UsedPercent pre-compute) từ Ambassador → TCB: cải thiện performance dashboard
+- Port `BudgetCampaign` (custom email alert config) từ TCB → Ambassador: cho team marketing setup alert riêng cho từng stakeholder
+
+→ 2 việc này không khẩn cấp, làm sau khi đã vá xong vCreator.
+
+---
+
+# 🔧 TECHNICAL SPECIFICATION
 
 ## TL;DR (đã sửa lại sau verify)
 
