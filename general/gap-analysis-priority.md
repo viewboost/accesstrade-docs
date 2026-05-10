@@ -94,7 +94,7 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 32 | **Mã nhân viên + binding partner** vCreator → Amb (full) + vCr → TCB (extend) | 3-4 tuần | EmployeeRegistry 18 fields + match engine |
 | 7 | **TCB Next.js Dashboard executive** → vCr/Amb | 4-6 tuần mỗi sản phẩm | Executive view ~10 sections, cần stakeholder confirm. Note: dashboard cũ admin Umi vCr có filter 3 tầng workplace cải tiến hơn |
 
-### 🟡 P2 — Backlog (4 items, sau khi #7 lên P1, #1 xuống P3)
+### 🟡 P2 — Backlog (9 items, sau khi #7 lên P1, #1 xuống P3)
 Score 8-11. Làm khi có resource.
 
 | # | Gap | Lý do P2 |
