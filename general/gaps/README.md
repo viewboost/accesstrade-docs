@@ -24,6 +24,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 |---|---|---|
 | 2 | InfluencerProfile concept — Ambassador mandatory + vCreator recommended (creator pool) | [p0/02-influencer-profile-concept.md](./p0/02-influencer-profile-concept.md) |
 | 8 | vCreator thiếu hệ thống kiểm soát ngân sách campaign + tính thưởng có cap | [p0/08-budget-alert-system.md](./p0/08-budget-alert-system.md) |
+| **35** 🚨 | **TCB urgent** — Hỗ trợ crawl Facebook Post + camp đếm số bài post (Amb đã có, TCB/vCr chưa) | [p0/35-facebook-post-crawl-and-count-campaign.md](./p0/35-facebook-post-crawl-and-count-campaign.md) |
 
 ---
 

@@ -63,20 +63,22 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 33 | **Ambassador có cơ chế "tạo user giả để reserve referral code", TCB và vCreator không có** — admin có thể reserve referral code cho campaign promotion. User thật register với code này → attach inviter relation. TCB/vCr cùng có `Referral.Codes` model nhưng không có flow admin tạo seed user. Phát hiện khi verify gap #31 (2026-05-07). [Detail](./gaps/p2/33-ambassador-referral-seed-user.md) | User & Auth | Ambassador → TCB/vCr | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 32 | **Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn nhiều, Ambassador chưa có** — vCreator EmployeeRegistry 18 fields + match engine 10 ChangeActions là source of truth. TCB chỉ ManageCode 9 fields. Ambassador không có. Tách từ gap #13 + revoke gap #23 P3 + reclassified P2→P1 (2026-05-07). [Detail](./gaps/p1/32-staff-code-employee-binding.md) | User & Auth | vCreator → Amb (port full) + vCreator → TCB (extend) | 4 | 3 | 3 | 5 | **15** | 🟠 P1 |
 | 34 | **Liên kết tài khoản Threads cho creator** — Ambassador đầy đủ (~263 LOC module + UserThreadsData struct + content tracking). vCreator partial (chỉ regex post URL 10 LOC, KHÔNG có user struct binding). TCB chưa có gì. Threads đang growth, cần parity 3 sản phẩm. Initial P1 (2026-05-10) — user self-listed gap. [Detail](./gaps/p1/34-threads-account-binding.md) | User & Auth | Ambassador → vCr (bổ sung) + Amb → TCB (port full) | 4 | 3 | 4 | 5 | **16** | 🟠 P1 |
+| 35 | **Hỗ trợ crawl Facebook Post + camp tính tiền theo số bài post** — Ambassador đầy đủ (RegexFacebookPost + RegexFacebookProfile + content source + tracking + analytics). TCB/vCr chỉ có Facebook video/reel, KHÔNG có post. Reward schema `EventSchemaMilestone.NumberOfContent` ĐÃ SẴN cả 3 sản phẩm (KHÔNG cần build mới). **TCB đang yêu cầu làm ngay** → P0. [Detail](./gaps/p0/35-facebook-post-crawl-and-count-campaign.md) | Content & Media | Ambassador → TCB (urgent) + Amb → vCr | 5 | 4 | 4 | 5 | **18** | 🔴 P0 |
 
 ---
 
 ## Priority breakdown
 
-### 🔴 P0 — Làm ngay (2 items, sau khi reclassify 2026-05-07)
+### 🔴 P0 — Làm ngay (3 items, sau khi reclassify 2026-05-07 + thêm #35 urgent 2026-05-10)
 Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** hoặc **critical risk** hoặc **business intent rõ ràng**.
 
 | # | Gap | Effort | Impact |
 |---|---|---|---|
+| 35 | **Facebook Post crawl + camp đếm số bài post** Amb → TCB (urgent) + vCr | 2-3 tuần | 🚨 TCB đang yêu cầu làm ngay — sales/delivery blocker. Schema reward đã sẵn, chỉ thiếu crawl infrastructure |
 | 8 | **Budget control + Reward V2 engine** — port từ Ambassador → vCreator (TCB và Amb đã có) | 2-3 tuần | vCreator hiện chi tiền không giới hạn + race condition khi nhiều creator submit (revenue protection) |
 | 2 | **InfluencerProfile concept** — port TCB → Ambassador (mandatory) + TCB → vCreator (recommended) | 6-8 tuần (2 phases) | Ambassador feature parity TCB; long-term chia sẻ creator pool 3 sản phẩm |
 
-→ **Tổng effort**: gap #8 nhỏ (1 sprint), gap #2 lớn (>1 quý) — chia phases triển khai.
+→ **Tổng effort**: gap #35 (~2-3 tuần urgent), gap #8 nhỏ (1 sprint), gap #2 lớn (>1 quý) — chia phases triển khai.
 
 **Note**:
 - Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
