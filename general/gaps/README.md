@@ -22,16 +22,16 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 
 | # | Gap | File |
 |---|---|---|
-| 8 | vCreator thiếu budget control system | [p0/08-budget-alert-system.md](./p0/08-budget-alert-system.md) |
+| 2 | InfluencerProfile concept — Ambassador mandatory + vCreator recommended (creator pool) | [p0/02-influencer-profile-concept.md](./p0/02-influencer-profile-concept.md) |
+| 8 | vCreator thiếu hệ thống kiểm soát ngân sách campaign + tính thưởng có cap | [p0/08-budget-alert-system.md](./p0/08-budget-alert-system.md) |
 
 ---
 
 ## P1 — Sprint tới
 
-(Chưa có file nào — sẽ tạo khi cần phân tích chi tiết)
+(Gap #2 đã reclassify P0 — xem section P0 ở trên)
 
-Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md):
-- Gap #2 — Auto-approve influencer + notification (TCB → Ambassador)
+Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chưa có file detail:
 - Gap #3 — Reward V2 cho vCreator
 - Gap #9 — `RecoverRecheckInProgress` cron (Amb → TCB)
 - Gap #10 — `isSendNotification` flag (Amb → TCB)

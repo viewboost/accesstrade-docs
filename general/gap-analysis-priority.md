@@ -30,8 +30,8 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | # | Gap | Source group | Direction port | BV | Risk | Effort | XProd | **Total** | **Priority** |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|
 | 1 | **Withdraw cả 3 đều admin-driven thực tế, có dead code endpoint** — TCB/vCr có `POST /withdraw` + frontend service nhưng 0 caller pages. UI `/bank` chỉ hiển thị "Bạn chưa đến kỳ thanh toán". Đề xuất xóa endpoint sau khi verify không có client mobile/external. [Detail](./gaps/p2/01-ambassador-withdraw-bank-validation.md) | Financial | Cleanup dead code 3 dự án | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
-| 2 | **Ambassador chưa có auto-approve influencer + notification** (comment "not yet ported") — creator phải chờ admin manual approve | User & Auth | TCB → Ambassador | 5 | 4 | 3 | 2 | **14** | 🟠 P1 |
-| 3 | **vCreator dùng reward V1 (naive)** — không có budget control, không có distributed lock → race condition khi nhiều creator cùng claim reward | Campaign & Event | TCB/Amb V2 → vCreator | 5 | 5 | 2 | 2 | **14** | 🟠 P1 |
+| 2 | **Khái niệm "Influencer Profile" — Ambassador BẮT BUỘC port, vCreator ĐỀ XUẤT port (chia sẻ creator pool)** — TCB có collection riêng + brand portal mạnh; Ambassador có scaffolding simplified (đọc từ user_social) + per-partner application flow + special channels (facebook_post, threads); vCreator không có concept. Reclassified P1→P0 (2026-05-07) sau khi user confirm business intent: Ambassador bắt buộc, vCreator để long-term chia sẻ creator pool. [Detail](./gaps/p0/02-influencer-profile-concept.md) | User & Auth | TCB → Ambassador (mandatory) + TCB → vCreator (recommended) | 5 | 4 | 2 | 5 | **16** | 🔴 P0 |
+| 3 | ~~**vCreator dùng reward V1 (naive)**~~ — **gộp vào gap #8** (cùng scope: budget control + reward V2 engine cần làm chung 1 task). Xem [gap #8 detail](./gaps/p0/08-budget-alert-system.md) | Campaign & Event | (gộp #8) | - | - | - | - | - | (merged → #8) |
 | 4 | **Float precision rounding chỉ vCreator có** (`pfloat.RoundToOneDecimal`) — TCB/Amb có thể bị bug làm tròn cash. Tuy nhiên 2 sản phẩm kia chạy campaign tiền to (không có fractional cents) → risk thực tế thấp. Reclassified P0→P2 (2026-05-07) | Financial | vCreator → TCB/Amb | 2 | 2 | 5 | 2 | **11** | 🟡 P2 |
 | 5 | **Audit ActorType field chỉ vCreator có** — Cả 3 dự án đều có flow dùng root account để audit, nhưng TCB/Amb không có field metadata phân biệt → query log không filter được automation vs manual. Reclassified P0→P2 (2026-05-07): không cấp bách, nice-to-have. [Detail](./gaps/p2/05-audit-actor-type.md) | Reconciliation & Audit | vCreator → TCB/Amb | 3 | 2 | 5 | 4 | **14** | 🟡 P2 |
 | 6 | **TCB Reconciliation engine** (1380 LOC, 3 services) — chỉ TCB có. vCr/Amb có model + admin page nhưng không có evaluation engine → admin page có thể là dead UI | Reconciliation & Audit | TCB → vCr/Amb (chỉ nếu cần) | 4 | 3 | 1 | 3 | **11** | 🟡 P2 |
@@ -64,18 +64,21 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 
 ## Priority breakdown
 
-### 🔴 P0 — Làm ngay (1 item, sau khi reclassify gap #4, #5, #12 — 2026-05-07)
-Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** hoặc **critical risk**.
+### 🔴 P0 — Làm ngay (2 items, sau khi reclassify 2026-05-07)
+Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** hoặc **critical risk** hoặc **business intent rõ ràng**.
 
 | # | Gap | Effort | Impact |
 |---|---|---|---|
-| 8 | **Budget control** — port từ Ambassador → vCreator (TCB và Amb đã có) | 3-4 ngày | vCreator hiện chi tiền không giới hạn (revenue protection) |
+| 8 | **Budget control + Reward V2 engine** — port từ Ambassador → vCreator (TCB và Amb đã có) | 2-3 tuần | vCreator hiện chi tiền không giới hạn + race condition khi nhiều creator submit (revenue protection) |
+| 2 | **InfluencerProfile concept** — port TCB → Ambassador (mandatory) + TCB → vCreator (recommended) | 6-8 tuần (2 phases) | Ambassador feature parity TCB; long-term chia sẻ creator pool 3 sản phẩm |
 
-→ **Tổng ~3-4 ngày dev**. Nên làm trong **wave 1 (tuần 1-2)**.
+→ **Tổng effort**: gap #8 nhỏ (1 sprint), gap #2 lớn (>1 quý) — chia phases triển khai.
 
-**Note**: Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
+**Note**:
+- Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
+- Gap #2 ban đầu P1 (auto-approve influencer + notification) → rescoped thành gap kiến trúc → reclassified P0 sau khi user confirm business intent "creator pool unification".
 
-### 🟠 P1 — Sprint tới (10 items)
+### 🟠 P1 — Sprint tới (9 items, gap #3 đã gộp vào #8 — 2026-05-07)
 Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 
 | # | Gap | Effort | Highlights |
