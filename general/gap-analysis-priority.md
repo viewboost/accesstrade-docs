@@ -50,13 +50,13 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 19 | **vCreator Extended Period mode** — cho phép content post sau event endAt được ghi nhận với ngày map về kỳ kế toán cũ. TCB/Amb không có. Reclassified P3→P2 (2026-05-10): user confirm cần giữ trong backlog, feature có business value rõ (kỳ kế toán linh hoạt). [Detail](./gaps/p2/19-vcreator-extended-period-mode.md) | Campaign & Event | vCreator → TCB/Amb (selective, cần product confirm) | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 20 | **Affiliate suite (campaign + contract + links + tracking)** — Ambassador có (~1275 LOC mature, pub2). vCreator **đang làm** (~951 LOC active dev, Scalef API — verified bằng git log). TCB chưa có, **chờ chốt sale**. Reclassified P2→P1 (2026-05-10): có active development + sales-driven blocker. [Detail](./gaps/p1/20-ambassador-affiliate-suite.md) | Infrastructure | Amb → vCr (đang làm) → TCB (sau chốt sale) | 5 | 3 | 1 | 5 | **14** | 🟠 P1 |
 | 21 | **Ambassador Mission/Gamification system** — Hệ thống nhiệm vụ + thưởng + level (~1327 LOC, hashtag check + view threshold + time window). Tên gốc "WildRift" từ partner Wild Rift game. TCB/vCr không có. Reclassified P3→P2 (2026-05-10): user confirm giữ trong backlog cho khi có khách hàng gamification/loyalty. [Detail](./gaps/p2/21-ambassador-mission-gamification.md) | Content & Media | Ambassador → vCr/TCB (selective, cần product confirm) | 3 | 2 | 3 | 4 | **12** | 🟡 P2 |
-| 22 | **vCreator Workplace 3-tier (Brand→Company→Unit)** — vCreator-specific B2B onboarding | User & Auth | KHÔNG port | 2 | 1 | 1 | 1 | **5** | ⚪ P3 |
+| 22 | ~~**vCreator Workplace 3-tier (Brand→Company→Unit)**~~ — Trùng scope với gap #32 (mã nhân viên + binding partner cần workplace để bind). Workplace là dependency/component của #32. Reclassified 2026-05-10: gộp vào gap #32. | User & Auth | (merged → #32) | - | - | - | - | - | (merged → #32) |
 | 23 | ~~**vCreator registry_match HR engine**~~ — Reclassified 2026-05-07: KHÔNG phải vCreator-specific, là pattern tốt cần port. Đã rescope thành **gap #32** với business intent rõ. | Targeting & Matching | (rescoped → #32) | - | - | - | - | - | (merged → #32) |
-| 24 | **TCB Campaign matching engine + filtered_campaigns** — TCB flagship feature riêng (T-Fluencers) | Campaign & Event | KHÔNG port | 4 | 1 | 1 | 1 | **7** | ⚪ P3 |
+| 24 | **TCB Campaign matching engine + filtered_campaigns** — AI-assisted creator selection (multi-dim scoring + AT-Core integration). TCB **đang phát triển dang dở** (~786 LOC active dev). vCr/Amb không có. Reclassified P3→P1 (2026-05-10): TCB chưa hoàn thiện nhưng làm xong cần port ngay sang vCr/Amb (strategic priority). [Detail](./gaps/p1/24-tcb-campaign-matching-engine.md) | Campaign & Event | TCB (đang dang dở) → vCr/Amb (port sau khi stable) | 4 | 3 | 2 | 5 | **14** | 🟠 P1 |
 | 25 | **TCB/Ambassador không có helper `GetRoot()` cho staff root account** — vCreator có helper với filter active + warning multi-root + sort. TCB/Amb dùng raw bson query inline ở `opshub_webhook.go`. Reclassified P1→P3 (2026-05-07): tech debt cleanup, không có business impact. [Detail](./gaps/p3/25-staff-root-account-helper.md) | Infrastructure & Misc | vCreator → TCB/Amb | 1 | 1 | 5 | 4 | **11** | ⚪ P3 |
-| 26 | **TCB transcript scoring (LLM-based)** vs vCr/Amb (Senlyzer sentiment) — không thể chia sẻ service, business model khác | Content & Media | KHÔNG port | 3 | 2 | 1 | 1 | **7** | ⚪ P3 |
+| 26 | **TCB transcript scoring (LLM)** vs vCr/Amb — Có khác biệt nhưng không cần gộp/port: cả 3 sản phẩm đã có **OpsHub** thay thế cho content scoring/moderation. Note only. | Content & Media | (note only — OpsHub đã thay) | - | - | - | - | - | ⚪ P3 |
 | 27 | **Ambassador chưa có user_social_partner config check** (comment "not yet ported") — duplicate với gap #2 | User & Auth | (gộp với #2) | - | - | - | - | - | - |
-| 28 | **Multi-tenant Partner concept khác nhau 3 sản phẩm** — TCB partner / vCr workplace / Amb Partner. Reclassified P1→P3 (2026-05-10): không phải feature gap, là architectural debt. Đã được nhắc gián tiếp trong gap #33 (referral seed user) — không cần unify riêng. | User & Auth | Defer (architectural) | 3 | 3 | 1 | 5 | **12** | ⚪ P3 |
+| 28 | **Multi-tenant Partner concept khác nhau 3 sản phẩm** — Architectural debt, không port. Note only. | User & Auth | (note only — không port) | - | - | - | - | - | ⚪ P3 |
 | 29 | **`load_data.go` synced TCB↔Ambassador chưa có process** — đang copy thủ công khi update, dễ drift | Infrastructure & Misc | Process improvement | 2 | 3 | 4 | 2 | **11** | 🟡 P2 |
 | 30 | **TCB telegram alert có dùng** — Ambassador đã có nhưng label `[Ambassador]`, chưa unify infrastructure | Campaign & Event | Process improvement | 2 | 2 | 4 | 2 | **10** | 🟡 P2 |
 | 31 | **TCB cho phép admin tạo creator + import content giúp họ; vCreator/Ambassador không có** — TCB có flow 3 bước (CreateUser admin với flag IsCreateByAdmin → CreateUserSocial → ImportContent + tracking). vCr không có gì. Amb có CreateUser nhưng cho referral seed, khác mục đích. Rescoped + reclassified P2→P1 2026-05-07. [Detail](./gaps/p1/31-admin-proxy-creator-flow.md) | Content & Media | TCB → vCr/Amb (selective) | 4 | 3 | 2 | 4 | **13** | 🟠 P1 |
@@ -81,7 +81,7 @@ Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** 
 - Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
 - Gap #2 ban đầu P1 (auto-approve influencer + notification) → rescoped thành gap kiến trúc → reclassified P0 sau khi user confirm business intent "creator pool unification".
 
-### 🟠 P1 — Sprint tới (7 items, sau khi reclassify #25→P3, #28→P3, #07 P2→P1, #18 P2→P1, #20 P2→P1 — 2026-05-10)
+### 🟠 P1 — Sprint tới (8 items, sau khi reclassify #25→P3, #28→P3, #07 P2→P1, #18 P2→P1, #20 P2→P1, #24 P3→P1 — 2026-05-10)
 
 **🔝 Top P1**: Gap #15 (Reconciliation engine + snapshot, gộp #6+#15) — user confirm là quan trọng nhất, port full stack (~5-7 tuần mỗi sản phẩm).
 Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
@@ -95,6 +95,7 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 7 | **TCB Next.js Dashboard executive** → vCr/Amb | 4-6 tuần mỗi sản phẩm | Executive view ~10 sections, cần stakeholder confirm. Note: dashboard cũ admin Umi vCr có filter 3 tầng workplace cải tiến hơn |
 | 18 | **BudgetInfo struct unify** Amb → TCB + vCr | <1 ngày backend | **Liên quan #8** — làm chung lúc port budget sang vCr. Pre-compute UsedPercent cho dashboard nhanh + 3 sản phẩm consistent |
 | 20 | **Affiliate suite** Amb (mature) → vCr (đang làm) → TCB (chờ chốt sale) | 6-8 tuần TCB sau khi chốt sale | vCr active dev với Scalef API, TCB blocker ở sales |
+| 24 | **Campaign matching engine** TCB (dang dở) → vCr/Amb (sau khi TCB stable) | TCB stable 2-3 tuần + vCr/Amb mỗi cái 3-4 tuần | AI-assisted creator selection, AT-Core integration |
 
 ### 🟡 P2 — Backlog (9 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 #21 P3→P2)
 Score 8-11. Làm khi có resource.
@@ -105,10 +106,21 @@ Score 8-11. Làm khi có resource.
 | 14 | ContentImportTracking | Chỉ làm nếu vCr/Amb có nhu cầu bulk import |
 | 29-30 | Process improvement (load_data sync, telegram unify) | Không tính năng product, là DevOps task |
 
-### ⚪ P3 — Defer/skip (5 items)
-Score < 8. Chưa cần.
+### ⚪ P3 — Defer/skip
 
-- Items #19, 21, 22, 23, 24, 26: features tied chặt business model riêng, **KHÔNG port được**. Document lại để stakeholder tham khảo.
+Score < 8 hoặc note-only.
+
+**Note-only (không port — features đặc thù business hoặc đã được thay thế)**:
+- #11 SendGrid legacy (TCB cleanup, không port)
+- #13 blacklist-keyword + content moderation (OpsHub đã thay)
+- #26 TCB transcript scoring LLM (OpsHub đã thay)
+- #28 Multi-tenant Partner concept (architectural debt, không port)
+
+**Có file detail (defer port)**:
+- #1 Withdraw dead code cleanup
+- #10 Telegram alert dedup
+- #12 Admin login security
+- #25 Staff root account helper
 
 ---
 

@@ -37,6 +37,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 32 | Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn | [p1/32-staff-code-employee-binding.md](./p1/32-staff-code-employee-binding.md) |
 | 7 | TCB Next.js Analytics Dashboard executive — TCB-only, vCr/Amb chỉ có dashboard cũ admin Umi | [p1/07-analytics-dashboard-port.md](./p1/07-analytics-dashboard-port.md) |
 | 20 | Affiliate suite — Amb mature, vCr đang làm (Scalef), TCB chờ chốt sale | [p1/20-ambassador-affiliate-suite.md](./p1/20-ambassador-affiliate-suite.md) |
+| 24 | TCB Campaign matching engine — đang dang dở, làm xong cần port ngay vCr/Amb | [p1/24-tcb-campaign-matching-engine.md](./p1/24-tcb-campaign-matching-engine.md) |
 
 
 ---
@@ -65,12 +66,11 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 25 | TCB/Ambassador không có helper `GetRoot()` cho staff root account (vCreator có) | [p3/25-staff-root-account-helper.md](./p3/25-staff-root-account-helper.md) |
 | 1 | Withdraw — 3 dự án đều admin-driven, dead code endpoint cần dọn dẹp | [p3/01-ambassador-withdraw-bank-validation.md](./p3/01-ambassador-withdraw-bank-validation.md) |
 
-Các gap P3 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chưa có file detail:
-- Gap #22 — vCreator Workplace 3-tier
-- Gap #23 — vCreator registry_match HR engine
-- Gap #24 — TCB Campaign matching engine
-- Gap #26 — TCB transcript scoring (LLM)
-- Gap #28 — Multi-tenant Partner unify (architectural debt, defer)
+**Note-only gaps** (KHÔNG port, không cần file detail — chỉ ghi nhận lý do trong [../gap-analysis-priority.md](../gap-analysis-priority.md)):
+- Gap #11 — SendGrid legacy (TCB cleanup, không port)
+- Gap #13 — Content moderation tools (OpsHub đã thay)
+- Gap #26 — TCB transcript scoring LLM (OpsHub đã thay)
+- Gap #28 — Multi-tenant Partner concept (architectural debt, không port)
 
 ---
 
