@@ -59,6 +59,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 36 | vCreator cho phép resubmit link đã reject ở camp khác (TCB/Amb không có) | [p2/36-vcreator-allow-resubmit-rejected-content.md](./p2/36-vcreator-allow-resubmit-rejected-content.md) |
 | 37 | Chuẩn hóa lý do từ chối content — TCB có 14 tag chuẩn + analytics, vCr/Amb chưa có | [p2/37-standardize-content-rejection-tags.md](./p2/37-standardize-content-rejection-tags.md) |
 | 38 | Thêm tên/mã nội bộ cho campaign (event code) — TCB có, vCr/Amb chưa có | [p2/38-event-code-internal-name.md](./p2/38-event-code-internal-name.md) |
+| 39 | Tag phân loại cho campaign — TCB có Event.EventTags + seed defaults, vCr/Amb có Tag model nhưng chưa wire vào Event | [p2/39-event-tags-categorization.md](./p2/39-event-tags-categorization.md) |
 
 ---
 

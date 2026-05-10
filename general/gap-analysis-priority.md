@@ -67,6 +67,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 36 | **vCreator cho phép resubmit link đã reject ở camp khác** — feature toggle per-partner `AllowResubmitRejectedContent` (47 LOC + field PartnerOpts). vCr có anti-spam guard (chặn resubmit cùng event, cho phép cross-event). TCB/Amb không có file `content_duplicate.go`, không có flag → block luôn cross-product. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/36-vcreator-allow-resubmit-rejected-content.md) | Content & Media | vCreator → TCB + Ambassador | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 37 | **Chuẩn hóa lý do từ chối content (rejection tags)** — TCB có 14 tag chuẩn hóa i18n vi/en + field `Content.RejectionTags + RejectionComment` + analytics aggregate per-tag. vCr/Amb chỉ có `RejectedBy + RejectedAt`, không có tag/comment, không thống kê được. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/37-standardize-content-rejection-tags.md) | Content & Media | TCB → vCreator + Ambassador | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 38 | **Thêm tên/mã nội bộ cho campaign (event code)** — TCB có field `Event.Code` + wire vào tất cả display layer (admin, dashboard, email, export, search). Format `[code] name`. vCr/Amb không có → BTC khó communicate, dễ nhầm campaign khi nhiều cái chạy song song. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/38-event-code-internal-name.md) | Campaign & Event | TCB → vCreator + Ambassador | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
+| 39 | **Tag phân loại cho campaign (event tags)** — TCB có `Event.EventTags []AppID` + 7 default seed tag (Nhận diện thương hiệu, Ra mắt sản phẩm, Theo mùa, ...) + admin filter/display với color. vCr/Amb có model `TagRaw` đã sẵn nhưng `EventRaw` chưa wire field `EventTags`. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/39-event-tags-categorization.md) | Campaign & Event | TCB → vCreator + Ambassador | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
 
 ---
 
@@ -104,7 +105,7 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 24 | **Campaign matching engine** TCB (dang dở) → vCr/Amb (sau khi TCB stable) | TCB stable 2-3 tuần + vCr/Amb mỗi cái 3-4 tuần | AI-assisted creator selection, AT-Core integration |
 | 34 | **Threads binding** Amb → vCr (bổ sung user struct) + Amb → TCB (port full) | vCr 3-5 ngày + TCB 1-2 tuần | Threads growing fast, vCr partial chỉ track view chứ chưa bind, TCB chưa có gì |
 
-### 🟡 P2 — Backlog (11 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 #21 P3→P2, #29 dropped, +#36 #37 #38 mới)
+### 🟡 P2 — Backlog (12 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 #21 P3→P2, #29 dropped, +#36 #37 #38 #39 mới)
 Score 8-11. Làm khi có resource.
 
 | # | Gap | Lý do P2 |
