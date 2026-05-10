@@ -32,11 +32,11 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | # | Gap | File |
 |---|---|---|
 | **15** ⭐ | **🔝 TOP P1** — vCreator/Ambassador thiếu hệ thống đối chiếu (reconciliation) + audit trail crawl chống fraud (combined #6 + #15) | [p1/15-reconciliation-engine-and-snapshot.md](./p1/15-reconciliation-engine-and-snapshot.md) |
+| 16 | vCreator/Ambassador thiếu hệ thống đánh giá creator (review + rating) — phần tiếp nối của gap #2 | [p1/16-profile-review-rating.md](./p1/16-profile-review-rating.md) |
 | 31 | TCB cho phép admin tạo creator + import content giúp họ; vCr/Amb không có | [p1/31-admin-proxy-creator-flow.md](./p1/31-admin-proxy-creator-flow.md) |
 | 32 | Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn | [p1/32-staff-code-employee-binding.md](./p1/32-staff-code-employee-binding.md) |
 
 Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chưa có file detail:
-- Gap #16 — Profile Review + Rating
 - Gap #17 — Upload avatar cache MinIO
 - Gap #25 — Staff root account port
 - Gap #28 — Multi-tenant Partner unify

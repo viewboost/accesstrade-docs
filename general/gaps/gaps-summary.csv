@@ -1,72 +1,117 @@
-"#","Tiêu đề chức năng","Mô tả ngắn gọn gap","Priority","Giải pháp suggest","Link chi tiết"
-"#2","Khái niệm hồ sơ Influencer — TCB đã có, Ambassador và vCreator chưa có (cần để tương lai chia sẻ creator giữa 3 platform)","• TCB: creator có hồ sơ influencer đầy đủ (chuyên môn, đối tượng khán giả, điểm uy tín, lượt xem trung bình) — brand có thể duyệt và chọn creator phù hợp campaign
-• Ambassador: chưa có hồ sơ chuyên sâu, brand chỉ thấy thông tin cơ bản (tên, follower, kênh) khi duyệt creator
-• vCreator: chưa có hồ sơ — chỉ lưu các kênh creator đã link (TikTok, YouTube...) phục vụ đăng bài
-• Hệ quả: creator giỏi không được showcase đủ ở Ambassador/vCreator; brand khó tìm creator phù hợp; tương lai muốn chia sẻ pool creator giữa 3 platform thì không có dữ liệu đồng bộ","P0","• Giai đoạn 1 (BẮT BUỘC, 2-3 tuần): Ambassador build hồ sơ influencer giống TCB — creator có trang profile đầy đủ thông tin chuyên môn + chỉ số uy tín, brand duyệt creator dễ hơn
-• Giai đoạn 2 (ĐỀ XUẤT, ~1 tháng): vCreator cũng build hồ sơ influencer — creator điền profile lúc onboarding
-• Giai đoạn 3 (DÀI HẠN, >2 tháng): Hệ thống chung cho 3 platform — 1 creator có 1 hồ sơ duy nhất, brand TCB có thể browse creator Ambassador/vCreator (và ngược lại)","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p0/02-influencer-profile-concept.md"
-"#8","vCreator chưa có cơ chế chặn chi vượt ngân sách campaign + chưa có chống trùng khi tính tiền thưởng","• TCB và Ambassador: campaign có thể đặt ngân sách 3 mức (tổng campaign / từng creator / từng bài), tự động chặn nhận content khi sắp hết tiền, gửi cảnh báo Telegram cho team ops tại 75%/95%/100%, có cơ chế chống tình huống nhiều creator cùng submit gây tính tiền sai
-• vCreator: KHÔNG có gì — campaign chạy không giới hạn chi tiêu, không cảnh báo team ops khi sắp hết tiền, không bảo vệ khi nhiều creator submit cùng lúc
-• Hệ quả: campaign vCreator có thể chi vượt ngân sách hàng tỷ mà không phát hiện cho đến cuối kỳ; nhiều creator submit cùng lúc có thể gây trả tiền nhiều lần (race condition); team ops bị động, phải manual check dashboard hàng ngày","P0","• Port toàn bộ cơ chế kiểm soát ngân sách + tính thưởng từ Ambassador sang vCreator
-• Effort: ~2-3 tuần dev
-• Phase 1: Cập nhật cấu trúc dữ liệu campaign để chứa thông tin ngân sách (1 ngày)
+"#","Tiêu đề chức năng","TCB","Ambassador","vCreator","Hệ quả","Priority","Giải pháp suggest","Link chi tiết"
+"#2","Khái niệm hồ sơ Influencer — Ambassador BẮT BUỘC port, vCreator ĐỀ XUẤT port (chia sẻ creator pool)","• Đã có hệ thống đầy đủ
+• Creator có hồ sơ influencer chi tiết: chuyên môn, đối tượng khán giả, điểm uy tín, lượt xem trung bình
+• Brand có thể duyệt và chọn creator phù hợp campaign","• Chưa có hồ sơ chuyên sâu
+• Brand chỉ thấy thông tin cơ bản (tên, follower, kênh) khi duyệt creator
+• BẮT BUỘC port để feature parity TCB (giai đoạn 1)","• Chưa có hồ sơ
+• Chỉ lưu các kênh creator đã link (TikTok, YouTube...) phục vụ đăng bài
+• ĐỀ XUẤT port (giai đoạn 2) để long-term chia sẻ creator pool","Creator giỏi không được showcase đủ ở Ambassador/vCreator; brand khó tìm creator phù hợp; tương lai muốn chia sẻ pool creator giữa 3 platform thì không có dữ liệu đồng bộ","P0","• Giai đoạn 1 (BẮT BUỘC, 2-3 tuần): Ambassador build hồ sơ influencer giống TCB
+• Giai đoạn 2 (ĐỀ XUẤT, ~1 tháng): vCreator build hồ sơ influencer + wizard onboarding
+• Giai đoạn 3 (DÀI HẠN, >2 tháng): hệ thống chung 1 creator có 1 hồ sơ duy nhất, brand TCB có thể browse creator Ambassador/vCreator","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p0/02-influencer-profile-concept.md"
+"#8","vCreator chưa có cơ chế chặn chi vượt ngân sách campaign + chống trùng khi tính tiền thưởng","• Đã có ngân sách 3 mức (campaign / từng creator / từng bài)
+• Tự động chặn nhận content khi sắp hết tiền
+• Cảnh báo Telegram cho team ops tại 75%/95%/100%
+• Có cơ chế chống tình huống nhiều creator cùng submit gây tính tiền sai","• Đã có (gần như tương đương TCB)
+• Cùng cơ chế ngân sách 3 mức + chặn + cảnh báo Telegram + chống race condition","• KHÔNG có gì
+• Campaign chạy không giới hạn chi tiêu
+• Không cảnh báo team ops khi sắp hết tiền
+• Không bảo vệ khi nhiều creator submit cùng lúc","vCreator có thể chi vượt ngân sách hàng tỷ mà không phát hiện cho đến cuối kỳ; nhiều creator submit cùng lúc có thể gây trả tiền nhiều lần (race condition); team ops bị động, phải manual check dashboard hàng ngày","P0","• Port toàn bộ cơ chế từ Ambassador sang vCreator (~2-3 tuần dev)
+• Phase 1: Cập nhật cấu trúc dữ liệu campaign chứa thông tin ngân sách (1 ngày)
 • Phase 2: Build engine tính thưởng có check ngân sách + chống trùng (1.5-2 tuần)
-• Phase 3: Setup channel Telegram riêng cho vCreator để nhận cảnh báo (3 ngày)
+• Phase 3: Setup channel Telegram riêng cho vCreator (3 ngày)
 • Phase 4: Test thực tế với campaign nhỏ trước khi rollout production (3 ngày)","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p0/08-budget-alert-system.md"
-"#15","🔝 TOP P1 — vCreator/Ambassador thiếu hệ thống đối chiếu (reconciliation) tiền thưởng + audit trail crawl chống fraud (combined #6 + #15)","Sau khi platform trả tiền thưởng cho creator dựa trên metric tại thời điểm crawl, có 4 vấn đề có thể phát sinh: (1) creator boost view giả → trả tiền sai, (2) TikTok/YouTube revise số liệu sau vài ngày → tiền đã trả không match, (3) cron crawl bị lỗi → thiếu data → reward sai, (4) audit compliance hỏi 'tại sao trả creator X số tiền Y?' → cần tra ngược
-TCB: Có hệ thống đối chiếu (reconciliation) đầy đủ — lưu snapshot metric mỗi lần crawl + cron crawl bù sau khi event hết hạn + cron crawl bù ngày thiếu + engine đối chiếu tự động phân loại (auto-approved / auto-rejected / needs-review) + admin tools (processing, running, export)
-vCreator/Ambassador: 'Có chân không có thân' — đã có 3 collections cơ bản + admin page reconciliation, NHƯNG KHÔNG có engine xử lý + 3 collections nâng cao + 3 admin handlers nâng cao. Admin page tồn tại có thể là dead UI
-Hệ quả: vCr/Amb không phát hiện được fraud (creator boost view), không xử lý được khi TikTok/YouTube revise số liệu, không tra ngược được khi audit compliance, không phát hiện được ngày crawl bị thiếu
-User confirm 2026-05-07: 'Cái này quan trọng, để ở P1 nhưng ở vị trí trên cùng luôn. Vì lúc làm TCB tôi đã đánh giá kỹ rồi, nó ảnh hưởng nhiều lắm.'","P1","Port toàn bộ stack reconciliation từ TCB sang vCreator + Ambassador (KHÔNG tách snapshot port riêng — vì snapshot không có engine = data lưu nhưng không dùng được)
-Effort tổng: ~5-7 tuần mỗi sản phẩm (làm song song được)
-Layer 1 (~1-2 tuần): Snapshot infrastructure — lưu lịch sử metric mỗi lần crawl per-day per-event
-Layer 2 (~1 tuần): Snapshot jobs — cron crawl bù sau event hết hạn + crawl bù ngày thiếu
-Layer 3 (~2-3 tuần): Engine đối chiếu tự động + 3 admin tools (processing, running, export)
-Phase 4 (~3-5 ngày): Test + rollout từng partner một
-Lưu ý: 3 collections cơ bản đã có ở vCr/Amb → cần align fields + migration data nếu có records cũ","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p1/15-reconciliation-engine-and-snapshot.md"
-"#31","TCB cho phép admin tạo creator + import content giúp họ; vCreator/Ambassador không có","• TCB: admin có flow 3 bước đầy đủ — (1) tạo creator account thay creator (flag IsCreateByAdmin), (2) link social channel cho creator, (3) bulk import content lịch sử của creator. Có theo dõi tiến độ + lưu lịch sử
-• vCreator: KHÔNG có flow nào — mọi creator phải tự đăng ký + tự link channel + tự submit content
-• Ambassador: có CreateUser admin nhưng KHÁC mục đích — chỉ tạo user dạng 'referral seed' (tên/email giả, password = refCode) để gen referral code cho người khác đăng ký. KHÔNG phải proxy creator thật
-• Hệ quả: vCr/Amb buộc creator phải tự thao tác mọi thứ → mất cơ hội credit content cũ, onboarding partner mới khó, không thể migrate data từ system cũ, không có audit trail khi cần admin can thiệp","P1","Port flow 3 bước 'admin proxy creator' từ TCB sang vCr/Amb nếu có business need
-Effort: ~3-4 tuần mỗi sản phẩm (full 3 modules)
-Module 1 (~5-7 ngày): Admin tạo creator account thay creator — schema flag IsCreateByAdmin + admin handler + admin UI
-Module 2 (~3-5 ngày): Admin link social channel cho creator — tận dụng module crawl hiện có + skip-crawl option
-Module 3 (~7-10 ngày): Admin bulk import content + tracking — schema + handler + async update + admin UI
-Cần verify use case cụ thể: vCr có nhu cầu HR Vin import nhân viên + admin set up account giúp không? Amb có roadmap onboarding partner mới với data sẵn không?
-Ambassador cần đổi naming Create → CreateReferralSeed để tránh confuse với flow mới","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p1/31-admin-proxy-creator-flow.md"
-"#32","Concept ""mã nhân viên + binding partner"" — TCB đơn giản, vCreator chi tiết hơn nhiều, Ambassador chưa có","• Trong campaign B2B, creator đăng ký cần link với mã nhân viên của partner để verify 'là nhân viên thật'
-• TCB (đơn giản): admin tạo từng mã staff → user nhập mã → check tồn tại → bind partner. Chỉ có 9 fields (code, partner, isUsed). Không có thông tin nhân viên
-• vCreator (chi tiết hơn nhiều): admin import file Excel từ HR Vin với 18 fields (code, tên, phone, workplace 3 cấp Brand→Company→Unit, status terminated...). Có match engine với 10 cách xử lý (auto verify, mismatch phone, terminated, transferred...)
-• Ambassador: KHÔNG có concept này — không có cách verify creator là nhân viên thật của partner
-• Hệ quả: Ambassador onboarding partner mới phải làm verify thủ công ngoài hệ thống; TCB stuck với pattern cũ không xử lý được edge case (employee terminated, transferred); maintenance lệch khi feature mới chỉ build ở vCreator","P1","• vCreator là source of truth — pattern chi tiết, production tested cho Gen-Green/VinFast B2B
-• Phase 1 (~1-2 tuần): Ambassador port full — tạo schema + admin import Excel + match engine 10 actions
-• Phase 2 (~1 tuần): TCB extend hoặc giữ song song — Option A migrate ManageCode → EmployeeRegistry, Option B (recommended) giữ ManageCode legacy + thêm EmployeeRegistry cho campaign mới
-• Cần product confirm: workplace 3-tier có phù hợp Ambassador/TCB không, hay cần adapt? (Anker/HDBank có cấu trúc tương đương Vin?)
-• Tách từ gap #13 + revoke gap #23 'P3 KHÔNG port' (2026-05-07) — gap này thực ra là pattern tốt cần port","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p1/32-staff-code-employee-binding.md"
-"#9","TCB và vCreator thiếu cơ chế bảo vệ khi tính lại tiền thưởng cho content đã thay đổi trạng thái","• Khi content thay đổi trạng thái (vd: admin reject sau khi đã duyệt), hệ thống cần tính lại reward từ đầu cho từng ngày
-• Ambassador: có cơ chế bảo vệ — đánh dấu reward 'đang recheck' + reset cash về 0 trước khi loop tính lại. Có cron tự động hoàn thành recheck dở dang khi server restart
-• TCB: có dấu hiệu đã từng định build cơ chế này (có sẵn ô lưu 'đang recheck' trong DB) nhưng implementation dở dang — chỉ có logic xoá đánh dấu, KHÔNG có logic đánh dấu + cron recovery
-• vCreator: hoàn toàn không có gì — kể cả ô lưu trong DB cũng chưa có
-• Hệ quả: nếu server crash giữa quá trình recheck (deploy, OOM, scale) → reward bị tính sai lệch giữa các ngày. Không có cách phát hiện tự động → chỉ phát hiện khi creator khiếu nại hoặc finance audit","P2","• Port pattern recheck-with-safety từ Ambassador sang TCB và vCreator
-• TCB (~3-5 ngày): hoàn thiện partial implementation — thêm logic đánh dấu 'đang recheck' + reset cash + cron recovery khi server start
+"#15","🔝 TOP P1 — vCreator/Ambassador thiếu hệ thống đối chiếu (reconciliation) tiền thưởng + audit trail crawl chống fraud","• Đã có hệ thống đầy đủ — 3 layers
+• Layer 1: Lưu snapshot metric mỗi lần crawl (per-day per-event)
+• Layer 2: Cron crawl bù sau khi event hết hạn + cron crawl bù ngày thiếu
+• Layer 3: Engine đối chiếu tự động phân loại auto-approved/rejected/needs-review
+• Có 3 admin tools: processing, running, export","• ""Có chân không có thân""
+• Có 3 collections cơ bản (reconciliation, item, history) + admin page
+• KHÔNG có 3 services chính + 3 collections nâng cao + 3 admin handlers nâng cao
+• Admin page reconciliation có thể là dead UI","• Tương tự Ambassador
+• Có 3 collections cơ bản + admin page
+• KHÔNG có engine xử lý","Không phát hiện được fraud (creator boost view giả → trả tiền sai); không xử lý được khi TikTok/YouTube revise số liệu sau; không tra ngược được khi audit compliance; không phát hiện được ngày crawl bị thiếu","P1","• Port toàn bộ stack reconciliation từ TCB sang vCr/Amb (KHÔNG tách subset)
+• Layer 1 (~1-2 tuần): Snapshot infrastructure
+• Layer 2 (~1 tuần): Snapshot jobs (post-expiry crawl + makeup crawl)
+• Layer 3 (~2-3 tuần): Engine đối chiếu + 3 admin tools
+• Test + rollout (~3-5 ngày)
+• Total: ~5-7 tuần mỗi sản phẩm (làm song song được)","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p1/15-reconciliation-engine-and-snapshot.md"
+"#16","vCreator/Ambassador thiếu hệ thống đánh giá creator (review + rating) — phần tiếp nối của gap #2","• Có hệ thống đầy đủ
+• 5 tiêu chí review (Content Quality, Professionalism, Communication, On-Time Delivery, Performance)
+• OverallRating tự tính + RatingCache aggregate per-creator
+• Time-decay weight (review cũ giảm trọng số) — có nhưng có thể chưa hoàn thiện
+• Visibility private/public","• KHÔNG có gì
+• Sau khi gap #2 phase 1 hoàn thành (Ambassador port InfluencerProfile) thì port gap #16","• KHÔNG có gì
+• Cân nhắc skip nếu vCreator B2B workplace không có brand external
+• Nếu port: làm sau gap #2 phase 2 hoàn thành","Brand đánh giá creator cảm tính, không có dữ liệu khách quan; khó book lại creator giỏi với pool lớn; không có signal trust giữa các brand; creator không biết điểm yếu để cải thiện; không filter creator theo chất lượng","P1","• Port standalone sau gap #2 từng phase (Option A recommended)
+• Phase 1 (1-2 ngày): Schema 2 collections (profile_review, rating_cache)
+• Phase 2 (3-5 ngày): Service review CRUD
+• Phase 3 (2-3 ngày): Service rating aggregation (verify TCB code chưa hoàn thiện 100%)
+• Phase 4 (3-5 ngày): Admin handler + brand portal integration
+• Phase 5 (2-3 ngày): Test + rollout
+• Total: ~2 tuần mỗi sản phẩm","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p1/16-profile-review-rating.md"
+"#31","TCB cho phép admin tạo creator + import content giúp họ; vCreator/Ambassador không có","• Có flow 3 bước đầy đủ
+• Bước 1: CreateUser admin (creator có flag IsCreateByAdmin)
+• Bước 2: CreateUserSocial admin (link kênh TikTok/YouTube cho creator)
+• Bước 3: ImportContent admin (bulk import content lịch sử của creator)
+• Có theo dõi tiến độ + lưu lịch sử","• Có CreateUser admin nhưng KHÁC mục đích
+• Tạo user dạng ""referral seed"" (tên/email giả, password = refCode) để gen referral code
+• KHÔNG phải proxy creator thật
+• KHÔNG có CreateUserSocial admin + KHÔNG có ImportContent","• KHÔNG có flow nào
+• Chỉ có CreateUserContractManually (concept khác — tạo contract cho user đã tồn tại)
+• Mọi creator phải tự đăng ký + tự link channel + tự submit content","vCr/Amb buộc creator phải tự thao tác mọi thứ → mất cơ hội credit content cũ, onboarding partner mới khó (phải chờ creator tự đăng ký), không thể migrate data từ system cũ, không có audit trail khi cần admin can thiệp","P1","• Port flow 3 bước ""admin proxy creator"" từ TCB sang vCr/Amb nếu có business need
+• Module 1 (~5-7 ngày): Admin tạo creator account thay creator
+• Module 2 (~3-5 ngày): Admin link social channel cho creator
+• Module 3 (~7-10 ngày): Admin bulk import content + tracking
+• Total: ~3-4 tuần mỗi sản phẩm (full 3 modules)
+• Ambassador cần đổi naming Create → CreateReferralSeed để tránh confuse với flow mới","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p1/31-admin-proxy-creator-flow.md"
+"#32","Concept ""mã nhân viên + binding partner"" — TCB đơn giản, vCreator chi tiết hơn nhiều, Ambassador chưa có","• Có concept đơn giản (ManageCode 9 fields)
+• Admin tạo từng mã staff → user nhập mã → check tồn tại → bind partner
+• KHÔNG có thông tin nhân viên (tên, phone, workplace)
+• KHÔNG có match engine xử lý edge case","• KHÔNG có concept này
+• Không có cách verify creator là nhân viên thật của partner","• Có pattern chi tiết nhất (EmployeeRegistry 18 fields) — source of truth
+• Admin import file Excel từ HR Vin
+• Workplace 3-tier (Brand → Company → Unit) + status terminated
+• Match engine với 10 cách xử lý (auto verify, mismatch phone, terminated, transferred...)","Ambassador onboarding partner mới phải làm verify thủ công ngoài hệ thống; TCB stuck với pattern cũ không xử lý được edge case (employee terminated, transferred); maintenance lệch khi feature mới chỉ build ở vCreator","P1","• vCreator là source of truth — pattern chi tiết, production tested cho Gen-Green/VinFast B2B
+• Phase 1 (~1-2 tuần): Ambassador port full — schema + admin import Excel + match engine 10 actions
+• Phase 2 (~1 tuần): TCB Option B (recommended) giữ ManageCode legacy + thêm EmployeeRegistry cho campaign mới
+• Cần product confirm: workplace 3-tier có phù hợp Ambassador/TCB không?
+• Tách từ gap #13 + revoke gap #23 ""P3 KHÔNG port"" — gap này thực ra là pattern tốt cần port","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p1/32-staff-code-employee-binding.md"
+"#1","Code rút tiền user là dead code, cần dọn","• Có API POST /withdraw + frontend service nhưng 0 caller pages
+• UI chỉ hiển thị ""Bạn chưa đến kỳ thanh toán""
+• Admin-driven runtime","• Có frontend service orphan (gọi sẽ 404)
+• Admin-driven runtime","• Có API POST /withdraw + frontend service nhưng 0 caller pages
+• Admin-driven runtime (giống TCB)","3 dự án đều admin-driven — không gây revenue loss hay UX issue, chỉ là tech debt. Code dead có thể gây confuse cho dev mới đọc codebase","P2","• Verify log API gateway không có client mobile/external gọi POST /withdraw
+• Xóa endpoint + frontend service ở 3 sản phẩm
+• Effort: ~1-2 ngày","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p2/01-ambassador-withdraw-bank-validation.md"
+"#9","TCB và vCreator thiếu cơ chế bảo vệ khi tính lại tiền thưởng cho content đã thay đổi trạng thái","• Có dấu hiệu đã từng định build cơ chế này
+• Có sẵn ô lưu ""đang recheck"" trong DB
+• NHƯNG implementation dở dang — chỉ có logic xoá đánh dấu, KHÔNG có logic đánh dấu + cron recovery","• Có cơ chế bảo vệ đầy đủ
+• Đánh dấu reward ""đang recheck"" + reset cash về 0 trước khi loop tính lại
+• Có cron tự động hoàn thành recheck dở dang khi server restart","• Hoàn toàn không có gì
+• Kể cả ô lưu trong DB cũng chưa có","Nếu server crash giữa quá trình recheck (deploy, OOM, scale) → reward bị tính sai lệch giữa các ngày. Không có cách phát hiện tự động → chỉ phát hiện khi creator khiếu nại hoặc finance audit","P2","• Port pattern recheck-with-safety từ Ambassador sang TCB và vCreator
+• TCB (~3-5 ngày): hoàn thiện partial implementation — thêm logic đánh dấu + reset cash + cron recovery
 • vCreator (~5-7 ngày): port full + migration data thêm ô lưu vào cấu trúc reward
 • Có thể combine với gap #8 cho vCreator — cùng touch reward engine
-• Defer P2 vì: tần suất crash thấp, impact 1 lần crash thường nhỏ (vài content), có workaround manual (admin trigger recheck lại)","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p2/09-recheck-recovery-pattern.md"
-"#33","Ambassador có cơ chế ""tạo user giả để reserve referral code"", TCB và vCreator không có","• Marketing campaign promotion thường dùng 'system referral code' — code đặc biệt reserve cho campaign (vd: VIP2024, TET2025) để track user đăng ký từ nguồn nào
-• Ambassador: admin có thể tạo 'user giả' (tên/email giả, password=refCode) sở hữu referral code mong muốn. User thật đăng ký với code này → tự động được attach inviter relation → track campaign
-• TCB/vCreator: cùng có model Referral.Codes giống Amb nhưng KHÔNG có flow admin tạo seed user → marketing không thể reserve code trước khi user đăng ký
-• Hệ quả: TCB/vCr thiếu công cụ campaign tracking, không thể co-marketing với partner (cấp code riêng), không implement được influencer ambassador program (cấp code cho KOL không phải creator platform)","P2","Port concept 'referral seed user' từ Ambassador sang TCB/vCr nếu marketing có nhu cầu campaign promotion
-Effort: ~3-5 ngày dev mỗi sản phẩm (nhỏ — chỉ thêm 1 admin endpoint)
-Việc cần làm: admin endpoint POST /admin/users/referral-seed nhận body {ref: 'VIP2024'} → tạo user giả với name='ref-VIP2024' + Referral.Codes chứa code admin nhập
-Recommend: thêm flag IsReferralSeed=true để filter user giả ra khỏi list creator + skip notification
-Cần verify: Marketing TCB/vCr có nhu cầu campaign promotion với code reserve không? Nếu không → defer P3","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p2/33-ambassador-referral-seed-user.md"
-"#10","TCB và Ambassador dùng 2 cơ chế khác nhau để chặn cảnh báo Telegram trùng lặp — cần unify","• Cả 2 đều giải quyết được vấn đề Telegram spam (KHÔNG phải bug)
-• TCB dùng cơ chế 'khóa cứng campaign': khi vượt ngân sách → block toàn bộ tính reward → vĩnh viễn không gửi Telegram lại. Hệ quả: campaign tê liệt, admin phải manual reset
-• Ambassador dùng cơ chế 'khóa thông minh + cờ alert': khi vượt → ghi nhận đã alert + chỉ block submit content. Reward calc vẫn chạy. Tự động unblock khi admin tăng budget
-• Hệ quả: 2 trải nghiệm operations khác nhau hoàn toàn; dev mới đọc code dễ đoán nhầm 'TCB thiếu feature'; vCreator port (gap #8) không biết theo pattern nào","P3","• Unify 2 cơ chế — chọn pattern Ambassador làm chuẩn cho cả 3 sản phẩm
-• Lý do chọn Ambassador: campaign không tê liệt khi vượt ngưỡng, tự động hồi phục khi admin tăng budget, dễ extend cho alert khác
+• Defer P2: tần suất crash thấp, impact 1 lần crash thường nhỏ, có workaround manual","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p2/09-recheck-recovery-pattern.md"
+"#33","Ambassador có cơ chế ""tạo user giả để reserve referral code"", TCB và vCreator không có","• Có model Referral.Codes giống Ambassador
+• KHÔNG có flow admin tạo seed user
+• Code chỉ tạo khi user thật đăng ký (không reserve trước được)","• Admin có thể tạo ""user giả"" sở hữu referral code mong muốn
+• User thật đăng ký với code này → tự động được attach inviter relation → track campaign
+• Tên user giả: ""ref-{code}"", email giả, password = refCode","• Có model Referral.Codes giống Amb
+• KHÔNG có flow admin tạo seed user (giống TCB)","TCB/vCr thiếu công cụ campaign tracking, không thể co-marketing với partner (cấp code riêng), không implement được influencer ambassador program (cấp code cho KOL không phải creator platform)","P2","• Port concept ""referral seed user"" từ Ambassador sang TCB/vCr nếu marketing có nhu cầu
+• Effort: ~3-5 ngày dev mỗi sản phẩm (nhỏ — chỉ thêm 1 admin endpoint)
+• Việc cần làm: admin endpoint POST /admin/users/referral-seed nhận body {ref: ""VIP2024""} → tạo user giả với name=""ref-VIP2024"" + Referral.Codes chứa code admin nhập
+• Recommend: thêm flag IsReferralSeed=true để filter user giả ra khỏi list creator + skip notification
+• Cần verify: Marketing TCB/vCr có nhu cầu campaign promotion với code reserve không? Nếu không → defer P3","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p2/33-ambassador-referral-seed-user.md"
+"#10","TCB và Ambassador dùng 2 cơ chế khác nhau để chặn cảnh báo Telegram trùng lặp — cần unify","• Cơ chế ""khóa cứng campaign""
+• Khi vượt ngân sách → block toàn bộ tính reward → vĩnh viễn không gửi Telegram lại
+• Hệ quả: campaign tê liệt, admin phải manual reset","• Cơ chế ""khóa thông minh + cờ alert""
+• Khi vượt → ghi nhận đã alert + chỉ block submit content
+• Reward calc vẫn chạy. Tự động unblock khi admin tăng budget","• KHÔNG có hệ thống cảnh báo Telegram (thuộc gap #8)
+• Khi gap #8 port từ Ambassador → tự động dùng pattern Ambassador","Cả 2 đều giải quyết được vấn đề Telegram spam (KHÔNG phải bug). Nhưng 2 trải nghiệm operations khác nhau hoàn toàn; dev mới đọc code dễ đoán nhầm ""TCB thiếu feature""; vCreator port (gap #8) không biết theo pattern nào","P3","• Unify 2 cơ chế — chọn pattern Ambassador làm chuẩn cho cả 3 sản phẩm
+• Lý do chọn Ambassador: campaign không tê liệt khi vượt ngưỡng, tự động hồi phục khi admin tăng budget
 • Phase 1: TCB thêm cờ alert dedup (safety net, ~1 ngày)
-• Phase 2: TCB bỏ logic 'khóa cứng campaign' — reward vẫn tính nhưng không tạo reward mới khi không có cash (~2-3 ngày)
+• Phase 2: TCB bỏ logic ""khóa cứng campaign"" (~2-3 ngày)
 • Phase 3: TCB tự động unblock khi admin tăng budget (~1 ngày)
 • Phase 4: Test + rollout (~1 ngày)
-• Effort tổng: ~5-6 ngày dev. Nên làm SAU gap #8 (vCreator port) để tham chiếu pattern Ambassador từ vCreator","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p3/10-telegram-alert-deduplication.md"
+• Tổng: ~5-6 ngày dev. Nên làm SAU gap #8 (vCreator port) để tham chiếu pattern Ambassador từ vCreator","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p3/10-telegram-alert-deduplication.md"
