@@ -69,6 +69,8 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 38 | **Thêm tên/mã nội bộ cho campaign (event code)** — TCB có field `Event.Code` + wire vào tất cả display layer (admin, dashboard, email, export, search). Format `[code] name`. vCr/Amb không có → BTC khó communicate, dễ nhầm campaign khi nhiều cái chạy song song. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/38-event-code-internal-name.md) | Campaign & Event | TCB → vCreator + Ambassador | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
 | 39 | **Tag phân loại cho campaign (event tags)** — TCB có `Event.EventTags []AppID` + 7 default seed tag (Nhận diện thương hiệu, Ra mắt sản phẩm, Theo mùa, ...) + admin filter/display với color. vCr/Amb có model `TagRaw` đã sẵn nhưng `EventRaw` chưa wire field `EventTags`. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/39-event-tags-categorization.md) | Campaign & Event | TCB → vCreator + Ambassador | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
 | 40 | **Staff account password lifecycle (invite email + forgot password + self-service)** — TCB có 18 methods (980 LOC) đầy đủ: `InviteStaff`, `ResendInvite`, `BulkInvite`, `VerifyInviteToken`, `AcceptInvite`, `ForgotPassword`, `ResetPassword`, `UpdateMyPassword`, `GenerateAuthCode/ExchangeAuthCode` + fields `InviteToken/ResetToken` + email templates SendGrid. vCr/Amb chỉ có 8 methods (453 LOC ~46%) — admin tạo password thủ công, copy gửi qua chat. **Vấn đề bảo mật + ops**. Initial P1 (2026-05-10) — user self-listed gap. [Detail](./gaps/p1/40-staff-account-password-and-invite-flow.md) | Infrastructure & Misc | TCB → vCreator + Ambassador | 4 | 4 | 3 | 4 | **15** | 🟠 P1 |
+| 41 | **Đổi article/news editor từ HTML sang Markdown + upload ảnh** — vCreator dùng `braft-editor` (HTML), package `@uiw/react-md-editor` đã cài nhưng chưa wire. Pain: HTML tệ, không copy giữa bài giữ format, khó dùng AI soạn, preview cực. Initial P1 (2026-05-10) — user self-listed gap. [Detail](./gaps/p1/41-content-editor-html-to-markdown.md) | Content & Media | vCr (làm trước) → TCB + Ambassador | 3 | 3 | 4 | 4 | **14** | 🟠 P1 |
+| 42 | **Cache cover image của top content về MinIO** — TCB vừa làm (commits `dcd358bd` + `7197a1bd`): file `cover_host.go` 159 LOC + caller wire. Lỗi ảnh hỏng do social CDN expire signature, "xuất hiện liên tục". vCr/Amb có MinIO module nhưng chưa có service. Initial P1 (2026-05-10) — user self-listed gap, bug active. [Detail](./gaps/p1/42-cache-content-cover-to-minio.md) | Content & Media | TCB → vCreator + Ambassador | 4 | 4 | 4 | 4 | **16** | 🟠 P1 |
 
 ---
 
@@ -89,7 +91,7 @@ Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** 
 - Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
 - Gap #2 ban đầu P1 (auto-approve influencer + notification) → rescoped thành gap kiến trúc → reclassified P0 sau khi user confirm business intent "creator pool unification".
 
-### 🟠 P1 — Sprint tới (10 items, sau khi reclassify #25→P3, #28→P3, #07 P2→P1, #18 P2→P1, #20 P2→P1, #24 P3→P1, +#34 #40 mới — 2026-05-10)
+### 🟠 P1 — Sprint tới (12 items, sau khi reclassify #25→P3, #28→P3, #07 P2→P1, #18 P2→P1, #20 P2→P1, #24 P3→P1, +#34 #40 #41 #42 mới — 2026-05-10)
 
 **🔝 Top P1**: Gap #15 (Reconciliation engine + snapshot, gộp #6+#15) — user confirm là quan trọng nhất, port full stack (~5-7 tuần mỗi sản phẩm).
 Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
@@ -106,6 +108,8 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 24 | **Campaign matching engine** TCB (dang dở) → vCr/Amb (sau khi TCB stable) | TCB stable 2-3 tuần + vCr/Amb mỗi cái 3-4 tuần | AI-assisted creator selection, AT-Core integration |
 | 34 | **Threads binding** Amb → vCr (bổ sung user struct) + Amb → TCB (port full) | vCr 3-5 ngày + TCB 1-2 tuần | Threads growing fast, vCr partial chỉ track view chứ chưa bind, TCB chưa có gì |
 | 40 | **Staff password lifecycle (invite + forgot + self-service)** TCB → vCr + Amb | ~1 tuần mỗi sản phẩm | Vấn đề bảo mật: password truyền qua chat. TCB có 980 LOC, vCr/Amb mới 453 LOC (~46%) |
+| 41 | **Article/News editor HTML → Markdown** vCr (làm trước) → TCB + Amb | 3-5 ngày mỗi sản phẩm | Pain: HTML tệ, khó AI-assist. vCr đã có md-editor package cài sẵn |
+| 42 | **Cache content cover về MinIO** TCB → vCr + Amb | 3-5 ngày mỗi sản phẩm | Bug active "xuất hiện liên tục". TCB vừa fix với 159 LOC pattern. MinIO infra đã sẵn |
 
 ### 🟡 P2 — Backlog (12 items, sau khi #7 #18 #20 lên P1, #1 xuống P3, #19 #21 P3→P2, #29 dropped, +#36 #37 #38 #39 mới)
 Score 8-11. Làm khi có resource.
