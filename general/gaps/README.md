@@ -57,6 +57,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 21 | Ambassador Mission/Gamification system — nhiệm vụ + thưởng + level (Wild Rift origin, giờ generic) | [p2/21-ambassador-mission-gamification.md](./p2/21-ambassador-mission-gamification.md) |
 | 33 | Ambassador có cơ chế "tạo user giả để reserve referral code", TCB và vCreator không có | [p2/33-ambassador-referral-seed-user.md](./p2/33-ambassador-referral-seed-user.md) |
 | 36 | vCreator cho phép resubmit link đã reject ở camp khác (TCB/Amb không có) | [p2/36-vcreator-allow-resubmit-rejected-content.md](./p2/36-vcreator-allow-resubmit-rejected-content.md) |
+| 37 | Chuẩn hóa lý do từ chối content — TCB có 14 tag chuẩn + analytics, vCr/Amb chưa có | [p2/37-standardize-content-rejection-tags.md](./p2/37-standardize-content-rejection-tags.md) |
 
 ---
 
