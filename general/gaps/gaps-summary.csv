@@ -13,6 +13,25 @@
 • Phase 2: Build engine tính thưởng có check ngân sách + chống trùng (1.5-2 tuần)
 • Phase 3: Setup channel Telegram riêng cho vCreator để nhận cảnh báo (3 ngày)
 • Phase 4: Test thực tế với campaign nhỏ trước khi rollout production (3 ngày)","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p0/08-budget-alert-system.md"
+"#31","TCB cho phép admin tạo creator + import content giúp họ; vCreator/Ambassador không có","• TCB: admin có flow 3 bước đầy đủ — (1) tạo creator account thay creator (flag IsCreateByAdmin), (2) link social channel cho creator, (3) bulk import content lịch sử của creator. Có theo dõi tiến độ + lưu lịch sử
+• vCreator: KHÔNG có flow nào — mọi creator phải tự đăng ký + tự link channel + tự submit content
+• Ambassador: có CreateUser admin nhưng KHÁC mục đích — chỉ tạo user dạng 'referral seed' (tên/email giả, password = refCode) để gen referral code cho người khác đăng ký. KHÔNG phải proxy creator thật
+• Hệ quả: vCr/Amb buộc creator phải tự thao tác mọi thứ → mất cơ hội credit content cũ, onboarding partner mới khó, không thể migrate data từ system cũ, không có audit trail khi cần admin can thiệp","P1","Port flow 3 bước 'admin proxy creator' từ TCB sang vCr/Amb nếu có business need
+Effort: ~3-4 tuần mỗi sản phẩm (full 3 modules)
+Module 1 (~5-7 ngày): Admin tạo creator account thay creator — schema flag IsCreateByAdmin + admin handler + admin UI
+Module 2 (~3-5 ngày): Admin link social channel cho creator — tận dụng module crawl hiện có + skip-crawl option
+Module 3 (~7-10 ngày): Admin bulk import content + tracking — schema + handler + async update + admin UI
+Cần verify use case cụ thể: vCr có nhu cầu HR Vin import nhân viên + admin set up account giúp không? Amb có roadmap onboarding partner mới với data sẵn không?
+Ambassador cần đổi naming Create → CreateReferralSeed để tránh confuse với flow mới","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p1/31-admin-proxy-creator-flow.md"
+"#32","Concept ""mã nhân viên + binding partner"" — TCB đơn giản, vCreator chi tiết hơn nhiều, Ambassador chưa có","• Trong campaign B2B, creator đăng ký cần link với mã nhân viên của partner để verify 'là nhân viên thật'
+• TCB (đơn giản): admin tạo từng mã staff → user nhập mã → check tồn tại → bind partner. Chỉ có 9 fields (code, partner, isUsed). Không có thông tin nhân viên
+• vCreator (chi tiết hơn nhiều): admin import file Excel từ HR Vin với 18 fields (code, tên, phone, workplace 3 cấp Brand→Company→Unit, status terminated...). Có match engine với 10 cách xử lý (auto verify, mismatch phone, terminated, transferred...)
+• Ambassador: KHÔNG có concept này — không có cách verify creator là nhân viên thật của partner
+• Hệ quả: Ambassador onboarding partner mới phải làm verify thủ công ngoài hệ thống; TCB stuck với pattern cũ không xử lý được edge case (employee terminated, transferred); maintenance lệch khi feature mới chỉ build ở vCreator","P1","• vCreator là source of truth — pattern chi tiết, production tested cho Gen-Green/VinFast B2B
+• Phase 1 (~1-2 tuần): Ambassador port full — tạo schema + admin import Excel + match engine 10 actions
+• Phase 2 (~1 tuần): TCB extend hoặc giữ song song — Option A migrate ManageCode → EmployeeRegistry, Option B (recommended) giữ ManageCode legacy + thêm EmployeeRegistry cho campaign mới
+• Cần product confirm: workplace 3-tier có phù hợp Ambassador/TCB không, hay cần adapt? (Anker/HDBank có cấu trúc tương đương Vin?)
+• Tách từ gap #13 + revoke gap #23 'P3 KHÔNG port' (2026-05-07) — gap này thực ra là pattern tốt cần port","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p1/32-staff-code-employee-binding.md"
 "#9","TCB và vCreator thiếu cơ chế bảo vệ khi tính lại tiền thưởng cho content đã thay đổi trạng thái","• Khi content thay đổi trạng thái (vd: admin reject sau khi đã duyệt), hệ thống cần tính lại reward từ đầu cho từng ngày
 • Ambassador: có cơ chế bảo vệ — đánh dấu reward 'đang recheck' + reset cash về 0 trước khi loop tính lại. Có cron tự động hoàn thành recheck dở dang khi server restart
 • TCB: có dấu hiệu đã từng định build cơ chế này (có sẵn ô lưu 'đang recheck' trong DB) nhưng implementation dở dang — chỉ có logic xoá đánh dấu, KHÔNG có logic đánh dấu + cron recovery
@@ -22,6 +41,14 @@
 • vCreator (~5-7 ngày): port full + migration data thêm ô lưu vào cấu trúc reward
 • Có thể combine với gap #8 cho vCreator — cùng touch reward engine
 • Defer P2 vì: tần suất crash thấp, impact 1 lần crash thường nhỏ (vài content), có workaround manual (admin trigger recheck lại)","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p2/09-recheck-recovery-pattern.md"
+"#33","Ambassador có cơ chế ""tạo user giả để reserve referral code"", TCB và vCreator không có","• Marketing campaign promotion thường dùng 'system referral code' — code đặc biệt reserve cho campaign (vd: VIP2024, TET2025) để track user đăng ký từ nguồn nào
+• Ambassador: admin có thể tạo 'user giả' (tên/email giả, password=refCode) sở hữu referral code mong muốn. User thật đăng ký với code này → tự động được attach inviter relation → track campaign
+• TCB/vCreator: cùng có model Referral.Codes giống Amb nhưng KHÔNG có flow admin tạo seed user → marketing không thể reserve code trước khi user đăng ký
+• Hệ quả: TCB/vCr thiếu công cụ campaign tracking, không thể co-marketing với partner (cấp code riêng), không implement được influencer ambassador program (cấp code cho KOL không phải creator platform)","P2","Port concept 'referral seed user' từ Ambassador sang TCB/vCr nếu marketing có nhu cầu campaign promotion
+Effort: ~3-5 ngày dev mỗi sản phẩm (nhỏ — chỉ thêm 1 admin endpoint)
+Việc cần làm: admin endpoint POST /admin/users/referral-seed nhận body {ref: 'VIP2024'} → tạo user giả với name='ref-VIP2024' + Referral.Codes chứa code admin nhập
+Recommend: thêm flag IsReferralSeed=true để filter user giả ra khỏi list creator + skip notification
+Cần verify: Marketing TCB/vCr có nhu cầu campaign promotion với code reserve không? Nếu không → defer P3","https://github.com/viewboost/accesstrade-docs/tree/main/general/gaps/p2/33-ambassador-referral-seed-user.md"
 "#10","TCB và Ambassador dùng 2 cơ chế khác nhau để chặn cảnh báo Telegram trùng lặp — cần unify","• Cả 2 đều giải quyết được vấn đề Telegram spam (KHÔNG phải bug)
 • TCB dùng cơ chế 'khóa cứng campaign': khi vượt ngân sách → block toàn bộ tính reward → vĩnh viễn không gửi Telegram lại. Hệ quả: campaign tê liệt, admin phải manual reset
 • Ambassador dùng cơ chế 'khóa thông minh + cờ alert': khi vượt → ghi nhận đã alert + chỉ block submit content. Reward calc vẫn chạy. Tự động unblock khi admin tăng budget

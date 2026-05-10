@@ -29,7 +29,10 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 
 ## P1 — Sprint tới
 
-(Gap #2 đã reclassify P0 — xem section P0 ở trên)
+| # | Gap | File |
+|---|---|---|
+| 31 | TCB cho phép admin tạo creator + import content giúp họ; vCr/Amb không có | [p1/31-admin-proxy-creator-flow.md](./p1/31-admin-proxy-creator-flow.md) |
+| 32 | Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn | [p1/32-staff-code-employee-binding.md](./p1/32-staff-code-employee-binding.md) |
 
 Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chưa có file detail:
 - Gap #3 — Reward V2 cho vCreator
@@ -55,6 +58,7 @@ Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chư
 | 6 | Reconciliation engine port (chưa viết) | _(pending)_ |
 | 7 | Analytics Dashboard port (chưa viết) | _(pending)_ |
 | 9 | TCB và vCreator thiếu cơ chế bảo vệ khi tính lại reward cho content đã thay đổi trạng thái | [p2/09-recheck-recovery-pattern.md](./p2/09-recheck-recovery-pattern.md) |
+| 33 | Ambassador có cơ chế "tạo user giả để reserve referral code", TCB và vCreator không có | [p2/33-ambassador-referral-seed-user.md](./p2/33-ambassador-referral-seed-user.md) |
 
 ---
 
