@@ -46,8 +46,8 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 15 | **🔝 TOP P1 — vCreator/Ambassador thiếu hệ thống đối chiếu (reconciliation) tiền thưởng + audit trail crawl chống fraud** — Combined gap #6 + #15 (2026-05-07). vCr/Amb có 3 models cơ bản + admin page nhưng KHÔNG có 3 services chính + 3 models nâng cao + admin tools nâng cao. User confirm: "Cái này quan trọng, để ở P1 nhưng ở vị trí trên cùng luôn. Vì lúc làm TCB tôi đã đánh giá kỹ rồi, nó ảnh hưởng nhiều lắm." Port full stack 3 layers (snapshot + jobs + engine). [Detail](./gaps/p1/15-reconciliation-engine-and-snapshot.md) | Reconciliation & Audit | TCB → vCr/Amb (full stack) | 5 | 4 | 2 | 4 | **15** | 🟠 P1 (top) |
 | 16 | **vCreator/Ambassador thiếu hệ thống đánh giá creator (review + rating)** — TCB có ProfileReview (5 tiêu chí) + RatingCache aggregate per-creator. vCr/Amb không có gì. **Phần tiếp nối của gap #2** — phải có InfluencerProfile trước để reference profile_id. Position: sau #15, trước #31. [Detail](./gaps/p1/16-profile-review-rating.md) | Targeting & Matching | TCB → vCr/Amb (sau gap #2) | 4 | 3 | 2 | 4 | **13** | 🟠 P1 |
 | 17 | **vCreator/Ambassador có thể bị broken avatar khi URL social expire** — TCB cache về MinIO permanent + resize 3 sizes. vCr/Amb dùng URL social trực tiếp (TikTok/Google/FB có expire). Infrastructure (MinIO + resizeimage) đã có sẵn ở vCr/Amb, chỉ thiếu service layer. Reclassified P1→P2 (2026-05-07): risk theory chứ không phải bug active. [Detail](./gaps/p2/17-upload-avatar-cache.md) | Content & Media | TCB → vCr/Amb | 3 | 3 | 4 | 4 | **14** | 🟡 P2 |
-| 18 | **TCB BudgetInfo struct (vs Ambassador)** — Ambassador đã có pre-compute UsedPercent giúp dashboard query nhanh, TCB chưa | Campaign & Event | Ambassador → TCB | 2 | 2 | 4 | 1 | **9** | 🟡 P2 |
-| 19 | **vCreator Extended Period mode** — feature đặc thù single-brand, TCB/Amb không có | Campaign & Event | KHÔNG port (vCreator-specific) | 2 | 1 | 1 | 1 | **5** | ⚪ P3 |
+| 18 | **TCB BudgetInfo struct (vs Ambassador) — pre-compute UsedPercent** — Ambassador có `BudgetInfo{Total,Used,Remain,UsedPercent}` pre-compute sẵn, TCB rải flat fields phải tính % mỗi request, vCr không có budget. Reclassified P2→P1 (2026-05-10): **liên quan #8** — làm chung lúc port budget control system sang vCr (cùng refactor BudgetInfo cho cả 3 sản phẩm consistent). | Campaign & Event | Ambassador → TCB + vCr (gắn theo #8) | 2 | 2 | 4 | 4 | **12** | 🟠 P1 |
+| 19 | **vCreator Extended Period mode** — cho phép content post sau event endAt được ghi nhận với ngày map về kỳ kế toán cũ. TCB/Amb không có. Reclassified P3→P2 (2026-05-10): user confirm cần giữ trong backlog, feature có business value rõ (kỳ kế toán linh hoạt). [Detail](./gaps/p2/19-vcreator-extended-period-mode.md) | Campaign & Event | vCreator → TCB/Amb (selective, cần product confirm) | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 20 | **Ambassador Affiliate suite** (campaign + contract + links + mapping) — Ambassador-only, KHÔNG port được | Infrastructure | KHÔNG port | 5 | 1 | 1 | 1 | **8** | 🟡 P2 |
 | 21 | **Ambassador Mission/WildRift gamification** — Ambassador-specific business model | Content & Media | KHÔNG port | 2 | 1 | 1 | 1 | **5** | ⚪ P3 |
 | 22 | **vCreator Workplace 3-tier (Brand→Company→Unit)** — vCreator-specific B2B onboarding | User & Auth | KHÔNG port | 2 | 1 | 1 | 1 | **5** | ⚪ P3 |
@@ -81,7 +81,7 @@ Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** 
 - Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
 - Gap #2 ban đầu P1 (auto-approve influencer + notification) → rescoped thành gap kiến trúc → reclassified P0 sau khi user confirm business intent "creator pool unification".
 
-### 🟠 P1 — Sprint tới (5 items, sau khi reclassify #25→P3, #28→P3, #07 P2→P1 — 2026-05-10)
+### 🟠 P1 — Sprint tới (6 items, sau khi reclassify #25→P3, #28→P3, #07 P2→P1, #18 P2→P1 — 2026-05-10)
 
 **🔝 Top P1**: Gap #15 (Reconciliation engine + snapshot, gộp #6+#15) — user confirm là quan trọng nhất, port full stack (~5-7 tuần mỗi sản phẩm).
 Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
@@ -93,15 +93,15 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 31 | **Admin proxy creator flow** TCB → vCr/Amb (selective) | 2-3 tuần | Admin tạo creator + import content giúp họ |
 | 32 | **Mã nhân viên + binding partner** vCreator → Amb (full) + vCr → TCB (extend) | 3-4 tuần | EmployeeRegistry 18 fields + match engine |
 | 7 | **TCB Next.js Dashboard executive** → vCr/Amb | 4-6 tuần mỗi sản phẩm | Executive view ~10 sections, cần stakeholder confirm. Note: dashboard cũ admin Umi vCr có filter 3 tầng workplace cải tiến hơn |
+| 18 | **BudgetInfo struct unify** Amb → TCB + vCr | <1 ngày backend | **Liên quan #8** — làm chung lúc port budget sang vCr. Pre-compute UsedPercent cho dashboard nhanh + 3 sản phẩm consistent |
 
-### 🟡 P2 — Backlog (9 items, sau khi #7 lên P1, #1 xuống P3)
+### 🟡 P2 — Backlog (9 items, sau khi #7 #18 lên P1, #1 xuống P3, #19 P3→P2)
 Score 8-11. Làm khi có resource.
 
 | # | Gap | Lý do P2 |
 |---|---|---|
 | 6 | TCB Reconciliation engine port | Effort lớn (~1380 LOC + models + admin), business value chưa rõ với vCr/Amb |
 | 14 | ContentImportTracking | Chỉ làm nếu vCr/Amb có nhu cầu bulk import |
-| 18 | BudgetInfo struct migration TCB | Cosmetic improvement, không critical |
 | 20 | Affiliate (Ambassador-only) | Không port được, document để stakeholder biết |
 | 29-30 | Process improvement (load_data sync, telegram unify) | Không tính năng product, là DevOps task |
 

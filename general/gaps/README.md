@@ -49,6 +49,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | ~~6~~ | ~~Reconciliation engine port~~ — **gộp vào gap #15** (P1 top) | (merged → #15) |
 | 9 | TCB và vCreator thiếu cơ chế bảo vệ khi tính lại reward cho content đã thay đổi trạng thái | [p2/09-recheck-recovery-pattern.md](./p2/09-recheck-recovery-pattern.md) |
 | 17 | vCreator/Ambassador có thể bị broken avatar khi URL social expire | [p2/17-upload-avatar-cache.md](./p2/17-upload-avatar-cache.md) |
+| 19 | vCreator Extended Period mode — ghi nhận content sau event endAt + map về kỳ kế toán cũ | [p2/19-vcreator-extended-period-mode.md](./p2/19-vcreator-extended-period-mode.md) |
 | 33 | Ambassador có cơ chế "tạo user giả để reserve referral code", TCB và vCreator không có | [p2/33-ambassador-referral-seed-user.md](./p2/33-ambassador-referral-seed-user.md) |
 
 ---
@@ -63,7 +64,6 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 1 | Withdraw — 3 dự án đều admin-driven, dead code endpoint cần dọn dẹp | [p3/01-ambassador-withdraw-bank-validation.md](./p3/01-ambassador-withdraw-bank-validation.md) |
 
 Các gap P3 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chưa có file detail:
-- Gap #19 — vCreator Extended Period mode
 - Gap #20 — Ambassador Affiliate suite
 - Gap #21 — Ambassador Mission/WildRift gamification
 - Gap #22 — vCreator Workplace 3-tier
