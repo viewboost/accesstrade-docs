@@ -275,6 +275,7 @@ Nếu Group A quá lớn (chiếm gần 50% codebase), cân nhắc extract thàn
 - [inventory-techcombank.md](./inventory-techcombank.md) — 458 dòng, 29 services, 85 models
 - [inventory-vcreator.md](./inventory-vcreator.md) — 250 dòng, 15 services, 68 models
 - [inventory-ambassador.md](./inventory-ambassador.md) — 250 dòng, 16 services, 66+ models
+- [services-detailed.md](./services-detailed.md) — **Detailed inventory**: LOC + exported functions per service, grouped by domain. Cho biết file nào synced (LOC giống), file nào đã divergent (LOC khác).
 - [verification-report.md](./verification-report.md) — kết quả spot-check + corrections
 
 > **Verification status**: Matrix này đã được rebuild **100% từ ground truth filesystem** (không trust phân loại của agent). Counts khớp với `find` actual. Caveat duy nhất: descriptions từ agent có thể chưa hoàn toàn chính xác — verify thêm cần đọc code thật.
