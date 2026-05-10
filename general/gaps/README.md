@@ -36,8 +36,6 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 31 | TCB cho phép admin tạo creator + import content giúp họ; vCr/Amb không có | [p1/31-admin-proxy-creator-flow.md](./p1/31-admin-proxy-creator-flow.md) |
 | 32 | Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn | [p1/32-staff-code-employee-binding.md](./p1/32-staff-code-employee-binding.md) |
 
-Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chưa có file detail:
-- Gap #28 — Multi-tenant Partner unify
 
 ---
 
@@ -72,6 +70,7 @@ Các gap P3 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chư
 - Gap #23 — vCreator registry_match HR engine
 - Gap #24 — TCB Campaign matching engine
 - Gap #26 — TCB transcript scoring (LLM)
+- Gap #28 — Multi-tenant Partner unify (architectural debt, defer)
 
 ---
 
