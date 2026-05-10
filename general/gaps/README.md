@@ -35,6 +35,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 16 | vCreator/Ambassador thiếu hệ thống đánh giá creator (review + rating) — phần tiếp nối của gap #2 | [p1/16-profile-review-rating.md](./p1/16-profile-review-rating.md) |
 | 31 | TCB cho phép admin tạo creator + import content giúp họ; vCr/Amb không có | [p1/31-admin-proxy-creator-flow.md](./p1/31-admin-proxy-creator-flow.md) |
 | 32 | Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn | [p1/32-staff-code-employee-binding.md](./p1/32-staff-code-employee-binding.md) |
+| 7 | TCB Next.js Analytics Dashboard executive — TCB-only, vCr/Amb chỉ có dashboard cũ admin Umi | [p1/07-analytics-dashboard-port.md](./p1/07-analytics-dashboard-port.md) |
 
 
 ---
@@ -47,7 +48,6 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 4 | Float precision rounding (reclassified) | _(không cần file riêng — chỉ là 10 LOC backport)_ |
 | 5 | Audit ActorType field metadata | [p2/05-audit-actor-type.md](./p2/05-audit-actor-type.md) |
 | ~~6~~ | ~~Reconciliation engine port~~ — **gộp vào gap #15** (P1 top) | (merged → #15) |
-| 7 | Analytics Dashboard port (chưa viết) | _(pending)_ |
 | 9 | TCB và vCreator thiếu cơ chế bảo vệ khi tính lại reward cho content đã thay đổi trạng thái | [p2/09-recheck-recovery-pattern.md](./p2/09-recheck-recovery-pattern.md) |
 | 17 | vCreator/Ambassador có thể bị broken avatar khi URL social expire | [p2/17-upload-avatar-cache.md](./p2/17-upload-avatar-cache.md) |
 | 33 | Ambassador có cơ chế "tạo user giả để reserve referral code", TCB và vCreator không có | [p2/33-ambassador-referral-seed-user.md](./p2/33-ambassador-referral-seed-user.md) |

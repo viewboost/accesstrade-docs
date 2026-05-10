@@ -35,7 +35,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 4 | **Float precision rounding chỉ vCreator có** (`pfloat.RoundToOneDecimal`) — TCB/Amb có thể bị bug làm tròn cash. Tuy nhiên 2 sản phẩm kia chạy campaign tiền to (không có fractional cents) → risk thực tế thấp. Reclassified P0→P2 (2026-05-07) | Financial | vCreator → TCB/Amb | 2 | 2 | 5 | 2 | **11** | 🟡 P2 |
 | 5 | **Audit ActorType field chỉ vCreator có** — Cả 3 dự án đều có flow dùng root account để audit, nhưng TCB/Amb không có field metadata phân biệt → query log không filter được automation vs manual. Reclassified P0→P2 (2026-05-07): không cấp bách, nice-to-have. [Detail](./gaps/p2/05-audit-actor-type.md) | Reconciliation & Audit | vCreator → TCB/Amb | 3 | 2 | 5 | 4 | **14** | 🟡 P2 |
 | 6 | ~~**TCB Reconciliation engine**~~ — **gộp vào gap #15** (cùng scope: snapshot + engine cần làm chung 1 task lớn). User confirm "đã eval kỹ ở TCB, ảnh hưởng nhiều lắm" → port full stack. Xem [gap #15 detail](./gaps/p1/15-reconciliation-engine-and-snapshot.md) | Reconciliation & Audit | (gộp #15) | - | - | - | - | - | (merged → #15) |
-| 7 | **TCB Analytics Dashboard** (Next.js, 2226 LOC backend) — TCB-only. vCr/Amb không có dashboard executive view | Analytics & Dashboard | TCB → vCr/Amb (strategic) | 4 | 2 | 1 | 3 | **10** | 🟡 P2 |
+| 7 | **TCB Next.js Analytics Dashboard executive** (standalone app + 2855 LOC backend, ~10 sections) — TCB-only. vCr/Amb chỉ có dashboard cũ admin Umi (basic, vCr có filter 3 tầng workplace cải tiến hơn). Reclassified P2→P1 (2026-05-10) — user confirm strategic value sau khi clarify scope. [Detail](./gaps/p1/07-analytics-dashboard-port.md) | Analytics & Dashboard | TCB → vCr/Amb (strategic) | 4 | 3 | 1 | 4 | **12** | 🟠 P1 |
 | 8 | **vCreator thiếu budget control system** — TCB và Ambassador GẦN NHƯ TƯƠNG ĐƯƠNG (3-level Bpe/Bpu/Bpc + block + threshold + Telegram alert), chỉ vCreator thiếu hoàn toàn → chi tiền không giới hạn. Reclassified direction port (2026-05-07) sau user catch. [Detail](./gaps/p0/08-budget-alert-system.md) | Campaign & Event | TCB hoặc Amb → vCreator | 5 | 4 | 3 | 4 | **16** | 🔴 P0 |
 | 9 | **TCB và vCreator thiếu cơ chế bảo vệ khi tính lại reward cho content đã thay đổi trạng thái** — Ambassador có safety state + cron recovery. TCB partial implementation (field tồn tại, không dùng), vCreator không có gì. Reclassified P1→P2 (2026-05-07): risk thấp-trung bình, có workaround manual. [Detail](./gaps/p2/09-recheck-recovery-pattern.md) | Campaign & Event | Ambassador → TCB + vCreator | 3 | 3 | 3 | 4 | **13** | 🟡 P2 |
 | 10 | **TCB và Ambassador dùng 2 cơ chế khác nhau để dedup Telegram alert** — TCB dùng cơ chế "khóa cứng campaign" (block toàn bộ reward calc), Ambassador dùng "khóa thông minh + cờ alert" (chỉ block submit, reward vẫn chạy). Cả 2 đều dedup OK (KHÔNG phải bug). Cần unify để 3 sản phẩm consistent — direction: TCB refactor theo pattern Ambassador. Reclassified scope (2026-05-07). [Detail](./gaps/p3/10-telegram-alert-deduplication.md) | Campaign & Event | Unify (TCB refactor theo Amb) | 2 | 2 | 3 | 4 | **11** | ⚪ P3 |
@@ -81,7 +81,7 @@ Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** 
 - Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.
 - Gap #2 ban đầu P1 (auto-approve influencer + notification) → rescoped thành gap kiến trúc → reclassified P0 sau khi user confirm business intent "creator pool unification".
 
-### 🟠 P1 — Sprint tới (4 items, sau khi reclassify #25→P3, #28→P3 — 2026-05-10)
+### 🟠 P1 — Sprint tới (5 items, sau khi reclassify #25→P3, #28→P3, #07 P2→P1 — 2026-05-10)
 
 **🔝 Top P1**: Gap #15 (Reconciliation engine + snapshot, gộp #6+#15) — user confirm là quan trọng nhất, port full stack (~5-7 tuần mỗi sản phẩm).
 Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
@@ -92,14 +92,14 @@ Score 12-15. Strategic, đáng làm trong **wave 2 (tháng 1)**.
 | 16 | **Profile Review + Rating** từ TCB → vCr/Amb | 2 tuần | Brand-creator trust signal — phần tiếp nối #2 |
 | 31 | **Admin proxy creator flow** TCB → vCr/Amb (selective) | 2-3 tuần | Admin tạo creator + import content giúp họ |
 | 32 | **Mã nhân viên + binding partner** vCreator → Amb (full) + vCr → TCB (extend) | 3-4 tuần | EmployeeRegistry 18 fields + match engine |
+| 7 | **TCB Next.js Dashboard executive** → vCr/Amb | 4-6 tuần mỗi sản phẩm | Executive view ~10 sections, cần stakeholder confirm. Note: dashboard cũ admin Umi vCr có filter 3 tầng workplace cải tiến hơn |
 
-### 🟡 P2 — Backlog (6 items)
+### 🟡 P2 — Backlog (5 items, sau khi #7 lên P1)
 Score 8-11. Làm khi có resource.
 
 | # | Gap | Lý do P2 |
 |---|---|---|
 | 6 | TCB Reconciliation engine port | Effort lớn (~1380 LOC + models + admin), business value chưa rõ với vCr/Amb |
-| 7 | TCB Analytics Dashboard port | Frontend + backend đều phức tạp, cần stakeholder confirm có cần không |
 | 14 | ContentImportTracking | Chỉ làm nếu vCr/Amb có nhu cầu bulk import |
 | 18 | BudgetInfo struct migration TCB | Cosmetic improvement, không critical |
 | 20 | Affiliate (Ambassador-only) | Không port được, document để stakeholder biết |
