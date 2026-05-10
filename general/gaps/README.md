@@ -61,6 +61,7 @@ Các gap P1 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chư
 
 | # | Gap | File |
 |---|---|---|
+| 10 | TCB gửi cảnh báo Telegram lặp khi campaign vượt ngân sách (alert fatigue) | [p3/10-telegram-alert-deduplication.md](./p3/10-telegram-alert-deduplication.md) |
 | 12 | vCreator/Ambassador thiếu lớp bảo vệ cho admin login | [p3/12-admin-login-security.md](./p3/12-admin-login-security.md) |
 
 Các gap P3 từ [../gap-analysis-priority.md](../gap-analysis-priority.md) chưa có file detail:
