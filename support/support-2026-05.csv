@@ -1,19 +1,20 @@
-#,Thời gian,Tiêu đề,Người request,Người hỗ trợ,Mô tả,Nghiệp vụ xử lý,Có cần code chức năng không?,Thời gian tiêu tốn (giờ),=SUM(I2:I100)
-1,11/05/2026,"Rà soát rủi ro lộ thông tin user do admin tự tạo trên Techcombank",Hà,Vĩnh,"Hà cần bổ sung số lượng lớn influencer cho đủ KPI nhưng influencer thật không có thời gian đăng ký tài khoản.
+#,Thời gian,Tiêu đề,Người request,Người hỗ trợ,Status,Mô tả,Nghiệp vụ xử lý,Có cần code chức năng không?,Thời gian tiêu tốn (giờ),=SUM(J2:J100)
+1,11/05/2026,"Rà soát rủi ro lộ thông tin user do admin tự tạo trên Techcombank",Hà,Vĩnh,Done,"Hà cần bổ sung số lượng lớn influencer cho đủ KPI nhưng influencer thật không có thời gian đăng ký tài khoản.
 
 Hà muốn dùng chức năng admin tự thêm user để bổ sung, tuy nhiên lo ngại phía Techcombank có thể nhận ra và cần rà soát.","Kiểm tra toàn bộ các điểm hiển thị thông tin user/content phía Techcombank có thể nhìn thấy: bảng danh sách user-partner, file export, các trang chi tiết, danh sách kênh social.
 
 Kết luận: hệ thống không có chỗ nào phân biệt user/content do admin tạo so với user thật — phía Techcombank không có cách nhận biết.
 
 An toàn để dùng cho mục đích bổ sung KPI.",Không,0.5
-2,11/05/2026,"Fix lỗi ảnh thumbnail video TikTok bị vỡ ở khu Nội dung nổi bật (T-Fluencers)",Minh,Vĩnh,"Minh báo ảnh thumbnail của các video ở khu Nội dung nổi bật trang chủ partner thường xuyên bị vỡ, ảnh hưởng trải nghiệm và độ chuyên nghiệp của trang.","Nguyên nhân: Link ảnh do TikTok cấp chỉ có hạn sử dụng khoảng 2 ngày. Sau khi campaign hết hạn, hệ thống không crawl content nữa nên không cập nhật link mới — link cũ hết hạn dẫn đến ảnh không hiển thị được.
+2,11/05/2026,"Fix lỗi ảnh thumbnail video TikTok bị vỡ ở khu Nội dung nổi bật (T-Fluencers)",Minh,Vĩnh,"Done khâu xử lý tạm thời
+Chờ implement chức năng liên quan","Minh báo ảnh thumbnail của các video ở khu Nội dung nổi bật trang chủ partner thường xuyên bị vỡ, ảnh hưởng trải nghiệm và độ chuyên nghiệp của trang.","Nguyên nhân: Link ảnh do TikTok cấp chỉ có hạn sử dụng khoảng 2 ngày. Sau khi campaign hết hạn, hệ thống không crawl content nữa nên không cập nhật link mới — link cũ hết hạn dẫn đến ảnh không hiển thị được.
 
 Giải pháp tạm: Lấy danh sách 8 video đang hiển thị, copy link ảnh thumbnail mới thủ công từ TikTok và fill vào hệ thống để khắc phục ngay trong lúc chờ release.
 
 Giải pháp dài hạn: Lên task để hệ thống tự tải ảnh về kho lưu trữ riêng — link của mình sẽ không bao giờ hết hạn, kể cả khi campaign đã đóng.
 
 Phạm vi: Áp dụng cho 8 video nổi bật trên trang chủ partner.",Có,2
-3,10/05/2026,"Hỗ trợ user Ambassador không ký được hợp đồng do lỗi ekyc",Phượng,Huyền + Trung,"Phượng tiếp nhận phản ánh từ user trên Ambassador: khi bấm ""Tạo hợp đồng mới"" để ký thì hệ thống chỉ hiện lỗi ""error"" mà không nêu rõ nguyên nhân, user không tiếp tục được.","Rà soát luồng xử lý phía Ambassador, phát hiện logic cũ trả về thông báo ""error"" chung chung mỗi khi dịch vụ ekyc không trả lỗi cụ thể.
+3,10/05/2026,"Hỗ trợ user Ambassador không ký được hợp đồng do lỗi ekyc",Phượng,Huyền + Trung,Chờ AT phản hồi,"Phượng tiếp nhận phản ánh từ user trên Ambassador: khi bấm ""Tạo hợp đồng mới"" để ký thì hệ thống chỉ hiện lỗi ""error"" mà không nêu rõ nguyên nhân, user không tiếp tục được.","Rà soát luồng xử lý phía Ambassador, phát hiện logic cũ trả về thông báo ""error"" chung chung mỗi khi dịch vụ ekyc không trả lỗi cụ thể.
 
 Cung cấp hashtag user cho bên AccessTrade (Hoàng) để xem log và debug nguyên nhân thực sự bên dịch vụ ekyc.
 
