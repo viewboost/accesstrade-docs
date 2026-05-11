@@ -15,6 +15,8 @@ DISO gửi team bản **cập nhật Kế hoạch triển khai Tháng 5/2026**, 
 2. **Chính thức loại VCreator – Affiliate Center v2 khỏi kế hoạch tháng 5**, dời sang **đầu tháng 6/2026** để tập trung hoàn thiện Affiliate Center v1 đúng deadline 15/05.
 3. **Điều chỉnh workload hạng mục VCreator – Affiliate Center v1 – Liên kết tài khoản ScaleF & GenGreen** từ **72h → 56h**: hai bên đã thống nhất **không xử lý nghiệp vụ giải quyết xung đột thông tin** trong v1 do đánh giá không khả thi ở thời điểm hiện tại.
 4. **Chính thức bổ sung 01 hạng mục Onboard ADV mới** vào tháng 5 (29h, deadline 28/05).
+5. **Bổ sung KPI cross-product**: *Rà soát bảng chức năng* (12h PM, đã Done, deadline 10/05) — output gồm bảng tóm tắt chức năng từng dự án, bảng so sánh khác biệt, và roadmap đề xuất giải quyết 42 gaps.
+6. **Bổ sung 03 task dự án T-Fluencer**: (i) *Xử lý lỗi ảnh/video trang chủ không hiển thị* (4h, Dev Testing, deadline 16/05) — task phát sinh phải xử lý gấp; (ii) *Nhận bài đăng dạng post Facebook* (chờ estimate); (iii) *Hủy video hàng loạt bằng upload Excel* (chờ estimate).
 
 Chi tiết như sau:
 
@@ -41,7 +43,23 @@ Chi tiết như sau:
 | 7 | Onboard ADV | Tiếp nhận và onboard 1 ADV mới trong tháng 5 (chính thức bổ sung vào kế hoạch). | – | 28/05 | 29 | ⚪ Not Started |
 | | **Tổng Ambassador** | | | | **29** | |
 
-> 🔢 **Tổng workload Tháng 5/2026: ~222 giờ**
+## 3. Dự án T-Fluencer
+
+| STT | Hạng mục | Mô tả | PRD | Deadline | Workload (giờ) | Trạng thái |
+|-----|----------|-------|-----|----------|----------------|------------|
+| 9 | Nhận bài đăng dạng post Facebook | – | – | TBD | TBD | ⚪ Not Started |
+| 10 | Xử lý lỗi ảnh/video trang chủ không hiển thị | Tải ảnh và upload lên MinIO của hệ thống với riêng top 8 video trang chủ. | [Tài liệu](https://github.com/viewboost/accesstrade-docs/tree/main/t-fluencers/fix-cover-expired) | 16/05 | 4 | 🔵 Dev Testing |
+| 11 | Hủy video hàng loạt bằng cách upload Excel | – | [Yêu cầu của Diễm](https://www.notion.so/cashbag/Xanh-H-y-video-tr-n-h-th-ng-35ad74f894ff80f1bcb2d5698afcc4f0) | TBD | TBD | ⚪ Not Started |
+| | **Tổng T-Fluencer** | | | | **4 (+TBD)** | |
+
+## 4. Cross-product (KPI bổ sung)
+
+| STT | Hạng mục | Mô tả | PRD | Deadline | Workload (giờ) | Trạng thái |
+|-----|----------|-------|-----|----------|----------------|------------|
+| 8 | Rà soát bảng chức năng | Lên lại bảng đánh giá các tính năng sản phẩm để chốt độ ưu tiên (Priority) và cập nhật lên Roadmap. Áp dụng cho tất cả dự án. | [Tổng hợp 42 gaps](https://docs.google.com/spreadsheets/d/1llWv7MwEkyceEH5f16zujxS_R_t-ZaX7kAVKh2R0Yzg/edit?gid=1404505092#gid=1404505092) | 10/05 | 12 (PM) | ✅ Done |
+| | **Tổng Cross-product** | | | | **12** | |
+
+> 🔢 **Tổng workload Tháng 5/2026: ~238 giờ** (chưa tính 02 task T-Fluencer #9, #11 đang chờ estimate)
 
 ---
 
