@@ -6,6 +6,7 @@
 **Trạng thái:** Đề xuất
 **Đối tượng:** Dev TCB backend (Go)
 **Overview:** [`overview.md`](./overview.md)
+**PRD (tiêu chí nghiệm thu):** [`prd.md`](./prd.md)
 **Source of truth:** `accesstrade-projects/ambassabor/backend/` (Ambassador production)
 
 ---
@@ -737,6 +738,8 @@ g.GET("/crawl-content-facebook-post", h.CrawlDataContentFacebookPost, v.Schedule
 ---
 
 ## 6. Acceptance criteria
+
+> **Đây là dev checklist** (verify kỹ thuật khi code xong). Tiêu chí nghiệm thu chính thức theo góc nhìn QA/PM/Brand — viết dạng Given/When/Then + bảng test case — nằm ở [`prd.md` mục 5](./prd.md#5-tiêu-chí-nghiệm-thu-acceptance-criteria). Dev tự test bằng checklist dưới; QA/PM nghiệm thu bằng PRD.
 
 - [ ] **Constants** — `SourceFacebookPost`, `ContentSourceFacebookPost` có trong code, hiển thị "Facebook Post" trong UI dashboard
 - [ ] **Regex** — `IsValidFacebookPostURL` pass với 10 URL test sau (xem section 8) và **không nhầm** với video/reel

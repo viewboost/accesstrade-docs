@@ -110,7 +110,8 @@ Các mục trên phụ thuộc nhu cầu thực tế khi dùng — cứ phản h
 ## Đọc thêm
 
 - **Gap gốc:** [`general/gaps/p0/35-facebook-post-crawl-and-count-campaign.md`](../../general/gaps/p0/35-facebook-post-crawl-and-count-campaign.md) — phân tích gap gốc 3 sản phẩm (gap doc bao gồm cả phần reward, đợt này TCB chỉ làm phần tracking)
-- **Tech Spec:** `tech-spec.md` *(sắp tạo)* — file/code path cụ thể, regex, struct field, switch-case cần thêm
+- **PRD:** [`prd.md`](./prd.md) — user stories, business rules và **tiêu chí nghiệm thu** (Given/When/Then + bảng test case) cho QA/PM/Brand
+- **Tech Spec:** [`tech-spec.md`](./tech-spec.md) — file/code path cụ thể, regex, struct field, switch-case cần thêm
 - **Source code tham chiếu (Ambassador):**
   - `accesstrade-projects/ambassabor/backend/internal/module/social/facebook/facebook.go` — regex + validation
   - `accesstrade-projects/ambassabor/backend/internal/model/mg/event_analytic_daily.go` — pattern breakdown riêng `facebookPost`
