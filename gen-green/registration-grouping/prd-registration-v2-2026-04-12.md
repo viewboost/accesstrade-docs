@@ -186,7 +186,9 @@ Logic match chi tiết → [overview-v2-import-logic.md §3](overview-v2-import-
 #### FR-012: Missing from File với 2-Layer Confirm ✅
 - **Layer 1 — Toggle "Rà soát nghỉ việc" lúc upload:** Default OFF (delta mode). Bật khi full-dump tháng.
   - `CreateImportInput.DetectMissing bool` → chỉ chạy `detectMissingFromFile` khi true
-  - Frontend Checkbox với hint "Bật khi file đầy đủ tháng. Tắt nếu file delta"
+  - Frontend Checkbox với hint đầy đủ:
+    - "**Bật** khi file là **danh sách nhân sự đầy đủ**. Hệ thống sẽ đánh dấu nhân viên đã có trong hệ thống nhưng không có trong file là 'Nghỉ việc?' để bạn xác nhận."
+    - "**Tắt** nếu file chỉ chứa **một phần nhân sự** (delta) — tránh đánh dấu nhầm."
 - **Layer 2 — Checkbox confirm trong preview:** Hiện khi `missingFromFile > 0`. Admin tick = lên lịch terminate, không tick = skip records này khi apply.
 - **Case orphan registry (post-ship fix):** Apply `missing_from_file` cho record không có user claim (`genGreenUserId=null`) → terminate registry record NGAY (không qua grace period vì không có user để gỡ tag). Tránh loop missing flag ở các import sau khi orphan record không bao giờ được terminate.
 

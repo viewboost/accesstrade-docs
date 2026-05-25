@@ -1,0 +1,53 @@
+#,Thời gian,Tiêu đề,Người request,Người hỗ trợ,Status,Mô tả,Nghiệp vụ xử lý,Có cần code chức năng không?,Thời gian tiêu tốn (giờ),=SUM(J2:J100)
+1,11/05/2026,"Rà soát rủi ro lộ thông tin user do admin tự tạo trên Techcombank",Hà,Vĩnh,Done,"Hà cần bổ sung số lượng lớn influencer cho đủ KPI nhưng influencer thật không có thời gian đăng ký tài khoản.
+
+Hà muốn dùng chức năng admin tự thêm user để bổ sung, tuy nhiên lo ngại phía Techcombank có thể nhận ra và cần rà soát.","Kiểm tra toàn bộ các điểm hiển thị thông tin user/content phía Techcombank có thể nhìn thấy: bảng danh sách user-partner, file export, các trang chi tiết, danh sách kênh social.
+
+Kết luận: hệ thống không có chỗ nào phân biệt user/content do admin tạo so với user thật — phía Techcombank không có cách nhận biết.
+
+An toàn để dùng cho mục đích bổ sung KPI.",Không,0.5
+2,11/05/2026,"Fix lỗi ảnh thumbnail video TikTok bị vỡ ở khu Nội dung nổi bật (T-Fluencers)",Minh,Vĩnh,"Done khâu xử lý tạm thời
+Chờ implement chức năng liên quan","Minh báo ảnh thumbnail của các video ở khu Nội dung nổi bật trang chủ partner thường xuyên bị vỡ, ảnh hưởng trải nghiệm và độ chuyên nghiệp của trang.","Nguyên nhân: Link ảnh do TikTok cấp chỉ có hạn sử dụng khoảng 2 ngày. Sau khi campaign hết hạn, hệ thống không crawl content nữa nên không cập nhật link mới — link cũ hết hạn dẫn đến ảnh không hiển thị được.
+
+Giải pháp tạm: Lấy danh sách 8 video đang hiển thị, copy link ảnh thumbnail mới thủ công từ TikTok và fill vào hệ thống để khắc phục ngay trong lúc chờ release.
+
+Giải pháp dài hạn: Lên task để hệ thống tự tải ảnh về kho lưu trữ riêng — link của mình sẽ không bao giờ hết hạn, kể cả khi campaign đã đóng.
+
+Phạm vi: Áp dụng cho 8 video nổi bật trên trang chủ partner.",Có,2
+3,10/05/2026,"Hỗ trợ user Ambassador không ký được hợp đồng do lỗi ekyc",Phượng,Huyền + Trung,Done,"Phượng tiếp nhận phản ánh từ user trên Ambassador: khi bấm ""Tạo hợp đồng mới"" để ký thì hệ thống chỉ hiện lỗi ""error"" mà không nêu rõ nguyên nhân, user không tiếp tục được.","Rà soát luồng xử lý phía Ambassador, phát hiện logic cũ trả về thông báo ""error"" chung chung mỗi khi dịch vụ ekyc không trả lỗi cụ thể.
+
+Cung cấp hashtag user cho bên AccessTrade (Hoàng) để xem log và debug nguyên nhân thực sự bên dịch vụ ekyc.
+
+Hoàng (AT) báo đã xử lý xong. Đã thông báo lại để user thử ký lại, hiện đang chờ kết quả xác nhận.",Không,0.5
+4,11/05/2026,"Xử lý sự cố không truy cập được trang quản trị do hệ thống tự khởi động lại liên tục",Việt Anh,Trung + anh Thuận,Chờ release hotfix,"Việt Anh báo không thể vào trang quản trị. Phượng liên hệ anh Thuận kiểm tra phát hiện hệ thống bị tự khởi động lại liên tục, gây gián đoạn truy cập.","Truy nguyên: ràng buộc trùng lặp trên bảng nội dung (yêu cầu mỗi cặp nội dung – đối tác là duy nhất) bị vi phạm do hệ thống vô tình ghi nhận bản ghi trùng → khiến tiến trình lỗi và khởi động lại liên tục.
+
+Trung đã tạo PR gỡ ràng buộc này và gửi mail cho anh Thuận để release bản vá khẩn. Đang chờ hotfix lên production.",Có,0.5
+5,14/05/2026,"Xử lý sự cố hàng đợi xuất dữ liệu bị tắc do file VinPearl quá lớn (vCreator)",Bình VinPearl,Vĩnh + anh Thuận,Done,"Bình (VinPearl) báo file xuất dữ liệu của VinPearl quá lớn nên xử lý lâu, làm tắc nghẽn toàn bộ các yêu cầu xuất dữ liệu phía sau — các file khác đều không chạy được.","Phân tích cơ chế xuất dữ liệu phía vCreator: hệ thống giới hạn chạy tối đa 2 file cùng lúc, các file mới phải chờ đến lượt. Khi file VinPearl xử lý quá lâu (hoặc bị treo giữa chừng), hệ thống vẫn coi như đang chạy nên không nhường chỗ cho file khác — gây tắc nghẽn.
+
+Lần 1: Nhờ anh Thuận khởi động lại dịch vụ và kiểm tra, nhưng các file vẫn không chạy lại được. Nguyên nhân: hệ thống không có cơ chế tự nhận diện và dọn các file đang treo khi khởi động lại.
+
+Lần 2: Nhờ anh Thuận can thiệp trực tiếp vào dữ liệu, đánh dấu các file đang treo thành ""thất bại"" để giải phóng hàng đợi. Sau đó các file xếp hàng chờ phía sau đã được hệ thống tự động xử lý tiếp.
+
+Khuyến nghị dài hạn: bổ sung cơ chế tự dọn dẹp file treo khi khởi động lại và đặt thời gian tối đa cho mỗi file để tránh tái diễn.",Không,0.5
+6,14/05/2026,"Chạy lại 1500 video VinWonders theo thể lệ đại lễ mới trước hạn",Việt Anh,Vĩnh,Đang chạy,"Việt Anh yêu cầu rà soát và chạy lại 1500 video của VinWonders trước kỳ đại lễ theo thể lệ mới. Phần lớn các video đang ở trạng thái bị AI hủy do thể lệ trước đó không khớp với thể lệ đại lễ — cần tìm cách xử lý nhanh nhất để kịp hạn.","Hướng tiếp cận đã thử:
+1. Tận dụng lại kết quả AI cũ — không đáp ứng vì thể lệ áp dụng đã khác.
+2. Chỉnh sửa cục bộ một vài trường trong dữ liệu — vẫn không cho ra kết quả mong muốn.
+
+Phương án cuối cùng được áp dụng:
+- Thiết lập thể lệ phù hợp với chiến dịch đại lễ, sau đó cho chạy lại toàn bộ 1500 video.
+- Khôi phục lại thể lệ cũ trước khi thay đổi để các video mới đăng (vốn nên áp dụng thể lệ cũ) không bị ăn nhầm thể lệ đại lễ, rồi chạy lại nhóm video mới này.
+
+Hiện tại hệ thống đang chạy lại theo cấu hình trên, chờ AI xử lý xong toàn bộ.",Không,8
+7,14/05/2026,"[Ambassador] Lỗi liên kết thêm tài khoản TikTok",Phượng,Huyền + Định,Note started,"Phượng tiếp nhận phản ánh từ user trên Ambassador: khi bấm ""Liên kết TikTok"" thì hệ thống hiện lỗi ""Bạn không có quyền thực hiện hành động này"" mà không nêu rõ nguyên nhân. User thoát ra các màn hình khác vẫn gặp lỗi tương tự, không thao tác tiếp được.","Truy nguyên: lỗi ""Bạn không có quyền thực hiện hành động này"" xảy ra khi user nhấn liên kết lần thứ 2, sau khi đã nhấn liên kết lần 1 với tài khoản TikTok đã được liên kết với user khác. Hệ thống chặn đúng nghiệp vụ (1 tài khoản TikTok chỉ liên kết với 1 user) nhưng thông báo lỗi quá chung chung khiến user hiểu nhầm và mắc kẹt ở các màn hình khác.
+
+Đã note để team xem xét cải thiện thông báo lỗi rõ ràng hơn (vd: ""Tài khoản TikTok này đã được liên kết với người dùng khác"").",Có,2
+8,15/05/2026,"Tư vấn chức năng import Influencer/Video và tiếp nhận nhu cầu cải tiến (Techcombank)",Hoàng Anh (TCB),Vĩnh,Done,"Chị Hoàng Anh (Techcombank) gọi điện hỏi kỹ về chức năng import Influencer và Video trên hệ thống — muốn hiểu rõ cách dùng để quản lý các campaign dạng này thay vì phải làm thủ công bên ngoài hệ thống.","Giải thích tường tận luồng và phạm vi sử dụng của chức năng import Influencer/Video: cách chuẩn bị dữ liệu, các trường hợp áp dụng, giới hạn hiện tại.
+
+Đồng thời lắng nghe nhu cầu và nỗi đau của khách hàng khi đang phải quản lý các campaign dạng này bên ngoài hệ thống (tốn công, khó theo dõi, dễ sai sót).
+
+Tiếp nhận yêu cầu và cùng phân tích định hướng cải tiến hệ thống để hỗ trợ tốt hơn cho nghiệp vụ quản lý campaign import — sẽ tổng hợp lại để lên kế hoạch nâng cấp chức năng.",Không,1.5
+9,15/05/2026,"Xử lý sự cố creator không gửi được bài đăng và không liên kết lại được tài khoản TikTok",Tùng Đàm (AT),Vĩnh,Done,"Tùng Đàm (AccessTrade) yêu cầu hỗ trợ trường hợp creator vừa không thể gửi bài đăng, vừa không thể liên kết lại tài khoản TikTok — bị kẹt không thao tác tiếp được.","Rà soát source code để truy nguyên nhân gây lỗi gửi bài đăng và liên kết lại tài khoản TikTok.
+
+Giải pháp tạm thời: hướng dẫn creator đăng xuất rồi đăng nhập lại bằng TikTok để khôi phục phiên kết nối và xử lý ngay.
+
+Khuyến nghị dài hạn: cần code implement cải tiến để tránh tình huống này tái phát trong tương lai (xử lý tự động phiên kết nối lỗi/hết hạn).",Có,0.5
