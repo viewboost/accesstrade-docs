@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Wireframes - Hiển thị tiền hoàn tạm tính tại MSHT</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: #202124;
+    line-height: 1.6;
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 16px;
+    background: #fafafa;
+  }
+  h1 { font-size: 22px; margin-top: 28px; border-bottom: 2px solid #1a73e8; padding-bottom: 6px; }
+  h2 { font-size: 18px; margin-top: 28px; color: #1a73e8; }
+  h3 { font-size: 15px; margin-top: 16px; }
+
+  /* Meta table */
+  .meta {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0 24px;
+  }
+  .meta table { border: 0; }
+  .meta td { padding: 4px 12px 4px 0; border: 0; }
+  .meta td:first-child { font-weight: 600; color: #5f6368; width: 140px; }
+
+  /* TOC */
+  .toc {
+    background: #e8f0fe;
+    border-left: 4px solid #1a73e8;
+    padding: 12px 20px;
+    margin: 20px 0;
+    border-radius: 4px;
+  }
+  .toc ol { margin: 8px 0 0 20px; padding: 0; }
+  .toc li { margin: 4px 0; }
+  .toc a { color: #1a73e8; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  /* Wireframe container */
+  .wireframe-section {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0;
+  }
+  .wireframe-row {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .wireframe-mockup {
+    flex: 0 0 auto;
+  }
+  .wireframe-notes {
+    flex: 1;
+    min-width: 260px;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 320px;
+    background: #fff;
+    border: 8px solid #1a1a1a;
+    border-radius: 32px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    margin: 12px 0;
+    position: relative;
+  }
+  .phone-notch {
+    height: 22px;
+    background: #1a1a1a;
+    border-radius: 0 0 14px 14px;
+    width: 110px;
+    margin: 0 auto;
+  }
+  .phone-screen {
+    background: #f5f6fa;
+    min-height: 580px;
+    padding: 0;
+  }
+  .topbar {
+    background: #fff;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ececec;
+    font-weight: 600;
+  }
+  .topbar .icon { color: #5f6368; }
+  .content { padding: 16px; }
+
+  /* Common UI */
+  .hero-text {
+    text-align: center;
+    margin: 16px 0;
+  }
+  .hero-text .emoji { font-size: 36px; }
+  .hero-text h4 { font-size: 16px; margin: 8px 0 4px; }
+  .hero-text p { font-size: 12px; color: #5f6368; margin: 4px 16px; }
+
+  .input-link {
+    background: #fff;
+    border: 1px solid #d2d6dc;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0;
+    font-size: 12px;
+    color: #5f6368;
+  }
+  .input-link.error { border-color: #d93025; }
+  .input-link.filled { color: #202124; }
+  .paste-btn { color: #1a73e8; font-weight: 600; cursor: pointer; }
+
+  .btn-primary {
+    background: #ff6f00;
+    color: #fff;
+    border: 0;
+    border-radius: 12px;
+    padding: 14px;
+    width: 100%;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    margin: 12px 0;
+    cursor: pointer;
+  }
+  .btn-primary.disabled { background: #d2d6dc; cursor: not-allowed; }
+  .btn-secondary {
+    background: #fff;
+    color: #1a73e8;
+    border: 1px solid #1a73e8;
+    border-radius: 12px;
+    padding: 12px;
+    width: 100%;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    margin: 8px 0;
+    cursor: pointer;
+  }
+  .link-text {
+    text-align: center;
+    color: #1a73e8;
+    font-size: 13px;
+    margin: 12px 0;
+    font-weight: 500;
+  }
+
+  .divider-text {
+    text-align: center;
+    color: #9aa0a6;
+    font-size: 11px;
+    margin: 16px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .divider-text::before, .divider-text::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .platform-row {
+    display: flex;
+    justify-content: space-around;
+    margin: 8px 0;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .platform-chip {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .info-box {
+    background: #fff8e1;
+    border-left: 3px solid #ffa000;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #5d4037;
+    margin: 12px 0;
+  }
+  .warning-box {
+    background: #fef7e0;
+    border-left: 3px solid #f9ab00;
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #5d4037;
+    margin: 12px 0;
+  }
+
+  /* Skeleton */
+  .skeleton {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .skeleton-line {
+    height: 12px;
+    background: linear-gradient(90deg, #e8eaed 25%, #f1f3f4 50%, #e8eaed 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+    margin: 8px 0;
+  }
+  .skeleton-line.short { width: 60%; }
+  .skeleton-line.medium { width: 80%; }
+  .skeleton-line.tall { height: 60px; }
+  @keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .loading-text {
+    text-align: center;
+    color: #5f6368;
+    font-size: 12px;
+    margin: 12px 0;
+  }
+
+  /* Product card */
+  .product-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    gap: 12px;
+    margin: 12px 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .product-img {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9aa0a6;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  .product-info { flex: 1; }
+  .product-name { font-size: 13px; font-weight: 600; line-height: 1.3; margin-bottom: 4px; }
+  .product-platform { font-size: 11px; color: #5f6368; margin-bottom: 6px; }
+  .product-price { font-size: 13px; color: #d93025; font-weight: 700; }
+
+  /* Cashback highlight */
+  .cashback-card {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin: 12px 0;
+    border: 2px solid #ffb74d;
+  }
+  .cashback-label {
+    font-size: 11px;
+    color: #6d4c41;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .cashback-amount {
+    font-size: 32px;
+    font-weight: 800;
+    color: #e65100;
+    margin: 4px 0;
+  }
+  .cashback-rate {
+    font-size: 13px;
+    color: #6d4c41;
+    font-weight: 600;
+  }
+  .breakdown {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    text-align: left;
+    font-size: 11px;
+  }
+  .breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    color: #5f6368;
+  }
+  .breakdown-item.bonus { color: #2e7d32; font-weight: 600; }
+
+  /* Empty/Error states */
+  .empty-state {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px 16px;
+    text-align: center;
+    margin: 12px 0;
+  }
+  .empty-emoji { font-size: 40px; margin-bottom: 8px; }
+  .empty-title { font-weight: 700; font-size: 14px; margin: 8px 0; color: #202124; }
+  .empty-desc { font-size: 12px; color: #5f6368; line-height: 1.5; }
+  .empty-state.no-cashback .empty-title { color: #e65100; }
+  .empty-state.error .empty-title { color: #d93025; }
+
+  /* Suggestion list */
+  .suggest-title { font-size: 13px; font-weight: 600; margin: 16px 0 8px; color: #202124; }
+  .suggest-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    margin: 8px 0;
+  }
+  .suggest-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #f1f3f4;
+    font-size: 12px;
+  }
+  .suggest-item:last-child { border-bottom: 0; }
+  .suggest-item .product-img { width: 36px; height: 36px; }
+  .suggest-name { flex: 1; font-weight: 600; }
+  .suggest-rate { color: #2e7d32; font-weight: 700; font-size: 11px; }
+
+  .error-text { color: #d93025; font-size: 11px; margin-top: -8px; margin-bottom: 8px; padding-left: 6px; }
+
+  /* Supported platforms list */
+  .platform-list {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0;
+    font-size: 12px;
+    color: #5f6368;
+  }
+  .platform-list li { padding: 4px 0; }
+  .platform-list li::before { content: '✓ '; color: #2e7d32; font-weight: 700; }
+
+  /* Flow diagram */
+  pre {
+    background: #2d2d2d;
+    color: #f8f8f2;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'Menlo', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  /* Tables */
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+  th, td { border: 1px solid #dadce0; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f1f3f4; font-weight: 600; }
+
+  /* Labels */
+  .label {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  .label-new { background: #fce4ec; color: #ad1457; }
+  .label-reuse { background: #e8f5e9; color: #2e7d32; }
+  .label-star { background: #fff3e0; color: #e65100; }
+  .label-warn { background: #fce8e6; color: #c5221f; }
+
+  .badge-section {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+  .badge-happy { background: #e8f5e9; color: #2e7d32; }
+  .badge-error { background: #fce8e6; color: #c5221f; }
+  .badge-warn { background: #fff3e0; color: #e65100; }
+
+  /* Notes block */
+  .notes-block {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .notes-block h4 { margin: 0 0 8px; font-size: 13px; color: #202124; }
+  .notes-block ul { margin: 0; padding-left: 20px; }
+  .notes-block li { font-size: 13px; padding: 2px 0; }
+
+  hr { border: 0; border-top: 1px solid #e0e0e0; margin: 32px 0; }
+  .footer { text-align: center; color: #9aa0a6; font-size: 12px; margin: 40px 0 20px; }
+</style>
+</head>
+<body>
+
+<h1>Wireframes: Hiển thị tiền hoàn tạm tính tại MSHT</h1>
+
+<div class="meta">
+  <table>
+    <tr><td>Phiên bản</td><td>v1.0</td></tr>
+    <tr><td>Ngày tạo</td><td>2026-06-01</td></tr>
+    <tr><td>Trạng thái</td><td>Draft</td></tr>
+    <tr><td>Related docs</td><td><a href="./PRD.md">PRD.md</a></td></tr>
+  </table>
+</div>
+
+<div class="toc">
+  <strong>📑 Mục lục</strong>
+  <ol>
+    <li><a href="#m1">Màn 1: Input Link (Idle State)</a></li>
+    <li><a href="#m2">Màn 2: Loading State</a></li>
+    <li><a href="#m3">Màn 3: Kết quả – Có hoàn tiền (Happy Path)</a></li>
+    <li><a href="#m4">Màn 4: Kết quả – Không có hoàn tiền (0đ)</a></li>
+    <li><a href="#m5">Màn 5: Error States</a></li>
+    <li><a href="#flow">Sơ đồ luồng tổng quan</a></li>
+    <li><a href="#components">Components UI cần design</a></li>
+    <li><a href="#notes">Lưu ý cho Designer khi chuyển sang Hi-fi</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================
+     MÀN 1
+============================================================ -->
+<h2 id="m1">1. Màn 1: Input Link (Idle State)</h2>
+
+<div class="wireframe-section">
+  <div class="wireframe-row">
+    <div class="wireframe-mockup">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="topbar">
+            <span class="icon">←</span>
+            <span>Kiểm tra hoàn tiền</span>
+            <span class="icon">⋮</span>
+          </div>
+          <div class="content">
+            <div class="hero-text">
+              <div class="emoji">💰</div>
+              <h4>Xem tiền hoàn trước khi mua</h4>
+              <p>Dán link sản phẩm để biết số tiền hoàn dự kiến bạn sẽ nhận được</p>
+            </div>
+            <div class="input-link">
+              <span>🔗 Dán link sản phẩm tại đây</span>
+              <span class="paste-btn">📋</span>
+            </div>
+            <button class="btn-primary disabled">Kiểm tra hoàn tiền</button>
+            <div class="divider-text">Hỗ trợ các sàn</div>
+            <div class="platform-row">
+              <span class="platform-chip">🛒 Shopee</span>
+              <span class="platform-chip">🛍️ Lazada</span>
+              <span class="platform-chip">📦 Tiki</span>
+              <span class="platform-chip">🎵 TikTok</span>
+            </div>
+            <div class="info-box">
+              ℹ️ Số tiền hoàn là dự kiến và có thể thay đổi theo chính sách
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wireframe-notes">
+      <h3>Ghi chú</h3>
+      <div class="notes-block">
+        <ul>
+          <li>Icon 📋 = nút paste tự động từ clipboard</li>
+          <li>Nút "Kiểm tra hoàn tiền" <strong>disabled</strong> khi input rỗng</li>
+          <li>Logo các sàn hỗ trợ hiển thị bên dưới</li>
+          <li>Disclaimer ngay từ đầu để set kỳ vọng cho user</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MÀN 2
+============================================================ -->
+<h2 id="m2">2. Màn 2: Loading State</h2>
+
+<div class="wireframe-section">
+  <div class="wireframe-row">
+    <div class="wireframe-mockup">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="topbar">
+            <span class="icon">←</span>
+            <span>Kiểm tra hoàn tiền</span>
+            <span class="icon">⋮</span>
+          </div>
+          <div class="content">
+            <div class="input-link filled">
+              <span>🔗 https://shopee.vn/product...</span>
+            </div>
+            <div class="skeleton">
+              <div class="skeleton-line tall"></div>
+              <div class="skeleton-line medium"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+            <div class="skeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+            <div class="loading-text">⏳ Đang kiểm tra...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wireframe-notes">
+      <h3>Ghi chú</h3>
+      <div class="notes-block">
+        <ul>
+          <li>Skeleton placeholder với shimmer animation</li>
+          <li>Timeout sau 5s → fallback error state</li>
+          <li>Disable user input trong khi loading</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MÀN 3
+============================================================ -->
+<h2 id="m3">3. Màn 3: Kết quả – Có hoàn tiền <span class="badge-section badge-happy">⭐ Happy Path</span></h2>
+
+<div class="wireframe-section">
+  <div class="wireframe-row">
+    <div class="wireframe-mockup">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="topbar">
+            <span class="icon">←</span>
+            <span>Kết quả hoàn tiền</span>
+            <span class="icon">⋮</span>
+          </div>
+          <div class="content">
+            <div class="product-card">
+              <div class="product-img">IMG</div>
+              <div class="product-info">
+                <div class="product-name">Áo thun unisex form rộng cotton 100%...</div>
+                <div class="product-platform">🛒 Shopee</div>
+                <div class="product-price">💵 250.000đ</div>
+              </div>
+            </div>
+            <div class="cashback-card">
+              <div class="cashback-label">💰 TIỀN HOÀN DỰ KIẾN</div>
+              <div class="cashback-amount">25.000đ</div>
+              <div class="cashback-rate">10% hoàn</div>
+              <div class="breakdown">
+                <div class="breakdown-item">
+                  <span>• Hoàn base (6%)</span>
+                  <span>15.000đ</span>
+                </div>
+                <div class="breakdown-item bonus">
+                  <span>• Bonus (4%) 🎁</span>
+                  <span>10.000đ</span>
+                </div>
+              </div>
+            </div>
+            <div class="warning-box">
+              ⚠️ Số tiền hoàn là dự kiến và có thể thay đổi tùy chính sách từng ngày
+            </div>
+            <button class="btn-primary">🛍️ Mua ngay &amp; nhận hoàn</button>
+            <div class="link-text">Kiểm tra link khác →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wireframe-notes">
+      <h3>Highlights</h3>
+      <div class="notes-block">
+        <ul>
+          <li>Số tiền hoàn <strong>nổi bật</strong> ở giữa, font size 32-40pt</li>
+          <li>Breakdown base + bonus rõ ràng (có thể collapse/expand)</li>
+          <li>Disclaimer ngay dưới</li>
+          <li>CTA chính <strong>bold, full-width</strong>, màu cam brand</li>
+          <li>Link phụ "Kiểm tra link khác" để user check sản phẩm khác</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MÀN 4
+============================================================ -->
+<h2 id="m4">4. Màn 4: Kết quả – Không có hoàn tiền (0đ) <span class="badge-section badge-warn">⚠️ Critical UX</span></h2>
+
+<div class="wireframe-section">
+  <div class="wireframe-row">
+    <div class="wireframe-mockup">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="topbar">
+            <span class="icon">←</span>
+            <span>Kết quả hoàn tiền</span>
+            <span class="icon">⋮</span>
+          </div>
+          <div class="content">
+            <div class="product-card">
+              <div class="product-img">IMG</div>
+              <div class="product-info">
+                <div class="product-name">Sách "Đắc Nhân Tâm"</div>
+                <div class="product-platform">🛒 Shopee</div>
+                <div class="product-price">💵 89.000đ</div>
+              </div>
+            </div>
+            <div class="empty-state no-cashback">
+              <div class="empty-emoji">😔</div>
+              <div class="empty-title">Sản phẩm này hiện<br>KHÔNG CÓ HOÀN TIỀN</div>
+              <div class="empty-desc">Lý do: Ngành hàng "Sách" không thuộc danh mục được hoàn tiền của chương trình</div>
+            </div>
+            <div class="suggest-title">💡 Gợi ý cho bạn</div>
+            <div class="suggest-box">
+              <div class="suggest-item">
+                <div class="product-img">📕</div>
+                <div class="suggest-name">Sách Kỹ Năng...</div>
+                <div class="suggest-rate">5% hoàn →</div>
+              </div>
+              <div class="suggest-item">
+                <div class="product-img">📗</div>
+                <div class="suggest-name">Sách Tâm Lý...</div>
+                <div class="suggest-rate">8% hoàn →</div>
+              </div>
+            </div>
+            <button class="btn-secondary">Xem sản phẩm có hoàn tiền</button>
+            <div class="link-text">Kiểm tra link khác →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wireframe-notes">
+      <h3>Lưu ý quan trọng</h3>
+      <div class="notes-block">
+        <ul>
+          <li>Thông báo <strong>0đ rõ ràng</strong> ngay đầu để tránh kỳ vọng sai</li>
+          <li>Giải thích <strong>lý do</strong> cụ thể (ngành hàng nào không hoàn)</li>
+          <li>Có gợi ý thay thế → <strong>giữ user trong app</strong></li>
+          <li>Dùng tone trung tính, KHÔNG dùng màu đỏ tiêu cực</li>
+          <li>CTA phụ "Xem sản phẩm có hoàn tiền" để chuyển hướng user</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MÀN 5
+============================================================ -->
+<h2 id="m5">5. Màn 5: Error States</h2>
+
+<div class="wireframe-section">
+  <h3>5.1 Link không hợp lệ</h3>
+  <div class="wireframe-row">
+    <div class="wireframe-mockup">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="topbar">
+            <span class="icon">←</span>
+            <span>Kiểm tra hoàn tiền</span>
+            <span class="icon">⋮</span>
+          </div>
+          <div class="content">
+            <div class="input-link error filled">
+              <span>🔗 abc.xyz/some-random...</span>
+              <span class="paste-btn" style="color:#d93025">✕</span>
+            </div>
+            <div class="error-text">❌ Link không hợp lệ</div>
+            <div class="empty-state error">
+              <div class="empty-emoji">🔍</div>
+              <div class="empty-title">Không nhận diện được<br>sản phẩm từ link này</div>
+              <div class="empty-desc">Vui lòng kiểm tra lại link hoặc copy lại từ ứng dụng sàn TMĐT</div>
+            </div>
+            <button class="btn-primary">Thử lại</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wireframe-notes">
+      <h3>Ghi chú</h3>
+      <div class="notes-block">
+        <ul>
+          <li>Input border đỏ + icon ✕ để clear</li>
+          <li>Hướng dẫn user copy lại từ app gốc</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>5.2 Sàn không hỗ trợ</h3>
+  <div class="wireframe-row">
+    <div class="wireframe-mockup">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="topbar">
+            <span class="icon">←</span>
+            <span>Kiểm tra hoàn tiền</span>
+            <span class="icon">⋮</span>
+          </div>
+          <div class="content">
+            <div class="input-link filled">
+              <span>🔗 https://sendo.vn/...</span>
+            </div>
+            <div class="empty-state error">
+              <div class="empty-emoji">🚫</div>
+              <div class="empty-title">Sàn này chưa được hỗ trợ</div>
+              <div class="empty-desc">Hiện tại MSHT chỉ hỗ trợ:</div>
+              <ul class="platform-list" style="text-align:left; display:inline-block; margin-top:8px;">
+                <li>Shopee</li>
+                <li>Lazada</li>
+                <li>Tiki</li>
+                <li>TikTok Shop</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wireframe-notes">
+      <h3>Ghi chú</h3>
+      <div class="notes-block">
+        <ul>
+          <li>Liệt kê rõ các sàn được hỗ trợ</li>
+          <li>Roadmap mở rộng thêm sàn ở Phase 2</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>5.3 API Error / Timeout</h3>
+  <div class="wireframe-row">
+    <div class="wireframe-mockup">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="topbar">
+            <span class="icon">←</span>
+            <span>Kiểm tra hoàn tiền</span>
+            <span class="icon">⋮</span>
+          </div>
+          <div class="content">
+            <div style="margin-top: 80px;"></div>
+            <div class="empty-state error">
+              <div class="empty-emoji">⚠️</div>
+              <div class="empty-title">Có lỗi xảy ra</div>
+              <div class="empty-desc">Không thể kiểm tra hoàn tiền lúc này. Vui lòng thử lại sau vài giây.</div>
+            </div>
+            <button class="btn-primary">🔄 Thử lại</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wireframe-notes">
+      <h3>Ghi chú</h3>
+      <div class="notes-block">
+        <ul>
+          <li>Hiển thị khi API timeout (>5s) hoặc lỗi server</li>
+          <li>Retry button → gọi lại API với cùng link</li>
+          <li>Log error để monitor</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     FLOW
+============================================================ -->
+<h2 id="flow">6. Sơ đồ luồng tổng quan (Flow Diagram)</h2>
+
+<pre>
+┌──────────────┐
+│  Entry Point │
+│ (Home/Tab)   │
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│  Màn 1:      │
+│  Input Link  │
+└──────┬───────┘
+       ↓ [User dán link + tap CTA]
+┌──────────────┐
+│  Validate    │
+│  link?       │
+└──┬────────┬──┘
+   │        │
+   │ Invalid│ Valid
+   ↓        ↓
+┌─────┐  ┌─────────────┐
+│ M5.1│  │  Màn 2:     │
+│Error│  │  Loading    │
+└─────┘  └──────┬──────┘
+                ↓ [Call AT API]
+         ┌──────────────┐
+         │  API Result? │
+         └──┬─────┬─────┴─┐
+            │     │       │
+       Success Zero    Error
+            │     │       │
+            ↓     ↓       ↓
+         ┌────┐┌────┐ ┌──────┐
+         │ M3 ││ M4 │ │ M5.3 │
+         └─┬──┘└─┬──┘ └──────┘
+           │     │
+   [CTA]   │     │ [Gợi ý sp khác]
+           ↓     ↓
+      ┌────────────┐
+      │ Redirect   │
+      │ Affiliate  │
+      └────────────┘
+</pre>
+
+<!-- ============================================================
+     COMPONENTS
+============================================================ -->
+<h2 id="components">7. Components UI cần design</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:200px">Component</th>
+      <th>Mô tả</th>
+      <th style="width:140px">Reuse từ DS?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>LinkInput</code></td><td>Input field + paste button</td><td><span class="label label-reuse">Có thể reuse</span></td></tr>
+    <tr><td><code>LoadingSkeleton</code></td><td>Skeleton placeholder</td><td><span class="label label-reuse">Có</span></td></tr>
+    <tr><td><code>ProductCard</code></td><td>Card hiển thị sản phẩm</td><td><span class="label label-reuse">Có</span></td></tr>
+    <tr><td><code>CashbackHighlight</code></td><td>Box hiển thị tiền hoàn nổi bật</td><td><span class="label label-new">Mới</span></td></tr>
+    <tr><td><code>CashbackBreakdown</code></td><td>Collapse list base + bonus</td><td><span class="label label-new">Mới</span></td></tr>
+    <tr><td><code>EmptyState</code></td><td>Trạng thái 0đ / error</td><td><span class="label label-reuse">Có</span></td></tr>
+    <tr><td><code>RecommendationList</code></td><td>List sản phẩm gợi ý</td><td><span class="label label-reuse">Có</span></td></tr>
+    <tr><td><code>PrimaryCTA</code></td><td>Button mua hàng</td><td><span class="label label-reuse">Có</span></td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================
+     NOTES
+============================================================ -->
+<h2 id="notes">8. Lưu ý cho Designer khi chuyển sang Hi-fi</h2>
+
+<div class="notes-block">
+  <ol>
+    <li><strong>Màu sắc tiền hoàn dự kiến</strong>: dùng màu chủ đạo brand (vàng/cam) để gây chú ý</li>
+    <li><strong>Typography</strong>: số tiền hoàn dùng font size lớn nhất (vd: 32-40pt)</li>
+    <li><strong>Animation</strong>: micro-interaction khi reveal kết quả (số tiền đếm tăng dần)</li>
+    <li><strong>Empty state cho 0đ</strong>: tránh dùng màu đỏ tiêu cực, dùng tone trung tính + có call-to-action thay thế</li>
+    <li><strong>Disclaimer</strong>: cần đủ rõ nhưng không lấn át số tiền hoàn</li>
+    <li><strong>Accessibility</strong>: contrast ratio ≥ 4.5:1, support dark mode</li>
+  </ol>
+</div>
+
+<hr>
+
+<h2>Lịch sử thay đổi</h2>
+<table>
+  <thead>
+    <tr><th>Version</th><th>Ngày</th><th>Người thay đổi</th><th>Nội dung</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>v1.0</td><td>2026-06-01</td><td>PM</td><td>Khởi tạo wireframe v1</td></tr>
+  </tbody>
+</table>
+
+<div class="footer">— End of Document —</div>
+
+</body>
+</html>
