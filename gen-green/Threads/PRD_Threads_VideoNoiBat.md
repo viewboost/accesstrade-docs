@@ -26,25 +26,15 @@ Nền tảng hiện tại đã hỗ trợ liên kết các tài khoản mạng x
 
 ---
 
-## 2. Đối tượng người dùng (Target Users)
+## 2. Yêu cầu chức năng (Functional Requirements)
 
-| Persona | Mô tả | Pain Point |
-|---|---|---|
-| **Creator/KOL** | Người sáng tạo nội dung đa nền tảng | Mất công cập nhật từng kênh, muốn tổng hợp tự động |
-| **Người xem (Viewer)** | Người theo dõi creator | Muốn xem nhanh video chất lượng, không bị nhiễu bởi post text |
-| **Brand/Doanh nghiệp** | Quản lý nhiều tài khoản MXH | Cần kênh Threads để mở rộng marketing |
-
----
-
-## 3. Yêu cầu chức năng (Functional Requirements)
-
-### 3.1 Tính năng A: Liên kết tài khoản Threads
+### 2.1 Tính năng A: Liên kết tài khoản Threads
 
 #### FR-A1: Khởi tạo liên kết
 - Tại trang **Cài đặt → Tài khoản liên kết**, hiển thị thêm nút **"Liên kết 
 Threads"** với logo Threads chính thức.
 - Trạng thái nút:
-  - `Chưa kết nối`: hiển thị "Kết nối Threads".
+  - `Chưa kết nối`: hiển thị "Thêm tài khoản".
   - `Đã kết nối`: hiển thị tên tài khoản Threads 
 
 
@@ -67,22 +57,21 @@ Threads"** với logo Threads chính thức.
 
 ---
 
-### 3.2 Tính năng B: Video nổi bật chỉ hiển thị video
+### 2.2 Tính năng B: Video nổi bật chỉ hiển thị video
 
 #### FR-B1: Logic lọc
 - Mục **"Video nổi bật"** chỉ hiển thị các item có `media_type IN ('VIDEO')`.
 - Loại bỏ hoàn toàn: text post, image post, carousel chỉ chứa ảnh.
 - Với carousel có chứa video → chỉ trích xuất phần video.
 
-#### FR-B2: Tiêu chí "nổi bật" và số lượng hiển thị
+#### FR-B2: Tiêu chí sắp xếp và số lượng hiển thị
+- **Giữ nguyên logic sắp xếp cũ:** sort theo `order` ASC, sau đó theo `view` DESC.
 - Hiển thị **8 video nổi bật** cho cả desktop lẫn mobile (cố định, không đổi theo breakpoint).
-- Logic chọn video: với mỗi user, lấy **video có lượt view cao nhất** (top 1 video / 1 user).
-- Sau đó tổng hợp 8 user khác nhau (theo thứ tự ưu tiên view của video đại diện giảm dần) để hiển thị.
-- **Nguyên tắc:** mỗi user chỉ xuất hiện duy nhất 1 video trong mục Video nổi bật, đảm bảo đa dạng nguồn nội dung.
+- Chỉ lấy item dạng video (theo FR-B1), không hiển thị bài viết dạng text/ảnh.
 
 ---
 
-## 4. Yêu cầu phi chức năng (Non-Functional Requirements)
+## 3. Yêu cầu phi chức năng (Non-Functional Requirements)
 
 | Hạng mục | Yêu cầu |
 |---|---|
