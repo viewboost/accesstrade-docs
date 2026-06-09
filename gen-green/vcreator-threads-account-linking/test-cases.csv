@@ -1,0 +1,79 @@
+Mã trường hợp kiểm tra,Mục đích kiểm thử,Độ ưu tiên,Điều kiện,Các bước thực hiện,Kết quả mong muốn,QA dev,QA stag,QA prod,Dev verify,Dev note
+TC01.1,Hiển thị mục Threads trong danh sách kênh liên kết (FR-1),Cao,"Creator đã đăng nhập, vào trang Tài khoản → Quản lý liên kết","1. Đăng nhập Creator
+2. Truy cập trang Quản lý liên kết
+3. Quan sát danh sách kênh","Mục Threads xuất hiện trong danh sách cùng TikTok/Google/Facebook, có logo Threads chính thức, tên 'Threads' và mô tả 'Bạn có thể liên kết nhiều tài khoản'",,,,,
+TC01.2,Hiển thị nút Thêm tài khoản Threads (FR-2),Cao,Đang ở trang Quản lý liên kết,"1. Quan sát mục Threads
+2. Tìm dòng '+ Thêm tài khoản'","Hiển thị dòng '+ Thêm tài khoản' (giống TikTok), bấm được",,,,,
+TC01.3,Nút Thêm tài khoản luôn hiển thị kể cả đã liên kết (multi-account),Trung bình,"Creator đã liên kết ít nhất 1 tài khoản Threads","1. Quan sát mục Threads khi đã có 1 tài khoản
+2. Kiểm tra còn nút '+ Thêm tài khoản'","Vẫn hiển thị nút '+ Thêm tài khoản' để liên kết thêm (cho phép nhiều tài khoản)",,,,,
+TC02.1,Mở ThreadsModal đúng nội dung (FR-3),Cao,Đang ở mục Threads,"1. Bấm '+ Thêm tài khoản'
+2. Quan sát modal","Mở modal tiêu đề 'Đăng ký kênh Threads', nút xác nhận 'Đăng ký', có khối hướng dẫn 2 bước, ô nhập link và ví dụ",,,,,
+TC02.2,Hiển thị hashtag cá nhân và nút Copy,Cao,"User có hashtag cá nhân (user.hashtag != null)","1. Mở ThreadsModal
+2. Quan sát mục 'Hashtag cá nhân'
+3. Bấm nút Copy","Hiển thị đúng hashtag cá nhân của user; bấm Copy sao chép được hashtag vào clipboard",,,,,
+TC02.3,Hướng dẫn 2 bước xác thực quyền sở hữu,Trung bình,Đang mở ThreadsModal,"1. Đọc khối hướng dẫn","Bước 1: điền hashtag cá nhân vào Bio Threads; Bước 2: quay lại nhập link; có ghi chú được xóa hashtag sau khi duyệt",,,,,
+TC02.4,Đóng modal reset trạng thái,Thấp,Đang mở ThreadsModal đã nhập dở,"1. Nhập 1 phần link
+2. Đóng modal
+3. Mở lại modal","Ô nhập link và thông báo lỗi được reset rỗng khi mở lại",,,,,
+TC03.1,Validate link rỗng (FR-3),Cao,Đang mở ThreadsModal,"1. Để trống ô link
+2. Bấm 'Đăng ký'","Hiển thị lỗi 'Vui lòng nhập link tài khoản Threads', không gọi API lưu",,,,,
+TC03.2,Validate link sai định dạng (không phải domain Threads),Cao,Đang mở ThreadsModal,"1. Nhập https://facebook.com/abc
+2. Bấm 'Đăng ký'","Báo lỗi định dạng link không hợp lệ, không gọi API lưu (regex chỉ chấp nhận threads.net/threads.com)",,,,,
+TC03.3,Validate link profile hợp lệ - threads.net,Cao,Đang mở ThreadsModal,"1. Nhập https://www.threads.net/@tencuaban
+2. Bấm 'Đăng ký'","Qua validate client, gọi postLinkUserSocial với source=threads, linkSocial=URL",,,,,
+TC03.4,Validate link profile hợp lệ - không có https/www,Trung bình,Đang mở ThreadsModal,"1. Nhập threads.net/@tencuaban
+2. Bấm 'Đăng ký'","Chấp nhận theo regex IsValidProfileURL (cho phép biến thể), hoặc auto-chuẩn hóa rồi gửi đi",,,,,
+TC03.5,Validate link profile hợp lệ - domain threads.com,Trung bình,Đang mở ThreadsModal,"1. Nhập https://threads.com/@tencuaban
+2. Bấm 'Đăng ký'","Chấp nhận domain threads.com theo regex RegexThreadsProfile",,,,,
+TC03.6,Từ chối link bài đăng (post URL) khi đăng ký profile,Trung bình,Đang mở ThreadsModal,"1. Nhập https://www.threads.net/@user/post/abc123
+2. Bấm 'Đăng ký'","Báo lỗi vì đây là URL bài đăng, không phải URL profile (yêu cầu link profile)",,,,,
+TC04.1,Gửi payload linkSocial thay vì token (FR-4),Cao,"Link profile hợp lệ đã nhập","1. Nhập link profile hợp lệ
+2. Bấm 'Đăng ký'
+3. Kiểm tra request gửi lên","Payload là { source: 'threads', linkSocial: <url> }; KHÔNG gửi field token cho threads",,,,,
+TC04.2,Backend scrape profile và lưu thông tin (FR-4),Cao,"External Threads API hoạt động, link profile public hợp lệ","1. Gửi đăng ký với link profile hợp lệ
+2. Quan sát kết quả","Backend validate URL → ScrapeProfile → lưu user.Threads (ID/PK, Username, FullName, ProfilePic, Followers, LinkSocial=URL gốc)",,,,,
+TC04.3,Liên kết thành công đóng modal và refresh danh sách,Cao,"Đăng ký thành công","1. Đăng ký tài khoản Threads thành công
+2. Quan sát màn hình","Modal đóng, gọi getListUserSocial, tài khoản Threads mới hiển thị với ảnh đại diện + tên/username",,,,,
+TC04.4,Hiển thị loading khi đang liên kết,Trung bình,"Đang submit đăng ký","1. Bấm 'Đăng ký'
+2. Quan sát nút trong lúc chờ","Nút/modal ở trạng thái loading (theo effect userState/postLinkUserSocial), tránh double submit",,,,,
+TC04.5,Liên kết nhiều tài khoản Threads,Trung bình,"Đã có 1 tài khoản Threads liên kết","1. Bấm '+ Thêm tài khoản'
+2. Đăng ký tài khoản Threads thứ 2 (username khác)","Cả 2 tài khoản Threads hiển thị trong danh sách",,,,,
+TC05.1,Lỗi external API - profile không tồn tại (FR-4 NFR),Cao,"Link đúng định dạng nhưng tài khoản không tồn tại","1. Nhập link profile không tồn tại
+2. Bấm 'Đăng ký'","Báo lỗi thân thiện (không tìm thấy tài khoản), không lưu liên kết rác",,,,,
+TC05.2,Lỗi external API - tài khoản private,Trung bình,"Link profile của tài khoản ở chế độ riêng tư","1. Nhập link profile private
+2. Bấm 'Đăng ký'","Thông báo lỗi phù hợp (không lấy được dữ liệu profile riêng tư), không lưu",,,,,
+TC05.3,Lỗi external API timeout/down,Trung bình,"External Threads API chậm hoặc lỗi","1. Nhập link hợp lệ khi API down
+2. Bấm 'Đăng ký'","Hiển thị lỗi thân thiện, không treo UI, trang quản lý vẫn hoạt động",,,,,
+TC05.4,Chống nhập URL độc hại,Cao,Đang mở ThreadsModal,"1. Nhập URL có script/redirect lạ ngoài whitelist
+2. Bấm 'Đăng ký'","Regex whitelist threads.net/threads.com chặn, không xử lý URL ngoài domain",,,,,
+TC06.1,Chống liên kết trùng tài khoản Threads,Cao,"Một tài khoản Threads đã được liên kết (bởi user hiện tại hoặc user khác)","1. Đăng ký link profile đã được liên kết
+2. Quan sát kết quả","Cảnh báo/từ chối liên kết trùng theo PK/username, không tạo bản ghi trùng",,,,,
+TC07.1,Trạng thái chờ duyệt sau khi liên kết (FR-5),Trung bình,"Cơ chế duyệt special source được bật","1. Liên kết Threads mới
+2. Quan sát badge trạng thái","Tài khoản ở trạng thái chờ duyệt/đúng theo cấu hình; badge hiển thị tương ứng",,,,,
+TC07.2,Badge trạng thái active,Trung bình,"Tài khoản Threads đã được duyệt (status=active)","1. Quan sát tài khoản đã duyệt","Hiển thị badge 'Hoạt động' (success)",,,,,
+TC07.3,Badge trạng thái hết hạn/từ chối,Trung bình,"Tài khoản Threads status=rejected/expired","1. Quan sát tài khoản bị từ chối/hết hạn","Hiển thị badge 'Hết hạn' (danger)",,,,,
+TC07.4,Gỡ liên kết tài khoản Threads (nếu có ở phiên bản 1),Thấp,"Đã liên kết 1 tài khoản Threads, tính năng gỡ được bật","1. Chọn gỡ liên kết tài khoản Threads
+2. Xác nhận","Tài khoản bị gỡ khỏi danh sách, các kênh khác không ảnh hưởng",,,,,
+TC08.1,Threads là special source - bắt buộc chọn tài khoản khi nộp bài (FR-6),Cao,"Đã liên kết tài khoản Threads, mở Post Modal nộp bài thử thách có applyForSources gồm threads","1. Mở Post Modal
+2. Chọn nền tảng Threads
+3. Quan sát","Hiển thị bộ chọn tài khoản Threads; bắt buộc chọn tài khoản trước khi nộp",,,,,
+TC08.2,Hashtag chỉ hiển thị hashtag chương trình cho Threads (FR-6),Cao,"Đã chọn Threads trong Post Modal","1. Chọn nền tảng Threads
+2. Quan sát phần hashtag","Chỉ hiển thị hashtag chương trình, KHÔNG kèm hashtag cá nhân (giống TikTok); combineHashtag('threads') trả về chỉ program hashtags",,,,,
+TC08.3,So sánh hashtag với Instagram (vẫn kèm hashtag cá nhân),Trung bình,"Có thể chọn Threads và Instagram","1. Chọn Threads → xem hashtag
+2. Chọn Instagram → xem hashtag","Threads: chỉ program hashtags; Instagram: program + hashtag cá nhân",,,,,
+TC08.4,Validate URL bài đăng Threads - dạng /post/ (FR-6),Cao,"Đang nộp bài source=threads","1. Nhập https://www.threads.net/@username/post/postId
+2. Nộp bài","URL hợp lệ theo IsValidPostURL, cho phép nộp",,,,,
+TC08.5,Validate URL bài đăng Threads - dạng /t/,Cao,"Đang nộp bài source=threads","1. Nhập https://www.threads.net/t/postId
+2. Nộp bài","URL hợp lệ theo IsValidPostURL, cho phép nộp",,,,,
+TC08.6,Từ chối URL bài đăng Threads sai định dạng,Cao,"Đang nộp bài source=threads","1. Nhập https://www.threads.net/@username (chỉ profile)
+2. Nộp bài","Báo lỗi URL bài đăng không hợp lệ, không cho nộp",,,,,
+TC08.7,Placeholder và ví dụ URL bài đăng Threads,Thấp,"Đang nộp bài source=threads","1. Quan sát placeholder ô nhập URL","Hiển thị gợi ý: https://www.threads.net/@username/post/postId hoặc https://www.threads.net/t/postId",,,,,
+TC08.8,transformSource hiển thị tên nền tảng,Thấp,"Có nội dung nguồn threads","1. Quan sát label nền tảng ở các nơi hiển thị","'threads' hiển thị thành 'Threads'",,,,,
+TC08.9,Nộp bài Threads gửi đúng source và accountId,Cao,"Đã chọn tài khoản Threads và URL hợp lệ","1. Chọn tài khoản Threads
+2. Nhập URL bài đăng hợp lệ
+3. Nộp bài","Request nộp bài có source='threads' và đúng accountId tài khoản đã chọn",,,,,
+TC09.1,Không hồi quy TikTok (regression),Cao,"Đã liên kết tài khoản TikTok","1. Thực hiện liên kết và nộp bài TikTok như cũ","TikTok giữ nguyên hành vi: chọn tài khoản, hashtag chỉ program, luồng OAuth không đổi",,,,,
+TC09.2,Không hồi quy các kênh khác,Trung bình,"Có liên kết Google/Facebook","1. Kiểm tra trang quản lý và nộp bài các kênh khác","Các kênh khác hoạt động bình thường, không bị ảnh hưởng bởi Threads",,,,,
+TC10.1,Đồng bộ trên biến thể frontend (FR-4.7),Cao,"Phạm vi phát hành gồm frontend / frontend-vcreator / frontend-green","1. Kiểm tra tính năng Threads trên từng biến thể FE trong phạm vi","Hành vi liên kết Threads nhất quán trên các biến thể FE được phát hành",,,,,
+TC10.2,Text tiếng Việt nhất quán (i18n),Thấp,"Đang dùng giao diện","1. Rà soát toàn bộ text của tính năng Threads","Toàn bộ text tiếng Việt đúng chính tả, đồng bộ giọng văn hệ thống",,,,,
+TC10.3,Hiển thị responsive trên mobile,Trung bình,"Mở trên màn hình mobile","1. Mở trang quản lý và ThreadsModal trên mobile","Bố cục hiển thị tốt, không vỡ layout, thao tác được",,,,,
