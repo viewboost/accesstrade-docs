@@ -114,14 +114,40 @@ Tiền hoàn dự kiến = Tiền hoàn base + Tiền hoàn bonus
 
 ### 6.1 Luồng UX chính
 
+**Nguyên tắc thiết kế:** Việc hiển thị tiền hoàn tạm tính là phần **enhancement (best-effort)** được thêm vào luồng mua hàng đã có sẵn. Nó **không được phép chặn** luồng CTA mua hàng. CTA mua hàng chỉ phụ thuộc vào việc tạo được affiliate link (API gen link), **không phụ thuộc** vào việc lấy được thông tin sản phẩm (API AT).
+
+Sau khi parse link thành công, FE gọi **2 API song song (parallel)**:
+
+| API | Vai trò | Mức độ quan trọng |
+|---|---|---|
+| **API gen link** (luồng cũ) | Tạo affiliate link để redirect mua hàng | **Bắt buộc** — lỗi thì chặn |
+| **API AT lấy thông tin sản phẩm** (mới) | Lấy giá + % hoàn để hiển thị tiền hoàn tạm tính | **Best-effort** — lỗi thì bỏ qua, không chặn |
+
 ```
 [User paste link]
       ↓
 [Validate & Parse link]
       ↓
-[Gọi API AT lấy thông tin sản phẩm]
+[Gọi SONG SONG 2 API]
+   ├── API gen link (bắt buộc)
+   └── API AT lấy thông tin sản phẩm (best-effort)
       ↓
-[Hiển thị thông tin tiền hoàn dự kiến]
+   ┌──────────────────────────────────────────────────────────┐
+   │ Ma trận kết quả                                          │
+   ├──────────────┬─────────────┬─────────────────────────────┤
+   │ Gen link     │ API AT      │ Kết quả hiển thị            │
+   ├──────────────┼─────────────┼─────────────────────────────┤
+   │ ❌ Lỗi       │ (bất kỳ)    │ Báo lỗi (luồng cũ).         │
+   │              │             │ KHÔNG hiện tiền hoàn,       │
+   │              │             │ KHÔNG có CTA mua hàng.      │
+   ├──────────────┼─────────────┼─────────────────────────────┤
+   │ ✅ OK        │ ❌ Lỗi      │ Ẩn tiền hoàn tạm tính.      │
+   │              │             │ Hiện thông báo mềm +        │
+   │              │             │ CTA mua hàng (vẫn đi tiếp). │
+   ├──────────────┼─────────────┼─────────────────────────────┤
+   │ ✅ OK        │ ✅ OK       │ Happy case: hiện đầy đủ     │
+   │              │             │ tiền hoàn tạm tính + CTA.   │
+   └──────────────┴─────────────┴─────────────────────────────┘
       ↓
 [CTA mua hàng → Redirect qua affiliate link]
 ```
@@ -136,10 +162,13 @@ Tiền hoàn dự kiến = Tiền hoàn base + Tiền hoàn bonus
 - Hỗ trợ sàn: **Shopee** (MVP), Lazada/Tiki (Phase 2)
 
 #### Màn 2: Loading
-- Skeleton/spinner trong khi gọi API
-- Timeout 5s → fallback error state
+- Skeleton/spinner trong khi gọi **2 API song song** (gen link + API AT)
+- Điều kiện thoát loading: khi **cả 2 API đã có kết quả** (thành công hoặc lỗi/timeout)
+- Timeout 5s áp dụng độc lập cho từng API:
+  - API gen link timeout/lỗi → đi nhánh lỗi (Màn 5a)
+  - API AT timeout/lỗi (gen link OK) → đi nhánh thông báo mềm (Màn 3b)
 
-#### Màn 3: Kết quả – Có hoàn tiền (Happy path)
+#### Màn 3: Kết quả – Có hoàn tiền (Happy path — TH#3: gen link OK + API AT OK)
 Hiển thị:
 - Ảnh + tên sản phẩm
 - **Giá sản phẩm** (VND)
@@ -148,16 +177,28 @@ Hiển thị:
 - **Disclaimer**: "Số tiền hoàn có thể thay đổi tùy theo chính sách từng ngày"
 - CTA chính: **"Mua ngay & nhận hoàn tiền"**
 
+#### Màn 3b: Kết quả – Không lấy được tạm tính (TH#2: gen link OK + API AT lỗi/timeout)
+Trường hợp này affiliate link đã tạo được nên **vẫn cho user mua hàng**, chỉ thiếu phần tạm tính.
+- **Ẩn hoàn toàn** phần thông tin sản phẩm + tiền hoàn tạm tính (không hiện số, không hiện skeleton lỗi)
+- **Thông báo mềm** (trấn an, không phải báo lỗi): *"Hiện chưa tạm tính được hoàn tiền, nhưng bạn vẫn được hoàn tiền như bình thường khi mua qua đây 🎁"*
+- (Tùy chọn) Link/nút phụ **"Thử lại"** để gọi lại API AT (chỉ gọi lại API AT, không gọi lại gen link)
+- CTA chính **vẫn nổi bật, không thay đổi**: **"Mua ngay & nhận hoàn tiền"**
+- > ⚠️ Lưu ý design: màn này **bắt buộc có CTA mua hàng**. Không được biến thành error state chặn user.
+
 #### Màn 4: Kết quả – Không có hoàn tiền (0đ)
 - Thông báo rõ ràng: "Sản phẩm này hiện **không có hoàn tiền**"
 - Lý do: ngành hàng không thuộc danh mục hoàn tiền
 - (Phase 2) Gợi ý sản phẩm/danh mục tương tự có hoàn tiền
 - CTA phụ: "Xem sản phẩm khác có hoàn tiền"
 
-#### Màn 5: Error state
-- Link không hợp lệ → "Link không hợp lệ, vui lòng kiểm tra lại"
-- Link không thuộc sàn hỗ trợ → "Hiện chỉ hỗ trợ link Shopee"
-- API lỗi/timeout → "Có lỗi xảy ra, vui lòng thử lại"
+#### Màn 5: Error state (chỉ dành cho lỗi chặn — không tạo được affiliate link)
+Đây là các lỗi khiến **không có gì để mua** nên chặn là đúng. Phân biệt rõ với TH#2 (API AT lỗi) ở Màn 3b — TH#2 KHÔNG phải error state.
+
+- **Màn 5a — Lỗi gen link / API lỗi chặn**: API gen link lỗi/timeout → "Có lỗi xảy ra, vui lòng thử lại" + nút **"Thử lại"** (gọi lại từ đầu). Không có CTA mua hàng vì chưa có affiliate link.
+- **Màn 5b — Link không hợp lệ**: "Link không hợp lệ, vui lòng kiểm tra lại"
+- **Màn 5c — Link không thuộc sàn hỗ trợ**: "Hiện chỉ hỗ trợ link Shopee"
+
+> **Quan trọng:** Lỗi của **API AT lấy thông tin sản phẩm KHÔNG đi vào Màn 5** — nó đi vào **Màn 3b** (thông báo mềm + CTA mua hàng) vì affiliate link vẫn tạo được.
 
 ---
 
@@ -205,6 +246,10 @@ Hiển thị:
 | User paste cùng link nhiều lần | Dùng cache, không gọi API lặp |
 | Link không phải sàn TMĐT | Báo lỗi rõ ràng |
 | API AT trả về data không đầy đủ | Fallback hiển thị phần khả dụng + báo "Không thể lấy đầy đủ thông tin" |
+| **Gen link OK + API AT lỗi/timeout** | Đi Màn 3b: ẩn tạm tính + thông báo mềm, **vẫn hiện CTA mua hàng** (không chặn) |
+| **Gen link lỗi** | Đi Màn 5a: báo lỗi + "Thử lại", **không** hiện tạm tính, **không** CTA mua hàng |
+| **1 API trả về trước, 1 API còn đang chờ** | Chờ cả 2 API có kết quả mới render màn cuối (tránh nhấp nháy UI giữa các state) |
+| **API AT chậm hơn timeout nhưng vẫn trả về sau** | Bỏ qua response trễ (đã render Màn 3b), không update ngược lại UI để tránh giật |
 
 ---
 
@@ -223,7 +268,8 @@ Hiển thị:
 
 | Rủi ro | Mức độ | Giải pháp |
 |---|---|---|
-| API AT chậm/không ổn định | Cao | Caching, timeout, fallback UX |
+| API AT chậm/không ổn định | Cao | Caching, timeout, **fallback Màn 3b: ẩn tạm tính + thông báo mềm + vẫn cho mua hàng** (không chặn conversion) |
+| Tính năng tạm tính (mới) vô tình chặn luồng mua hàng (cũ) | Cao | Tách 2 API song song; CTA chỉ phụ thuộc gen link, độc lập với API AT |
 | Tỉ lệ hoàn thay đổi giữa lúc xem và lúc mua | Cao | Disclaimer rõ ràng, log lại snapshot |
 | User vẫn thất vọng dù đã có dự kiến | Trung bình | UX rõ ràng phần "dự kiến", có FAQ |
 | Tỉ lệ parse link sai do format mới | Trung bình | Monitor + alert, update parser |
@@ -242,8 +288,9 @@ Hiển thị:
 | `link_pasted` | platform (shopee/lazada...), link_valid |
 | `cashback_estimated_shown` | cashback_amount, cashback_rate, has_bonus |
 | `cashback_zero_shown` | reason |
-| `cta_buy_clicked` | cashback_amount, product_id |
-| `error_shown` | error_type |
+| `cashback_unavailable_shown` | reason (api_at_error/api_at_timeout) — TH#2: Màn 3b, đã hiện CTA |
+| `cta_buy_clicked` | cashback_amount (nullable), product_id (nullable), estimate_status (ok/unavailable) |
+| `error_shown` | error_type (gen_link_error/invalid_link/unsupported_platform) — chỉ lỗi chặn ở Màn 5 |
 
 ### 11.2 Dashboard
 - Conversion funnel: open → paste → see result → click CTA → order
@@ -288,6 +335,7 @@ Hiển thị:
 | Version | Ngày | Người thay đổi | Nội dung |
 |---|---|---|---|
 | v1.0 | 2026-06-01 | PM | Khởi tạo PRD |
+| v1.1 | 2026-06-11 | PM | Tách phụ thuộc: FE gọi 2 API song song (gen link + API AT). Khi API AT lỗi/timeout vẫn cho mua hàng (Màn 3b: thông báo mềm + CTA). Tính năng tạm tính không còn chặn luồng mua hàng cũ. |
 
 ---
 
