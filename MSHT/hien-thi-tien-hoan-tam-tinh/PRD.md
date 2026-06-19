@@ -1,16 +1,5 @@
 # PRD: Hiển thị mức tiền hoàn tạm tính khi user dán link tại MSHT
 
-| | |
-|---|---|
-| **Phiên bản** | v1.0 |
-| **Ngày tạo** | 2026-06-01 |
-| **Trạng thái** | Draft |
-| **PM** | [Tên PM] |
-| **Stakeholders** | Product, Tech (BE/FE), Design, Data, CS, Marketing |
-| **Related docs** | [Wireframes](./wireframes.md) |
-
----
-
 ## Mục lục
 
 1. [Tổng quan](#1-tổng-quan-overview)
@@ -157,15 +146,24 @@ Sau khi parse link thành công, FE gọi **2 API song song (parallel)**:
 > 📐 **Xem chi tiết wireframes**: [wireframes.md](./wireframes.md)
 
 #### Màn 1: Input link
-- Input field cho user paste link
-- Button "Kiểm tra hoàn tiền"
-- Hỗ trợ sàn: **Shopee** (MVP), Lazada/Tiki (Phase 2)
+
+> 🖼️ Tham khảo giao diện màn nhập link (ảnh thiết kế).
+
+Bố cục card (trạng thái **Active**):
+- **Logo các sàn hỗ trợ** hiển thị ngay đầu card: **Shopee**, **TikTok Shop**, **Lazada**
+- Link **"Hướng dẫn ›"** (góc phải trên) → mở hướng dẫn cách sao chép link sản phẩm
+- **Tiêu đề**: "TỐI ĐA TIỀN HOÀN TRÊN SHOPEE"
+- **Mô tả**: "Sao chép link sản phẩm từ Shopee, TikTok Shop, Lazada và dán vào ô bên dưới."
+- **Input field** cho user dán link (icon 🔗) + **button "Mua ngay"** (inline bên phải input)
+  - Button disabled khi input rỗng
+- **Footer note**: "Mua đúng sản phẩm được chuyển hướng đến"
+- Hỗ trợ sàn: **Shopee, TikTok Shop, Lazada** (MVP)
 
 #### Màn 2: Loading
 - Skeleton/spinner trong khi gọi **2 API song song** (gen link + API AT)
 - Điều kiện thoát loading: khi **cả 2 API đã có kết quả** (thành công hoặc lỗi/timeout)
 - Timeout 5s áp dụng độc lập cho từng API:
-  - API gen link timeout/lỗi → đi nhánh lỗi (Màn 5a)
+  - API gen link timeout/lỗi → báo lỗi theo luồng cũ (không có CTA mua hàng vì chưa tạo được affiliate link)
   - API AT timeout/lỗi (gen link OK) → đi nhánh thông báo mềm (Màn 3b)
 
 #### Màn 3: Kết quả – Có hoàn tiền (Happy path — TH#3: gen link OK + API AT OK)
@@ -194,9 +192,7 @@ Trường hợp này affiliate link đã tạo được nên **vẫn cho user mu
 #### Màn 5: Error state (chỉ dành cho lỗi chặn — không tạo được affiliate link)
 Đây là các lỗi khiến **không có gì để mua** nên chặn là đúng. Phân biệt rõ với TH#2 (API AT lỗi) ở Màn 3b — TH#2 KHÔNG phải error state.
 
-- **Màn 5a — Lỗi gen link / API lỗi chặn**: API gen link lỗi/timeout → "Có lỗi xảy ra, vui lòng thử lại" + nút **"Thử lại"** (gọi lại từ đầu). Không có CTA mua hàng vì chưa có affiliate link.
 - **Màn 5b — Link không hợp lệ**: "Link không hợp lệ, vui lòng kiểm tra lại"
-- **Màn 5c — Link không thuộc sàn hỗ trợ**: "Hiện chỉ hỗ trợ link Shopee"
 
 > **Quan trọng:** Lỗi của **API AT lấy thông tin sản phẩm KHÔNG đi vào Màn 5** — nó đi vào **Màn 3b** (thông báo mềm + CTA mua hàng) vì affiliate link vẫn tạo được.
 
@@ -247,7 +243,7 @@ Trường hợp này affiliate link đã tạo được nên **vẫn cho user mu
 | Link không phải sàn TMĐT | Báo lỗi rõ ràng |
 | API AT trả về data không đầy đủ | Fallback hiển thị phần khả dụng + báo "Không thể lấy đầy đủ thông tin" |
 | **Gen link OK + API AT lỗi/timeout** | Đi Màn 3b: ẩn tạm tính + thông báo mềm, **vẫn hiện CTA mua hàng** (không chặn) |
-| **Gen link lỗi** | Đi Màn 5a: báo lỗi + "Thử lại", **không** hiện tạm tính, **không** CTA mua hàng |
+| **Gen link lỗi** | Báo lỗi theo luồng cũ + "Thử lại", **không** hiện tạm tính, **không** CTA mua hàng (chưa có affiliate link) |
 | **1 API trả về trước, 1 API còn đang chờ** | Chờ cả 2 API có kết quả mới render màn cuối (tránh nhấp nháy UI giữa các state) |
 | **API AT chậm hơn timeout nhưng vẫn trả về sau** | Bỏ qua response trễ (đã render Màn 3b), không update ngược lại UI để tránh giật |
 
@@ -290,7 +286,7 @@ Trường hợp này affiliate link đã tạo được nên **vẫn cho user mu
 | `cashback_zero_shown` | reason |
 | `cashback_unavailable_shown` | reason (api_at_error/api_at_timeout) — TH#2: Màn 3b, đã hiện CTA |
 | `cta_buy_clicked` | cashback_amount (nullable), product_id (nullable), estimate_status (ok/unavailable) |
-| `error_shown` | error_type (gen_link_error/invalid_link/unsupported_platform) — chỉ lỗi chặn ở Màn 5 |
+| `error_shown` | error_type (gen_link_error theo luồng cũ / invalid_link ở Màn 5b) |
 
 ### 11.2 Dashboard
 - Conversion funnel: open → paste → see result → click CTA → order

@@ -25,38 +25,33 @@
 ## 1. Màn 1: Input Link (Idle State)
 
 ```
+  Active
 ┌─────────────────────────────────────┐
-│  ←     Kiểm tra hoàn tiền      ⋮   │
-├─────────────────────────────────────┤
+│ [S] [TT] [Laz]          Hướng dẫn › │
 │                                     │
-│   💰 Xem tiền hoàn trước khi mua   │
+│  TỐI ĐA TIỀN HOÀN TRÊN SHOPEE       │
 │                                     │
-│   Dán link sản phẩm để biết số tiền │
-│   hoàn dự kiến bạn sẽ nhận được     │
+│  Sao chép link sản phẩm từ Shopee,  │
+│  Tiktok Shop, Lazada và dán vào ô   │
+│  bên dưới.                          │
 │                                     │
-│  ┌───────────────────────────────┐ │
-│  │ 🔗 Dán link sản phẩm tại đây │ │
-│  │                          [📋] │ │
-│  └───────────────────────────────┘ │
+│  ┌──────────────────────┐ ┌───────┐ │
+│  │ 🔗 https://s.shopee… │ │Mua ngay│ │
+│  └──────────────────────┘ └───────┘ │
 │                                     │
-│  ┌───────────────────────────────┐ │
-│  │     Kiểm tra hoàn tiền        │ │
-│  └───────────────────────────────┘ │
-│                                     │
-│  ─────  Hỗ trợ các sàn  ─────      │
-│                                     │
-│   [Shopee] [Lazada] [Tiki] [TT]    │
-│                                     │
-│  ℹ️  Số tiền hoàn là dự kiến và có  │
-│     thể thay đổi theo chính sách    │
+│  Mua đúng sản phẩm được chuyển      │
+│  hướng đến                          │
 │                                     │
 └─────────────────────────────────────┘
 ```
 
 **Ghi chú:**
-- Icon `[📋]` = nút paste tự động từ clipboard
-- Nút "Kiểm tra hoàn tiền" **disabled** khi input rỗng
-- Logo các sàn hỗ trợ hiển thị bên dưới
+- Logo các sàn hỗ trợ hiển thị đầu card: **Shopee, TikTok Shop, Lazada**
+- Link **"Hướng dẫn ›"** (góc phải trên) → mở hướng dẫn cách sao chép link sản phẩm
+- Tiêu đề: "TỐI ĐA TIỀN HOÀN TRÊN SHOPEE"
+- Input field dán link + button **"Mua ngay"** (inline bên phải input)
+- Button "Mua ngay" **disabled** khi input rỗng
+- Footer note: "Mua đúng sản phẩm được chuyển hướng đến"
 
 ---
 
@@ -189,7 +184,9 @@
 
 ## 5. Màn 5: Error States
 
-### 5.1 Link không hợp lệ
+> Chỉ dành cho **lỗi chặn** (không tạo được affiliate link). Lỗi API AT lấy tạm tính KHÔNG vào đây — xem Màn 3b (thông báo mềm + vẫn cho mua).
+
+### 5b. Link không hợp lệ
 
 ```
 ┌─────────────────────────────────────┐
@@ -220,54 +217,6 @@
 └─────────────────────────────────────┘
 ```
 
-### 5.2 Sàn không hỗ trợ
-
-```
-┌─────────────────────────────────────┐
-│  ←     Kiểm tra hoàn tiền      ⋮   │
-├─────────────────────────────────────┤
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │ 🔗 https://sendo.vn/...       │ │
-│  └───────────────────────────────┘ │
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │         🚫                    │ │
-│  │                               │ │
-│  │   Sàn này chưa được hỗ trợ    │ │
-│  │                               │ │
-│  │   Hiện tại MSHT chỉ hỗ trợ:   │ │
-│  │   ✓ Shopee                    │ │
-│  │   ✓ Lazada                    │ │
-│  │   ✓ Tiki                      │ │
-│  │   ✓ TikTok Shop               │ │
-│  └───────────────────────────────┘ │
-│                                     │
-└─────────────────────────────────────┘
-```
-
-### 5.3 API Error / Timeout
-
-```
-┌─────────────────────────────────────┐
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │         ⚠️                    │ │
-│  │                               │ │
-│  │   Có lỗi xảy ra               │ │
-│  │                               │ │
-│  │   Không thể kiểm tra hoàn     │ │
-│  │   tiền lúc này. Vui lòng      │ │
-│  │   thử lại sau vài giây.       │ │
-│  └───────────────────────────────┘ │
-│                                     │
-│  ┌───────────────────────────────┐ │
-│  │       🔄 Thử lại              │ │
-│  └───────────────────────────────┘ │
-│                                     │
-└─────────────────────────────────────┘
-```
-
 ---
 
 ## 6. Sơ đồ luồng tổng quan (Flow Diagram)
@@ -291,23 +240,25 @@
    │ Invalid│ Valid
    ↓        ↓
 ┌─────┐  ┌─────────────┐
-│ M5.1│  │  Màn 2:     │
-│Error│  │  Loading    │
-└─────┘  └──────┬──────┘
-                ↓ [Call AT API]
+│ M5b │  │  Màn 2:     │
+│Link │  │  Loading    │
+│ lỗi │  │ (gen link + │
+└─────┘  │  AT // song)│
+         └──────┬──────┘
+                ↓ [Call gen link + AT API song song]
          ┌──────────────┐
          │  API Result? │
          └──┬─────┬─────┴─┐
             │     │       │
-       Success Zero    Error
+       Success Zero    AT lỗi
             │     │       │
             ↓     ↓       ↓
          ┌────┐┌────┐ ┌──────┐
-         │ M3 ││ M4 │ │ M5.3 │
-         └─┬──┘└─┬──┘ └──────┘
-           │     │
-   [CTA]   │     │ [Gợi ý sp khác]
-           ↓     ↓
+         │ M3 ││ M4 │ │ M3b  │
+         └─┬──┘└─┬──┘ └──┬───┘
+           │     │       │
+   [CTA]   │     │[Gợi ý]│ [CTA vẫn hiện]
+           ↓     ↓       ↓
       ┌────────────┐
       │ Redirect   │
       │ Affiliate  │
