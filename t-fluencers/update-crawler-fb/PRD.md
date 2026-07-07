@@ -15,7 +15,7 @@ Là một creator submit link bài Facebook vào một event/campaign, tôi gặ
 
 ## Solution
 
-- **Fallback mềm cho Facebook/Facebook Reels:** khi crawler không trả dữ liệu, thay vì từ chối, hệ thống tạo content ở trạng thái tạm ("Đang lấy thông tin") với ID sinh từ URL đã được chuẩn hóa, và bỏ qua bước check hashtag. Creator submit được ngay, thông tin sẽ được bổ sung sau. (Facebook Post vẫn bắt buộc crawl thành công vì cần AuthorId để verify quyền sở hữu bài.)
+- **Fallback mềm cho Facebook/Facebook Reels/Facebook Post:** khi crawler không trả dữ liệu, thay vì từ chối, hệ thống tạo content ở trạng thái tạm ("Đang lấy thông tin") với ID sinh từ URL đã được chuẩn hóa, và bỏ qua bước check hashtag. Creator submit được ngay, thông tin sẽ được bổ sung sau. 
 
 - **Chuẩn hóa URL trước khi sinh ID:** loại bỏ query param và fragment khỏi URL trước khi encode thành ID. Nhờ đó cùng một bài — dù đính kèm `?fbclid=...` hay `#...` — luôn cho ra cùng một ID, đóng lỗ hổng lách chống trùng.
 
