@@ -1,0 +1,61 @@
+,,,,,NHẬN XÉT,,,,,,,,,,,,
+,,,,,Tiêu chuẩn hợp đồng,,81,77,77,60,295,,,,,,
+,,,,,Số giờ bù trừ vượt chuẩn tháng 5,,115,2,10,-5,122,,,,,,
+,,,,,Số giờ làm thực tế,,126,129,78,41,374,,,,,,
+,,,,,Số giờ làm so với tiêu chuẩn,,160,54,11,-24,201,,,,,,
+STT,Request/Feature,Mô tả,Impact,Tài liệu liên quan/Notion,Status,Deadline,BE,FE,QC & Project Manager,PM,Total (hours),Dự án ,Gắn nhãn,Ghi chú,AT nghiệm thu,AT Note,DISO Note
+1,Onboard Parasola,,,"Notion
+Dữ liệu",Dev Testing,4/6,1,20,8,1,30,Ambassador,Onboarding adv,29/5 chốt Design ,Xem xét,"Chưa thấy vai trò PM Là gì trong khi PRD AT đã cung cấp theo file  
+
+Bổ sung file testcase thể hiện được 8h làm việc nghiệm thu 1 hoạt động lặp đi lặp lại hàng tháng ","Checklist nghiệm thu: https://docs.google.com/spreadsheets/d/1EUVasnJJsXrM7wueMMxrsZ0facQ2FQqaCbF4PDroBSU/edit?gid=0#gid=0
+- Hoạt động tester tốn 8h do: 
+1. Hoạt động review thiết kế tốn feedback cho cả desktop lẫn mobile vì thiết kế clone từ các bản cũ ra nên k đồng nhất các title, btn , màu btn, size banner,...
+2. Thiết kế thay đổi lặt vặt nhưng nhiều. Điển hình: Background, các text btn, cùng 1 component nhưng mỗi chỗ mỗi khác (ví dụ như mốc nhận thưởng,...) => FE sửa nhiều lần => QC test lại nhiều round. Chưa kể Hương yêu cầu khắc khe hơn các lỗi UI dù đã xuất hiện sẵn bên Ambassador và các ldp khác -> Phải fix theo feedback của Hương để được release
+3. Phải thúc team ops rất nhiều lần để hoàn thành setup nôi dung các bài viết ở môi trường dev (file thông tin cung cấp không đúng id)"
+2,Ambassador - xử lý lỗi liên kết thêm tk sang các website khác,Cần clone qua các website có trạng thái đang chạy và vừa hết,Fix lỗi đăng nhập tiktok đã xử lý trên ambassador qua các website frontend custom khác,"Mô tả & Solution
+
+Notion",Dev Testing,11/6,0,4,2,1,7,Ambassador,Operation,,,,
+3,Mở tính năng xác thực email cho creator Gen-Green,Chức năng  xác thực email này làm với tính năng phân nhóm Creator (tháng 4) nhưng đang ẩn. Cần mở lại trước khi start verify hết tài khoản user bằng email  ,,Đi chung với chức năng cũ,Pending,,2,1,2,1,6,VCreator,Feature,Đã làm xong nhưng chờ AT/Vin xác nhận đã có email gửi OTP trên môi trường production hay chưa? ,,,
+4,"VCreator + TFluencer: Nâng cấp quản lý creator, influencer","- Quản lý toàn diện Influencer bao gồm hồ sơ, hiệu quả tham gia chiến dịch
+- Làm cho cả T-Fluencers và VCreator","Hiện tại brand chưa thể xem thông tin cụ thể của 1 creator, influencer. Nếu cần data thì sẽ phải request operation gửi thông tin lên
+Các thông tin ít nhất cần có bao gồm:
+- Xem thông tin cá nhân
+- Xem các kênh social liên kết
+- Xem hiệu quả tham gia campaign","PRD
+Notion",In progress,24/6,24,16,8,8,56,Tfluencer,Feature,,,,
+4,Tích hợp profile crawler cho ambassador,Đưa chức năng onboard profile từ T-Fluencers sang Ambassador,"- Tận dụng tối đa hiệu quả hoạt động crawler
+- Tạo tiền đề cho phát triển module booking ở tháng 7",Đang soạn thảo,In progress,24/6,40,24,12,8,84,VCreator,Feature,,,,
+5,Vcreator - Liên kết tài khoản Threads,"Đưa tính năng liên kết tài khoản Threads lên Vcreator
+","Hiện tại trên VCreator có thể gửi bài đăng threads nhưng chưa có mục liên kết threads trong trang ""liên kết tài khoản""","Notion
+
+PRD",In progress,11/6,4,2,2,1,9,VCreator,Request,,,,
+6,Tải và quản lý file tải (3 dự án),"Tối ưu luồng tải file (cho phép cancel, không cần restart và migarte để start lại luồng tải)",Trong tháng 5 có 3 lần liên tiếp phải request anh Thuận restart server + migrate database bằng lệnh để fix lỗi stuck. Mỗi lần vậy quy trình rất dài và thường mất vài ngày. Cần giải quyết vấn đề từ gốc,PRD,Not started,18/6,8,8,8,2,26,Ambassador,Feature,,,,
+7,Gen-Green Affiliate,Build trang chương trình affiliate thay Green Seller và bỏ coming soon,Trang Green Seller đang để coming soon lâu quá. Đã request lên Gen-Green thay đổi menu Green Seller thành Green Affiliate để user khám phá campaign,"PRD
+
+Notion",Not started,30/6,8,16,8,4,36,VCreator,Feature,Nhờ Hiếu điều chỉnh trang green affiliate 11/6,,,
+8,Thêm tính năng add thưởng bằng file,"Clone tính năng Thưởng bonus từ Ambassador qua
+Nhưng cần làm lại theo chuẩn mới: Có preview trước khi action
+Sau đó clone ngược về lại Ambassador","Request từ operation, giảm workload tạo thưởng nhỏ lẻ",PRD,In progress,15/6,24,16,16,4,60,VCreator,Feature,Cần ưu tiên đẩy lên trong tuần 2,,,
+9,T- Fluencer - Cập nhật dashboard lọc creator theo hashtag và cập nhật thông tin vị trí creator,Request từ Hà AT,"Request từ oepration, xuất phát từ feedback của ADV","Làm cùng với #8
+
+",Not started,TBD,0,0,0,0,0,Tfluencer,Operation,,,,
+10,Cho phép tạo lại link affiliate. Thêm Utm_source ,"
+Hỗ trợ tạo lại link cho trường hợp link hết hạn, link bị lỗi. Thêm utm_source = gen-green vào api overview, conversation","Lọc đúng đơn hàng, hoa hồng theo đúng source Gen-Green thay vì lấy tất cả ",,Done,4/6,2,1,1,1,5,VCreator,Feature,,,,
+11,[Vreator] User đã update email và ký lại HĐ nhưng không đồng bộ thông tin mới,"Rà soát source code để truy nguyên nhân gây lỗi email ký TOS lại không trùng khớp với email đã cập nhật trong profile: Hệ thống đang ưu tiên lấy theo email từ thông tin ekyc đã xác thực trước đó -> email trong hồ sơ người dùng -> giá trị đang giữ trong state 
+
+",Fix lỗi không đồng bộ email ở bước xác nhận thông tin (bước 3) với bước nhập thông tin (bước 1) trong luồng eKYC ,,Done,4/6,0,6,2,1,9,VCreator,Bug,,Nghiệm thu,,"Hoạt động này tốn khá nhiều thời gian FE, truy tìm nguyên nhân xử lý các lỗi cũ dẫn đến bug hiện tại, cụ thể: 
+1. Lỗi hiển thị popup xác nhận mst -> block step xác nhận ký hợp đồng 
+2. Lỗi hđ đã huỷ nhưng cờ isCompleted = true -> Không thực hiện eKYC lại được 
+3. Lỗi không validate field email 
+"
+12,[Ambassador] Lusso Video - Chênh lệch thông tin trong cùng 1 file đối soát,,"Trong cùng 1 kỳ đối soát nhưng tải file 2 thời điểm khác nhau lại cho ra kết qủa khác. Nguyên nhân chính do callback trễ, dẫn đến view ghi nhận bị lệch số",,In progress,11/6,2,0,1,1,4,VCreator,Bug,,,,
+13,[Ambassador] User không update được địa chỉ - HĐ đã hủy bỏ,,User không sửa được địa chỉ ở bước xác nhận. Dẫn đến sai thông tin hợp đồng.,Notion,Done,4/6,0,1,0,1,2,Ambassador,Bug,,,,
+14,[Tech] Chi tiết case data lệch Lusso,Thu thập nguyên nhân gây lệch view theo danh sách videp AT gửi,Thu thập nguyên nhân gây lệch view theo danh sách video AT gửi,"Notion
+File",Done,4/6,2,0,0,1,3,Ambassador,Bug,,,,
+19,[Tech] Đưa solution xử lý  case data lệch Lusso,Đưa solution xử lý lệch view đối soát,Đưa phương án xử lý để lần sau không gặp lại lỗi lệch view này nữa,PRD,Done,10/6,1,0,0,1,2,Ambassador,Request,,,,
+20,Xử lý bug lệch view đối soát,,"Fix lỗi lệch view, ngăn chặn lỗi lặp lại ở tương lai",PRD,Not started,chưa xác định,8,1,4,1,14,Ambassador,Request,Cần AT duyệt solution,,,
+20,[Lusso] User không update được địa chỉ - HĐ đã hủy bỏ,Clone fix lỗi không update địa chỉ hợp đồng sang các website đang chạy và vừa hết,Clone fix lỗi không update địa chỉ hợp đồng sang các website đang chạy và vừa hết,Notion,In progress,11/6,0,4,1,1,6,Ambassador,Request,,,,
+21,[Ambasador] [Admin] Không pagging trang Duyêt Creator,,Fix lỗi không chuyển page được,Notion,Dev Testing,10/6,0,1,0,1,2,Ambassador,Bug,,,,
+22,VPBANK- Update giao diện,Đổi giao diện VPbank,Đổi giao diện VPbank,"Tài liệu
+Notion",In progress,12/6,0,2,1,1,4,Ambassador,Request,,,,
+23,Fix bug tồn đọng Ambassador,Fix các bug cũ trên Ambassador,Fix các bug cũ trên Ambassador,File nghiệm thu,Not started,15/6,,6,2,1,9,Ambassador,Request,,,,

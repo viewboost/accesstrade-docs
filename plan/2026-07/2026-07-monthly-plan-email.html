@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>DISO - Kế hoạch Tháng 7/2026</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #202124; line-height: 1.6; max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+  h1 { font-size: 18px; margin-top: 28px; border-bottom: 2px solid #1a73e8; padding-bottom: 6px; }
+  h2 { font-size: 16px; margin-top: 24px; color: #1a73e8; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+  th, td { border: 1px solid #dadce0; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f1f3f4; font-weight: 600; }
+  td.num, th.num { text-align: right; }
+  .status-done { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-testing { background: #cce5ff; color: #004085; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-progress { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-notstarted { background: #e2e3e5; color: #383d41; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-pending { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .group-row { background: #fef7e0; font-weight: 600; }
+  .group-total { background: #e8f0fe; font-weight: 700; }
+  .total-summary { background: #e8f0fe; padding: 12px 16px; border-left: 4px solid #1a73e8; margin: 16px 0; font-weight: 600; }
+  .strategy { background: #e8f0fe; padding: 16px; border-left: 4px solid #1a73e8; margin: 16px 0; }
+  .strategy ul { margin: 6px 0 0 18px; padding: 0; }
+  .strategy li { margin-bottom: 6px; }
+  .note { background: #f1f3f4; padding: 14px 16px; border-left: 4px solid #5f6368; margin: 16px 0; }
+  .note ul { margin: 6px 0 0 18px; padding: 0; }
+  .next-actions { background: #e6f4ea; padding: 14px 16px; border-left: 4px solid #34a853; margin: 16px 0; }
+  .next-actions ul { margin: 6px 0 0 18px; padding: 0; }
+  .plan-link { background: #e6f4ea; padding: 12px 16px; border-left: 4px solid #34a853; margin: 16px 0; text-align: center; font-size: 15px; }
+  .confirm { background: #fef7e0; padding: 16px; border-left: 4px solid #f9ab00; margin: 16px 0; }
+  a { color: #1a73e8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .signature { margin-top: 24px; }
+  .subject-hint { background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: #856404; }
+</style>
+</head>
+<body>
+
+<div class="subject-hint"><strong>Gợi ý Subject:</strong> [DISO] Kế hoạch triển khai Tháng 7/2026 (Dự kiến)</div>
+
+<p>Dear team,</p>
+
+<p>DISO gửi team bản <strong>kế hoạch triển khai Tháng 7/2026 (dự kiến)</strong>, gồm danh sách hạng mục, mô tả, impact, deadline, workload ước tính (BE / FE / QC / PM) và trạng thái hiện tại. Đây là bản kế hoạch lần 1 của tháng 7, sẽ chốt lại sau khi hai bên xác nhận scope.</p>
+
+<div class="strategy">
+  <strong>🎯 Định hướng triển khai Tháng 7/2026</strong>
+  <ul>
+    <li><strong>Ưu tiên hoàn thành các task operation đang có request</strong> (tồn từ tháng 6 hoặc phát sinh mới), kèm <strong>dự phòng ~52h</strong> cho operation task phát sinh cuối tháng (rút kinh nghiệm tháng 6 có nhiều task operation phát sinh đột xuất).</li>
+    <li><strong>Feature chính: Booking phase 1</strong> (128h) — kế thừa nền tảng <em>Tích hợp profile crawler cho Ambassador</em> đã triển khai tháng 6.</li>
+    <li><strong>Phương án backup:</strong> Nếu scope Booking chưa clear ở thời điểm start, DISO sẽ chuyển sang <strong>xây dựng core admin portal / brand portal mới</strong> để sẵn sàng cho Booking ở các tháng tiếp theo. <em>(Workload tương đương; sẽ xác nhận với AT trước khi đổi.)</em></li>
+  </ul>
+</div>
+
+<h1>Tổng quan kế hoạch Tháng 7/2026 (dự kiến)</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 36px;">STT</th>
+      <th style="width: 220px;">Hạng mục</th>
+      <th>Mô tả</th>
+      <th>Impact</th>
+      <th style="width: 70px;">Deadline</th>
+      <th class="num" style="width: 40px;">BE</th>
+      <th class="num" style="width: 40px;">FE</th>
+      <th class="num" style="width: 40px;">QC</th>
+      <th class="num" style="width: 40px;">PM</th>
+      <th class="num" style="width: 56px;">Total</th>
+      <th style="width: 90px;">Trạng thái</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- Group 1: Feature chính - Booking -->
+    <tr class="group-row"><td colspan="11">1. Feature chính – Booking</td></tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Booking phase 1</strong><br>Triển khai module booking giai đoạn 1 — kế thừa nền tảng <em>Tích hợp profile crawler cho Ambassador</em> đã làm ở tháng 6.</td>
+      <td>Feature chính tháng 7, mở ra nghiệp vụ booking creator/influencer cho ADV. Tạo doanh thu mới ngoài affiliate.</td>
+      <td>31/07</td>
+      <td class="num">40</td>
+      <td class="num">32</td>
+      <td class="num">32</td>
+      <td class="num">24</td>
+      <td class="num"><strong>128</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 1 (1 hoạt động)</td>
+      <td class="num">40</td>
+      <td class="num">32</td>
+      <td class="num">32</td>
+      <td class="num">24</td>
+      <td class="num">128</td>
+      <td>(43.4% / 295h)</td>
+    </tr>
+
+    <!-- Group 2: Onboard ADV (dự kiến) -->
+    <tr class="group-row"><td colspan="11">2. Onboard ADV <em style="font-weight: 400;">(dự kiến — chưa có ADV cụ thể)</em></td></tr>
+    <tr>
+      <td>1</td>
+      <td><strong>Onboard ADV 1 (dự kiến)</strong><br>Tiếp nhận và onboard 1 ADV mới trong tháng 7. <em>Hiện chưa có ADV cụ thể — workload đặt trước theo nhịp onboard định kỳ.</em></td>
+      <td>Duy trì nhịp onboard ADV định kỳ hàng tháng trên Ambassador.</td>
+      <td>TBD</td>
+      <td class="num">4</td>
+      <td class="num">20</td>
+      <td class="num">8</td>
+      <td class="num">0</td>
+      <td class="num"><strong>32</strong></td>
+      <td><span class="status-pending">Dự kiến</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 2 (1 hoạt động)</td>
+      <td class="num">4</td>
+      <td class="num">20</td>
+      <td class="num">8</td>
+      <td class="num">0</td>
+      <td class="num">32</td>
+      <td>(10.8% / 295h)</td>
+    </tr>
+
+    <!-- Group 3: Hỗ trợ vận hành, refactor, bug fix -->
+    <tr class="group-row"><td colspan="11">3. Hỗ trợ vận hành, cải tiến hệ thống & Bug fix</td></tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Xây dựng chức năng hủy video hàng loạt</strong><br>Vận hành sẽ có thể hủy 1 loạt video bằng cách import file Excel. Bao gồm chế độ preview trước ảnh hưởng sau khi xóa.</td>
+      <td>Hiện tại mỗi tháng đang có 1–3 yêu cầu xóa hàng loạt từ ADV, đã hỗ trợ chạy auto tay 1 lần. Có thêm vài request sau đó nhưng không thể thực hiện. Làm xong operation sẽ không phải duyệt tay nữa.</td>
+      <td>09/07</td>
+      <td class="num">16</td>
+      <td class="num">8</td>
+      <td class="num">8</td>
+      <td class="num">4</td>
+      <td class="num"><strong>36</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>Ambassador – Đồng bộ tính năng submit lại link</strong><br>Thêm chức năng cấu hình cho phép submit link vào cấu hình ADV. ADV nào được bật, link đã bị từ chối bên campaign A sẽ có thể submit lại bên campaign B. Đã hoàn thiện ở VCreator, cần clone sang Ambassador và T-Fluencers. <em><strong>⚠️ RỦI RO:</strong> Cần test kỹ ảnh hưởng của việc submit lại với hoạt động đối soát, thanh toán.</em></td>
+      <td>Hỗ trợ các tình huống submit nhầm campaign. Hiện tại có vài creator yêu cầu hỗ trợ việc này nhưng chưa xử lý được.</td>
+      <td>09/07</td>
+      <td class="num">12</td>
+      <td class="num">4</td>
+      <td class="num">6</td>
+      <td class="num">2</td>
+      <td class="num"><strong>24</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>Check lỗi link Facebook</strong><br>Xử lý trường hợp vendor cào failed: thay vì chặn link như cũ thì cho pass (tương tự cách xử lý Instagram).</td>
+      <td>Giảm tình huống creator bị reject link Facebook oan do vendor cào failed, đồng bộ logic với flow Instagram.</td>
+      <td>09/07</td>
+      <td class="num">12</td>
+      <td class="num">2</td>
+      <td class="num">4</td>
+      <td class="num">2</td>
+      <td class="num"><strong>20</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td><strong>Màn Thống kê – Tiền thưởng event bonus chưa filter theo event</strong><br>Bổ sung filter theo event cho phần tiền thưởng event bonus trên màn Thống kê (hiện chưa lọc được theo từng event).</td>
+      <td>Operation lọc nhanh tiền thưởng theo từng event để đối soát chính xác.</td>
+      <td>09/07</td>
+      <td class="num">4</td>
+      <td class="num">0</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num"><strong>7</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td><strong>T-Fluencer – Thay SMS, Email Provider</strong><br>Đưa về chung 1 partner cho dễ quản lý.</td>
+      <td>Giảm chi phí vận hành và rủi ro khi quản lý nhiều provider cùng lúc; thống nhất 1 đầu mối SMS/Email.</td>
+      <td>09/07</td>
+      <td class="num">16</td>
+      <td class="num">0</td>
+      <td class="num">4</td>
+      <td class="num">2</td>
+      <td class="num"><strong>22</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td><strong>Thay đổi content crawler qua partner mới</strong></td>
+      <td>Kỳ vọng tăng hiệu quả API crawler so với partner hiện tại.</td>
+      <td>09/07</td>
+      <td class="num">16</td>
+      <td class="num">0</td>
+      <td class="num">4</td>
+      <td class="num">2</td>
+      <td class="num"><strong>22</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>[VCreator] Làm lại menu Tổng quan trên webadmin</strong><br>API admin ở màn này đang không sử dụng được nữa. Trong quá trình phát triển hệ thống, không cập nhật lại API này. Giờ cần update lại để hoạt động đúng.</td>
+      <td>Admin sẽ vẫn tiếp tục dùng được menu này thay vì bỏ hẳn.</td>
+      <td>13/07</td>
+      <td class="num">16</td>
+      <td class="num">1</td>
+      <td class="num">4</td>
+      <td class="num">1</td>
+      <td class="num"><strong>22</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><strong>Clone fix lỗi "Có lỗi xảy ra" khi đăng nhập với token sai</strong> (T-Fluencer & VCreator)<br>Clone fix lỗi đã xử lý qua các hệ thống còn lại.</td>
+      <td>Đồng bộ behavior xử lý token sai khi login giữa các sản phẩm, tránh user nhận thông báo lỗi chung chung.</td>
+      <td>09/07</td>
+      <td class="num">2</td>
+      <td class="num">2</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num"><strong>7</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 3 (8 hoạt động)</td>
+      <td class="num">94</td>
+      <td class="num">17</td>
+      <td class="num">34</td>
+      <td class="num">15</td>
+      <td class="num">160</td>
+      <td>(54.2% / 295h)</td>
+    </tr>
+
+    <!-- Group 4: Dự phòng -->
+    <tr class="group-row"><td colspan="11">4. Dự phòng task operation phát sinh</td></tr>
+    <tr>
+      <td>11</td>
+      <td><strong>Dự phòng cho task operation khác</strong><br>Khoảng 2 task nhỏ.</td>
+      <td>Để dự phòng vì tháng 6 phát sinh task operation cuối tháng khá nhiều — dành buffer chủ động thay vì vượt chuẩn bất ngờ.</td>
+      <td>31/07</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num">4</td>
+      <td class="num"><strong>52</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 4 (1 hoạt động)</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num">4</td>
+      <td class="num">52</td>
+      <td>(17.6% / 295h)</td>
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Tổng hợp workload Tháng 7/2026</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nhóm chức năng</th>
+      <th class="num" style="width: 70px;">Số hoạt động</th>
+      <th class="num" style="width: 56px;">BE</th>
+      <th class="num" style="width: 56px;">FE</th>
+      <th class="num" style="width: 56px;">QC</th>
+      <th class="num" style="width: 56px;">PM</th>
+      <th class="num" style="width: 70px;">Total (h)</th>
+      <th class="num" style="width: 110px;">% so với chuẩn 295h</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1. Feature chính – Booking</td>
+      <td class="num">1</td>
+      <td class="num">40</td>
+      <td class="num">32</td>
+      <td class="num">32</td>
+      <td class="num">24</td>
+      <td class="num">128</td>
+      <td class="num">43.4%</td>
+    </tr>
+    <tr>
+      <td>2. Onboard ADV <em>(dự kiến)</em></td>
+      <td class="num">1</td>
+      <td class="num">4</td>
+      <td class="num">20</td>
+      <td class="num">8</td>
+      <td class="num">0</td>
+      <td class="num">32</td>
+      <td class="num">10.8%</td>
+    </tr>
+    <tr>
+      <td>3. Hỗ trợ vận hành, cải tiến hệ thống & Bug fix</td>
+      <td class="num">8</td>
+      <td class="num">94</td>
+      <td class="num">17</td>
+      <td class="num">34</td>
+      <td class="num">15</td>
+      <td class="num">160</td>
+      <td class="num">54.2%</td>
+    </tr>
+    <tr>
+      <td>4. Dự phòng task operation phát sinh</td>
+      <td class="num">1</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num">4</td>
+      <td class="num">52</td>
+      <td class="num">17.6%</td>
+    </tr>
+    <tr class="group-total">
+      <td><strong>TỔNG THÁNG 7/2026</strong></td>
+      <td class="num"><strong>11</strong></td>
+      <td class="num"><strong>154</strong></td>
+      <td class="num"><strong>85</strong></td>
+      <td class="num"><strong>90</strong></td>
+      <td class="num"><strong>43</strong></td>
+      <td class="num"><strong>372</strong></td>
+      <td class="num"><strong>126.1%</strong></td>
+    </tr>
+    <tr>
+      <td style="color: #5f6368;">Tiêu chuẩn hợp đồng tháng</td>
+      <td class="num" style="color: #5f6368;">–</td>
+      <td class="num" style="color: #5f6368;">81</td>
+      <td class="num" style="color: #5f6368;">77</td>
+      <td class="num" style="color: #5f6368;">77</td>
+      <td class="num" style="color: #5f6368;">60</td>
+      <td class="num" style="color: #5f6368;">295</td>
+      <td class="num" style="color: #5f6368;">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="total-summary">
+  🔢 Tổng workload Tháng 7/2026 (dự kiến): <strong>~372 giờ ≈ 126.1% / chuẩn 295h</strong> — <strong>11 hoạt động</strong> trên 4 nhóm chức năng.<br>
+  <span style="font-weight: 400; font-size: 13px;">Lưu ý: Tổng % cộng các nhóm có thể vượt 100% vì so với tiêu chuẩn chung của tháng. Phần vượt ~77h sẽ trao đổi với AT về phương án xử lý (tương tự bù trừ tháng 5/6).</span>
+</div>
+
+<div class="note">
+  <strong>📌 Một số lưu ý khi review</strong>
+  <ul>
+    <li><strong>PM hours đã được dàn trải vào từng task</strong> (planning, họp hành triển khai), không tách thành 1 task riêng cho công việc quản lý chung — nhờ Vui lưu ý khi review workload PM.</li>
+    <li><strong>Các hoạt động phát sinh</strong> trong tháng sẽ liên tục được cập nhật trong <strong>kế hoạch tuần</strong> (gửi đầu mỗi tuần).</li>
+    <li><strong>Booking phase 1</strong> cần scope rõ trước khi start — nếu chưa clear, DISO sẽ chủ động chuyển sang xây core admin/brand portal mới (workload tương đương). Sẽ trao đổi với AT trước khi đổi.</li>
+    <li><strong>Buffer dự phòng 52h</strong> cho task operation phát sinh cuối tháng — đã rút kinh nghiệm từ tháng 6.</li>
+  </ul>
+</div>
+
+<div class="plan-link">
+  📄 <strong>Chi tiết Kế hoạch Tháng 7/2026 (full):</strong> <a href="https://docs.google.com/spreadsheets/d/1llWv7MwEkyceEH5f16zujxS_R_t-ZaX7kAVKh2R0Yzg/edit?gid=1293951566#gid=1293951566">XEM TẠI ĐÂY</a>
+</div>
+
+<div class="confirm">
+  <strong>✅ Đề nghị xác nhận kế hoạch</strong>
+  <p style="margin: 8px 0 0 0;">Nhờ team review và <strong>xác nhận lại bản kế hoạch Tháng 7/2026 (dự kiến)</strong> ở trên để DISO làm cơ sở nghiệm thu cuối tháng. Đặc biệt mong AT <strong>xác nhận scope Booking phase 1</strong> sớm — hoặc thống nhất phương án backup (core admin/brand portal mới) để DISO không bị blocker đầu tháng.</p>
+</div>
+
+<p>Báo cáo tiến độ tuần sẽ gửi riêng vào đầu mỗi tuần. Trong quá trình triển khai, nếu có vướng mắc, thay đổi scope hoặc cần điều chỉnh deadline, DISO sẽ chủ động cập nhật và trao đổi với các bên liên quan kịp thời.</p>
+
+<p>Cảm ơn team đã phối hợp.</p>
+
+<div class="signature">
+  <p>Thanks &amp; Regards,<br>
+  <strong>DISO Team</strong></p>
+</div>
+
+</body>
+</html>

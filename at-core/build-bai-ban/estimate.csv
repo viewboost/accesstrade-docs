@@ -1,0 +1,60 @@
+Cụm,Mô tả cụm,Module,Mô tả chi tiết,Trạng thái,BE (h),FE (h),QA (h),PM (h),BA (h),SA (h),DevOps (h),Tổng giờ,Tổng tiền (USD)
+A,"Multi-tenant + API key + Quota.
+Cho phép AT cấp phát + quản lý nhiều partner, mỗi partner có API key riêng, quota riêng, rate limit riêng.
+Mỗi module tự document chính nó (OpenAPI + admin guide tiếng Việt).","Partner CRUD + sinh API key + check API key + Admin UI onboard","- 8 endpoint /admin/partners/* (Create/List/Get/Update/Deactivate/RegenerateKey)
+- Sinh API key prefix at_prod_* + hash bcrypt
+- Middleware partner_auth check X-Partner-ID + X-API-Key cho /v1/partners/*
+- Trang admin /partners list + detail
+- Form cấp API key (modal, copy clipboard 1 lần) + Form đăng ký webhook URL + secret
+- OpenAPI spec + Authentication guide + Admin guide tiếng Việt",🟢 Đã có sẵn,22,28,12,5,9,3,1,80,1226
+,,"Quota atomic Redis + Rate limit per partner","- DecrementQuota atomic Redis INCR (Lua-style)
+- PartnerRateLimiter Redis-based, AllowCustom per-partner
+- Middleware PartnerRateLimit
+- GET /v1/partners/quota cho partner self-check
+- Form chỉnh quota trong admin UI
+- OpenAPI cho /v1/partners/quota + tech doc rate limit policy",🟢 Đã có sẵn,14,4,5,3,4,3,1,34,520
+B,"Enrich + gọi Vendor + Cache + Lưu kết quả + Webhook + Log request theo partner.
+Core nghiệp vụ của at-core.
+Mỗi module tự document chính nó.","Nhận enrich + proxy Vendor + circuit breaker","- POST /v1/partners/profiles/enrich + GET /v1/partners/jobs/{id}
+- ipclient gọi Vendor: circuit breaker, retry, timeout, exponential backoff
+- Mode sync/async/cached
+- Worker async + transformer + duplicate detection
+- OpenAPI cho enrich + jobs endpoint + tech doc Vendor integration",🟢 Đã có sẵn,32,0,8,4,6,4,1,55,851
+,,"Cache hit/miss + lưu kết quả profile pool","- Cache check trước khi gọi Vendor (tiết kiệm cost)
+- Lưu kết quả vào profile pool (MongoDB) sau khi enrich
+- Change repository track thay đổi profile theo thời gian
+- Index profile pool theo platform + externalId
+- Tech doc cache policy + profile data model",🟢 Đã có sẵn,18,0,5,3,3,3,1,33,510
+,,"Webhook outbound HMAC + retry + Admin UI events","- Đăng ký webhook URL + secret per partner
+- HMAC-SHA256 sign payload (X-AT-Signature, X-AT-Timestamp)
+- Gửi event khi enrich job hoàn tất (replay-able)
+- RetryWorker poll DB, retry policy 1m/5m/15m/dead-letter
+- Admin UI events: list/detail/retry
+- OpenAPI webhook payload + HMAC signature verification guide + admin guide tiếng Việt cho UI events",🟢 Đã có sẵn,24,4,6,3,5,3,1,46,714
+,,"Log request theo partner","- Collection request_logs: partnerId, endpoint, vendorCalled, status, duration, cacheHit, timestamp
+- Middleware ghi log mỗi request /v1/partners/*
+- Index theo partnerId + timestamp
+- Async write tránh ảnh hưởng latency
+- Tech doc schema request_logs + query patterns",🟡 Build mới,16,0,4,3,3,2,0,28,431
+C,"Thống kê request partner + Vendor — tối thiểu.
+Phục vụ AT tổng hợp usage, không có chart, có export CSV.
+Module tự document chính nó.","API thống kê + Trang table + Export CSV","- GET /admin/stats/partners?from&to — tổng request theo partner
+- GET /admin/stats/vendor?from&to — tổng request gọi Vendor (cache hit vs vendor miss)
+- GET /admin/stats/export?from&to&format=csv
+- MongoDB aggregation pipeline trên request_logs
+- Page UI table: partner, total requests, vendor calls, cache hits, period + filter time range + nút Export CSV (không chart)
+- OpenAPI stats endpoint + Admin guide tiếng Việt",🟡 Build mới,16,12,7,5,7,4,0,51,783
+D,"Bộ API document chính thức cho partner.
+Markdown trong repo, partner clone về đọc và tích hợp tự lực.
+Đáp ứng yêu cầu AT trong báo cáo nghiệm thu T-Fluencers T5/2026.","[Docs] Bộ API document partner (Enrich + Webhook)","- Getting Started: đăng ký partner, lấy API key, hello world request
+- Authentication guide: X-Partner-ID + X-API-Key
+- Enrich API: POST /v1/partners/profiles/enrich + GET /v1/partners/jobs/{id} (request/response, status code, error code, retry strategy)
+- Webhook integration guide: payload schema + HMAC-SHA256 verify sample code
+- Quota check: GET /v1/partners/quota
+- Postman collection import-ready
+- Hosted dạng Markdown trong repo + README index",🟡 Build mới,4,0,2,2,8,4,0,20,304
+E,"Cất sang đợt sau — KHÔNG thuộc bàn giao này.","Subscription/plan per partner","- Phân plan free/basic/pro per partner
+- Hiện partner = nội bộ AT, chưa cần",⚪ Đợt sau,0,0,0,0,0,0,0,0,0
+,,"RBAC management UI + Activity log mở rộng","- RBAC enforce đã có, management UI chưa có",⚪ Đợt sau,0,0,0,0,0,0,0,0,0
+,,"Multi-tenant pool access (CONTRIBUTED/BOOKMARKED/BOOKED)","- Model + service có, chưa wire vào pool filter",⚪ Đợt sau,0,0,0,0,0,0,0,0,0
+,,"Matching cải tiến + Brand feedback → score","- Matching proxy có, brand feedback chưa có code",⚪ Đợt sau,0,0,0,0,0,0,0,0,0

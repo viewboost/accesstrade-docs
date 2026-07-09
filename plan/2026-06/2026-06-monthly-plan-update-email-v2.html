@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>DISO - Cập nhật Kế hoạch Tháng 6/2026 (v2)</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #202124; line-height: 1.6; max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+  h1 { font-size: 18px; margin-top: 28px; border-bottom: 2px solid #1a73e8; padding-bottom: 6px; }
+  h2 { font-size: 16px; margin-top: 24px; color: #1a73e8; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+  th, td { border: 1px solid #dadce0; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f1f3f4; font-weight: 600; }
+  td.num, th.num { text-align: right; }
+  .status-done { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-testing { background: #cce5ff; color: #004085; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-progress { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-notstarted { background: #e2e3e5; color: #383d41; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-pending { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .group-row { background: #fef7e0; font-weight: 600; }
+  .group-total { background: #e8f0fe; font-weight: 700; }
+  .total-summary { background: #e8f0fe; padding: 12px 16px; border-left: 4px solid #1a73e8; margin: 16px 0; font-weight: 600; }
+  .changelog { background: #fce8e6; padding: 16px; border-left: 4px solid #d93025; margin: 16px 0; }
+  .changelog ul { margin: 6px 0 0 18px; padding: 0; }
+  .changelog li { margin-bottom: 6px; }
+  .note { background: #f1f3f4; padding: 14px 16px; border-left: 4px solid #5f6368; margin: 16px 0; }
+  .note ul { margin: 6px 0 0 18px; padding: 0; }
+  .next-actions { background: #e6f4ea; padding: 14px 16px; border-left: 4px solid #34a853; margin: 16px 0; }
+  .next-actions ul { margin: 6px 0 0 18px; padding: 0; }
+  .plan-link { background: #e6f4ea; padding: 12px 16px; border-left: 4px solid #34a853; margin: 16px 0; text-align: center; font-size: 15px; }
+  .confirm { background: #fef7e0; padding: 16px; border-left: 4px solid #f9ab00; margin: 16px 0; }
+  a { color: #1a73e8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .signature { margin-top: 24px; }
+  .subject-hint { background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: #856404; }
+</style>
+</head>
+<body>
+
+<div class="subject-hint"><strong>Gợi ý Subject:</strong> [DISO] Cập nhật Kế hoạch triển khai Tháng 6/2026 (v2)</div>
+
+<p>Dear team,</p>
+
+<p>DISO gửi team bản <strong>cập nhật tiếp theo cho Kế hoạch Tháng 6/2026</strong>, sau khi cập nhật scope thực tế phát sinh và sắp xếp lại các nhóm chức năng. Chi tiết đầy đủ team xem ở link cuối email.</p>
+
+<div class="changelog">
+  <strong>📋 Changelog – Thay đổi nổi bật so với bản update trước</strong>
+  <ul>
+    <li><strong>⚠️ Bỏ hạng mục <em>Brand portal (VCreator)</em></strong> khỏi kế hoạch tháng 6 (đã có ở bản update trước). Thay thế bằng hạng mục mới: <strong><em>Tích hợp profile crawler cho Ambassador</em></strong> (84h) — đưa chức năng onboard profile từ T-Fluencer sang Ambassador, tận dụng hiệu quả crawler hiện có và <strong>tạo tiền đề phát triển module booking tháng 7</strong>.</li>
+    <li><strong>Bổ sung loạt task vận hành / bug fix phát sinh trong tháng</strong>: liên kết tài khoản Threads, lỗi đồng bộ email VCreator, các bug Lusso Video (lệch view, file đối soát), VPBANK update giao diện, Ambassador admin pagging, fix bug tồn đọng Ambassador, v.v.</li>
+    <li><strong>Bổ sung hạng mục Gen-Green</strong>: Liên kết tài khoản Threads, Tạo lại link affiliate + Utm_source.</li>
+    <li><strong>Đã bổ sung thêm cột <em>Impact</em></strong> trong bảng chi tiết để team review nhanh giá trị / ảnh hưởng của từng hạng mục.</li>
+  </ul>
+</div>
+
+<h1>Tổng quan kế hoạch Tháng 6/2026 (cập nhật)</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 36px;">STT</th>
+      <th style="width: 220px;">Hạng mục</th>
+      <th>Impact</th>
+      <th style="width: 90px;">Tài liệu</th>
+      <th style="width: 70px;">Deadline</th>
+      <th class="num" style="width: 40px;">BE</th>
+      <th class="num" style="width: 40px;">FE</th>
+      <th class="num" style="width: 40px;">QC</th>
+      <th class="num" style="width: 40px;">PM</th>
+      <th class="num" style="width: 56px;">Total</th>
+      <th style="width: 90px;">Trạng thái</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- Group 1: Nâng cấp Quản lý Influencer cho T-Fluencer -->
+    <tr class="group-row"><td colspan="11">1. Nâng cấp Quản lý Influencer cho T-Fluencer</td></tr>
+    <tr>
+      <td>4</td>
+      <td><strong>T-Fluencer: Nâng cấp quản lý creator, influencer</strong><br>Quản lý toàn diện Influencer (hồ sơ, hiệu quả tham gia chiến dịch).</td>
+      <td>Brand chưa thể xem thông tin cụ thể của 1 creator/influencer (hiện tại phải request operation). Cần ít nhất: thông tin cá nhân, các kênh social liên kết, hiệu quả tham gia campaign.</td>
+      <td><a href="#">PRD / Notion</a></td>
+      <td>24/06</td>
+      <td class="num">24</td>
+      <td class="num">16</td>
+      <td class="num">8</td>
+      <td class="num">8</td>
+      <td class="num"><strong>56</strong></td>
+      <td><span class="status-progress">In Progress</span></td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td><strong>T-Fluencer – Dashboard lọc creator theo hashtag + vị trí</strong><br>Bổ sung filter hashtag và vị trí vào dashboard creator của T-Fluencer. <em>Sẽ giải quyết kèm trong task <strong>T-Fluencer: Nâng cấp quản lý creator, influencer</strong> ở trên (không tính workload riêng).</em></td>
+      <td>Request từ Hà AT, xuất phát từ feedback của ADV cần lọc nhanh creator theo chủ đề / khu vực.</td>
+      <td>–</td>
+      <td>Đi cùng task trên</td>
+      <td class="num">–</td>
+      <td class="num">–</td>
+      <td class="num">–</td>
+      <td class="num">–</td>
+      <td class="num"><strong>–</strong></td>
+      <td><span class="status-notstarted">Đi cùng</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 1 (2 hoạt động)</td>
+      <td class="num">24</td>
+      <td class="num">16</td>
+      <td class="num">8</td>
+      <td class="num">8</td>
+      <td class="num">56</td>
+      <td>(19.0% / 295h)</td>
+    </tr>
+
+    <!-- Group 2: Tận dụng Profile Crawler -->
+    <tr class="group-row"><td colspan="11">2. Tận dụng Profile Crawler</td></tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Tích hợp profile crawler cho Ambassador</strong><br>Đưa chức năng onboard profile từ T-Fluencer sang Ambassador.</td>
+      <td>Tận dụng tối đa hiệu quả crawler hiện có. Tạo tiền đề cho phát triển <strong>module booking ở tháng 7</strong>.</td>
+      <td>Đang soạn thảo</td>
+      <td>30/06</td>
+      <td class="num">40</td>
+      <td class="num">24</td>
+      <td class="num">12</td>
+      <td class="num">8</td>
+      <td class="num"><strong>84</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 2 (1 hoạt động)</td>
+      <td class="num">40</td>
+      <td class="num">24</td>
+      <td class="num">12</td>
+      <td class="num">8</td>
+      <td class="num">84</td>
+      <td>(28.5% / 295h)</td>
+    </tr>
+
+    <!-- Group 3: Hoàn thiện Green Affiliate -->
+    <tr class="group-row"><td colspan="11">3. Hoàn thiện Green Affiliate</td></tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Mở tính năng xác thực email cho creator Gen-Green</strong><br>Tính năng làm cùng phân nhóm Creator tháng 4 nhưng đang ẩn; cần mở lại trước khi verify hết tài khoản user.</td>
+      <td>Chuẩn bị cho việc verify tài khoản user bằng email trên Gen-Green production.</td>
+      <td>Đi chung chức năng cũ</td>
+      <td>–</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num"><strong>6</strong></td>
+      <td><span class="status-pending">Pending</span></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>VCreator – Liên kết tài khoản Threads</strong><br>Hiện VCreator gửi được bài đăng Threads nhưng chưa có mục liên kết Threads trong trang "Liên kết tài khoản".</td>
+      <td>Hoàn thiện flow liên kết Threads để creator gửi bài có nguồn rõ ràng.</td>
+      <td><a href="#">Notion / PRD</a></td>
+      <td>11/06</td>
+      <td class="num">4</td>
+      <td class="num">2</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num"><strong>9</strong></td>
+      <td><span class="status-progress">In Progress</span></td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><strong>Gen-Green Affiliate</strong><br>Build trang chương trình affiliate thay Green Seller, bỏ coming soon. <em>Nhờ Hiếu điều chỉnh trang green affiliate 11/06.</em></td>
+      <td>Trang Green Seller đang để coming soon lâu. Đã request Gen-Green đổi menu Green Seller → Green Affiliate để user khám phá campaign.</td>
+      <td><a href="#">PRD / Notion</a></td>
+      <td>30/06</td>
+      <td class="num">8</td>
+      <td class="num">16</td>
+      <td class="num">8</td>
+      <td class="num">4</td>
+      <td class="num"><strong>36</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td><strong>Cho phép tạo lại link affiliate + Utm_source</strong><br>Hỗ trợ tạo lại link cho trường hợp link hết hạn/lỗi. Thêm <code>utm_source = gen-green</code> vào API overview, conversation.</td>
+      <td>Lọc đúng đơn hàng, hoa hồng theo source Gen-Green thay vì lấy tất cả.</td>
+      <td>–</td>
+      <td>04/06</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num">1</td>
+      <td class="num">1</td>
+      <td class="num"><strong>5</strong></td>
+      <td><span class="status-done">Done</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 3 (4 hoạt động)</td>
+      <td class="num">16</td>
+      <td class="num">20</td>
+      <td class="num">13</td>
+      <td class="num">7</td>
+      <td class="num">56</td>
+      <td>(19.0% / 295h)</td>
+    </tr>
+
+    <!-- Group 4: Onboard ADV / Update giao diện -->
+    <tr class="group-row"><td colspan="11">4. Onboard ADV / Update giao diện</td></tr>
+    <tr>
+      <td>1</td>
+      <td><strong>Onboard Parasola</strong><br>Tiếp nhận và onboard ADV Parasola mới trong tháng 6. <em>29/05 chốt design.</em></td>
+      <td>Mở rộng tệp ADV trên Ambassador, đảm bảo nhịp onboard ADV định kỳ hàng tháng.</td>
+      <td><a href="https://www.notion.so/cashbag/Ambassador-Onboarding-Parasola-366d74f894ff803f9a67fdb739abed61?pvs=23">Notion</a> / <a href="https://docs.google.com/spreadsheets/d/1tMsxGGI901h1vWRkMMTYAj9x1oxHtpV0Xfgh8Ad7WR8/edit?gid=1132256960#gid=1132256960">Dữ liệu</a></td>
+      <td>04/06</td>
+      <td class="num">1</td>
+      <td class="num">20</td>
+      <td class="num">8</td>
+      <td class="num">1</td>
+      <td class="num"><strong>30</strong></td>
+      <td><span class="status-testing">Dev Testing</span></td>
+    </tr>
+    <tr>
+      <td>22</td>
+      <td><strong>VPBANK – Update giao diện</strong></td>
+      <td>Đổi giao diện VPBank theo brief mới.</td>
+      <td><a href="#">Tài liệu / Notion</a></td>
+      <td>12/06</td>
+      <td class="num">0</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num">1</td>
+      <td class="num"><strong>4</strong></td>
+      <td><span class="status-progress">In Progress</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 4 (2 hoạt động)</td>
+      <td class="num">1</td>
+      <td class="num">22</td>
+      <td class="num">9</td>
+      <td class="num">2</td>
+      <td class="num">34</td>
+      <td>(11.5% / 295h)</td>
+    </tr>
+
+    <!-- Group 5: Hỗ trợ vận hành -->
+    <tr class="group-row"><td colspan="11">5. Hỗ trợ vận hành</td></tr>
+    <tr>
+      <td>6</td>
+      <td><strong>Tải và quản lý file tải (3 dự án)</strong><br>Tối ưu luồng tải file (cho phép cancel, không cần restart và migrate).</td>
+      <td>Trong T5 có 3 lần liên tiếp phải request restart server + migrate DB để fix lỗi stuck (mỗi lần mất vài ngày). Giải quyết vấn đề từ gốc.</td>
+      <td><a href="#">PRD</a></td>
+      <td>18/06</td>
+      <td class="num">8</td>
+      <td class="num">8</td>
+      <td class="num">8</td>
+      <td class="num">2</td>
+      <td class="num"><strong>26</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td><strong>Thêm tính năng add thưởng bằng file</strong><br>Clone Thưởng bonus từ Ambassador, làm lại theo chuẩn mới (preview trước action), sau đó clone ngược về Ambassador. <em>Cần ưu tiên đẩy lên trong tuần 2.</em></td>
+      <td>Request từ operation, giảm workload tạo thưởng nhỏ lẻ thủ công.</td>
+      <td><a href="#">PRD</a></td>
+      <td>15/06</td>
+      <td class="num">24</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num">4</td>
+      <td class="num"><strong>60</strong></td>
+      <td><span class="status-progress">In Progress</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 5 (2 hoạt động)</td>
+      <td class="num">32</td>
+      <td class="num">24</td>
+      <td class="num">24</td>
+      <td class="num">6</td>
+      <td class="num">86</td>
+      <td>(29.2% / 295h)</td>
+    </tr>
+
+    <!-- Group 6: Bug fix -->
+    <tr class="group-row"><td colspan="11">6. Bug fix</td></tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Ambassador – Clone fix lỗi liên kết thêm tài khoản TikTok</strong><br>Clone fix qua các website đang chạy và vừa hết.</td>
+      <td>Đảm bảo flow liên kết TikTok hoạt động đồng nhất trên các website ambassador.</td>
+      <td><a href="#">Mô tả & Solution / Notion</a></td>
+      <td>11/06</td>
+      <td class="num">0</td>
+      <td class="num">4</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num"><strong>7</strong></td>
+      <td><span class="status-testing">Dev Testing</span></td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td><strong>[VCreator] Fix lỗi không đồng bộ email khi user cập nhật & ký lại HĐ</strong><br>Fix bug email ký TOS không trùng email trong profile.</td>
+      <td>Đảm bảo email trong hồ sơ luôn đồng bộ với email ký HĐ, tránh sai dữ liệu pháp lý.</td>
+      <td>–</td>
+      <td>04/06</td>
+      <td class="num">0</td>
+      <td class="num">6</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num"><strong>9</strong></td>
+      <td><span class="status-done">Done</span></td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td><strong>[Ambassador] Lusso Video – Chênh lệch thông tin trong cùng 1 file đối soát</strong></td>
+      <td>Cùng 1 kỳ đối soát nhưng 2 lần tải file ra kết quả khác (callback trễ → view ghi nhận bị lệch).</td>
+      <td>–</td>
+      <td>11/06</td>
+      <td class="num">2</td>
+      <td class="num">0</td>
+      <td class="num">1</td>
+      <td class="num">1</td>
+      <td class="num"><strong>4</strong></td>
+      <td><span class="status-progress">In Progress</span></td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td><strong>[Ambassador] User không update được địa chỉ – HĐ đã hủy bỏ</strong></td>
+      <td>Fix lỗi user không sửa được địa chỉ ở bước xác nhận → sai thông tin hợp đồng.</td>
+      <td><a href="#">Notion</a></td>
+      <td>04/06</td>
+      <td class="num">0</td>
+      <td class="num">1</td>
+      <td class="num">0</td>
+      <td class="num">1</td>
+      <td class="num"><strong>2</strong></td>
+      <td><span class="status-done">Done</span></td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td><strong>[Tech] Chi tiết case data lệch Lusso</strong></td>
+      <td>Thu thập nguyên nhân gây lệch view theo danh sách video AT gửi.</td>
+      <td><a href="#">Notion / File</a></td>
+      <td>04/06</td>
+      <td class="num">2</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">1</td>
+      <td class="num"><strong>3</strong></td>
+      <td><span class="status-done">Done</span></td>
+    </tr>
+    <tr>
+      <td>20</td>
+      <td><strong>[Lusso] Clone fix lỗi không update địa chỉ – HĐ đã hủy</strong></td>
+      <td>Clone fix sang các website Lusso đang chạy và vừa hết.</td>
+      <td><a href="#">Notion</a></td>
+      <td>11/06</td>
+      <td class="num">0</td>
+      <td class="num">4</td>
+      <td class="num">1</td>
+      <td class="num">1</td>
+      <td class="num"><strong>6</strong></td>
+      <td><span class="status-progress">In Progress</span></td>
+    </tr>
+    <tr>
+      <td>21</td>
+      <td><strong>[Ambassador Admin] Không phân trang được trang Duyệt Creator</strong></td>
+      <td>Fix lỗi không chuyển page.</td>
+      <td><a href="#">Notion</a></td>
+      <td>10/06</td>
+      <td class="num">0</td>
+      <td class="num">1</td>
+      <td class="num">0</td>
+      <td class="num">1</td>
+      <td class="num"><strong>2</strong></td>
+      <td><span class="status-testing">Dev Testing</span></td>
+    </tr>
+    <tr>
+      <td>19</td>
+      <td><strong>[Tech] Đưa solution xử lý case data lệch Lusso</strong><br>Đưa phương án để lần sau không gặp lại lỗi lệch view đối soát.</td>
+      <td>Ngăn chặn lỗi lệch view tái diễn trong các kỳ đối soát Lusso.</td>
+      <td><a href="#">PRD</a></td>
+      <td>10/06</td>
+      <td class="num">1</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">1</td>
+      <td class="num"><strong>2</strong></td>
+      <td><span class="status-done">Done</span></td>
+    </tr>
+    <tr>
+      <td>20</td>
+      <td><strong>Xử lý bug lệch view đối soát</strong><br>Fix lỗi lệch view, ngăn chặn lỗi lặp lại. <strong>⚠️ Cần AT duyệt solution.</strong></td>
+      <td>Đảm bảo file đối soát Lusso ổn định, không bị lệch số liệu giữa các lần tải.</td>
+      <td><a href="#">PRD</a></td>
+      <td>Chưa xác định</td>
+      <td class="num">8</td>
+      <td class="num">1</td>
+      <td class="num">4</td>
+      <td class="num">1</td>
+      <td class="num"><strong>14</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>23</td>
+      <td><strong>Fix bug tồn đọng Ambassador</strong></td>
+      <td>Fix các bug cũ trên Ambassador đã tồn đọng từ trước.</td>
+      <td><a href="#">File nghiệm thu</a></td>
+      <td>15/06</td>
+      <td class="num">–</td>
+      <td class="num">6</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num"><strong>9</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 6 (10 hoạt động)</td>
+      <td class="num">13</td>
+      <td class="num">23</td>
+      <td class="num">12</td>
+      <td class="num">10</td>
+      <td class="num">58</td>
+      <td>(19.7% / 295h)</td>
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Tổng hợp workload Tháng 6/2026</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nhóm chức năng</th>
+      <th class="num" style="width: 70px;">Số hoạt động</th>
+      <th class="num" style="width: 56px;">BE</th>
+      <th class="num" style="width: 56px;">FE</th>
+      <th class="num" style="width: 56px;">QC</th>
+      <th class="num" style="width: 56px;">PM</th>
+      <th class="num" style="width: 70px;">Total (h)</th>
+      <th class="num" style="width: 110px;">% so với chuẩn 295h</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1. Nâng cấp Quản lý Influencer cho T-Fluencer</td>
+      <td class="num">2</td>
+      <td class="num">24</td>
+      <td class="num">16</td>
+      <td class="num">8</td>
+      <td class="num">8</td>
+      <td class="num">56</td>
+      <td class="num">19.0%</td>
+    </tr>
+    <tr>
+      <td>2. Tận dụng Profile Crawler</td>
+      <td class="num">1</td>
+      <td class="num">40</td>
+      <td class="num">24</td>
+      <td class="num">12</td>
+      <td class="num">8</td>
+      <td class="num">84</td>
+      <td class="num">28.5%</td>
+    </tr>
+    <tr>
+      <td>3. Hoàn thiện Green Affiliate</td>
+      <td class="num">4</td>
+      <td class="num">16</td>
+      <td class="num">20</td>
+      <td class="num">13</td>
+      <td class="num">7</td>
+      <td class="num">56</td>
+      <td class="num">19.0%</td>
+    </tr>
+    <tr>
+      <td>4. Onboard ADV / Update giao diện</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num">22</td>
+      <td class="num">9</td>
+      <td class="num">2</td>
+      <td class="num">34</td>
+      <td class="num">11.5%</td>
+    </tr>
+    <tr>
+      <td>5. Hỗ trợ vận hành</td>
+      <td class="num">2</td>
+      <td class="num">32</td>
+      <td class="num">24</td>
+      <td class="num">24</td>
+      <td class="num">6</td>
+      <td class="num">86</td>
+      <td class="num">29.2%</td>
+    </tr>
+    <tr>
+      <td>6. Bug fix</td>
+      <td class="num">10</td>
+      <td class="num">13</td>
+      <td class="num">23</td>
+      <td class="num">12</td>
+      <td class="num">10</td>
+      <td class="num">58</td>
+      <td class="num">19.7%</td>
+    </tr>
+    <tr class="group-total">
+      <td><strong>TỔNG THÁNG 6/2026</strong></td>
+      <td class="num"><strong>21</strong></td>
+      <td class="num"><strong>126</strong></td>
+      <td class="num"><strong>129</strong></td>
+      <td class="num"><strong>78</strong></td>
+      <td class="num"><strong>41</strong></td>
+      <td class="num"><strong>374</strong></td>
+      <td class="num"><strong>126.8%</strong></td>
+    </tr>
+    <tr>
+      <td style="color: #5f6368;">Tiêu chuẩn hợp đồng tháng</td>
+      <td class="num" style="color: #5f6368;">–</td>
+      <td class="num" style="color: #5f6368;">81</td>
+      <td class="num" style="color: #5f6368;">77</td>
+      <td class="num" style="color: #5f6368;">77</td>
+      <td class="num" style="color: #5f6368;">60</td>
+      <td class="num" style="color: #5f6368;">295</td>
+      <td class="num" style="color: #5f6368;">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="total-summary">
+  🔢 Tổng workload Tháng 6/2026 (cập nhật): <strong>~374 giờ ≈ 126.8% / chuẩn 295h</strong> — <strong>21 hoạt động</strong> trên 6 nhóm chức năng.<br>
+  <span style="font-weight: 400; font-size: 13px;">Lưu ý: Tổng % cộng các nhóm có thể vượt 100% vì so với tiêu chuẩn chung của tháng. Phần vượt 79h sẽ trao đổi với AT về phương án xử lý (tương tự bù trừ tháng 5 — 122h).</span>
+</div>
+
+<div class="note">
+  <strong>📌 Một số lưu ý khi review</strong>
+  <ul>
+    <li><strong>Vĩnh đã dàn trải thời gian lên kế hoạch và họp hành triển khai vào từng task</strong>, không còn tách rời thành 1 task riêng cho công việc quản lý chung. Nhờ Vui lưu ý khi review workload PM của từng hạng mục — PM hours hiện đã bao gồm cả thời gian planning / họp hành cho task đó.</li>
+    <li><strong>Các hoạt động phát sinh</strong> trong tháng sẽ <strong>liên tục được cập nhật trong kế hoạch tuần</strong> (gửi đầu mỗi tuần), thay vì chờ tổng kết cuối tháng.</li>
+    <li>Đã <strong>bổ sung cột Impact</strong> trong bảng chi tiết ở trên để team review nhanh giá trị/ảnh hưởng của từng hạng mục.</li>
+  </ul>
+</div>
+
+<div class="next-actions">
+  <strong>🎯 Next actions</strong>
+  <ul>
+    <li><strong>Vĩnh</strong>: tổng hợp thiết kế Green Affiliate, gửi Vui để gửi đề xuất update đến Gen-Green.</li>
+    <li><strong>Vui</strong>: xác nhận kế hoạch theo bảng chi tiết trong tuần này.</li>
+  </ul>
+</div>
+
+<div class="plan-link">
+  📄 <strong>Chi tiết Kế hoạch Tháng 6/2026 (full):</strong> <a href="https://docs.google.com/spreadsheets/d/1llWv7MwEkyceEH5f16zujxS_R_t-ZaX7kAVKh2R0Yzg/edit?gid=1670883632#gid=1670883632">XEM TẠI ĐÂY</a>
+</div>
+
+<div class="confirm">
+  <strong>✅ Đề nghị xác nhận kế hoạch</strong>
+  <p style="margin: 8px 0 0 0;">Nhờ team review và <strong>xác nhận lại bản kế hoạch Tháng 6/2026 (đã cập nhật)</strong> để DISO làm cơ sở nghiệm thu cuối tháng. Đặc biệt mong AT xác nhận sớm việc <strong>thay Brand portal bằng Tích hợp profile crawler cho Ambassador</strong> và <strong>duyệt solution cho task Xử lý bug lệch view đối soát</strong> để DISO triển khai đúng tiến độ.</p>
+</div>
+
+<p>Báo cáo tiến độ tuần sẽ gửi riêng vào đầu mỗi tuần. Trong quá trình triển khai, nếu có vướng mắc, thay đổi scope hoặc cần điều chỉnh deadline, DISO sẽ chủ động cập nhật và trao đổi với các bên liên quan kịp thời.</p>
+
+<p>Cảm ơn team đã phối hợp.</p>
+
+<div class="signature">
+  <p>Thanks &amp; Regards,<br>
+  <strong>DISO Team</strong></p>
+</div>
+
+</body>
+</html>
