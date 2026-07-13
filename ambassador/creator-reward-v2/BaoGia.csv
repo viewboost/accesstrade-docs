@@ -1,0 +1,112 @@
+,BÁO GIÁ — CƠ CHẾ THƯỞNG CREATOR PHIÊN BẢN 2 + MỞ RỘNG KÊNH X,,,,,,,,,,,,
+,Hệ thống Ambassador — 5 cơ chế thưởng mới cho creator onboard + ghi nhận nội dung kênh X (Twitter),,,,,,,,,,,,
+
+Cụm,Giá trị mang lại,Hạng mục,Nội dung bàn giao,Loại,BE (h),FE (h),QA (h),PM (h),BA (h),SA (h),DevOps (h),Tổng giờ,Thành tiền (USD)
+A,"BỔ SUNG 2 KHẢ NĂNG THƯỞNG HỆ THỐNG CHƯA CÓ
+Hệ thống hiện có 3 loại thưởng (theo lượt xem / đủ số video / đủ lượt xem) và admin vẫn tự cấu hình được.
+Nhưng mỗi gói thưởng chỉ trao ĐƯỢC MỘT LẦN DUY NHẤT và chỉ có ĐÚNG MỘT MỐC → không làm được yêu cầu mới.
+Cụm này bổ sung 2 khả năng còn thiếu: thưởng LẶP LẠI hàng tháng và thưởng NHIỀU BẬC trong một gói.
+Có 2 khả năng này thì 'thưởng theo số video/tháng' và 'thưởng theo mốc hiệu suất' mới chạy được.",Khả năng 1: Thưởng lặp lại hàng tháng,"- HIỆN TẠI: mỗi gói thưởng chỉ trao được MỘT LẦN cho mỗi creator, trao rồi là hết
+- Muốn thưởng tháng 8 thì admin phải tạo GÓI MỚI thủ công mỗi tháng, 14 khách hàng × 12 tháng = việc lặp vô tận
+- BỔ SUNG: gói thưởng tự lặp theo tháng — hết tháng reset, tháng sau creator lại có cơ hội nhận
+- Đảm bảo không trả thưởng trùng cho cùng một creator trong cùng một tháng
+- Rà soát và làm sạch dữ liệu thưởng đang tồn tại trước khi áp dụng",Bổ sung,16,0,8,2,2,5,2,35,550
+,,Cấu hình chu kỳ cho gói thưởng,"- Thêm lựa chọn chu kỳ khi tạo gói: trao một lần / trong khoảng thời gian cố định (như hiện nay) / lặp hàng tháng
+- Chốt sổ tháng vào ngày 1 tháng sau, 02:00 sáng — đủ thời gian cho dữ liệu về đầy đủ
+- Các gói thưởng đang chạy giữ nguyên hành vi, không bị ảnh hưởng",Bổ sung,16,0,8,2,3,4,0,33,508
+,,Khả năng 2: Thưởng nhiều bậc trong một gói,"- HIỆN TẠI: mỗi gói chỉ đặt được ĐÚNG MỘT mốc (ví dụ: đủ 10 video → 500K). Muốn 3 mức thưởng phải tạo 3 gói riêng,
+  và creator đủ 20 video sẽ ăn cả 3 gói cùng lúc — sai ý đồ
+- BỔ SUNG: một gói chứa nhiều bậc — 5 video = 200K, 10 video = 500K, 20 video = 1,2 triệu
+- Quy tắc: hưởng bậc cao nhất đạt được, không cộng dồn (12 video → nhận 500K, không phải 700K)
+- Áp dụng cho cả 'thưởng theo số video/tháng' và 'thưởng theo mốc hiệu suất'",Bổ sung,16,0,8,2,3,3,0,32,488
+,,Bảo vệ: chặn cấu hình thưởng sai nền tảng,"- RỦI RO THẬT: kênh Threads hiện KHÔNG lấy được lượt xem. Nếu bật 'thưởng theo lượt xem' cho Threads,
+  creator đăng bài, được duyệt, nhưng nhận 0đ — và sẽ khiếu nại
+- Hệ thống tự biết mỗi kênh cung cấp được chỉ số nào (lượt xem / like / bình luận)
+- Cảnh báo và CHẶN đội vận hành bật nhầm gói thưởng không phù hợp với kênh
+- Cho phép chọn chỉ số thay thế khi kênh không có lượt xem",Xây mới,8,6,4,1,2,2,0,23,350
+,,Cập nhật màn hình quản trị gói thưởng,"- Bổ sung vào form tạo gói hiện có: chọn chu kỳ, thêm/bớt bậc thưởng
+- Xem trước kết quả trước khi kích hoạt: 'creator duyệt 12 video sẽ nhận 500.000đ'
+- Cảnh báo trực quan khi chọn kênh không phù hợp với loại thưởng",Bổ sung,4,20,6,2,3,0,0,35,512
+,,Thưởng theo lượt xem (PPV) — kích hoạt,"- Hệ thống ĐÃ CÓ SẴN cơ chế này, không phải xây mới — chỉ cần cấu hình và kiểm thử
+- Lưu ý quan trọng cần truyền thông cho creator: số liệu cập nhật 2 LẦN/NGÀY, không phải tức thời
+- Kiểm thử: lượt xem tăng → tiền tăng đúng đơn giá; bài bị hủy → thu hồi thưởng",Đã có sẵn,2,2,4,1,2,0,0,11,154
+B,"THƯỞNG CHÀO MỪNG CREATOR MỚI
+Yêu cầu: thưởng cho creator mới onboard hệ thống (3 video đầu tiên được duyệt).
+Vướng mắc lớn nhất: toàn bộ hệ thống thưởng hiện nay BẮT BUỘC gắn với một chiến dịch cụ thể.
+Nhưng creator onboard là onboard vào HỆ THỐNG, không thuộc chiến dịch nào → cần mở đường ghi sổ mới.",Mở đường thưởng ngoài chiến dịch,"- Cho phép ghi nhận khoản thưởng không thuộc chiến dịch nào (thưởng chào mừng, thưởng xếp hạng)
+- ĐÂY LÀ PHẦN RỦI RO NHẤT CỦA DỰ ÁN: đụng trực tiếp vào đường tiền đang chạy cho 14 khách hàng
+- Kiểm thử hồi quy toàn bộ 14 khách hàng: thưởng cũ phải không đổi một đồng",Xây mới,20,0,8,2,2,6,0,38,600
+,,Quỹ thưởng cấp khách hàng,"- Thiết lập quỹ thưởng riêng cho các khoản ngoài chiến dịch, tách khỏi ngân sách từng chiến dịch
+- Bắt buộc đặt hạn mức, không cho phép để trống (tránh chi vượt không kiểm soát)
+- Cảnh báo qua Telegram khi quỹ sắp cạn",Xây mới,16,0,6,2,2,4,0,30,472
+,,Thưởng N video đầu tiên,"- Business nói '3 video' → hệ thống làm 'N video', đổi sang 5 chỉ cần sửa cấu hình, KHÔNG cần deploy lại
+- Thưởng TỪNG video (không chờ đủ 3 mới trả) + thưởng thêm khi hoàn thành đủ N — giữ chân creator mới tốt hơn
+- 'Đầu tiên' tính trên toàn hệ thống, không phải trong từng chiến dịch (creator chỉ onboard một lần)
+- Chống gian lận: video phải đạt lượt xem tối thiểu; 2 video cách nhau dưới 1 giờ không được tính cả hai
+- Nếu video bị hủy sau khi đã thưởng → thu hồi, video kế tiếp lên thế chỗ",Xây mới,20,0,10,2,3,3,0,38,576
+,,Đối soát và chi tiền cho thưởng ngoài chiến dịch,"- Khoản thưởng mới đi vào ĐÚNG quy trình đối soát → ví creator → rút tiền hiện có
+- Không phải xây lại quy trình tài chính — đây là lý do chọn phương án này thay vì làm hệ thống riêng
+- Kiểm thử toàn trình: duyệt → đối soát → tiền vào ví → creator rút được",Xây mới,12,0,6,2,2,3,0,25,388
+,,Màn hình quản trị: quỹ thưởng và gói chào mừng,"- Theo dõi quỹ thưởng: đã dùng bao nhiêu, còn lại bao nhiêu
+- Cấu hình gói chào mừng (số video, tiền/video, thưởng hoàn thành, lượt xem tối thiểu)
+- Báo cáo: creator nào đã nhận thưởng chào mừng",Xây mới,4,16,5,2,2,0,0,29,428
+C,"BẢNG XẾP HẠNG THÁNG
+Xếp hạng creator theo tháng, gộp thành tích từ TẤT CẢ chiến dịch (không giới hạn trong một chiến dịch).
+Tin tốt: dữ liệu cần thiết đã có sẵn, không phải làm lại từ đầu.
+Bảng xếp hạng cũ chỉ dùng được cho một khách hàng duy nhất (viết riêng cho họ) → phải làm mới.",Tính toán xếp hạng,"- Gộp thành tích creator từ tất cả chiến dịch trong tháng
+- Điều kiện tối thiểu để vào bảng: tối thiểu 3 video được duyệt và 10.000 lượt xem
+  (tránh creator có đúng 1 video viral chiếm mất giải của người đóng góp đều đặn)
+- Quy tắc xử lý đồng hạng rõ ràng, chạy lại không đổi thứ hạng",Xây mới,16,0,6,2,2,4,0,30,472
+,,Chốt sổ và trao thưởng,"- Chốt bảng xếp hạng ngày 1 tháng sau, LƯU LẠI BẢN BẤT BIẾN trước khi phát thưởng
+  → creator khiếu nại thì có bằng chứng đối chiếu, không tranh cãi được
+- Phát thưởng tự động theo hạng, đảm bảo không trao trùng
+- Kiểm thử: chạy lại quy trình 2 lần → không phát thưởng 2 lần",Xây mới,16,0,8,2,2,3,0,31,476
+,,Cơ cấu giải thưởng theo hạng,"- Cấu hình tự do: Quán quân / Á quân / Hạng 3 / Top 4-10 — số hạng và mức tiền đều đổi được
+- Chọn tiêu chí xếp hạng: lượt xem / số video / mức độ tương tác",Xây mới,12,0,6,1,2,2,0,23,348
+,,Giao diện bảng xếp hạng,"- Ứng dụng creator: bảng xếp hạng tháng này và tháng trước, vị trí của tôi, còn cách hạng trên bao nhiêu
+- Quản trị: xem bảng xếp hạng, tra cứu bản đã chốt, xuất file Excel",Xây mới,6,20,6,2,3,0,0,37,544
+D,"MỞ RỘNG KÊNH X (TWITTER)
+Kênh Threads ĐÃ CÓ SẴN — không tính phí.
+PHỤ THUỘC BÊN NGOÀI: cần đội crawler hỗ trợ kênh X trước. Cụm này KHÔNG chặn tiến độ các cụm A, B, C —
+nếu đội crawler trễ, phần còn lại vẫn bàn giao đúng hạn.",Bổ sung kênh X vào hệ thống,"- Ghi nhận bài đăng trên X: lượt xem, like, bình luận
+- Tính thưởng cho nội dung X giống các kênh hiện có
+- Lưu ý: kiến trúc hiện tại yêu cầu sửa ~26 vị trí cho mỗi kênh mới — việc cơ học nhưng dễ sót,
+  một chỗ sót là creator mất tiền → cần kiểm thử kỹ",Xây mới,20,0,8,2,2,3,0,35,540
+,,Thu thập dữ liệu định kỳ từ X,"- Tự động lấy số liệu bài đăng X 2 lần/ngày (giống các kênh khác)
+- Kiểm tra tính hợp lệ của đường dẫn bài đăng X",Xây mới,10,0,5,1,0,2,2,20,314
+,,Xác minh và tích hợp với đội crawler,"- PHỤ THUỘC ĐỘI KHÁC: cần xác nhận họ trả về LƯỢT XEM của bài đăng X, không chỉ like/bình luận
+- BÀI HỌC TỪ THREADS: Threads lấy dữ liệu thành công nhưng KHÔNG có lượt xem
+  → nếu áp thưởng theo lượt xem, creator nhận 0đ
+- Phải xin dữ liệu mẫu trước khi bắt đầu, không dựa vào cam kết miệng
+- Nếu X không có lượt xem → chỉ thưởng được theo like/bình luận",Chờ bên ngoài,8,0,4,3,1,2,0,18,288
+,,Giao diện kênh X,"- Creator chọn kênh X khi đăng bài
+- Hiển thị thống kê X trong trang cá nhân creator và trang quản trị",Xây mới,0,10,3,1,1,0,0,15,218
+E,CHUYỂN GIAO VÀ VẬN HÀNH,Chuyển đổi dữ liệu,"- Cập nhật dữ liệu thưởng hiện có sang cấu trúc mới
+- Có phương án quay lui cho từng bước
+- Chạy thử trên bản sao dữ liệu thật trước khi áp dụng chính thức",Xây mới,8,0,4,1,0,2,4,19,304
+,,Triển khai,"- Triển khai theo từng cụm (A → B → C), không dồn một lần để giảm rủi ro
+- Theo dõi cảnh báo ngân sách sau mỗi lần triển khai",Xây mới,2,0,3,2,0,0,6,13,210
+,,Tài liệu,"- Hướng dẫn tiếng Việt cho đội vận hành: cách cấu hình từng loại thưởng
+- Quy trình vận hành: chốt sổ tháng, xử lý khiếu nại xếp hạng
+- Cập nhật tài liệu kỹ thuật",Xây mới,3,0,0,3,12,2,0,20,292
+,,Nghiệm thu và hỗ trợ 2 tuần đầu,"- Chạy thử với 1 khách hàng thật trước khi mở cho toàn bộ 14 khách hàng
+- Đối chiếu thủ công tiền thưởng tháng đầu tiên
+- Trực xử lý khiếu nại creator",Xây mới,6,0,10,6,4,0,0,26,384
+
+,,TỔNG (chưa dự phòng),,,241,74,136,46,55,50,14,616,9416
+,,Dự phòng 15%,Hệ thống thưởng hiện tại có mức ràng buộc cao và đang vận hành cho 14 khách hàng — mọi thay đổi đều chạm vào đường tiền đang chạy.,,36,11,20,7,8,8,2,92,1411
+,,TỔNG CỘNG,,,277,85,156,53,63,58,16,708,10827
+
+ĐƠN GIÁ ($/giờ),,,,,$16,$15,$12,$20,$12,$20,$17,,
+
+⚠️,ĐIỀU KIỆN TIÊN QUYẾT — KHÔNG TÍNH PHÍ TRONG BÁO GIÁ NÀY (xử lý thành đợt sửa lỗi riêng),,,,,,,,,,,,
+,,Creator bị mất thưởng vĩnh viễn khi quỹ cạn,"Khi ngân sách hết, hệ thống vẫn ghi nhận là creator 'đã nhận thưởng' dù thực tế nhận 0đ. Sau đó dù nạp thêm tiền, creator KHÔNG BAO GIỜ được trả khoản đó nữa.","🔴 Chặn cụm B, C",,,,,,,,,
+,,Tác vụ đêm chi vượt ngân sách,Tác vụ tự động chạy 00:30 hằng đêm không kiểm tra hạn mức ngân sách trước khi trả thưởng.,"🔴 Chặn cụm A, B, C",,,,,,,,,
+,,Mốc hiệu suất tính sai,Creator đạt ĐÚNG mốc (ví dụ tròn 100.000 lượt xem) KHÔNG được thưởng — phải vượt mốc mới tính. Ngoài ra creator phải chờ hết chu kỳ đối soát mới thấy tiền. Không sửa thì tính năng 'thưởng theo mốc hiệu suất' giao ra vẫn sai.,🔴 Chặn cụm A,,,,,,,,,
+
+,GHI CHÚ QUAN TRỌNG,,,,,,,,,,,,
+,1. Kênh Threads ĐÃ CÓ SẴN trong hệ thống — không tính phí.,,,,,,,,,,,,
+,2. Thưởng theo lượt xem (PPV) ĐÃ CÓ SẴN cơ chế — chỉ tính phí cấu hình và kiểm thử (10 giờ).,,,,,,,,,,,,
+,"3. Cụm D (kênh X) phụ thuộc đội crawler bên ngoài, KHÔNG nằm trên đường găng. Tách ra: tổng còn 606 giờ.",,,,,,,,,,,,
+,"4. Số liệu creator cập nhật 2 LẦN/NGÀY, không tức thời — cần truyền thông rõ để tránh khiếu nại.",,,,,,,,,,,,
+,"5. Bảng xếp hạng tính trong phạm vi từng khách hàng, không gộp chung 14 khách hàng (cần làm rõ nếu business muốn khác).",,,,,,,,,,,,

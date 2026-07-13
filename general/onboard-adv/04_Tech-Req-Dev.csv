@@ -1,0 +1,22 @@
+Mã ENV,Mô tả,Ví dụ,PIC (Ai điền),Giá trị (Develop),Ghi chú
+APP_NAME,Tên thương hiệu hiển thị trên app,Parasola Creators Hub,Biz AT,,Lấy từ ADV-Input
+PARTNER_ID,Partner slug — chuỗi chữ định danh (chữ thường không dấu),parasola,Biz AT,,Slug do Biz AT đặt. KHÁC AMBASSADOR_PARTNER_ID (là ObjectId hệ thống)
+DOMAIN,Domain frontend môi trường Develop,parasola.demo.accesstrade.click,Biz AT,,"• Mặc định Dev: slug.demo.accesstrade.click
+• Nếu domain riêng trên Cloudflare: cấu hình trỏ trên Cloudflare"
+OG_TITLE,Tiêu đề trang / OpenGraph title,Parasola by Naris Creators Hub,Biz AT,,Lấy từ ADV-Input
+OG_DESCRIPTION,Mô tả trang / OpenGraph description,,Biz AT,,Lấy từ ADV-Input
+SEO_KEYWORDS,Từ khóa SEO,,Biz AT,,Tùy chọn
+LOGO_FILE,Tên file logo,,Hiếu AT,='02_Design'!C3,Ref sang 02_Design (dòng Logo)
+FAVICON_FILE,Tên file favicon,,Hiếu AT,='02_Design'!C4,Ref sang 02_Design (dòng Favicon)
+BANNER,File hình: Banner home (2 size) + Cover chiến dịch (2 bản),,Hiếu AT,='02_Design'!C5,Ref sang 02_Design (dòng Banner/Cover)
+OG_IMAGE,Ảnh social preview (1200x630),,Hiếu AT,='02_Design'!C7,Ref sang 02_Design (dòng OG Image)
+PRIMARY_COLOR,Màu chính thương hiệu (HEX),,Hiếu AT,='02_Design'!C8,Ref sang 02_Design (dòng Màu chủ đạo)
+SECONDARY_COLOR,Màu phụ (để trống nếu dùng mặc định #d0d5dd),,Hiếu AT,='02_Design'!C9,Ref sang 02_Design (dòng Màu phụ)
+FONT,Font chữ sử dụng,,Hiếu AT,='02_Design'!C10,Ref sang 02_Design (dòng Font)
+GTM_ID,Google Tag Manager ID,GTM-NLRX5THC,Campaign Operation,,Để trống nếu dùng chung
+SUPPORT_ARTICLE_ID,ID bài hỗ trợ trên CMS,6a201227c593297560ee1009,Campaign Operation,,Sinh sau khi tạo bài trên admin (sinh ở sheet 03_Config-Dev)
+QA_ARTICLE_ID,ID bài Q&A trên CMS,6a200ce8c593297560ee1005,Campaign Operation,,Sinh sau khi tạo bài trên admin (sinh ở sheet 03_Config-Dev)
+TERM_ID,ID bài điều khoản trên CMS,6a200f5ec593297560ee1007,Campaign Operation,,Sinh sau khi tạo bài trên admin (sinh ở sheet 03_Config-Dev)
+CONDITION_ID,ID bài điều kiện trên CMS,6a2006c3c593297560ee0fff,Campaign Operation,,Sinh sau khi tạo bài trên admin (sinh ở sheet 03_Config-Dev)
+AMBASSADOR_PARTNER_ID,ID đối tác trên hệ thống Ambassador — ObjectId hệ thống,6a1957283b2d71106b7afec2,Campaign Operation,,Sinh khi tạo tenant trên admin. KHÁC PARTNER_ID (là slug chữ)
+EVENT_ID,ID campaign trên hệ thống Ambassador,6a20ea00d2b93e2838113c05,Campaign Operation,,Sinh sau khi tạo campaign trên admin (sinh ở sheet 03_Config-Dev)

@@ -1,0 +1,13 @@
+STT,Thành phần,Giá trị / Mô tả thay đổi,Ghi chú
+,,"• Đầu vào: Brand guide do ADV cung cấp ở sheet 01_ADV-Input
+• Fork từ template chung, chỉ đổi: Logo · Favicon · Banner home · Cover chiến dịch · Màu (chính/phụ) · Font chữ
+• Giữ nguyên: layout · cỡ chữ · cấu trúc trang",Hiếu AT vẽ Figma & điền các thay đổi bên dưới
+1,Logo,Thay đổi 1,PNG nền trong suốt. Phải có 1 frame/section riêng trong Figma để export ngay (không cắt thủ công)
+2,Favicon,Thay đổi 2,PNG/ICO. Phải có 1 frame/section riêng trong Figma để export ngay (không cắt thủ công)
+3,Banner home (2 size: 20:8 & 4:3),Thay đổi 3,"20:8 (4320x1728 px) + 4:3 (1280x960 px). Mỗi size 1 frame/section riêng trong Figma để export ngay (không cắt thủ công)"
+4,Cover chiến dịch (2 bản: Tiêu chuẩn & Stretch),Thay đổi 4,"Bản Tiêu chuẩn + bản Stretch. Mỗi bản 1 frame/section riêng trong Figma để export ngay (không cắt thủ công)"
+5,OG Image (ảnh social preview),Thay đổi 5,"Kích thước 1200x630 px. Phải có 1 frame/section riêng trong Figma để export ngay (không cắt thủ công)"
+6,Màu chủ đạo (PRIMARY_COLOR),Thay đổi 6,HEX theo brand guide (VD #FFC0D4)
+7,Màu phụ (SECONDARY_COLOR),Thay đổi 7,"HEX. Để trống nếu dùng mặc định #d0d5dd"
+8,Font chữ,Thay đổi 8,Font chính + font phụ nếu có
+9,Thay đổi khác (nếu có),Thay đổi 9,Ghi rõ thành phần + lý do

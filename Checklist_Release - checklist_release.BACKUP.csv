@@ -1,0 +1,36 @@
+STT,Giai đoạn,Nhóm,Hạng mục,Phụ trách,Deadline,Assign ,Ghi chú
+1,1 - Trước release,Phạm vi & chuẩn bị,"Danh sách chức năng, bug fix đi kèm trong phạm vi release",PM/QA,D-7,"AT, DISO",
+2,,,"Thiết kế chính thức
+Đi kèm danh sách thay đổi cho với bản mẫu",Designer ,D-7,AT,"Sẽ cần một mẫu (template chung cho dự án)
+Mỗi ADV mới sẽ fork từ template này
+Toàn bộ update sẽ cần được liệt kê lại chi tiết để tránh thiếu sót trong quá trình implement
+Đề xuất chỉ được thay đổi các thành phần:
+- Logo
+- Cover
+- Màu chủ đạo
+- Font chữ
+
+Hạn chế thay đổi cỡ chữ, cách bố trí, giao diện tổng thể"
+6,,Code & Build,"Tao PR, Review code",Dev,,DISO,
+7,,,Deploy,Dev,,AT,
+8,,Dữ liệu,"Allow domains của các đối tác đúng (không có https://, không dấu / cuối);",Admin,,AT,
+9,,,"Slug các đối tác không trùng, không đổi so với bản đã công bố",Admin,,AT,
+10,,,"Cấu hình đối tác (Logo, Cover, Mô tả, Ngân sách, toggle BXH/nội dung) đã đúng theo thỏa thuận",Admin,,AT,
+11,,Kiểm thử (QA),Đã chạy toàn bộ bộ test case trên Dev → tất cả Pass (đối chiếu file test case),QA,,DISO,
+12,,,"Đã test các luồng chính: đăng nhập, trang chủ, chi tiết chương trình, đăng bài, liên kết tài khoản",QA,,DISO,
+3,,Kế hoạch Release,"Release note (tính năng mới, thay đổi, bug đã fix, hướng dẫn)",PM/Dev/QA ,D-1,DISO,
+4,,,Thông báo lịch release & thời gian downtime (nếu có) cho các bên liên quan,PM ,D-1,DISO,
+5,,,Danh sách nhân sự tham gia release,PM,D-1,DISO,
+13,,Kế hoạch Rollback,Xác định ngưỡng quyết định rollback (lỗi gì thì revert code),Lead,,"AT, DISO",
+14,2 - Triển khai,Thực thi release,Deploy đúng phiên bản/tag đã duyệt lên Production,DevOps,,AT,
+15,,Thực thi release,Chạy migration Production (nếu có) — kiểm tra thành công,DevOps,,"AT, DISO",
+16,3 - Sau release,Smoke test,"Trang chủ load được, hiển thị đúng thiết kế (banner, creator, thử thách)",QA,,DISO,
+17,,,Landing đối tác mở được trên domain thật (Allow domains hoạt động),QA,,DISO,
+18,,,Đăng nhập Google / TikTok thành công trên Production,QA,,DISO,
+19,,,Thử 1 luồng nghiệp vụ quan trọng end-to-end (VD: đăng bài / xem BXH),QA,,DISO,
+20,,,Kiểm tra không có lỗi 404 / 500 / trang trắng ở các route chính,QA,,DISO,
+21,,Giám sát & Đóng release,Theo dõi log / lỗi / hiệu năng trong ít nhất 30–60 phút đầu,Dev/DevOps,,AT,
+22,,,Không phát sinh lỗi nghiêm trọng → xác nhận release thành công,PM,,"AT, DISO",
+23,,,"Thông báo go-live cho các bên liên quan (Sale, đối tác, support)",PM,,DISO,
+24,,,Cập nhật trạng thái release ,PM,,DISO,
+25,,,Ghi lại vấn đề phát sinh để cải tiến lần sau,PM,,DISO,

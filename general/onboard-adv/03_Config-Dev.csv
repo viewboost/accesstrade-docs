@@ -1,0 +1,18 @@
+STT,Nhóm,Hạng mục,Phụ trách,Deadline,Trạng thái,Ghi chú
+1,Setup ADV,Tạo ADV / tenant mới trên admin (Dev) — nhập Tên hiển thị,Campaign Operation,D-5,Chưa làm,"• Nguồn: 01_ADV-Input — Tên thương hiệu
+• → Trả về AMBASSADOR_PARTNER_ID → điền 04_Tech-Req-Dev"
+2,Setup ADV,"Upload Logo, Favicon, Cover",Campaign Operation,D-5,Chưa làm,• Nguồn: 02_Design — Logo / Favicon / Cover
+3,Setup ADV,Nhập Slug,Campaign Operation,D-5,Chưa làm,"• Nguồn: 01_ADV-Input — Slug
+• Đã chốt với ADV từ đầu"
+4,Setup ADV,"Cấu hình Allow domains (không https://, không / cuối, không @-prefix)",Campaign Operation,D-5,Chưa làm,"• Nguồn: 01_ADV-Input — Tên miền
+• Dev mặc định: slug.demo.accesstrade.click"
+5,Setup ADV,Nhập Website (CÓ https://),Campaign Operation,D-5,Chưa làm,"• Nguồn: 01_ADV-Input — Đường dẫn CTA ""Về đối tác"""
+6,Setup ADV,Bật/tắt toggle: BXH / hiển thị số tiền / gửi lại nội dung,Campaign Operation,D-5,Chưa làm,• Nguồn: thỏa thuận với ADV
+7,Setup Campaign,Tạo campaign trên hệ thống Ambassador — nhập Tên chiến dịch + Thời gian (start–end),Campaign Operation,D-5,Chưa làm,"• Nguồn: 01_ADV-Input — Tên chiến dịch, Thời gian chạy chiến dịch
+• → Trả về EVENT_ID → điền 04_Tech-Req-Dev"
+8,Setup Campaign,Nhập Ngân sách campaign,Campaign Operation,D-5,Chưa làm,• Nguồn: 01_ADV-Input — Ngân sách campaign
+9,Setup Campaign,Nhập Hashtag chiến dịch,Campaign Operation,D-5,Chưa làm,• Nguồn: 01_ADV-Input — Hashtag chính thức
+10,Setup Campaign,Nhập Tiêu đề bảng xếp hạng top creator,Campaign Operation,D-5,Chưa làm,• Nguồn: 01_ADV-Input — Tiêu đề BXH top creator
+11,Setup nội dung,"Tạo các bài CMS: hỗ trợ, Q&A, điều khoản, điều kiện",Campaign Operation,D-5,Chưa làm,"• Nguồn: 01_ADV-Input — Chi tiết chiến dịch
+• → Trả về các *_ARTICLE_ID → điền 04_Tech-Req-Dev"
+12,Setup nội dung,Dán nội dung Mô tả chương trình,Campaign Operation,D-5,Chưa làm,• Nguồn: 01_ADV-Input — Chi tiết chiến dịch

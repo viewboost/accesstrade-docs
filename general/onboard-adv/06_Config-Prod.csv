@@ -1,0 +1,21 @@
+STT,Nhóm,Hạng mục,Phụ trách,Deadline,Khớp Dev?,Trạng thái,Ghi chú
+1,Setup ADV,Tạo ADV / tenant mới trên admin (Prod) — nhập Tên hiển thị,Campaign Operation,D-1,☐,Chưa làm,"• Nguồn: 01_ADV-Input — Tên thương hiệu
+• → Trả về AMBASSADOR_PARTNER_ID (KHÁC ID Dev) → điền 07_Tech-Req-Prod"
+2,Setup ADV,"Upload Logo, Favicon, Cover",Campaign Operation,D-1,☐,Chưa làm,• Nguồn: 02_Design — Logo / Favicon / Cover
+3,Setup ADV,Nhập Slug (ĐÚNG Y HỆT slug Dev),Campaign Operation,D-1,☐,Chưa làm,"• Nguồn: 01_ADV-Input — Slug
+• KHÔNG đổi so với Dev"
+4,Setup ADV,"Cấu hình Allow domains: domain THẬT (không https://, không / cuối, không @-prefix)",Campaign Operation,D-1,☐,Chưa làm,"• Nguồn: 01_ADV-Input — Tên miền
+• Prod dùng domain thật"
+5,Setup ADV,Nhập Website (CÓ https://),Campaign Operation,D-1,☐,Chưa làm,"• Nguồn: 01_ADV-Input — Đường dẫn CTA ""Về đối tác"""
+6,Setup ADV,Bật/tắt toggle: BXH / hiển thị số tiền / gửi lại nội dung,Campaign Operation,D-1,☐,Chưa làm,"• Nguồn: thỏa thuận với ADV
+• Đúng như Dev"
+7,Setup Campaign,Tạo campaign trên hệ thống Ambassador — nhập Tên chiến dịch + Thời gian (start–end),Campaign Operation,D-1,☐,Chưa làm,"• Nguồn: 01_ADV-Input — Tên chiến dịch, Thời gian chạy chiến dịch
+• → Trả về EVENT_ID (KHÁC ID Dev) → điền 07_Tech-Req-Prod"
+8,Setup Campaign,Nhập Ngân sách campaign,Campaign Operation,D-1,☐,Chưa làm,• Nguồn: 01_ADV-Input — Ngân sách campaign
+9,Setup Campaign,Nhập Hashtag chiến dịch,Campaign Operation,D-1,☐,Chưa làm,• Nguồn: 01_ADV-Input — Hashtag chính thức
+10,Setup Campaign,Nhập Tiêu đề bảng xếp hạng top creator,Campaign Operation,D-1,☐,Chưa làm,• Nguồn: 01_ADV-Input — Tiêu đề BXH top creator
+11,Setup nội dung,"Tạo các bài CMS: hỗ trợ, Q&A, điều khoản, điều kiện",Campaign Operation,D-1,☐,Chưa làm,"• Nguồn: 01_ADV-Input — Chi tiết chiến dịch
+• → Trả về các *_ARTICLE_ID (KHÁC ID Dev) → điền 07_Tech-Req-Prod"
+12,Setup nội dung,Dán nội dung Mô tả chương trình,Campaign Operation,D-1,☐,Chưa làm,• Nguồn: 01_ADV-Input — Chi tiết chiến dịch
+13,PROD-ONLY,Xác nhận DOMAIN đã trỏ về IP 54.169.3.115 (hoặc Cloudflare),Biz AT/DevOps AT,D-Day,-,Chưa làm,• Chỉ Prod
+14,PROD-ONLY,Xóa hết domain localhost/test trong Allow domains,Campaign Operation,D-Day,-,Chưa làm,• Chỉ giữ domain thật

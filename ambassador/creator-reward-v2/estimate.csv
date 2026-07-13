@@ -1,0 +1,110 @@
+Cụm,Mô tả cụm,Module,Mô tả chi tiết,Trạng thái,BE (h),FE (h),QA (h),PM (h),BA (h),SA (h),DevOps (h),Tổng giờ,Tổng tiền (USD)
+A,"Mở 3 trục cấu hình trên engine đã có (KHÔNG viết lại engine).
+Xong 3 trục này, cơ chế 'video duyệt/tháng' và 'mốc hiệu suất' chỉ còn là bản ghi cấu hình.
+Mọi hằng số business đều config được — business đổi số không cần deploy.",periodKey — chốt chặn của cả dự án,"- Thêm field periodKey ('2026-07') vào event-rewards
+- Đổi guard idempotency từ '1 lần trọn đời' → '1 lần / chu kỳ'
+- MỘT field này mở khoá cả 'thưởng hàng tháng' lẫn 'BXH hàng tháng'
+- Migration: backfill periodKey cho reward cũ
+- Kèm UNIQUE INDEX (user, schema._id, periodKey, contentId, isBudgetExceeded) — khoá chống trả thưởng 2 lần ở tầng DB
+- Script dò + gộp dữ liệu trùng đang có trên prod trước khi tạo index
+- Test: tháng 7 nhận thưởng → tháng 8 nhận lại được; 2 goroutine song song → chỉ 1 reward",🟡 Build mới,16,0,8,2,2,5,2,35,550
+,,Trục WINDOW (lifetime / fixed / recurring),"- RewardWindow: type + period (monthly/weekly) + timezone Asia/Ho_Chi_Minh
+- Cron chốt sổ tháng: ngày 1 tháng sau 02:00 (hấp thụ độ trễ crawl 12h)
+- Backward-compatible: schema cũ mặc định window=fixed, chạy y nguyên
+- Test: đổi tháng → counter reset, không thưởng trùng",🟡 Build mới,16,0,8,2,3,4,0,33,508
+,,Trục PAYOUT — bậc thang (tiered),"- RewardTier[]: min/max/cash/label — thay cho 1 mốc cứng hiện tại
+- Áp cho by-content-milestone (số video/tháng) + by-view-milestone (mốc hiệu suất)
+- Bậc thang KHÔNG cộng dồn: 12 video → nhận bậc 500k, không phải 200k+500k (giả định A4)
+- Test: 4/5/12/25 video → đúng bậc; ranh giới min/max",🟡 Build mới,16,0,8,2,3,3,0,32,488
+,,Platform Capability Matrix,"- Khai báo mỗi platform có view/like/comment/share hay không
+- CHẶN admin bật PPV cho platform mù view (Threads hiện KHÔNG trả view → creator sẽ nhận 0đ)
+- Rule khai báo metric ưu tiên + fallbackMetric
+- Test: chọn Threads + cashPerView → UI cảnh báo, chặn Active",🟡 Build mới,8,6,4,1,2,2,0,23,350
+,,Admin UI: cấu hình window + bậc thang,"- Form chọn chu kỳ (lifetime/cố định/hàng tháng)
+- Bảng bậc thang thêm/xoá dòng (min, max, tiền, nhãn)
+- Cảnh báo capability khi chọn source
+- Preview: 'creator duyệt 12 video sẽ nhận 500.000đ'",🟡 Build mới,4,20,6,2,3,0,0,35,512
+,,Cấu hình PPV (đã có engine — chỉ config),"- by-statistic + cashPerView ĐÃ CÓ 100%, không code mới
+- Cấu hình rule + đóng cửa platform mù view
+- Ghi rõ trên UI creator: cập nhật 2 lần/ngày, KHÔNG realtime
+- Test: view tăng → tiền tăng đúng đơn giá; content bị hủy → thu hồi",🟢 Đã có,2,2,4,1,2,0,0,11,154
+B,"Thưởng ngoài campaign (theo yêu cầu: creator onboard hệ thống, không thuộc campaign nào).
+Hiện TOÀN BỘ model thưởng bắt buộc gắn campaign → thưởng ngoài campaign không có đường ghi sổ.
+Nới event thành optional + thêm quỹ partner. Đối soát/chi tiền tái dùng nguyên luồng cũ.",Nới scope: event → optional,"- Thêm RewardScope (event | partner), rà TOÀN BỘ guard 'if event.ID.IsZero() return'
+- Rà lại mọi aggregation ngân sách + báo cáo đang giả định event luôn tồn tại
+- Đây là phần rủi ro nhất: đụng vào đường tiền đang chạy cho 14 tenant
+- Test hồi quy: 14 tenant, reward cũ không đổi hành vi",🟡 Build mới,20,0,8,2,2,6,0,38,600
+,,Quỹ thưởng partner (BppReward) + budget lock,"- Bpp đã tồn tại nhưng CHƯA dùng trong engine (chỉ validate tổng Bpe)
+- Định nghĩa BppReward = quỹ thưởng ngoài campaign
+- Budget lock key budget_partner_<id> song song budget_event_<id>
+- Bắt buộc set, không cho 0=unlimited
+- Test: cạn quỹ → không vượt chi, cảnh báo Telegram",🟡 Build mới,16,0,6,2,2,4,0,30,472
+,,Thưởng N video đầu (business nói '3'),"- firstN.n cấu hình được — business đổi sang 5 thì sửa 1 field, không deploy
+- cashEach (thưởng từng video) + cashBonus (thưởng thêm khi đủ N) — giả định A1
+- 'Đầu tiên' tính theo phạm vi partner, không phải campaign — giả định A2
+- minView chống spam + cooldown 1h giữa 2 video được tính
+- Video bị hủy → video kế tiếp lên thế chỗ
+- Test: 7 kịch bản acceptance trong PRD",🟡 Build mới,20,0,10,2,3,3,0,38,576
+,,Đối soát + chi tiền cho thưởng ngoài campaign,"- Reward scope=partner đi vào CÙNG luồng reconciliation (chỉ khác event=null)
+- Không phải xây lại đối soát/transfer/withdraw — đây là lý do chọn phương án này
+- Rà pipeline đối soát đang hardcode type + event
+- Test: đối soát → cash-flow → ví creator → rút tiền",🟡 Build mới,12,0,6,2,2,3,0,25,388
+,,Admin UI: quỹ partner + rule onboarding,"- Màn hình quản lý quỹ thưởng partner (đã dùng / còn lại / cảnh báo)
+- Form rule onboarding (N, tiền/video, bonus, minView)
+- Báo cáo: creator nào đã nhận thưởng onboarding",🟡 Build mới,4,16,5,2,2,0,0,29,428
+C,"Bảng xếp hạng tháng — xuyên campaign trong 1 partner (giả định A3).
+Dữ liệu đã sẵn sàng: content-analytic-daily có partner + month + year + user. Không cần migration.
+BXH cũ (WildRift) hardcode tên tenant, không tái dùng được → viết mới.",Aggregate BXH + tie-break,"- Aggregate từ content-analytic-daily (KHÔNG dùng user-partners: pipeline của nó thiếu 3 source)
+- KHÔNG query collection users theo partner (UserRaw không có field partner — bug của code BXH cũ)
+- Tie-break deterministic: đồng hạng → ưu tiên video cuối duyệt sớm hơn
+- Điều kiện tối thiểu: >= 3 video duyệt, >= 10K view (chống 1-video-viral cướp top)
+- Index mới cho sort leaderboard",🟡 Build mới,16,0,6,2,2,4,0,30,472
+,,Snapshot bất biến + cron phát thưởng,"- Chốt sổ ngày 1 tháng sau 02:00, snapshot BXH vào doc bất biến TRƯỚC khi phát thưởng
+- Chạy lại cron không đổi kết quả (creator khiếu nại thì có bằng chứng)
+- Phát thưởng theo hạng, idempotent bằng periodKey
+- Test: chạy cron 2 lần → không thưởng trùng",🟡 Build mới,16,0,8,2,2,3,0,31,476
+,,Loại thưởng theo hạng (by-leaderboard-rank),"- Tiers theo hạng: Top1 / Top2 / Top3 / Top4-10 — số hạng và tiền đều config
+- Metric xếp hạng chọn được: view / số video / engagement
+- Fallback metric cho platform mù view",🟡 Build mới,12,0,6,1,2,2,0,23,348
+,,API + UI bảng xếp hạng (creator + admin),"- App creator: BXH tháng hiện tại + tháng trước, vị trí của tôi, khoảng cách tới hạng trên
+- Admin: xem BXH, xem snapshot đã chốt, xuất CSV
+- Cache Redis (key BXH đã có sẵn)",🟡 Build mới,6,20,6,2,3,0,0,37,544
+D,"Kênh X (Twitter). Threads ĐÃ CÓ SẴN — không tính tiền.
+CHẶN NGOÀI: phụ thuộc Content Catcher V2 (service team khác) hỗ trợ source=x VÀ trả field view.
+Cụm này KHÔNG nằm trên đường găng — cụm A–D ship được mà không cần X.",Thêm source X vào backend,"- Platform bị hardcode thành struct field + switch/case ở 26 file (~130 chỗ) — KHÔNG data-driven
+- 14 điểm chạm: constants, UserEventStatistic, EventAnalyticDailyStatistic, GetCashTotal/GetPointTotal,
+  switch tính milestone, aggregation statistic, response admin/public
+- Việc cơ học nhưng dễ sót — 1 chỗ sót = creator mất tiền
+- Test: đăng bài X → ghi nhận view/like/comment → tính thưởng đúng",🟡 Build mới,20,0,8,2,2,3,0,35,540
+,,Cron crawl X + xử lý callback,"- Copy pattern Threads: CrawlDataContentX + processXCrawl + đăng ký cron
+- Xử lý callback async (request_id → contents-callback)
+- Validator URL x.com / twitter.com",🟡 Build mới,10,0,5,1,0,2,2,20,314
+,,Tích hợp + xác minh Content Catcher V2,"- PHỤ THUỘC TEAM NGOÀI: xác nhận source=x được hỗ trợ VÀ response có field view
+- BẪY: Threads crawl được nhưng KHÔNG trả view (dùng Apify profile-scraper) → PPV Threads = 0đ
+- Phải xin sample JSON trước khi code, không tin lời hứa suông
+- Nếu X không có view → chỉ tính thưởng được theo like/comment",⚠️ Chặn ngoài,8,0,4,3,1,2,0,18,288
+,,FE: hiển thị kênh X,"- Submit content chọn nguồn X
+- Hiển thị thống kê X trong dashboard creator + admin",🟡 Build mới,0,10,3,1,1,0,0,15,218
+E,"Migration, triển khai, tài liệu, vận hành.",Migration + rollback,"- Backfill periodKey, dò/gộp reward trùng, tạo index mới
+- Script rollback cho từng bước
+- Chạy thử trên bản sao dữ liệu prod trước",🟡 Build mới,8,0,4,1,0,2,4,19,304
+,,Deploy staging + production,"- Deploy theo từng phase (A → B → C → D), không big-bang
+- Theo dõi cảnh báo ngân sách Telegram sau mỗi phase",🟡 Build mới,2,0,3,2,0,0,6,13,210
+,,Tài liệu,"- Admin guide tiếng Việt: cách cấu hình từng loại thưởng
+- Tài liệu vận hành: chốt sổ tháng, xử lý khiếu nại BXH
+- Cập nhật API docs + data model",🟡 Build mới,3,0,0,3,12,2,0,20,292
+,,UAT + hỗ trợ vận hành 2 tuần đầu,"- UAT với 1 partner thật trước khi bật cho 14 tenant
+- Đối chiếu tiền thưởng thủ công tháng đầu tiên
+- Trực xử lý khiếu nại creator",🟡 Build mới,6,0,10,6,4,0,0,26,384
+
+,,TỔNG (chưa buffer),,,241,74,136,46,55,50,14,616,9416
+,,Buffer 15%,Rủi ro: engine coupling cao (thêm 1 loại thưởng = chạm 14 file); đụng đường tiền đang chạy cho 14 tenant,,36,11,20,7,8,8,2,92,1411
+,,TỔNG CỘNG,,,277,85,156,53,63,58,16,708,10827
+
+⚠️ ĐIỀU KIỆN TIÊN QUYẾT — KHÔNG TÍNH TIỀN TRONG BÁO GIÁ NÀY (tách thành task fix P0 riêng),,,,,,,,,,,,,
+,,P0-1: Milestone hết ngân sách chặn thưởng vĩnh viễn,"Reward cash=0 vẫn bị đếm là 'đã nhận' → creator KHÔNG BAO GIỜ được cấp lại, kể cả sau khi nạp thêm ngân sách. Không sửa → thưởng onboarding (cụm B) và BXH (cụm C) đều dính.","🔴 Chặn cụm B, C",,,,,,,,,
+,,P0-2: Cron 00:30 bypass kiểm tra ngân sách,"RecheckMilestoneByEvent insert reward full cash, không lock, không estimate. Không sửa → mọi cơ chế thưởng mới đều có thể vượt chi.","🔴 Chặn cụm A, B, C",,,,,,,,,
+,,P1: Mốc hiệu suất sai điều kiện,Engine dùng > thay >= → creator đạt ĐÚNG 100.000 view không được thưởng. Đếm view chỉ tính bucket .Completed → creator phải chờ hết chu kỳ đối soát mới thấy tiền. Không sửa → tính năng 'mốc hiệu suất' GIAO RA VẪN SAI.,🔴 Chặn cụm A,,,,,,,,,
+,,P1: content-analytic-daily thiếu index {date},"COLLSCAN toàn collection mỗi đêm. Chưa chặn tính năng, nhưng cron chốt sổ tháng (cụm A) sẽ càng chậm.",🟠 Nên sửa kèm,,,,,,,,,
+
+ĐƠN GIÁ,,,,,$16/h,$15/h,$12/h,$20/h,$12/h,$20/h,$17/h,,

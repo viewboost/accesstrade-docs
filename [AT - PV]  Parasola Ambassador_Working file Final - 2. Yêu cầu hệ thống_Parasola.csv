@@ -1,0 +1,157 @@
+field,description,PIC,required,example,value,Timline,Nội dung bài viết set up,Bài mẫu,Note
+APP_NAME,Tên thương hiệu hiển thị trên app,Parasola,required,Parasola Creators Hub,Parasola Sun Match,,,,
+PARTNER_ID,Partner slug (lowercase không dấu),Parasola,required,parasola,parasola,,,,
+DOMAIN,"Domain/subdomain frontend production
+
+Trỏ thông tin về: 54.169.3.115
+*Note: nếu domain trên cloudflare cần lên cloudflare để trỏ ",Parasola,required,phocungdinh.afotech.vn,"id.matbao.net
+-ID: MB11821572
+-Pass: Naris@1932
+
+https://parasola-creator.com/",,,,
+PRIMARY_COLOR,Màu chính thương hiệu (HEX),Parasola,required,"C0M100Y100K0 (đỏ) (ed1c24)
+C0M0Y100K0 (vàng) (fff200)",#FFC0D4 #FFC0D4,,,,
+SECONDARY_COLOR,Màu phụ (để trống nếu dùng mặc định #d0d5dd),Parasola,optional,,,,,,
+LOGO_FILE,"Tên file logo (đặt trong src/assets/images/new/)
+* Gửi file design",Parasola,required,,https://drive.google.com/file/d/1taJ0S6mFPHf6RZ381BAtC8CagABZTi0R/view?usp=drive_link,,,,
+FAVICON_FILE,Tên file favicon,Parasola,required,,https://drive.google.com/file/d/1taJ0S6mFPHf6RZ381BAtC8CagABZTi0R/view?usp=drive_link,,,,
+OG_TITLE,Tiêu đề trang / OpenGraph title,Parasola,required,Parasola by Naris Creators Hub,Parasola Sun Match | MATCH CHUẨN NẮNG – THƯỞNG NÓNG TRAO TAY,,,,
+OG_DESCRIPTION,Mô tả trang / OpenGraph description,Parasola,required,"Sáng tạo video nhận thưởng mỗi ngày cùng Parasola
+1 CHẠM 12H BẢO VỆ","Tham gia Parasola Sun Match: chọn Team Nâng Tông hoặc Team Tỏa Hương, sáng tạo nội dung cùng Parasola và săn thưởng nóng trao tay.",,,,
+FONT,FONT chữ đang sử dụng ,Parasola,required,Montserrat,ROBOTO - Font phụ: SVN-Roseinda Alyamore,,,,
+BANNER,"- KV cho từng chiến dịch 3 size: 
+Banner trang home:
++ 20:8 (4320 x 1728 px) 
++ 4:3 (1280 x 960 px)
+Banner dành cho các MiniCamp (Cả Đt và MT)
++ 9:16 
+- KV đi truyền thông trên app AT size : 
++ 1200x1200 px
++ 1200x400 px
++ 3000x1000 px
+- KV đi truyền thông trên web Pub2 : 
++ 8000x1000 px 
++ 3000x2500 px
++ 2000x600 px(10:3)
+- Pop up truyền thông: 3000x2500px
+- KV chi tiết chiến dịch : 600x1000 px, 2400x300px
+
+*Note: Gửi file thiết kế",Parasola,required,,,,,,
+BRAND_GUIDE,File thiết kế liên quan tới thương hiệu ,Parasola,required,,,,,,
+SEO_KEYWORDS,Từ khóa SEO,Parasola,optional,,,,,,
+OG_IMAGE,Ảnh social preview (1200x630),Parasola,optional,,,,,,
+GTM_ID,Google Tag Manager ID (để trống nếu dùng chung),AT,optional,,"
+GTM-NLRX5THC",,,,
+SUPPORT_ARTICLE_ID,ID bài hỗ trợ trên CMS( chú ý để cả môi trường dev và product),AT,optional,,"Dev: 6a201227c593297560ee1009
+Product: 6a20f44c94a2d1dc271a6d5f",,,https://creator.hdbank.com.vn/bai-viet/689eaa63a75825ab6a54800a,
+QA_ARTICLE_ID,ID bài Q&A trên CMS( chú ý để cả môi trường dev và product),AT,optional,,"Dev: 6a200ce8c593297560ee1005
+Product: 6a20f60294a2d1dc271a6d61",,,https://creator.hdbank.com.vn/bai-viet/682549b7dc42a03562653188,
+TERM_ID,ID bài điều khoản( chú ý để cả môi trường dev và product),AT,optional,,"Dev: 6a200f5ec593297560ee1007
+Product: 6a4647593c3dcc83f7c86829",,,https://creator.hdbank.com.vn/bai-viet/68254accdc42a0356265318c,
+CONDITION_ID,ID bài điều kiện( chú ý để cả môi trường dev và product),AT,optional,,"Dev: 6a2006c3c593297560ee0fff
+Product: 6a20e5f894a2d1dc271a6cc3",,,https://creator.hdbank.com.vn/bai-viet/68254a8ddc42a0356265318a,
+PARTNER_ID,ID đối tác được setup trên hệ thống ambassdor( chú ý để cả môi trường dev và product),AT,optional,,"Dev: 6a1957283b2d71106b7afec2
+Product: 6a1cf67194a2d1dc271a629e",,,,
+EVENT_ID,ID của campaign setup trên hệ thống ambassador( chú ý để cả môi trường dev và product),AT,optional,,"Dev: 6a20ea00d2b93e2838113c05
+Product: 6a20ed4094a2d1dc271a6cc9",,,,
+Thông tin liên hệ,,Parasola,required,,"Email: chinl@pvdistribution.com.vn 
+giangldl@pvdistribution.com.vn",,,,
+Link redirect từ CTA Về Đối tác,,Parasola,required,,https://naris.vn/,,,,
+Facebook,,Parasola,required,,https://www.facebook.com/parasolavietnam,,,,
+Materials/ kho tư liệu,,Parasola,required,,Guideline Parasola,,,,
+CHI TIẾT CHIẾN DỊCH ,,Parasola,required,"Chiến dịch Biến tấu đơn giản với phở Cung Đình cho vị ngon khó cưỡng là một trong những chiến dịch thuộc chương trình Hội Nghiện Phở - chương trình trao thưởng của Phở Cung Đình dành cho các nhà sáng tạo nội dung nhằm cảm ơn và khuyến khích mọi người lan tỏa trải nghiệm khi chơi trải nghiệm, tin dùng và sáng tạo sản phẩm Phở Cung Đình.","Chào mừng các bạn tham gia chiến dịch: Parasola Sun Match | Match chuẩn nắng - Thưởng nóng trao tay, chiến dịch mùa hè dành cho các Content Creator/KOC yêu thích làm đẹp, chống nắng và sáng tạo nội dung lifestyle. Đồng hành cùng Parasola by Naris, Creator sẽ tham gia thử thách “Match chuẩn nắng” bằng cách lựa chọn sản phẩm phù hợp với phong cách cá nhân: Team Nâng Tông hoặc Team Tỏa Hương. Đây là sân chơi để Creator vừa thỏa sức sáng tạo, vừa bứt phá thu nhập cùng Parasola Sun Match – nơi mỗi lựa chọn đúng sản phẩm đều có thể trở thành một khoảnh khắc nổi bật dưới nắng.
+",01/07 - 31/08,"Nội dung setup theo chiến dịch Parasola Sun Match: thông điệp, thể lệ, sản phẩm hợp lệ, guideline creator, kiểm soát fraud và report truyền thông.",,Đã đồng bộ theo cột Chiến dịch C trong file Thể lệ chiến dịch Parasola Sun Match.
+Hashtag,,,,,"#ParasolaVietnam
+#ParasolaSunMatch
+#MatchChuanNang
+#ThuongNongTraoTay",01/07 - 31/08,Sử dụng đúng hashtag chính thức của chiến dịch.,,Hashtag lấy từ file thể lệ đã điền trước đó.
+TITLE_Top Parasola creator,,,,,Top Parasola Sun Match Creator,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,"Parasola Sun Match là chiến dịch creator/UGC cho Parasola by Naris, triển khai với thông điệp chính: MATCH CHUẨN NẮNG – THƯỞNG NÓNG TRAO TAY.
+
+Thời gian triển khai: 01/07 - 30/08
+
+Mục tiêu chiến dịch:
+- Views: Min 25M views
+- Video: Min 300-400
+- SL Creators: Min 200
+- Top of mind: Match chuẩn nắng - Nhớ Parasola
+- Lan tỏa thông điệp: MATCH CHUẨN NẮNG – THƯỞNG NÓNG TRAO TAY
+- Tạo UGC theo format chọn team: Team Nâng Tông / Team Tỏa Hương
+- Thúc đẩy nhận diện sản phẩm Parasola trong mùa nắng & giai đoạn trade activation
+
+Thể lệ/format tham gia:
+Thể lệ Parasola Sun Match:
+
+- Người tham gia/Creator lựa chọn team phù hợp với nhu cầu chống nắng: Team Nâng Tông hoặc Team Tỏa Hương.
+- Sản xuất nội dung theo guideline, thể hiện rõ khoảnh khắc “match” sản phẩm Parasola với bối cảnh ra nắng hằng ngày.
+- Nội dung cần lồng ghép thông điệp: “MATCH CHUẨN NẮNG – THƯỞNG NÓNG TRAO TAY”.
+- Video/bài đăng gắn đầy đủ hashtag chiến dịch, tag kênh/brand theo yêu cầu của AT/Brand.
+- Cơ cấu thưởng nóng/tiền thưởng và cách ghi nhận kết quả: AT & Brand xác nhận chi tiết trước khi triển khai.
+
+Thông tin sản phẩm cần đẩy:
+Thông tin cần đẩy trong chiến dịch:
+
+Key message:
+MATCH CHUẨN NẮNG – THƯỞNG NÓNG TRAO TAY
+
+Concept nội dung:
+Parasola Sun Match giúp người dùng chọn đúng “team” chống nắng theo nhu cầu cá nhân:
+- Team Nâng Tông: phù hợp khi muốn da sáng, bắt nắng đẹp, tiện dùng trước khi ra ngoài/chụp ảnh.
+- Team Tỏa Hương: phù hợp khi muốn chống nắng tiện lợi, thơm nhẹ, dùng hằng ngày/đi chơi/du lịch.
+
+USP sản phẩm cần nhấn mạnh:
+- Chống nắng chuẩn Nhật, bảo vệ da trước nắng mùa hè.
+- Dạng xịt tiện lợi, đầu xịt nano 360 độ, dễ dùng lại trong ngày.
+- Dòng nâng tông giúp da sáng, bắt sáng tự nhiên.
+- Dòng tỏa hương tạo cảm giác thơm mát, dễ chịu khi sử dụng.
+
+CTA:
+Chọn team Parasola phù hợp và tham gia Sun Match để có cơ hội nhận thưởng nóng trao tay.
+
+Guideline nội dung cho Creators:
+
+1. Chọn team Parasola: Team Nâng Tông vs Team Tỏa Hương.
+2. Review trải nghiệm sử dụng sản phẩm trong bối cảnh ra nắng thật.
+3. Tình huống “match chuẩn nắng”: đi làm, đi học, đi chơi, du lịch, dạo phố.
+4. Nội dung UGC/challenge kêu gọi người xem chọn team và tham gia Parasola Sun Match.
+5. Chia sẻ thông điệp chiến dịch và cơ hội nhận thưởng nóng trao tay.
+6. Có thể lồng ghép ưu đãi/hoạt động trade nếu Brand xác nhận.
+
+Quyền lợi cho Creators:
+
+- Được tặng sản phẩm/combo Parasola để trải nghiệm và sản xuất nội dung.
+- Có cơ hội nhận thưởng nóng/tiền thưởng theo cơ cấu chiến dịch.
+- Nội dung tốt có cơ hội được Brand repost/đẩy truyền thông.
+- Chi tiết quà tặng, mức thưởng và điều kiện nhận thưởng: Brand & AT xác nhận sau.
+Quy tắc duyệt Content:
+
+- Creator gửi outline/script trước khi sản xuất nếu nội dung có claim sản phẩm hoặc thông tin khuyến mãi.
+- Video/bài đăng phải đúng thông điệp, đúng sản phẩm, đúng hashtag và không dùng thông tin chưa được Brand xác nhận.
+- Không so sánh tiêu cực với thương hiệu khác, không claim quá mức về hiệu quả sản phẩm.
+- Nội dung final gửi Brand/AT duyệt trước khi publish.
+- Chỉ tính nội dung đã duyệt, đăng công khai, đúng thời gian chiến dịch.
+
+Kiểm soát fraud:
+Quy trình kiểm soát frauds:
+
+- AT tracking theo link/hashtag/mã Creator và danh sách video đã duyệt.
+- Chỉ ghi nhận view/video hợp lệ: đăng công khai, đúng nội dung, đúng hashtag, không re-up, không spam.
+- Loại trừ view bất thường, tài khoản ảo, nội dung sai guideline hoặc xóa/ẩn trước thời gian nghiệm thu.
+- Đối soát định kỳ theo tuần và nghiệm thu cuối chiến dịch.
+
+Content Calendar dự kiến:
+
+- Giai đoạn 1 - Teasing/Kick-off: giới thiệu Parasola Sun Match và thông điệp chiến dịch.
+- Giai đoạn 2 - Launch: đẩy nội dung chọn team Nâng Tông/Tỏa Hương, review sản phẩm, kêu gọi tham gia.
+- Giai đoạn 3 - Peak: tăng UGC/challenge, nội dung thưởng nóng trao tay, recap các video nổi bật.
+- Giai đoạn 4 - Wrap-up: tổng hợp kết quả, top content, top creators và câu chuyện chiến dịch.
+
+Report truyền thông:
+
+- Báo cáo tuần: số video, số Creators, views, engagement, top content, tình trạng duyệt nội dung.
+- Báo cáo giữa kỳ: tiến độ KPI, nội dung hiệu quả, vấn đề cần tối ưu, đề xuất tăng tốc.
+- Báo cáo cuối chiến dịch: tổng views, tổng video, số Creators, ER, top KOC/UGC, hashtag performance, fraud check và đề xuất cho chiến dịch tiếp theo.",,,,

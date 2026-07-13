@@ -1,0 +1,39 @@
+STT,Giai đoạn,Nhóm,Hạng mục,Phụ trách,Deadline,Assign,Ghi chú
+1,1a - Chuẩn bị (D-7),Phạm vi & chuẩn bị,"Danh sách chức năng, bug fix đi kèm trong phạm vi release",PM/QA,D-7,"AT, DISO",Chốt scope; mọi thứ ngoài scope đẩy sang release sau
+2,,,"Thiết kế chính thức, đi kèm danh sách thay đổi so với bản mẫu",Designer,D-7,AT,"Cần một mẫu (template chung cho dự án). Mỗi ADV mới fork từ template này.
+Toàn bộ update phải liệt kê chi tiết để tránh thiếu sót khi implement.
+Chỉ được thay đổi: Logo, Cover, Màu chủ đạo, Font chữ.
+Hạn chế thay đổi: cỡ chữ, cách bố trí, giao diện tổng thể."
+3,,,"Cấp phát Slug/Tenant code cho ADV mới — không trùng với 14 tenant hiện có, không đổi so với bản đã công bố",Admin/PM,D-7,AT,Xác nhận slug là duy nhất TRƯỚC khi build để tránh phải đổi về sau
+4,,,"Chuẩn bị data cấu hình ADV: rate-card, quota, budget, toggle BXH/nội dung",Admin/PM,D-7,"AT, DISO",Rollout ADV không chỉ là UI — cần seed đủ cấu hình vận hành
+5,1b - Build & QA (Dev),Code & Build,"Tạo PR, review code",Dev,D-5,DISO,
+6,,,"Deploy lên Dev/Staging",Dev,D-5,AT,
+7,,Dữ liệu (Dev),"Allow domains của đối tác đúng (không có https://, không dấu / cuối, không @-prefix) — verify trên Dev TRƯỚC",Admin,D-5,AT,Bẫy thường gặp: prefix @, thừa https://, thừa / cuối
+8,,,"Cấu hình đối tác (Logo, Cover, Mô tả, Ngân sách, toggle BXH/nội dung) đúng theo thỏa thuận",Admin,D-5,AT,
+9,,,"Seed/migration data cho tenant mới trên Dev — chạy thử thành công",Admin/Dev,D-5,"AT, DISO",Dry-run migration trên Dev trước khi đụng Prod
+10,,Kiểm thử (QA),Đã chạy toàn bộ bộ test case trên Dev → tất cả Pass (đối chiếu file test case),QA,D-3,DISO,
+11,,,"Đã test các luồng chính: đăng nhập, trang chủ, chi tiết chương trình, đăng bài, liên kết tài khoản",QA,D-3,DISO,
+12,,,"Verify branding đúng ADV này: Logo/Cover/Màu/Font đúng, không lẫn ADV khác",QA,D-3,DISO,Rủi ro số 1 của mô hình fork template
+13,,,"Verify phân tách dữ liệu tenant: không rò rỉ creator/nội dung/BXH sang ADV khác",QA,D-3,"AT, DISO",Chống scope-leak giữa các tenant
+14,,,"Kiểm tra responsive / mobile — layout không vỡ khi đổi logo/màu/font",QA,D-3,DISO,
+15,1c - Sẵn sàng release (D-1),Kế hoạch Release,"Release note (tính năng mới, thay đổi, bug đã fix, hướng dẫn)",PM/Dev/QA,D-1,DISO,
+16,,,Thông báo lịch release & thời gian downtime (nếu có) cho các bên liên quan,PM,D-1,DISO,
+17,,,Danh sách nhân sự tham gia release & phân vai war-room (ai trực, ai bấm go/no-go),PM,D-1,"AT, DISO",Chỉ định Release Manager có quyền quyết hoãn
+18,,,"Code Freeze — chốt tag/phiên bản, ngừng merge vào nhánh release",Lead,D-1,"AT, DISO",
+19,,Kế hoạch Rollback,Xác định ngưỡng quyết định rollback (lỗi gì thì revert code/data),Lead,D-1,"AT, DISO",
+20,,,"Quy trình rollback thực thi: revert về tag nào, có rollback migration/data không, ai bấm, thông báo cho ai",Lead/DevOps,D-1,"AT, DISO",Rollback lúc panic mà không có checklist = hỏng
+21,2 - Triển khai (D-Day),Thực thi release,"Backup DB Production TRƯỚC khi chạy migration",DevOps,D-Day,"AT, DISO",Không có backup = không rollback data được
+22,,,Deploy đúng phiên bản/tag đã duyệt lên Production,DevOps,D-Day,AT,
+23,,,Chạy migration Production (nếu có) — kiểm tra thành công,DevOps,D-Day,"AT, DISO",
+24,,,"Cấu hình Allow domains & config ADV trên Production đúng như đã verify ở Dev",Admin,D-Day,AT,
+25,3 - Sau release,Smoke test,"Trang chủ load được, hiển thị đúng thiết kế (banner, creator, thử thách)",QA,D-Day,DISO,
+26,,,Landing đối tác mở được trên domain thật (Allow domains hoạt động),QA,D-Day,DISO,
+27,,,Đăng nhập Google / TikTok thành công trên Production,QA,D-Day,DISO,
+28,,,Thử 1 luồng nghiệp vụ quan trọng end-to-end (VD: đăng bài / xem BXH),QA,D-Day,DISO,
+29,,,Kiểm tra không có lỗi 404 / 500 / trang trắng ở các route chính,QA,D-Day,DISO,
+30,,,"Verify branding & phân tách tenant trên Production (như đã check ở Dev)",QA,D-Day,"AT, DISO",Lặp lại check quan trọng nhất trên môi trường thật
+31,,Giám sát & Đóng release,Theo dõi log / lỗi / hiệu năng trong ít nhất 30–60 phút đầu,Dev/DevOps,D-Day,"AT, DISO",Phân rõ ai trực lỗi app (DISO) vs hạ tầng (AT)
+32,,,Không phát sinh lỗi nghiêm trọng → xác nhận release thành công,PM,D-Day,"AT, DISO",Release Manager ra quyết định go-live cuối
+33,,,"Thông báo go-live cho các bên liên quan (Sale, đối tác, support)",PM,D-Day,DISO,
+34,,,Cập nhật trạng thái release,PM,D-Day,DISO,
+35,,,"Ghi lại vấn đề phát sinh + gắn owner & hạn khắc phục (retro)",PM,D+1,DISO,

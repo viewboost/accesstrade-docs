@@ -1,0 +1,22 @@
+STT,Giai đoạn,Đầu mục lớn,Mô tả,Đầu mối,Sheet chi tiết,Deadline,Trạng thái
+1,0 - Khởi tạo,Tiếp nhận & thu thập đầu vào,"Biz AT tiếp nhận nhu cầu ADV mới, gửi mẫu thông tin cho đối tác và nhận lại bản điền đủ",Biz AT,01_ADV-Input,D-7,Chưa làm
+2,1 - Chuẩn bị,Fork thiết kế từ template,"• Fork template chung
+• Điền các thay đổi (Logo/Favicon/Banner/Cover/Màu/Font) theo mẫu
+• Giữ nguyên layout/cỡ chữ/cấu trúc",Hiếu AT,02_Design,D-7,Chưa làm
+3,1 - Chuẩn bị,Cấu hình ADV trên Develop,"• Setup ADV: nhận diện, slug, allow domains, toggle
+• Setup Campaign: tạo campaign + ngân sách
+• Setup nội dung: tạo bài CMS → sinh các ID",Campaign Operation,03_Config-Dev,D-5,Chưa làm
+4,1 - Chuẩn bị,Tổng hợp tech requirement (Dev),"• Gom bộ biến ENV bản Develop
+• Điền các ID vừa sinh ở bước Config (EVENT_ID, *_ARTICLE_ID)
+• Bàn giao cho DevOps set ENV",Biz AT,04_Tech-Req-Dev,D-5,Chưa làm
+5,2 - Kiểm thử,Deploy Dev & nghiệm thu,"• DevOps Diso set ENV theo tech requirement + deploy Dev
+• Nghiệm thu theo mẫu test case (sheet 05_Testcases)",QA / DevOps Diso,05_Testcases,D-3,Chưa làm
+6,3 - Triển khai,Cấu hình ADV trên Production,"• Setup ADV / Campaign / nội dung giống hệt Dev
+• Task chỉ-Prod: trỏ IP thật, dọn domain test",Campaign Operation,06_Config-Prod,D-1,Chưa làm
+7,3 - Triển khai,Tổng hợp tech requirement (Prod),"• Gom bộ biến ENV bản Production
+• Điền các ID vừa sinh trên Prod (KHÁC ID Dev)
+• Bàn giao cho DevOps set ENV",Biz AT,07_Tech-Req-Prod,D-1,Chưa làm
+8,3 - Triển khai,Pre-release,"Soạn meeting note, gửi thông báo lịch release",Huyền Diso,(không có file),D-1,Chưa làm
+9,3 - Triển khai,Release lên Production,"Merge PR, deploy, setup ENV Production",DevOps AT,(không có file),D-Day,Chưa làm
+10,4 - Sau release,Post-release,Test theo mẫu test case (sheet 05_Testcases — cùng mẫu bước nghiệm thu),QA,05_Testcases,D-Day,Chưa làm
+11,4 - Sau release,Xử lý sự cố,Bảng tra triệu chứng → task xử lý cho Campaign Operation/DevOps khi phát sinh lỗi sau go-live,Campaign Operation/DevOps,10_Troubleshooting,D-Day,-

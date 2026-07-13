@@ -1,0 +1,107 @@
+,BÁO GIÁ — CHƯƠNG TRÌNH THƯỞNG TĂNG TRƯỞNG CREATOR,,,,,,,,,,,,
+,vCreator Philippines,,,,,,,,,,,,
+,Nhóm theo CHỨC NĂNG. Mỗi chức năng là một cụm trọn gói: xử lý nghiệp vụ + màn hình quản trị + màn hình creator + kiểm thử + triển khai + tài liệu + nghiệm thu.,,,,,,,,,,,,
+,"Muốn giảm phạm vi thì bỏ nguyên một cụm chức năng (B đến G). Cụm A là nền tảng dùng chung, không bỏ được.",,,,,,,,,,,,
+,Xem overview.md (bối cảnh nghiệp vụ) và solution-design.md (thiết kế kỹ thuật).,,,,,,,,,,,,
+
+Cụm,Chức năng / Mục tiêu,Hạng mục,Nội dung bàn giao,,BE (h),FE (h),QA (h),PM (h),BA (h),DevOps (h),Design (h),Tổng giờ,Thành tiền (USD)
+A,"NỀN TẢNG DÙNG CHUNG
+Mọi cơ chế thưởng bên dưới đều chạy trên nền tảng này.
+Gồm: bảng dữ liệu thống kê thành tích creator, quản lý chương trình thưởng, bộ tính thưởng,
+kết nối vào quy trình đối soát và chi tiền, cùng các màn hình quản trị và màn hình creator dùng chung.",Bảng dữ liệu thống kê thành tích creator,"- Tạo bảng dữ liệu: tổng video đã duyệt, tổng lượt xem/like/bình luận, chia theo kênh, theo tháng
+- Cập nhật theo trạng thái nội dung: video được duyệt / bị hủy → cập nhật số liệu
+- Cập nhật theo job định kỳ: đồng bộ lại số liệu sau mỗi lần thu thập, đảm bảo số liệu luôn khớp
+- Cộng cả số liệu admin điều chỉnh thủ công (hệ thống đã có sẵn cơ chế này)
+- Nạp dữ liệu lịch sử cho toàn bộ creator hiện có
+- Một nguồn số liệu duy nhất cho toàn hệ thống: cùng một con số ở app creator, trang quản trị, và khi tính thưởng",,32,0,16,6,6,4,0,64,964
+,,Quản lý chương trình thưởng + nhắm nhóm creator,"- Tạo và quản lý chương trình thưởng cấp nền tảng (không thuộc nhãn hàng nào)
+- Nhắm nhóm creator theo thời điểm đăng ký (khoảng X–Y) → nhóm creator mới onboard
+- Creator không cần đăng ký tham gia — hệ thống tự động xác định ai thuộc nhóm
+- Đặt giới hạn số suất và thời gian cho từng gói thưởng",,24,0,10,5,8,2,0,49,734
+,,Bộ tính thưởng,"- Tính thưởng dựa trên thành tích của creator trên TOÀN HỆ THỐNG (mọi chiến dịch), không giới hạn trong
+  một chiến dịch. Đọc số liệu từ bảng thống kê
+- Ba dạng điều kiện dùng chung cho các cơ chế: đạt ngưỡng tích lũy, đạt ngưỡng trong tháng, tính theo đơn giá
+- Số video, số mốc, mức tiền đều cấu hình được — đổi từ 3 sang 5 video không cần lập trình
+- Đảm bảo mỗi creator chỉ nhận một lần cho mỗi mốc, mỗi chu kỳ",,32,0,16,6,6,2,0,62,930
+,,Kết nối vào quy trình đối soát và chi tiền,"- Khoản thưởng đi vào đúng quy trình đối soát → ví creator → rút tiền đang vận hành
+- Quy trình đối soát, ví và rút tiền đã có đủ — chỉ kết nối vào, không xây lại
+- Kiểm thử toàn trình: tạo thưởng → đối soát → vào ví → rút được tiền thật",,16,0,10,4,4,2,0,36,538
+,,Quản trị: cấu hình chương trình + theo dõi chi,"- Danh sách chương trình, tạo/sửa/kích hoạt/tạm dừng
+- Cấu hình gói thưởng: chọn nhóm creator, đặt mốc, mức tiền, chu kỳ, giới hạn số suất và thời gian
+- Bảng theo dõi: đã chi bao nhiêu, còn bao nhiêu suất, bao nhiêu creator đã nhận, chi theo thời gian
+- Số liệu để admin tự theo dõi và quyết định dừng gói thưởng khi cần",,8,12,8,4,5,2,0,39,578
+,,Quản trị: truy vấn dữ liệu thưởng + tra cứu creator,"- Danh sách thưởng đã phát: lọc theo chương trình / gói thưởng / creator / trạng thái / thời gian
+- Xem chi tiết vì sao creator nhận khoản này (đạt mốc nào, số liệu bao nhiêu)
+- Xuất file để đối soát
+- Tra cứu creator: thống kê thành tích, đang ở đâu trong từng chương trình, đã nhận những khoản nào",,12,16,10,4,6,2,0,50,738
+,,Creator: xem chương trình và dữ liệu thưởng,"- Banner chương trình đang chạy trên trang chủ app; trang chi tiết điều kiện và mức thưởng
+- Thanh tiến độ: creator đang ở đâu, còn cách mục tiêu bao xa
+- Lịch sử các khoản thưởng nhận từ chương trình (tách khỏi thưởng chiến dịch)
+- Thông báo khi đạt mốc, khi nhận thưởng, khi sắp hết hạn chương trình",,8,24,12,4,6,2,24,80,1106
+B,"CHỨC NĂNG 1 — THƯỞNG N VIDEO ĐẦU TIÊN ĐƯỢC DUYỆT
+Mục tiêu: đưa creator mới từ 'đã đăng ký' sang 'đã sản xuất nội dung thật'.
+Yêu cầu ban đầu là 3 video; hệ thống làm N video cấu hình được.",Thưởng N video đầu tiên,"- Thưởng từng video trong N video đầu, cộng thưởng hoàn thành khi đủ N
+- Điều kiện lượt xem tối thiểu để một video được tính
+- Video bị hủy sau khi đã thưởng → thu hồi, video kế tiếp lên thế chỗ
+- Quản trị: đặt N, tiền mỗi video, thưởng hoàn thành, lượt xem tối thiểu
+- Creator: '2/3 video được duyệt — đăng thêm 1 video nữa để nhận 500.000đ'",,16,8,13,5,7,2,8,59,846
+C,"CHỨC NĂNG 2 — THƯỞNG THEO SỐ VIDEO ĐƯỢC DUYỆT MỖI THÁNG
+Mục tiêu: tạo thói quen đăng đều, giữ chân creator sau giai đoạn đầu.",Thưởng theo số video duyệt mỗi tháng,"- Đếm số video được duyệt trong tháng, đối chiếu với các mốc
+- Nhiều mốc (5 / 10 / 20 video) — mỗi mốc là một khoản, cộng dồn
+- Chu kỳ tháng, hết tháng đặt lại; chốt sổ đầu tháng sau
+- Quản trị: đặt các mốc và mức tiền từng mốc
+- Creator: 'Tháng này bạn đã có 7/10 video — còn 3 video nữa để nhận 500.000đ'",,8,8,11,4,6,2,8,47,662
+D,"CHỨC NĂNG 3 — THƯỞNG THEO LƯỢT XEM (PPV)
+Mục tiêu: thưởng theo giá trị thật creator tạo ra, không chỉ theo số lượng bài đăng.",Thưởng theo lượt xem,"- Tiền × lượt xem tăng thêm, tính liên tục theo mỗi lần thu thập số liệu
+- Chỉ tính phần lượt xem tăng thêm, không tính lại từ đầu
+- Video bị hủy → thu hồi phần thưởng chưa đối soát
+- Quản trị: đặt đơn giá mỗi lượt xem, chọn kênh áp dụng
+- Creator: hiển thị tiền tích lũy theo lượt xem; ghi rõ số liệu cập nhật 2 lần/ngày",,16,8,13,5,6,2,8,58,834
+E,"CHỨC NĂNG 4 — THƯỞNG THEO MỐC HIỆU SUẤT (giai đoạn 2)
+Thưởng khi creator đạt các mốc lượt xem tích lũy.
+Hoãn vì trùng mục tiêu với thưởng theo lượt xem (PPV) — giữ một cơ chế là đủ cho giai đoạn đầu.",Thưởng theo mốc lượt xem tích lũy,"- Nhiều mốc (100K / 500K / 1M lượt xem) — cộng dồn. Đạt đúng mốc là được thưởng
+- Quản trị: đặt các mốc lượt xem và mức tiền
+- Creator: 'Bạn đạt 320.000 lượt xem — còn 180.000 nữa để nhận mốc 500K'",,8,8,11,4,6,2,8,47,662
+F,"CHỨC NĂNG 5 — BẢNG XẾP HẠNG THÁNG (giai đoạn 2)
+Xếp hạng creator theo thành tích trong tháng, gộp từ tất cả chiến dịch.
+Hoãn vì phục vụ nhóm creator dẫn đầu — creator mới chưa lọt top trong giai đoạn đầu.
+Nên triển khai khi đã có nhóm creator đủ lớn để tạo cạnh tranh.",Bảng xếp hạng tháng,"- Xếp hạng theo thành tích trong tháng, gộp từ tất cả chiến dịch
+- Điều kiện tối thiểu để vào bảng (ví dụ: 3 video, 10.000 lượt xem); quy tắc xử lý đồng hạng rõ ràng
+- Chốt sổ đầu tháng sau, lưu bản xếp hạng bất biến trước khi trao thưởng
+- Cơ cấu giải theo hạng — số hạng và mức tiền cấu hình được
+- Quản trị: xem bảng xếp hạng hiện tại, tra bản đã chốt các tháng trước, xuất file
+- Creator: bảng xếp hạng tháng này / tháng trước, vị trí của tôi, còn cách hạng trên bao xa",,40,32,32,10,13,4,16,147,2120
+G,"CHỨC NĂNG 6 — MỞ RỘNG KÊNH X (TWITTER) + THREADS (giai đoạn 2)
+Hệ thống hiện hỗ trợ YouTube, TikTok, Facebook, Instagram. Cả hai kênh mới đều chưa có.
+Phụ thuộc đội thu thập dữ liệu hỗ trợ 2 kênh này — cần xác nhận trước khi triển khai.",Bổ sung kênh Threads,"- Ghi nhận bài đăng Threads: lượt xem, like, bình luận; tính thưởng như các kênh hiện có
+- Thu thập số liệu định kỳ 2 lần/ngày; kiểm tra tính hợp lệ đường dẫn bài đăng
+- Xác nhận với đội thu thập dữ liệu: nguồn có trả về lượt xem hay chỉ like/bình luận
+- Hệ thống nhận biết kênh cung cấp chỉ số nào, cảnh báo khi gói thưởng không phù hợp với kênh
+- Creator chọn kênh khi đăng bài; hiển thị thống kê theo kênh ở app và trang quản trị",,32,8,15,5,5,2,4,71,1054
+,,Bổ sung kênh X (Twitter),"- Tương tự Threads: ghi nhận bài đăng, thu thập số liệu định kỳ, xác minh nguồn, giao diện creator và quản trị",,32,8,14,5,4,2,4,69,1030
+
+,,TỔNG (chưa dự phòng),,,284,132,191,71,88,32,80,878,12796
+,,Dự phòng 15%,,,43,20,29,11,13,5,12,133,1941
+,,TỔNG CỘNG,,,326,151,220,84,101,36,91,1009,14717
+
+ĐƠN GIÁ ($/giờ),,,,,$16,$15,$12,$20,$12,$17,$12,,
+
+,TÓM TẮT THEO CHỨC NĂNG — DÙNG ĐỂ CHỌN/BỎ PHẠM VI,,,,,,,,,,,,
+Cụm,Chức năng,Ghi chú,Bỏ được?,Tổng giờ,Thành tiền (USD),,,,,,,,
+A,Nền tảng dùng chung,Điều kiện để mọi cơ chế thưởng chạy được,KHÔNG — nền tảng dùng chung,437,6426,,,,,,,,
+B,Thưởng N video đầu tiên,Đưa creator mới vào sản xuất,Bỏ được,67,961,,,,,,,,
+C,Thưởng số video duyệt/tháng,Tạo thói quen đăng đều,Bỏ được,54,761,,,,,,,,
+D,Thưởng theo lượt xem (PPV),Thưởng theo giá trị thật,Bỏ được,66,949,,,,,,,,
+E,Thưởng theo mốc hiệu suất,Trùng mục tiêu với PPV,Bỏ được,54,761,,,,,,,,
+F,Bảng xếp hạng tháng,Phục vụ nhóm creator dẫn đầu,Bỏ được,170,2456,,,,,,,,
+G,Kênh X (Twitter) + Threads,Phụ thuộc đội thu thập dữ liệu,Bỏ được,161,2403,,,,,,,,
+,TỔNG CỘNG,,,1009,14717,,,,,,,,
+
+,GHI CHÚ,,,,,,,,,,,,
+,"1. Triển khai, tài liệu, nghiệm thu và bàn giao đã tính vào TỪNG hạng mục, không tách thành cụm riêng.",,,,,,,,,,,,
+,"2. Không có vai SA — phần thiết kế kỹ thuật gộp vào BE, phần rà soát và quyết định gộp vào PM.",,,,,,,,,,,,
+,"3. Cơ chế ngân sách (trần chi theo số tiền, cảnh báo khi vượt ngưỡng tiền) nằm NGOÀI phạm vi báo giá này. Trong phạm vi báo giá, việc kiểm soát dựa trên: giới hạn số suất và giới hạn thời gian cho mỗi gói thưởng (tận dụng cấu hình sẵn có), cùng bảng theo dõi số liệu chi để admin tự quyết định dừng gói thưởng khi cần (xây mới, trong cụm A). Các cơ chế này giới hạn SỐ LẦN TRẢ, không giới hạn TỔNG TIỀN. Nếu cần trần chi và cảnh báo theo số tiền, sẽ báo giá riêng.",,,,,,,,,,,,
+,4. Cụm G (kênh X + Threads) phụ thuộc đội thu thập dữ liệu bên ngoài. Cần xác nhận nguồn dữ liệu có trả về lượt xem hay chỉ like/bình luận trước khi cam kết tiến độ.,,,,,,,,,,,,
+,"5. Số liệu creator cập nhật 2 lần/ngày, không tức thời.",,,,,,,,,,,,
+,"6. Đếm theo ngày đăng bài, không phải ngày duyệt.",,,,,,,,,,,,
+,7. Nhiều mốc = cộng dồn (đạt 20 video nhận cả 3 mốc 5/10/20). Đặt mức tiền cần tính theo tổng cộng dồn.,,,,,,,,,,,,

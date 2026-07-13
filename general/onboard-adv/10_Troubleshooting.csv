@@ -1,0 +1,13 @@
+Triệu chứng,Nguyên nhân thường gặp,Task xử lý,Phụ trách
+Landing bị chặn / trắng trang / báo không được phép trên domain đối tác,"• Domain chưa có trong Allow domains
+• Hoặc nhập sai: thừa https://, thừa /, @-prefix
+• Sai subdomain/cổng","• Mở lại Allow domains
+• Nhập đúng domain (không https://, không / cuối, không @-prefix)
+• Kiểm tra từng ký tự",Campaign Operation
+Vào link đối tác ra landing đối tác khác / 404,Slug bị trùng hoặc đã đổi sau khi công bố,Kiểm tra Slug duy nhất; khôi phục Slug cũ hoặc phát lại link mới cho đối tác,Campaign Operation
+"Link ""Về [đối tác]"" không mở được",Ô Website trống hoặc thiếu https://,Nhập lại Website đầy đủ dạng https://...,Campaign Operation
+BXH không hiển thị / lộ số tiền ngoài ý muốn,Toggle BXH bật/tắt sai,"Chỉnh lại 2 toggle ""Hiển thị BXH"" và ""Hiển thị số tiền trong BXH""",Campaign Operation
+User không nộp lại được bài bị từ chối (hoặc ngược lại),"Toggle ""Gửi lại nội dung bị từ chối"" sai thỏa thuận",Bật/tắt lại toggle theo yêu cầu đối tác,Campaign Operation
+Font tiếng Việt / tên hiển thị lỗi,Nội dung Mô tả sai encoding,"Nhập lại Mô tả, kiểm tra hiển thị",Campaign Operation
+DOMAIN không truy cập được / chưa trỏ,DNS chưa trỏ về IP hoặc chưa cấu hình Cloudflare,Xác nhận DOMAIN trỏ về 54.169.3.115 (hoặc cấu hình Cloudflare),Biz AT/DevOps AT
+Lỗi nghiêm trọng sau go-live,Lỗi deploy / config Prod,Báo DevOps AT revert deploy về bản trước; khôi phục từ backup Prod nếu đã chạy migration,DevOps AT
