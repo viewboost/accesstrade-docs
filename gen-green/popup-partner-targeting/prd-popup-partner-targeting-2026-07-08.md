@@ -3,8 +3,8 @@
 **Project:** Gen-Green (VCreator)
 **Date:** 2026-07-08
 **Author:** Dang Dinh
-**Status:** Draft — Awaiting Approval (3 đề xuất, §7)
-**Version:** 1.0
+**Status:** ✅ Đã triển khai — PR #112 (merged 2026-07-13) + follow-up #114 (open). 3 đề xuất §7: **duyệt cả 3**.
+**Version:** 1.1 (cập nhật sau QA 2026-07-14)
 **Tài liệu kỹ thuật:** `tech-analysis-popup-partner-targeting.md` (lưu tại repo vcreator) (phân tích đầy đủ) · `tech-spec.md` (spec implement)
 
 ---
@@ -69,14 +69,14 @@ Quy tắc: mỗi lượt vào trang chỉ hiện **1 popup**. "Popup chung" = kh
 
 > Lưu ý cho case 3: mỗi lượt chỉ hiện 1 popup, không có cơ chế luân phiên — khi popup riêng đang chạy thì popup chung không có suất hiện trên trang đối tác đó cho đến khi chiến dịch riêng kết thúc. Đây là hành vi có chủ đích của cách làm này.
 
-### FR-003: Popup riêng thắng popup chung trên trang đối tác — **Should Have** *(chờ đề xuất 2)*
+### FR-003: Popup riêng thắng popup chung trên trang đối tác — **Should Have** *(đã duyệt + triển khai)*
 
 Backend xếp popup riêng lên trước khi trang đối tác có cả hai loại (~5 dòng).
 **AC:** [ ] Case 3 hiện popup riêng bất kể "Thứ tự".
 
-### FR-004: Sang trang đối tác thấy ngay popup của đối tác — **Should Have** *(chờ đề xuất 3)*
+### FR-004: Sang trang đối tác thấy ngay popup của đối tác — **Should Have** *(đã duyệt + triển khai)*
 
-Tách bộ nhớ "đã xem popup" theo từng trang thay vì dùng chung toàn site (~10 dòng).
+Tách bộ nhớ "đã xem popup" theo từng trang thay vì dùng chung toàn site. **Triển khai cuối (sau QA):** gộp vào **1 key** localStorage `lastShowBanner` dạng object `{ [scope]: ISOString }` (thay vì mỗi trang 1 key rời) — gọn, ghi đè sạch key cũ. Ngoài ra không ghi cooldown khi trang không có popup (§11 Fix B).
 **AC:** [ ] Vừa thấy popup trang chủ → vào trang Green SM vẫn thấy popup Green SM. [ ] Cùng 1 trang không hiện lặp trong cùng khung giờ.
 
 ## 5. Non-Functional Requirements
@@ -98,11 +98,11 @@ Tách bộ nhớ "đã xem popup" theo từng trang thay vì dùng chung toàn s
 
 | # | Nội dung cần quyết định | Đề xuất | Nếu không duyệt | Quyết định |
 |---|------------------------|---------|-----------------|------------|
-| 1 | Popup **chung** có được hiện trên trang đối tác không? | **Có** — giữ kênh thông báo toàn hệ thống | Popup chung chỉ hiện trang chủ. **Phạm vi sửa tăng đáng kể** (đổi logic dùng chung với banner) — team báo lại effort | ☐ Duyệt ☐ Không |
-| 2 | Trang đối tác có cả popup chung + riêng → **ưu tiên popup riêng**? (FR-003) | **Có** — tránh popup chung đè popup chiến dịch của đối tác | Hiện theo "Thứ tự" Ops tự đặt — popup chung có thể đè popup riêng nếu đặt nhầm | ☐ Duyệt ☐ Không |
-| 3 | User vừa thấy popup trang chủ → sang trang đối tác **thấy ngay** popup đối tác? (FR-004) | **Có** — hiện tại phải chờ sang khung giờ mới | Giữ hiện tại: mỗi khung giờ chỉ 1 popup toàn site, popup đối tác dễ bị bỏ lỡ | ☐ Duyệt ☐ Không |
+| 1 | Popup **chung** có được hiện trên trang đối tác không? | **Có** — giữ kênh thông báo toàn hệ thống | Popup chung chỉ hiện trang chủ. **Phạm vi sửa tăng đáng kể** (đổi logic dùng chung với banner) — team báo lại effort | ☑ **Duyệt** (2026-07-13) |
+| 2 | Trang đối tác có cả popup chung + riêng → **ưu tiên popup riêng**? (FR-003) | **Có** — tránh popup chung đè popup chiến dịch của đối tác | Hiện theo "Thứ tự" Ops tự đặt — popup chung có thể đè popup riêng nếu đặt nhầm | ☑ **Duyệt** (2026-07-13) |
+| 3 | User vừa thấy popup trang chủ → sang trang đối tác **thấy ngay** popup đối tác? (FR-004) | **Có** — hiện tại phải chờ sang khung giờ mới | Giữ hiện tại: mỗi khung giờ chỉ 1 popup toàn site, popup đối tác dễ bị bỏ lỡ | ☑ **Duyệt** (2026-07-13) |
 
-**Đồng ý cả 3 → phản hồi "OK theo đề xuất", team triển khai luôn.** Mục 2/3 không duyệt không ảnh hưởng fix chính; mục 1 không duyệt cần báo lại effort trước khi làm.
+**✅ Sếp đã duyệt cả 3 ("OK theo đề xuất") — FR-003 + FR-004 triển khai cùng fix chính (PR #112).**
 
 ## 8. Out of Scope
 
@@ -128,13 +128,35 @@ Tách bộ nhớ "đã xem popup" theo từng trang thay vì dùng chung toàn s
 
 ---
 
+## 11. Trạng thái triển khai & follow-up sau QA (2026-07-14)
+
+**Đã ship:** FR-001→FR-004 + cải thiện UX. **PR #112** (merged 2026-07-13, vào `develop`). Follow-up sau QA gom trong **PR #114** (open).
+
+### Cải thiện UX popup (PR #112)
+- Đóng popup bằng **Escape / click nền** (trước chỉ bấm được đúng nút ×).
+- Nút × và vùng ảnh **accessible**: bàn phím (Enter/Space) + screen reader (`aria-label`).
+- **Chống pop-in**: hiện spinner khi tải ảnh + fade-in + giữ khung.
+
+### Follow-up phát hiện khi QA (PR #114)
+| Fix | Vấn đề | Cách xử lý |
+|-----|--------|-----------|
+| **A** | Poster **dọc** cao hơn màn hình → popup tràn ra ngoài, nút × khó bấm | Cap ảnh `maxHeight: 80vh` + `width: auto` + `objectFit: contain`, căn giữa |
+| **B** | Popup rỗng (`news:[]`) vẫn ghi cooldown → chặn nhầm popup đăng ngay sau đó cùng giờ; tạo key thừa | Chỉ bật cờ + ghi cooldown khi có popup (`news.length > 0`) |
+| **C** | localStorage nhiều key rời (`lastShowBanner:<scope>`) + key cũ orphan | Gộp **1 key** dạng object `{ [scope]: ISOString }`, ghi đè sạch key cũ |
+
+> Đánh đổi Fix B: trang không có popup sẽ gọi lại API mỗi lần load (API nhẹ, chấp nhận được).
+
+---
+
 ## Appendix: Code Impact
 
-| File | Thay đổi | FR | Effort |
-|------|----------|----|--------|
-| `frontend-green/src/pages/partner-home/index.tsx` | Truyền `partner` + chuyển thời điểm gọi + reset cờ (~15 dòng) | FR-001 | S |
-| `frontend-green/src/pages/main-home/index.tsx` | Reset cờ đồng bộ (~3 dòng) | FR-001 | S |
-| `backend/pkg/public/service/news.go` | Xếp popup riêng lên trước (~5 dòng) | FR-003 | S |
-| `frontend-green/src/utils/storage.ts` + 2 trang | Bộ nhớ "đã xem" theo trang (~10 dòng) | FR-004 | S |
+| File | Thay đổi | FR | PR |
+|------|----------|----|----|
+| `frontend-green/src/pages/partner-home/index.tsx` | Truyền `partner` + chuyển thời điểm gọi + reset cờ + gate popup rỗng | FR-001, B | #112, #114 |
+| `frontend-green/src/pages/main-home/index.tsx` | Reset cờ đồng bộ + gate popup rỗng | FR-001, B | #112, #114 |
+| `backend/pkg/public/service/news.go` | Xếp popup riêng lên trước | FR-003 | #112 |
+| `frontend-green/src/utils/storage.ts` | Cooldown theo scope → gộp 1 key object | FR-004, C | #112, #114 |
+| `frontend-green/src/models/main.ts` | Saga `getPopupNews` truyền `news` về callback | B | #114 |
+| `frontend-green/src/components/common/app-popup/index.tsx` | UX (Escape/backdrop, accessible, chống pop-in) + cap ảnh 80vh | UX, A | #112, #114 |
 
 *Theo format PRD BMAD Method v6 — chi tiết root cause, phương án so sánh, flow diagram, edge cases: `tech-analysis-popup-partner-targeting.md` (lưu tại repo vcreator)*
