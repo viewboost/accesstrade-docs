@@ -1,19 +1,19 @@
 # Tech Spec: Popup hiển thị đúng đối tác đã chọn
 
-**Ngày:** 2026-07-09 · **Branch đề xuất:** `fix/popup-partner-targeting` (từ `origin/develop`)
-**PRD (bản gửi Sếp):** `prd-popup-partner-targeting-2026-07-08.md` · **Phân tích đầy đủ:** `tech-analysis-popup-partner-targeting.md` (lưu tại repo vcreator)
-**Trạng thái:** Sẵn sàng implement FR-001/FR-002 (Must). FR-003/FR-004 chờ Sếp duyệt đề xuất 2/3 (PRD §7).
+**Ngày:** 2026-07-09 (cập nhật 2026-07-14) · **Branch thực tế:** `task/popup-partner-targeting` (từ `origin/develop`)
+**PRD:** `prd-popup-partner-targeting-2026-07-08.md` · **Phân tích đầy đủ:** `tech-analysis-popup-partner-targeting.md` (lưu tại repo vcreator)
+**Trạng thái:** ✅ Đã triển khai FR-001→FR-004 (Sếp duyệt cả 3 đề xuất §7). **PR #112** merged 2026-07-13; follow-up sau QA (§2.6) → **PR #114** (open).
 
 ---
 
 ## 1. Phạm vi theo PRD
 
-| FR | Thay đổi | File | Điều kiện |
+| FR | Thay đổi | File | Trạng thái |
 |----|----------|------|-----------|
-| FR-001 | FE truyền id partner + đổi thời điểm gọi + reset cờ `isShowPopup` | `frontend-green/src/pages/partner-home/index.tsx`, `main-home/index.tsx` | Làm ngay |
-| FR-002 | Không sửa code — hành vi có được từ FR-001 + logic BE sẵn có | — | Verify bằng test matrix §4 |
-| FR-003 | BE sort popup riêng lên trước | `backend/pkg/public/service/news.go` | Chỉ khi duyệt đề xuất 2 |
-| FR-004 | Cooldown key theo scope trang | `frontend-green/src/utils/storage.ts` + 2 trang | Chỉ khi duyệt đề xuất 3 |
+| FR-001 | FE truyền id partner + đổi thời điểm gọi + reset cờ `isShowPopup` | `frontend-green/src/pages/partner-home/index.tsx`, `main-home/index.tsx` | ✅ Đã làm (#112) |
+| FR-002 | Không sửa code — hành vi có được từ FR-001 + logic BE sẵn có | — | ✅ Verify test matrix §4 |
+| FR-003 | BE sort popup riêng lên trước | `backend/pkg/public/service/news.go` | ✅ Đã làm — duyệt đề xuất 2 (#112) |
+| FR-004 | Cooldown theo scope → gộp 1 key object | `frontend-green/src/utils/storage.ts` + 2 trang | ✅ Đã làm — duyệt đề xuất 3 (#112, gộp key #114) |
 
 Root cause tóm tắt: `partner-home/index.tsx:146-156` fetch `{type:'popup'}` không kèm partner → BE (`public/service/news.go:84-87` + `mgquery/common.go:117-131`) chỉ match `$or:[{isAllPartner:true}]`. Chi tiết: tech-analysis §2.
 
@@ -41,12 +41,13 @@ const getPopupNews = async (partnerId: string, callback?) => {
 
 ```ts
 const showPopupIfEligible = (partnerId: string) => {
-  const previousTimeAccess = storage.getLastShowBanner();
+  const previousTimeAccess = storage.getLastShowBanner(partner); // scope = slug đối tác
   if (!previousTimeAccess || helper.getHourCount(previousTimeAccess) > 0) {
     dispatch({ type: 'mainState/updateState', payload: { isShowPopup: false } }); // reset TRƯỚC fetch
-    getPopupNews(partnerId, () => {
+    getPopupNews(partnerId, (news) => {
+      if (!news?.length) return; // không có popup → không bật cờ, không ghi cooldown (§2.6 Fix B)
       dispatch({ type: 'mainState/updateState', payload: { isShowPopup: true } });
-      setTimeout(() => storage.saveLastShowBanner(moment()), 2000);
+      setTimeout(() => storage.saveLastShowBanner(partner, moment()), 2000);
     });
   }
 };
@@ -76,28 +77,58 @@ sort.SliceStable(result, func(i, j int) bool {
 
 Type khác giữ sort `Order` desc như cũ. Trang chủ không ảnh hưởng (chỉ nhận popup all-partner).
 
-### 2.4 FR-004 — cooldown theo scope (chỉ khi duyệt đề xuất 3)
+### 2.4 FR-004 — cooldown theo scope, gộp 1 key (đã duyệt đề xuất 3)
 
-`utils/storage.ts:72-77`:
+`utils/storage.ts` — **bản cuối** (sau QA gộp về 1 key thay vì mỗi scope 1 key rời, xem §2.6 Fix C):
 
 ```ts
+function readBannerMap(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(AppConst.localStorage.lastShowBanner);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === 'object' ? parsed : {}; // format string cũ → {} (ghi đè sạch)
+  } catch { return {}; }
+}
 function getLastShowBanner(scope = 'home') {
-  return localStorage.getItem(`${AppConst.localStorage.lastShowBanner}:${scope}`);
+  return readBannerMap()[scope] ?? null;
 }
 function saveLastShowBanner(scope = 'home', time) {
-  return localStorage.setItem(`${AppConst.localStorage.lastShowBanner}:${scope}`, time);
+  const map = readBannerMap();
+  map[scope] = new Date(time).toISOString();
+  return localStorage.setItem(AppConst.localStorage.lastShowBanner, JSON.stringify(map));
 }
 ```
 
 Caller: `main-home` scope `'home'`; `partner-home` scope `params.partner` (slug — chỉ làm key localStorage, không gửi BE). Giữ ngữ nghĩa cooldown "sang khung giờ mới" (`helper.ts:271-277` so sánh `startOf('hour')`) — không đổi.
 
-Cách làm dừng ở mức này: không cooldown theo từng popup `_id`, không luân phiên chung/riêng, không thêm key nào ngoài `lastShowBanner:<scope>`.
+Cách làm dừng ở mức này: không cooldown theo từng popup `_id`, không luân phiên chung/riêng, chỉ 1 key `lastShowBanner` (object). Đã cân nhắc prune TTL nhưng **bỏ** cho gọn (object vốn nhỏ theo số đối tác từng ghé).
 
 ### 2.5 Không sửa
 
 - BE filter/handler/cache: param `partner` đã hỗ trợ (`public/model/request/news.go:11`); cache key theo full URL tự tách theo đối tác (`handler/news.go:61-65`); admin `clearCache` đã có.
 - Admin form + admin service: lưu `partner`/`isAllPartner` đúng (`admin/model/request/news.go:79-90`).
-- `PopupBanner` component: giữ nguyên (render `news[0]`).
+- `PopupBanner` component: vẫn render `news[0]` + không đổi luồng dữ liệu, nhưng **có sửa UX + cap kích thước ảnh** (§2.6).
+
+---
+
+## 2.6 Follow-up sau QA (2026-07-14 · PR #114)
+
+Phát hiện khi QA thực tế, không đổi kiến trúc — tinh chỉnh trong phạm vi popup:
+
+**Fix A — ảnh popup tràn màn hình** (`app-popup/index.tsx`): poster **dọc** ở bề rộng modal cao hơn viewport → đội ra ngoài, nút × khó bấm. Thay `className="w-100 h-100"` bằng cap `maxHeight: 80vh` + `width: auto` + `maxWidth: 100%` + `objectFit: contain`, căn giữa.
+
+**Fix B — popup rỗng vẫn ghi cooldown** (`models/main.ts` + 2 trang): saga `getPopupNews` trước fire callback kể cả `news:[]` → trang vẫn ghi cooldown dù không có popup → chặn nhầm popup đăng ngay sau đó cùng giờ + tạo key thừa. Sửa: saga truyền `news` về callback; trang chỉ bật cờ + ghi cooldown khi `news.length > 0`.
+
+```ts
+// models/main.ts — getPopupNews saga
+callback?.(response.data.news); // trước: callback?.()
+```
+
+> Đánh đổi: trang không có popup sẽ gọi lại API mỗi lần load (không còn cooldown chặn). API nhẹ, chấp nhận được — đúng nghĩa "cooldown = đừng hiện LẠI popup đã xem", không phải "đừng kiểm tra".
+
+**Fix C — gộp localStorage 1 key** (`storage.ts`): xem §2.4 (bản cuối). Thay N key rời (`lastShowBanner:<scope>`) bằng 1 key object; ghi đè sạch key cũ orphan.
+
+**UX popup (PR #112, ghi bổ sung):** đóng bằng Escape/click nền (`onHide`); nút × + vùng ảnh accessible (`<button>`/`role="button"`/`aria-label`/keyboard); chống pop-in (spinner + fade-in + giữ khung khi tải).
 
 ---
 
@@ -140,5 +171,6 @@ curl 'https://api.viewboost.vn/news?type=popup&partner=<greensm-id>'  # sau fix 
 
 ## Unresolved
 
-- Đề xuất 1/2/3 chờ Sếp duyệt (PRD §7) → quyết định FR-003/FR-004 có làm không.
+- ~~Đề xuất 1/2/3 chờ Sếp duyệt~~ → **đã duyệt cả 3** (2026-07-13); FR-003 + FR-004 đã làm.
+- **PR #114** (follow-up A/B/C) chờ review + QA thủ công: poster dọc không tràn, popup rỗng không stamp cooldown, localStorage còn 1 key.
 - Sau deploy: Ops cần gắn lại đúng đối tác cho các popup đang chạy theo kiểu workaround.
