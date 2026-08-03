@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>DISO - Kế hoạch Tháng 8/2026</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #202124; line-height: 1.6; max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+  h1 { font-size: 18px; margin-top: 28px; border-bottom: 2px solid #1a73e8; padding-bottom: 6px; }
+  h2 { font-size: 16px; margin-top: 24px; color: #1a73e8; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+  th, td { border: 1px solid #dadce0; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f1f3f4; font-weight: 600; }
+  td.num, th.num { text-align: right; }
+  .status-done { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-testing { background: #cce5ff; color: #004085; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-progress { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-notstarted { background: #e2e3e5; color: #383d41; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-pending { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .group-row { background: #fef7e0; font-weight: 600; }
+  .group-total { background: #e8f0fe; font-weight: 700; }
+  .carry-row { background: #fef7e0; }
+  .cumulative-row { background: #fce8e6; font-weight: 700; }
+  .total-summary { background: #e8f0fe; padding: 12px 16px; border-left: 4px solid #1a73e8; margin: 16px 0; font-weight: 600; }
+  .strategy { background: #e8f0fe; padding: 16px; border-left: 4px solid #1a73e8; margin: 16px 0; }
+  .strategy ul { margin: 6px 0 0 18px; padding: 0; }
+  .strategy li { margin-bottom: 6px; }
+  .note { background: #f1f3f4; padding: 14px 16px; border-left: 4px solid #5f6368; margin: 16px 0; }
+  .note ul { margin: 6px 0 0 18px; padding: 0; }
+  .next-actions { background: #e6f4ea; padding: 14px 16px; border-left: 4px solid #34a853; margin: 16px 0; }
+  .next-actions ul { margin: 6px 0 0 18px; padding: 0; }
+  .plan-link { background: #e6f4ea; padding: 12px 16px; border-left: 4px solid #34a853; margin: 16px 0; text-align: center; font-size: 15px; }
+  .confirm { background: #fef7e0; padding: 16px; border-left: 4px solid #f9ab00; margin: 16px 0; }
+  a { color: #1a73e8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .signature { margin-top: 24px; }
+  .subject-hint { background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: #856404; }
+</style>
+</head>
+<body>
+
+<div class="subject-hint"><strong>Gợi ý Subject:</strong> [DISO] Kế hoạch triển khai Tháng 8/2026 (Dự kiến)</div>
+
+<p>Dear team,</p>
+
+<p>DISO gửi team bản <strong>kế hoạch triển khai Tháng 8/2026 (dự kiến)</strong>, gồm danh sách hạng mục, mô tả, impact, deadline, workload ước tính (BE / FE / QC / PM) và trạng thái hiện tại. Đây là bản kế hoạch lần 1 của tháng 8, sẽ chốt lại sau khi hai bên xác nhận scope.</p>
+
+<div class="strategy">
+  <strong>🎯 Định hướng triển khai Tháng 8/2026</strong>
+  <ul>
+    <li><strong>Feature chính: minh bạch hoá đối soát &amp; tính thưởng</strong> (160h — chiếm phần lớn khối lượng tháng), gồm 3 phần:
+      <br>(1) cho phép đối soát một phần view hoặc 0 view đối với một video, xử lý được trường hợp ràng max thưởng;
+      <br>(2) mở đường cập nhật kết quả đối soát ngược lại hệ thống bằng chính file đối soát tải về;
+      <br>(3) rà soát các luồng tracking view bị lệch và tình huống cào không được, <strong>chuyển từ bị động sang chủ động cảnh báo</strong> thay vì đợi user report mới vào kiểm tra.
+      <br>Mục tiêu: rút thời gian đối soát một đợt từ <strong>vài ngày xuống vài giờ</strong>.</li>
+    <li><strong>Mở rộng nghiệp vụ ADV</strong> (109h): onboard <strong>FE Credit</strong> và xây <strong>luồng nhập / import mã nhân viên</strong> trên Ambassador, mở ra nhóm campaign dành riêng cho nhân viên và thống kê kết quả theo nhóm nhân viên.</li>
+  </ul>
+</div>
+
+<h1>Tổng quan kế hoạch Tháng 8/2026 (dự kiến)</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 36px;">STT</th>
+      <th style="width: 220px;">Hạng mục</th>
+      <th>Mô tả</th>
+      <th>Impact</th>
+      <th style="width: 70px;">Deadline</th>
+      <th class="num" style="width: 40px;">BE</th>
+      <th class="num" style="width: 40px;">FE</th>
+      <th class="num" style="width: 40px;">QC</th>
+      <th class="num" style="width: 40px;">PM</th>
+      <th class="num" style="width: 56px;">Total</th>
+      <th style="width: 90px;">Trạng thái</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- Group 1: Feature chính - Đối soát & tính thưởng -->
+    <tr class="group-row"><td colspan="11">1. Feature chính – Đối soát &amp; tính thưởng minh bạch</td></tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Phát triển hệ thống để xử lý trường hợp ràng max thưởng</strong> <em>(VCreator)</em><br>1. Cho phép đối soát 1 phần view, hoặc 0 view đối với 1 video.<br>2. Cho phép cập nhật kết quả đối soát bằng chính file đối soát tải về.</td>
+      <td>Đưa thời gian đối soát 1 đợt của Vin từ vài ngày xuống vài giờ.</td>
+      <td>31/08</td>
+      <td class="num">32</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num"><strong>80</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Xử lý triệt để lệch view</strong> <em>(Ambassador, T-Fluencers)</em><br>Xây dựng cơ chế tính toán sao cho tường minh view content, view tính thưởng và tiền thưởng tương ứng.</td>
+      <td>Không còn có sự hiểu nhầm của ADV, ops về các số view đối soát.</td>
+      <td>31/08</td>
+      <td class="num">32</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num"><strong>80</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 1 (2 hoạt động)</td>
+      <td class="num">64</td>
+      <td class="num">32</td>
+      <td class="num">32</td>
+      <td class="num">32</td>
+      <td class="num">160</td>
+      <td>(54.2% / 295h)</td>
+    </tr>
+
+    <!-- Group 2: Onboard ADV & nghiệp vụ mã nhân viên -->
+    <tr class="group-row"><td colspan="11">2. Onboard ADV &amp; nghiệp vụ mã nhân viên</td></tr>
+    <tr>
+      <td>1</td>
+      <td><strong>Onboard FE Credit</strong> <em>(Ambassador)</em><br>Tiếp nhận và onboard ADV FE Credit lên Ambassador.</td>
+      <td>Duy trì nhịp onboard ADV định kỳ hàng tháng trên Ambassador.</td>
+      <td>12/08</td>
+      <td class="num">4</td>
+      <td class="num">26</td>
+      <td class="num">12</td>
+      <td class="num">3</td>
+      <td class="num"><strong>45</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Luồng nhập mã nhân viên trên Ambassador</strong><br>Xây dựng cơ chế nhập mã nhân viên, import nhân viên để về sau còn phân loại.</td>
+      <td>Các ADV có thể sử dụng phần nhập mã nhân viên:<br>– Có nơi để nhân viên nhập mã<br>– Có thống kê kết quả theo nhóm nhân viên<br>– Có campaign dành riêng cho nhân viên</td>
+      <td>19/08</td>
+      <td class="num">24</td>
+      <td class="num">16</td>
+      <td class="num">16</td>
+      <td class="num">8</td>
+      <td class="num"><strong>64</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 2 (2 hoạt động)</td>
+      <td class="num">28</td>
+      <td class="num">42</td>
+      <td class="num">28</td>
+      <td class="num">11</td>
+      <td class="num">109</td>
+      <td>(36.9% / 295h)</td>
+    </tr>
+
+    <!-- Group 3: Hỗ trợ vận hành, cải tiến & Bug fix -->
+    <tr class="group-row"><td colspan="11">3. Hỗ trợ vận hành, cải tiến hệ thống &amp; Bug fix</td></tr>
+    <tr>
+      <td>5</td>
+      <td><strong>Ambassador – Update partner báo lỗi ngân sách</strong><br>Fix lỗi khi cập nhật đối tác, bắt buộc phải cập nhật ngân sách lớn hơn ngân sách cũ, gây cản trở không cần thiết.</td>
+      <td>Khi update partner không còn bị chặn bởi lỗi này nữa.</td>
+      <td>12/08</td>
+      <td class="num">16</td>
+      <td class="num">4</td>
+      <td class="num">8</td>
+      <td class="num">1</td>
+      <td class="num"><strong>29</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>Move update code màn Tổng quan từ VCreator qua Ambassador</strong><br>Clone update Menu Tổng quan từ VCreator sang Ambassador.</td>
+      <td>Bên Ambassador cũng dùng được menu Tổng quan giống cách của VCreator.</td>
+      <td>12/08</td>
+      <td class="num">4</td>
+      <td class="num">4</td>
+      <td class="num">4</td>
+      <td class="num">1</td>
+      <td class="num"><strong>13</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><strong>Kiểm tra hiển thị UI/UX hashtag cá nhân khi submit bài đăng TikTok</strong><br>Hiện tại TikTok đang có 2 cách đăng bài: <em>chọn kênh</em> và <em>không chọn kênh</em>.</td>
+      <td>Người dùng hiểu rõ khi nào video TikTok cần gắn hashtag hay không cần gắn hashtag.</td>
+      <td>12/08</td>
+      <td class="num">0</td>
+      <td class="num">4</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num"><strong>7</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td><strong>[T-Fluencers] Xử lý các bug cũ trong luồng ký hợp đồng</strong></td>
+      <td>Đảm bảo luồng hợp đồng hoạt động không lỗi.</td>
+      <td>05/08</td>
+      <td class="num">2</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num">1</td>
+      <td class="num"><strong>6</strong></td>
+      <td><span class="status-testing">Dev Testing</span></td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td><strong>Update giao diện ký hợp đồng của VPBank</strong><br>VPBank vẫn đang dùng TOS cũ, cần đồng bộ luồng ký hợp đồng giống Ambassador KOC.</td>
+      <td>VPBank không còn lỗi này nữa.</td>
+      <td>12/08</td>
+      <td class="num">1</td>
+      <td class="num">4</td>
+      <td class="num">1</td>
+      <td class="num">1</td>
+      <td class="num"><strong>7</strong></td>
+      <td><span class="status-progress">In Progress</span></td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td><strong>[VCreator] Cùng CCCD ký được 2 hợp đồng khác nhau</strong></td>
+      <td>Đảm bảo luồng hợp đồng hoạt động không lỗi.</td>
+      <td>12/08</td>
+      <td class="num">4</td>
+      <td class="num">0</td>
+      <td class="num">1</td>
+      <td class="num">1</td>
+      <td class="num"><strong>6</strong></td>
+      <td><span class="status-progress">In Progress</span></td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td><strong>[VCreator] Redirect sai domain khi nhấn mở TnC tại màn hình đăng nhập</strong><br>Fix link TOS và Privacy trong lúc đăng nhập Google đang trỏ về viewboost.vn.<br><em>⚠️ DISO đã kiểm tra và gửi email cho AT — nhờ AT xử lý tiếp phía Vin.</em></td>
+      <td>Người dùng truy cập đúng link, tăng độ tin tưởng cho hệ thống.</td>
+      <td>31/08</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">1</td>
+      <td class="num"><strong>1</strong></td>
+      <td><span class="status-progress">In Progress</span></td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td><strong>HOT FIX – Dừng cào view TikTok</strong><br>Xử lý sự cố dừng cào view TikTok bên VCreator.</td>
+      <td>Điều tra ra nguyên nhân khiến nhiều video TikTok không tiếp tục tăng view.</td>
+      <td>01/08</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">8</td>
+      <td class="num"><strong>8</strong></td>
+      <td><span class="status-done">Done</span></td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td><strong>Ambassador – Remove phần hiển thị Top Creator đối với các Chủ đề của HDBank Creator</strong> <em>(continue)</em><br>Ẩn phần hiển thị Top Creator.</td>
+      <td>Hạn chế bị report video.</td>
+      <td>12/08</td>
+      <td class="num">0</td>
+      <td class="num">2</td>
+      <td class="num">1</td>
+      <td class="num">1</td>
+      <td class="num"><strong>4</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 3 (9 hoạt động)</td>
+      <td class="num">27</td>
+      <td class="num">20</td>
+      <td class="num">18</td>
+      <td class="num">16</td>
+      <td class="num">81</td>
+      <td>(27.5% / 295h)</td>
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Tổng hợp workload Tháng 8/2026</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nhóm chức năng</th>
+      <th class="num" style="width: 70px;">Số hoạt động</th>
+      <th class="num" style="width: 56px;">BE</th>
+      <th class="num" style="width: 56px;">FE</th>
+      <th class="num" style="width: 56px;">QC</th>
+      <th class="num" style="width: 56px;">PM</th>
+      <th class="num" style="width: 70px;">Total (h)</th>
+      <th class="num" style="width: 110px;">% so với chuẩn 295h</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1. Feature chính – Đối soát &amp; tính thưởng minh bạch</td>
+      <td class="num">2</td>
+      <td class="num">64</td>
+      <td class="num">32</td>
+      <td class="num">32</td>
+      <td class="num">32</td>
+      <td class="num">160</td>
+      <td class="num">54.2%</td>
+    </tr>
+    <tr>
+      <td>2. Onboard ADV &amp; nghiệp vụ mã nhân viên</td>
+      <td class="num">2</td>
+      <td class="num">28</td>
+      <td class="num">42</td>
+      <td class="num">28</td>
+      <td class="num">11</td>
+      <td class="num">109</td>
+      <td class="num">36.9%</td>
+    </tr>
+    <tr>
+      <td>3. Hỗ trợ vận hành, cải tiến hệ thống &amp; Bug fix</td>
+      <td class="num">9</td>
+      <td class="num">27</td>
+      <td class="num">20</td>
+      <td class="num">18</td>
+      <td class="num">16</td>
+      <td class="num">81</td>
+      <td class="num">27.5%</td>
+    </tr>
+    <tr class="group-total">
+      <td><strong>TỔNG THÁNG 8/2026</strong></td>
+      <td class="num"><strong>13</strong></td>
+      <td class="num"><strong>119</strong></td>
+      <td class="num"><strong>94</strong></td>
+      <td class="num"><strong>78</strong></td>
+      <td class="num"><strong>59</strong></td>
+      <td class="num"><strong>350</strong></td>
+      <td class="num"><strong>118.6%</strong></td>
+    </tr>
+    <tr>
+      <td style="color: #5f6368;">Tiêu chuẩn hợp đồng tháng</td>
+      <td class="num" style="color: #5f6368;">–</td>
+      <td class="num" style="color: #5f6368;">81</td>
+      <td class="num" style="color: #5f6368;">77</td>
+      <td class="num" style="color: #5f6368;">77</td>
+      <td class="num" style="color: #5f6368;">60</td>
+      <td class="num" style="color: #5f6368;">295</td>
+      <td class="num" style="color: #5f6368;">100%</td>
+    </tr>
+    <tr>
+      <td>Chênh lệch riêng tháng 8</td>
+      <td class="num">–</td>
+      <td class="num">+38</td>
+      <td class="num">+17</td>
+      <td class="num">+1</td>
+      <td class="num">−1</td>
+      <td class="num">+55</td>
+      <td class="num">+18.6%</td>
+    </tr>
+    <tr class="carry-row">
+      <td>Bù trừ giờ luỹ kế từ tháng 7</td>
+      <td class="num">–</td>
+      <td class="num">+233</td>
+      <td class="num">−12.5</td>
+      <td class="num">+1</td>
+      <td class="num">−60</td>
+      <td class="num">+161.5</td>
+      <td class="num">–</td>
+    </tr>
+    <tr class="cumulative-row">
+      <td><strong>LUỸ KẾ VƯỢT CHUẨN – cần chốt phương án xử lý</strong></td>
+      <td class="num">–</td>
+      <td class="num"><strong>+271</strong></td>
+      <td class="num"><strong>+4.5</strong></td>
+      <td class="num"><strong>+2</strong></td>
+      <td class="num"><strong>−61</strong></td>
+      <td class="num"><strong>+216.5</strong></td>
+      <td class="num">–</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="total-summary">
+  🔢 Tổng workload Tháng 8/2026 (dự kiến): <strong>~350 giờ ≈ 118.6% / chuẩn 295h</strong> — <strong>13 hoạt động</strong> trên 3 nhóm chức năng.<br>
+  <span style="font-weight: 400; font-size: 13px;">Riêng tháng 8 vượt <strong>+55h</strong>. Cộng với phần bù trừ luỹ kế từ tháng 7 (<strong>+161.5h</strong>), tổng số giờ vượt chuẩn đang tồn là <strong>~216.5h</strong> — DISO đề nghị AT cùng chốt phương án xử lý dứt điểm trong tháng 8 (giãn scope sang tháng 9, hoặc điều chỉnh khối lượng hợp đồng), thay vì tiếp tục cộng dồn qua các tháng.</span>
+</div>
+
+<div class="plan-link">
+  📄 <strong>Chi tiết Kế hoạch Tháng 8/2026 (full):</strong> <a href="https://docs.google.com/spreadsheets/d/1llWv7MwEkyceEH5f16zujxS_R_t-ZaX7kAVKh2R0Yzg/edit?gid=1293951566#gid=1293951566">XEM TẠI ĐÂY</a>
+</div>
+
+<div class="confirm">
+  <strong>✅ Đề nghị xác nhận kế hoạch</strong>
+  <p style="margin: 8px 0 0 0;">Nhờ team review và <strong>xác nhận lại bản kế hoạch Tháng 8/2026 (dự kiến)</strong> ở trên để DISO làm cơ sở nghiệm thu cuối tháng. Đặc biệt mong AT phản hồi sớm về <strong>phương án xử lý ~216.5h vượt chuẩn luỹ kế</strong> — giãn scope sang tháng 9 hay điều chỉnh khối lượng hợp đồng.</p>
+</div>
+
+<p>Báo cáo tiến độ tuần sẽ gửi riêng vào đầu mỗi tuần. Trong quá trình triển khai, nếu có vướng mắc, thay đổi scope hoặc cần điều chỉnh deadline, DISO sẽ chủ động cập nhật và trao đổi với các bên liên quan kịp thời.</p>
+
+<p>Cảm ơn team đã phối hợp.</p>
+
+<div class="signature">
+  <p>Thanks &amp; Regards,<br>
+  <strong>DISO Team</strong></p>
+</div>
+
+</body>
+</html>
