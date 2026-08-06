@@ -3,8 +3,9 @@
 **Project:** Ambassador (Parasola)
 **Date:** 2026-08-06
 **Author:** Dang Dinh
-**Status:** ✅ Đã triển khai — PR #97 (merged 2026-08-05) + PR #99 (open). 2 đề xuất §7: **chờ duyệt**.
+**Status:** ✅ Đã triển khai — PR #97 (merged 2026-08-05) + PR #99 (open). **Phạm vi đã mở rộng — xem v2.**
 **Version:** 1.0
+**Kế thừa bởi:** `prd-leaderboard-period-v2-2026-08-06.md` — v2.0 mở rộng sang Lifetime/Week/Month sau `feedback-review-2026-08-06.md`. Tài liệu này giữ lại làm bản ghi phạm vi đã ship ở PR #97; **quyết định mới đọc ở v2**.
 **Tài liệu kỹ thuật:** `tech-spec.md` (spec implement)
 
 ---
