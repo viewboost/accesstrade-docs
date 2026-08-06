@@ -2,16 +2,18 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 1.1
+**Version:** 1.2
 **Status:** Draft
-**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v1.4
+**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v1.5
 **Repo:** `AT-Core/ambassador`
 
 ---
 
 ## 1. Tổng quan
 
-Tài liệu này mô tả cách hiện thực hoá PRD v1.4. Mỗi mục ánh xạ trực tiếp tới FR trong PRD.
+Tài liệu này mô tả cách hiện thực hoá PRD v1.5. Mỗi mục ánh xạ trực tiếp tới FR trong PRD.
+
+**Thuật ngữ** dùng theo mục 0 của PRD (claim/giải phóng mã, atomic ở cấp document, multi-document transaction, partial write, attack vector, tenant-level feature toggle, silent failure, dry-run, idempotent).
 
 ### Nguyên tắc bám theo
 
@@ -23,9 +25,9 @@ Tài liệu này mô tả cách hiện thực hoá PRD v1.4. Mỗi mục ánh x�
 
 | # | Ràng buộc | Vì sao |
 |---|---|---|
-| 1 | `confirm-is-staff` **không bao giờ ghi** `isJoined` / `joinedAt` | `isJoined` là điều kiện xác định user thuộc partner nào (`internal/service/user.go:226`). Ghi nhầm → thổi phồng số creator của Parasola |
+| 1 | `confirm-is-staff` **không bao giờ ghi** `isJoined` / `joinedAt` | `isJoined` là điều kiện xác định user thuộc partner nào (`internal/service/user.go:226`). Ghi nhầm → làm sai lệch tăng số creator của Parasola |
 | 2 | **Không đụng** `UserPartnerRaw.Code` | Trường này đang là referral code (`migration.go:1109 UserPartnerReferralCode`) |
-| 3 | Chiếm mã bằng **một** `findOneAndUpdate` | Hai user nhập cùng lúc chỉ một người thắng |
+| 3 | Claim mã bằng **một** `findOneAndUpdate` | Hai user nhập cùng lúc chỉ một người thắng |
 | 4 | Ba bước ghi nằm trong **một transaction** | Ghi vào 3 collection; lỗi giữa chừng phải rollback sạch |
 
 ---
@@ -159,7 +161,7 @@ const (
 
 // IsStaff là quy tắc canonical DUY NHẤT để phân loại nhân viên.
 // Mọi giá trị mơ hồ (rỗng, not_verify) đều KHÔNG tính là nhân viên,
-// để số liệu nhân viên không bao giờ bị thổi phồng do dữ liệu bẩn.
+// để số liệu nhân viên không bao giờ bị sai lệch tăng do dữ liệu không hợp lệ.
 // Giữ đồng bộ với parasola/src/utils/staff.ts
 func IsStaff(statusStaff string) bool {
 	return statusStaff == StatusStaffIsEmployee
@@ -281,7 +283,7 @@ func buildStaffStatus(partner *modelmg.PartnerRaw, up *modelmg.UserPartnerRaw) *
 	// Đã chốt lựa chọn → thôi hỏi
 	if up.StatusStaff == constants.StatusStaffIsEmployee ||
 		up.StatusStaff == constants.StatusStaffNotEmployee {
-		// user KHÔNG tự gỡ được nhãn nhân viên (FR-009)
+		// user KHÔNG tự thu hồi được trạng thái nhân viên (FR-009)
 		res.CanEdit = up.StatusStaff != constants.StatusStaffIsEmployee
 		return res
 	}
@@ -433,10 +435,10 @@ func (u *userImpl) writeStaffStatus(
 }
 ```
 
-#### `claimStaffCode` — chiếm mã atomic
+#### `claimStaffCode` — claim mã atomic
 
 ```go
-// claimStaffCode chiếm mã bằng MỘT thao tác findOneAndUpdate.
+// claimStaffCode claim mã bằng MỘT thao tác findOneAndUpdate.
 // Hai user nhập cùng lúc: chỉ một người match filter {isUsed:false}.
 func (u *userImpl) claimStaffCode(
 	ctx context.Context, partnerId modelmg.AppID, code string, userId modelmg.AppID,
@@ -496,7 +498,7 @@ staff_code_lock:user:<userId>   TTL 30 phút
 - Service gọi `recordStaffCodeFailure()` **chỉ khi nhập sai**; nhập đúng không tăng bộ đếm
 - Vượt ngưỡng → đặt khoá `lock`
 
-**Dùng chung cho mọi đường nhập mã** — cả `confirm-is-staff` lẫn đường sửa từ trang Hồ sơ (FR-009), cùng một khoá theo user. Nếu tách bộ đếm thì đó là cửa dò mã thứ hai.
+**Dùng chung cho mọi đường nhập mã** — cả `confirm-is-staff` lẫn đường sửa từ trang Hồ sơ (FR-009), cùng một khoá theo user. Nếu tách bộ đếm thì đó là kênh tấn công (attack vector) thứ hai.
 
 ---
 
@@ -603,7 +605,7 @@ type ImportResult struct {
 - Response bổ sung `statusStaff`, `staffCode`, `segments[]` (lookup từ `user-segments`)
 - Filter `statusStaff` (map thẳng vào `cond`), `segments` (`$in` qua `user-segments`)
 - Endpoint sửa trạng thái (FR-009): `PUT /user-partners/:id/staff-status` body `{statusStaff, reason}`
-  - Gỡ nhãn nhân viên ⇒ nhả mã (`isUsed:false`, unset `usedBy`/`usedAt`) + gỡ khỏi segment
+  - Thu hồi trạng thái nhân viên ⇒ giải phóng mã (`isUsed:false`, unset `usedBy`/`usedAt`) + gỡ khỏi segment
   - `reason` bắt buộc, ghi audit
 
 ---
@@ -710,7 +712,7 @@ func GetStaffBreakdownBySegment(cond bson.M) []bson.M {
 ```
 
 **Quy tắc trình bày** (khớp PRD):
-- `guest = total − staff`, không cộng dồn từng loại — mọi giá trị mơ hồ rơi vào "Ngoài", số nhân viên không bao giờ bị thổi phồng
+- `guest = total − staff`, không cộng dồn từng loại — mọi giá trị mơ hồ rơi vào "Ngoài", số nhân viên không bao giờ bị làm sai lệch tăng
 - Nhân viên không có segment → gom vào dòng "Chưa phân nhóm"
 - Số liệu loại trừ bài đã huỷ
 - Ghi chú bắt buộc trên bảng và export: *"Phân loại nhân viên theo trạng thái tại thời điểm xem báo cáo."*
@@ -732,7 +734,7 @@ Dùng `internal/model/mg/audit.go` sẵn có. Bốn loại sự kiện:
 
 Ghi bất đồng bộ (`go audit.Log...`) **sau khi transaction commit** — lỗi ghi log không được làm hỏng nghiệp vụ, và không được ghi log cho giao dịch đã rollback.
 
-**Không cần job đối soát mã mồ côi.** Transaction ở mục 4.2 đảm bảo không thể tồn tại mã bị chiếm mà chủ không có nhãn.
+**Không cần job đối soát bản ghi không nhất quán.** Transaction ở mục 4.2 đảm bảo không thể tồn tại mã đã claim nhưng chủ sở hữu không có trạng thái `employee`.
 
 ---
 
@@ -1010,7 +1012,7 @@ Tắt `options.enableStaffCode` của Parasola. Modal biến mất, API từ ch�
 | Chỉ số | Ngưỡng cảnh báo |
 |---|---|
 | Tỉ lệ nhập mã thất bại | > 30% → mã phát sai hoặc file import thiếu |
-| Số user chạm rate limit / ngày | > 10 → nghi có dò mã |
+| Số user chạm rate limit / ngày | > 10 → nghi có tấn công vét cạn |
 | Lỗi transaction khi xác nhận | > 0 → xem log, có thể do truyền nhầm ctx thay vì SessionContext |
 | Số creator mới của Parasola | tăng bất thường → **nghi `isJoined` bị ghi nhầm** |
 
@@ -1020,7 +1022,7 @@ Tắt `options.enableStaffCode` của Parasola. Modal biến mất, API từ ch�
 
 | Rủi ro | Mức | Giảm thiểu |
 |---|---|---|
-| Ghi nhầm `isJoined` → thổi phồng số creator | **Cao** | Một hàm ghi duy nhất có comment cảnh báo + unit test bắt câu update + theo dõi số creator sau release |
+| Ghi nhầm `isJoined` → làm sai lệch tăng số creator | **Cao** | Một hàm ghi duy nhất có comment cảnh báo + unit test bắt câu update + theo dõi số creator sau release |
 | Truyền nhầm `ctx` thay `SessionContext` trong transaction | Trung bình | Lệnh nằm ngoài transaction, happy path vẫn đúng nên khó phát hiện — có test mô phỏng lỗi giữa chừng |
 | Parasola phát mã tuần tự → dò được | Trung bình | Thống nhất yêu cầu entropy **trước khi** phát mã (PRD FR-007) |
 | Import nhầm file 5.000 dòng | Trung bình | Dry-run bắt buộc + xoá theo `importBatchId` |
@@ -1041,5 +1043,6 @@ Tắt `options.enableStaffCode` của Parasola. Modal biến mất, API từ ch�
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2026-08-06 | Nguyễn Đăng Định | Chuẩn hoá thuật ngữ theo mục 0 của PRD v1.5 |
 | 1.1 | 2026-08-06 | Nguyễn Đăng Định | Đổi từ bù trừ sang Mongo transaction (mục 4.2), bỏ job cron đối soát; chốt format mã theo T-Fluencers; nới mốc hiệu năng theo quy mô nhân viên nhỏ |
 | 1.0 | 2026-08-06 | Nguyễn Đăng Định | Tech spec đầu tiên, bám PRD v1.3 |

@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 1.4
+**Version:** 1.5
 **Project Level:** Level 2
 **Status:** Draft
 **Phạm vi:** **Chỉ partner Parasola.** 12 partner còn lại không bị ảnh hưởng.
@@ -34,13 +34,37 @@ Backend và admin xây dựng theo hướng dùng chung cho mọi partner (bật
 
 ---
 
+## 0. Thuật ngữ
+
+Dùng thống nhất trong cả PRD và tech spec.
+
+| Thuật ngữ | Định nghĩa |
+|---|---|
+| **Trạng thái nhân viên** (`statusStaff`) | Thuộc tính trên `user-partners`, nhận một trong ba giá trị `employee` \| `not_employee` \| `not_verify`. Rỗng = chưa hỏi, phân loại như `not_verify` |
+| **Claim mã** | Thao tác chuyển một bản ghi `manage-codes` từ `isUsed: false` sang `true` đồng thời ghi `usedBy`/`usedAt`. Thực hiện bằng một `findOneAndUpdate` để đảm bảo atomic |
+| **Giải phóng mã** | Thao tác ngược của claim: đưa `isUsed` về `false` và xoá `usedBy`/`usedAt`, trả mã về trạng thái dùng được |
+| **Atomic ở cấp document** | Đảm bảo của MongoDB: một lệnh ghi lên **một** document là bất khả phân. Không mở rộng sang nhiều document — đó là lý do cần transaction |
+| **Multi-document transaction** | Cơ chế ACID của MongoDB gói nhiều lệnh ghi trên nhiều collection thành một đơn vị commit/rollback. Yêu cầu replica set. Repo dùng qua helper `WithTransaction` |
+| **Partial write** | Trạng thái không nhất quán khi một phần chuỗi ghi thành công còn phần sau thất bại — ví dụ mã đã claim nhưng `statusStaff` chưa ghi |
+| **Tấn công vét cạn** (brute-force) | Thử tuần tự hoặc ngẫu nhiên nhiều giá trị mã cho tới khi trúng một mã hợp lệ |
+| **Attack vector** | Một đường vào mà kẻ tấn công dùng được. Ở đây: mỗi endpoint nhận mã nhân viên là một attack vector, nên tất cả phải chung một bộ đếm rate limit |
+| **Entropy của mã** | Số bit ngẫu nhiên thực sự trong mã. Mã tuần tự có entropy ≈ 0 nên rate limit không đủ bảo vệ |
+| **Tenant-level feature toggle** | Cờ bật/tắt tính năng theo từng partner, lưu trong `PartnerOpts`. Khác với ENV vốn có phạm vi toàn service |
+| **Segment** | Thực thể phân nhóm người dùng đã có sẵn trong Ambassador (`segments` + `user-segments`). PRD này dùng lại để biểu diễn nhóm nhân viên |
+| **Silent failure** | Lỗi xảy ra nhưng không phát sinh cảnh báo, hệ thống vẫn báo thành công — ví dụ import đọc sai cột mà vẫn trả "OK" |
+| **Dry-run** | Chạy toàn bộ logic nghiệp vụ và trả kết quả dự kiến, nhưng không thực hiện lệnh ghi nào |
+| **Idempotent** | Thực hiện nhiều lần cho cùng kết quả như một lần. Áp dụng cho upsert `user-segments` |
+| **Compensating transaction** | Cơ chế bù trừ thủ công: khi bước sau thất bại thì tự tay hoàn tác bước trước. **Đã loại bỏ** khỏi thiết kế vì dùng được multi-document transaction |
+
+---
+
 ## 1. Executive Summary
 
 Parasola muốn phân biệt **nhân viên nội bộ** với creator bên ngoài trên Ambassador, để chạy chiến dịch riêng cho nội bộ và báo cáo tách bạch đóng góp của hai nhóm.
 
 Ambassador hiện **chưa có gì** cho việc này: `UserPartnerRaw` không có trường trạng thái nhân viên (có comment xác nhận cố ý bỏ tại `partner_creator_config.go:23`), không có bảng mã nhân viên, không có API xác nhận.
 
-**Giải pháp:** Parasola cấp mã cho nhân viên qua kênh nội bộ → Admin import danh sách mã kèm nhóm vào Ambassador → Nhân viên nhập mã trên web → Hệ thống đối chiếu, gắn nhãn nhân viên và **tự động đưa vào nhóm tương ứng**. Nhãn và nhóm này dùng cho gate campaign và báo cáo.
+**Giải pháp:** Parasola cấp mã cho nhân viên qua kênh nội bộ → Admin import danh sách mã kèm nhóm vào Ambassador → Nhân viên nhập mã trên web → Hệ thống đối chiếu, ghi trạng thái nhân viên và **tự động đưa vào nhóm tương ứng**. Nhãn và nhóm này dùng cho gate campaign và báo cáo.
 
 **Vì sao vẫn làm backend dùng chung dù chỉ chạy cho Parasola:** chi phí thêm gần như bằng 0 (`PartnerOpts` đã có sẵn pattern), nhưng tránh phải viết lại khi partner thứ hai cần. Phần tốn công là frontend — và phần đó **chỉ làm cho `parasola/`**, không đụng 12 folder còn lại.
 
@@ -50,7 +74,7 @@ Ambassador hiện **chưa có gì** cho việc này: `UserPartnerRaw` không có
 |---|---|---|
 | Phân nhóm | Chỉ nhị phân nhân viên/người ngoài | **File import có cột Nhóm → tự gán Segment** |
 | Bật/tắt | ENV toàn cục | **Cờ theo từng partner** (`PartnerOpts`), chỉ bật cho Parasola |
-| Vòng đời mã | Dùng lại vô hạn (`isUsed` không set) | **1 mã 1 người**, chiếm mã ngay khi xác nhận |
+| Vòng đời mã | Dùng lại vô hạn (`isUsed` không set) | **1 mã 1 người**, claim mã ngay khi xác nhận |
 
 **Scope:** Không dựng dashboard analytics mới. Thống kê bổ sung vào trang admin đã có (`user-partner`, `segment/detail`) + export. Frontend chỉ làm trong `parasola/`.
 
@@ -149,7 +173,7 @@ const (
 
 // IsStaff là quy tắc canonical duy nhất để xác định nhân viên.
 // Mọi giá trị mơ hồ (rỗng, not_verify) đều KHÔNG tính là nhân viên,
-// để số liệu nhân viên không bao giờ bị thổi phồng do dữ liệu bẩn.
+// để số liệu nhân viên không bao giờ bị sai lệch tăng do dữ liệu không hợp lệ.
 func IsStaff(statusStaff string) bool { return statusStaff == StatusStaffIsEmployee }
 ```
 
@@ -228,7 +252,7 @@ type ManageCodeRaw struct {
 
 **Priority:** Must Have
 
-**Description:** Điểm khác biệt cốt lõi so với T-Fluencer — file import có **cột Nhóm**, đây là mắt xích duy nhất biến "thống kê theo nhóm nhân viên" thành khả thi.
+**Description:** Điểm khác biệt cốt lõi so với T-Fluencer — file import có **cột Nhóm**, đây là điều kiện tiên quyết duy nhất biến "thống kê theo nhóm nhân viên" thành khả thi.
 
 **Format file:**
 
@@ -283,7 +307,7 @@ type ManageCodeRaw struct {
 - [ ] Đổi `group` của mã **đã dùng** → user tương ứng chuyển segment ngay, thống kê phản ánh đúng
 - [ ] Dry-run **không ghi bất kỳ thứ gì** vào DB, kể cả segment mới
 - [ ] Xoá theo lô chỉ xoá mã chưa dùng, mã đã dùng giữ nguyên và được báo lại
-- [ ] Báo cáo kết quả liệt kê **từng dòng lỗi kèm số dòng** (T-Fluencer chỉ skip im lặng)
+- [ ] Báo cáo kết quả liệt kê **từng dòng lỗi kèm số dòng** (T-Fluencer chỉ skip không phát sinh cảnh báo)
 - [ ] Import 5.000 dòng hoàn thành dưới 30 giây
 
 ---
@@ -367,7 +391,7 @@ Body: { "partner": "<partnerId>", "isStaff": true, "code": "HDB000123" }
      a. Chuẩn hoá code: TRIM + UPPERCASE
      b. code rỗng / sai format → lỗi StaffCodeRequired / StaffCodeInvalid
      c. Nếu partner bật requireCodeValidation:
-          Chiếm mã (atomic, MỘT thao tác): findOneAndUpdate
+          Claim mã (atomic, MỘT thao tác): findOneAndUpdate
             filter: {partner, code, type: apply_for_employee, isUsed: false}
             update: {isUsed: true, usedBy: userId, usedAt: now}
           không match → phân biệt 2 lỗi bằng 1 truy vấn đọc:
@@ -389,7 +413,7 @@ Find(..., bson.M{"user": userId, "isJoined": true})   // → partnerIds
 ```
 và chỉ được set khi user **thực sự tham gia** (`internal/service/user.go:491`).
 
-Nếu `confirm-is-staff` ghi `isJoined`, thì mọi người chỉ mới bấm **"Tôi không phải nhân viên"** cũng bị tính là đã tham gia Parasola → số liệu partner, danh sách creator, thống kê tham gia đều sai theo hướng **thổi phồng** và rất khó phát hiện.
+Nếu `confirm-is-staff` ghi `isJoined`, thì mọi người chỉ mới bấm **"Tôi không phải nhân viên"** cũng bị tính là đã tham gia Parasola → số liệu partner, danh sách creator, thống kê tham gia đều sai lệch theo chiều **tăng** và rất khó phát hiện.
 
 **Thao tác ghi duy nhất được phép:**
 ```go
@@ -412,19 +436,19 @@ UserPartnerDAO().UpdateOne(ctx, ..., bson.M{"user": userId, "partner": partnerId
 
 #### Xử lý lỗi giữa chừng — dùng transaction
 
-Ba bước (c), (d), (e) ghi vào **ba collection khác nhau** (`manage-codes`, `user-partners`, `user-segments`). MongoDB chỉ atomic trong phạm vi một document, nên nếu (c) thành công rồi (d) lỗi thì mã bị chiếm mà không ai sở hữu: nhân viên mất mã, không nhập lại được, Ops nhìn dashboard thấy `isUsed: true` trỏ tới người không có nhãn nhân viên.
+Ba bước (c), (d), (e) ghi vào **ba collection khác nhau** (`manage-codes`, `user-partners`, `user-segments`). MongoDB chỉ atomic trong phạm vi một document, nên nếu (c) thành công rồi (d) lỗi thì mã bị chiếm mà không ai sở hữu: nhân viên mất mã, không nhập lại được, Ops nhìn dashboard thấy `isUsed: true` trỏ tới người không có trạng thái `employee`.
 
 **Gói cả ba bước trong một transaction.** Repo đã có sẵn helper `databasemongodb.TransactionDatabase().WithTransaction()` (`internal/module/database/mongodb/transaction.go`), đang dùng thật ở luồng rút tiền (`internal/service/withdraw.go:131`) — hạ tầng Mongo là replica set, không cần xác minh thêm.
 
 ```
 WithTransaction:
-    c. chiếm mã       manage-codes
-    d. gắn nhãn       user-partners
+    c. claim mã       manage-codes
+    d. ghi trạng thái       user-partners
     e. gán nhóm       user-segments
   → bất kỳ bước nào lỗi ⇒ toàn bộ rollback, mã trở về chưa dùng
 ```
 
-Nhờ vậy **không cần** cơ chế bù trừ thủ công, cũng **không cần** job đối soát mã mồ côi — trạng thái nửa vời không thể xảy ra.
+Nhờ vậy **không cần** cơ chế bù trừ thủ công, cũng **không cần** job đối soát — partial write không thể xảy ra.
 
 Audit log (bước f) ghi **sau khi** transaction commit thành công, bất đồng bộ, để lỗi ghi log không làm hỏng nghiệp vụ.
 
@@ -438,7 +462,7 @@ Audit log (bước f) ghi **sau khi** transaction commit thành công, bất đ�
 | `staffFeatureDisabled` | Tính năng chưa được bật cho đối tác này | Feature not enabled for this partner |
 
 **Acceptance Criteria:**
-- [ ] Chiếm mã bằng **một thao tác `findOneAndUpdate` atomic** — hai user nhập cùng lúc, chỉ một người thành công
+- [ ] Claim mã bằng **một thao tác `findOneAndUpdate` atomic** — hai user nhập cùng lúc, chỉ một người thành công
 - [ ] **`isJoined` và `joinedAt` không xuất hiện trong bất kỳ câu ghi nào** của luồng này — có test khẳng định điều này
 - [ ] User chưa từng tham gia Parasola, bấm "Tôi không phải nhân viên" → **không** bị tính vào danh sách creator của partner
 - [ ] `UserPartnerRaw.Code` (referral) không bị thay đổi
@@ -447,15 +471,15 @@ Audit log (bước f) ghi **sau khi** transaction commit thành công, bất đ�
 - [ ] Xác nhận thành công + mã có nhóm → user xuất hiện trong segment tương ứng ngay
 - [ ] Không dùng lại key lỗi của referral code
 - [ ] Mô phỏng lỗi ở bước (d) → **transaction rollback**, mã trở về `isUsed: false`, user nhập lại thành công
-- [ ] Mô phỏng lỗi ở bước (e) → rollback cả nhãn lẫn mã, không để lại trạng thái nửa vời
+- [ ] Mô phỏng lỗi ở bước (e) → rollback cả trạng thái lẫn mã, không để lại trạng thái không nhất quán (partial write)
 
 ---
 
-### FR-007: Chống dò mã
+### FR-007: Chống tấn công vét cạn (brute-force)
 
 **Priority:** Must Have
 
-**Description:** T-Fluencer không có rate limit và không validate format `Code`; kết hợp với việc mã đúng cho quyền vĩnh viễn, dò mã bằng script là khả thi. Ambassador phải chặn.
+**Description:** T-Fluencer không có rate limit và không validate format `Code`; kết hợp với việc mã đúng cho quyền vĩnh viễn, vét cạn bằng script là khả thi. Ambassador phải chặn.
 
 **Yêu cầu:**
 | Biện pháp | Ngưỡng |
@@ -471,7 +495,7 @@ Quy mô nhân viên Parasola nhỏ, nên ngưỡng này rộng rãi so với nhu
 - `POST /users/confirm-is-staff` (FR-006)
 - Đổi trạng thái từ trang Hồ sơ (FR-009)
 
-FR-009 cho phép đổi từ "không phải nhân viên" sang "là nhân viên" không giới hạn số lần; nếu đường đó không dùng chung bộ đếm thì đó là **cửa dò mã thứ hai**.
+FR-009 cho phép đổi từ "không phải nhân viên" sang "là nhân viên" không giới hạn số lần; nếu đường đó không dùng chung bộ đếm thì đó là **kênh tấn công (attack vector) thứ hai**.
 
 #### Format mã — theo đúng cách T-Fluencers đang làm
 
@@ -490,9 +514,9 @@ codes = [f"PRS_{secrets.token_hex(4).upper()}" for _ in range(N)]
 # xuất ra Excel với cột "code" và cột "group"
 ```
 
-Quy ước này thoả sẵn yêu cầu chống dò mã: 8 ký tự hex = 4 tỷ tổ hợp, không tuần tự, không suy ra được từ mã nhân sự hay số điện thoại. Prefix `PRS_` chỉ để nhận diện, không làm giảm entropy.
+Quy ước này thoả sẵn yêu cầu chống vét cạn: 8 ký tự hex = 4 tỷ tổ hợp, không tuần tự, không suy ra được từ mã nhân sự hay số điện thoại. Prefix `PRS_` chỉ để nhận diện, không làm giảm entropy.
 
-Rate limit một mình không đủ nếu mã đặt tuần tự (`PRS001`, `PRS002`…) — 20 lần/10 phút vẫn quét hết vài nghìn mã trong một đêm. Format trên loại bỏ rủi ro đó ngay từ gốc.
+Rate limit một mình không đủ nếu mã đặt tuần tự (`PRS001`, `PRS002`…) — 20 lần/10 phút vẫn vét cạn được vài nghìn mã trong một đêm. Format trên loại bỏ rủi ro đó ngay từ gốc.
 
 **Acceptance Criteria:**
 - [ ] Nhập sai quá ngưỡng → bị chặn kèm thông báo *"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 30 phút."*
@@ -564,7 +588,7 @@ Lý do: Parasola phần lớn là creator bên ngoài (P2). Chặn cứng toàn 
 
 **Đóng modal mà không chọn — có giới hạn:**
 
-Bỏ modal chặn cứng của T-Fluencer là đúng, nhưng "lần sau hỏi lại" mà không giới hạn thì với creator ngoài không bao giờ bấm gì sẽ thành **hỏi mãi mãi** — khó chịu không kém chặn cứng, chỉ là chia nhỏ ra.
+Bỏ modal blocking (không dismiss được) của T-Fluencer là đúng, nhưng "lần sau hỏi lại" mà không giới hạn thì với creator ngoài không bao giờ bấm gì sẽ thành **hỏi mãi mãi** — khó chịu không kém blocking, chỉ là chia nhỏ ra.
 
 ```
 Đóng modal → ghi user-partners.staffPromptDismissedAt + tăng staffPromptDismissCount
@@ -605,17 +629,17 @@ Hai field `staffPromptDismissedAt` / `staffPromptDismissCount` khai trong FR-001
 
 **Phía người dùng** — mục "Thông tin nhân viên" trong `parasola/src/pages/account/`:
 - Đang là "không phải nhân viên" → được đổi sang "là nhân viên" + nhập mã, **không giới hạn**
-- Đang là "nhân viên" → **không tự đổi được**, hiện hướng dẫn liên hệ hỗ trợ (tránh trò chiếm mã rồi nhả)
+- Đang là "nhân viên" → **không tự đổi được**, hiện hướng dẫn liên hệ hỗ trợ (tránh hành vi claim rồi giải phóng mã để thao túng)
 
 **Phía Admin** — nút "Sửa trạng thái nhân viên" trong `admin/src/pages/user-partner/`:
 - Đổi được sang bất kỳ trạng thái nào
-- Gỡ nhãn nhân viên → **nhả mã** (`isUsed = false`, xoá `usedBy`/`usedAt`) và gỡ khỏi segment
+- Thu hồi trạng thái nhân viên → **giải phóng mã** (`isUsed = false`, xoá `usedBy`/`usedAt`) và gỡ khỏi segment
 - Bắt buộc nhập lý do, ghi vào audit log
 
 **Acceptance Criteria:**
 - [ ] User tự chuyển từ "không phải" sang "là nhân viên" được
-- [ ] User **không** tự gỡ được nhãn nhân viên
-- [ ] Admin gỡ nhãn → mã quay về trạng thái chưa dùng, dùng lại được
+- [ ] User **không** tự thu hồi được trạng thái nhân viên
+- [ ] Admin thu hồi trạng thái → mã quay về trạng thái chưa dùng, dùng lại được
 - [ ] Mọi thao tác sửa đều có lý do và được ghi log
 
 ---
@@ -751,7 +775,7 @@ InAllowedGroup bool `json:"inAllowedGroup"`
 
 **Quy tắc tính:**
 - "Nhân viên" = `constants.IsStaff(statusStaff)`; mọi giá trị khác thuộc "Ngoài"
-- "Ngoài" = Tổng − Nhân viên (không cộng dồn từng loại, tránh sai lệch do dữ liệu bẩn)
+- "Ngoài" = Tổng − Nhân viên (không cộng dồn từng loại, tránh sai lệch do dữ liệu không hợp lệ)
 - Số liệu bài/xem/chi phí **không tính bài đã bị huỷ**
 - Nhân viên chưa được gán nhóm gom vào dòng "Chưa phân nhóm"
 
@@ -833,7 +857,7 @@ T-Fluencer cũng có đặc tính này nhưng không ghi ra ở đâu, dẫn t�
 
 ### NFR-002: Security
 
-- Chiếm mã bằng thao tác atomic — không có kẽ hở race condition
+- Claim mã bằng thao tác atomic — không có kẽ hở race condition
 - Rate limit theo cả user và IP (FR-007)
 - Mã nhân viên không xuất hiện trong log lỗi hay response cho user khác
 - Admin chỉ thao tác được trên mã của partner mình quản lý
@@ -873,7 +897,7 @@ FR-001, FR-002, FR-010, FR-016 — model, constants, collection, index, feature 
 FR-003, FR-004 — trang `/manage-code`, CRUD, import kèm nhóm, export.
 
 ### EPIC-003: Luồng xác nhận của người dùng
-FR-005, FR-006, FR-007, FR-008, FR-009 — API, chống dò mã, modal, sửa lại.
+FR-005, FR-006, FR-007, FR-008, FR-009 — API, chống vét cạn, modal, sửa lại.
 
 ### EPIC-004: Chiến dịch cho nhân viên
 FR-011, FR-012 — điều kiện tham gia, admin UI, thông báo từ chối.
@@ -901,8 +925,8 @@ Nhân viên nhập mã trên web
         │
    POST /users/confirm-is-staff
         │
-        ├──► chiếm mã (atomic)     manage-codes {isUsed, usedBy, usedAt}
-        ├──► gắn nhãn              user-partners {statusStaff, staffCode, staffCodeAt}
+        ├──► claim mã (atomic ở cấp document)     manage-codes {isUsed, usedBy, usedAt}
+        ├──► ghi trạng thái              user-partners {statusStaff, staffCode, staffCodeAt}
         ├──► gán nhóm              user-segments {user, segment}
         └──► ghi log               audit
         │
@@ -922,8 +946,8 @@ CalculateEligibility     theo nhóm             admin user-partner
   → shouldAskStaffStatus = true  → hiện modal
        ├─ "Tôi không phải"  → POST confirm-is-staff {isStaff:false} → xong, không hỏi lại
        ├─ "Tôi là nhân viên" + mã → POST confirm-is-staff {isStaff:true, code}
-       │      ├─ thành công → chiếm mã + gắn nhãn + vào nhóm + đóng modal
-       │      ├─ lỗi ở bước gắn nhãn/gán nhóm → NHẢ MÃ, báo lỗi
+       │      ├─ thành công → claim mã + ghi trạng thái + vào nhóm + đóng modal
+       │      ├─ lỗi ở bước ghi trạng thái/gán nhóm → GIẢI PHÓNG MÃ, báo lỗi
        │      └─ mã sai     → hiện lỗi dưới ô mã, giữ modal, tăng bộ đếm rate limit
        └─ đóng modal        → ghi staffPromptDismissedAt + tăng dismissCount
                               hỏi lại sau 7 ngày, tối đa 3 lần rồi thôi
@@ -956,7 +980,7 @@ User mở chi tiết chiến dịch
 | **DAO** | `backend/internal/module/database/mongodb/` | `ManageCodeDAO` + collection + index (cần helper unique index) |
 | **Public API** | `backend/pkg/public/service/user.go` | `GetMe` +khối `staffStatus`; `ConfirmIsStaff` |
 | **Public API** | `backend/pkg/public/{router,handler,service}/partner.go` | `staff-status` (đường phụ) |
-| **Middleware** | `backend/internal/echo/middleware/staff_code_rate_limit.go` | File mới — chống dò mã (FR-007) |
+| **Middleware** | `backend/internal/echo/middleware/staff_code_rate_limit.go` | File mới — chống vét cạn (FR-007) |
 | **Eligibility** | `backend/pkg/public/service/eligibility.go` | +2 điều kiện |
 | **Admin API** | `backend/pkg/admin/{router,handler,service}/manage_code.go` | File mới — CRUD + import (dry-run) + xoá theo lô + export |
 | **Admin API** | `backend/pkg/admin/service/user_partner.go` | Trả thêm field + filter + sửa trạng thái |
@@ -1042,11 +1066,11 @@ Tổng 16 FR.
 
 ## 12. Resolved Questions
 
-1. **Modal chặn cứng như T-Fluencer?** → **Không.** Ambassador phần lớn là creator bên ngoài; modal đóng được, người ngoài xong trong 1 click. Bù lại có đường sửa (FR-009) nên không cần ép chọn một lần vĩnh viễn.
+1. **Modal blocking (không dismiss được) như T-Fluencer?** → **Không.** Ambassador phần lớn là creator bên ngoài; modal đóng được, người ngoài xong trong 1 click. Bù lại có đường sửa (FR-009) nên không cần ép chọn một lần vĩnh viễn.
 
 2. **Người không phải nhân viên có phải nhập mã?** → **Không.** Đây là lỗi thiết kế form của T-Fluencer, sinh dữ liệu rác.
 
-3. **Một mã dùng được mấy người?** → **Một.** Chiếm mã atomic ngay khi xác nhận. T-Fluencer bỏ sót bước này nên mã chia sẻ được vô hạn.
+3. **Một mã dùng được mấy người?** → **Một.** Claim mã atomic ngay khi xác nhận. T-Fluencer bỏ sót bước này nên mã chia sẻ được vô hạn.
 
 4. **Bật/tắt bằng gì?** → **`PartnerOpts` theo từng partner**, không dùng ENV. Ambassador có 13 partner.
 
@@ -1064,11 +1088,11 @@ Tổng 16 FR.
 
 11. **Thống kê có snapshot theo thời điểm đăng bài không?** → **Không** (phương án A). Tính theo trạng thái hiện tại, đổi lại phải in ghi chú trên mọi bảng và export. Snapshot cần thêm field vào content và vẫn không xử lý được dữ liệu cũ.
 
-12. **Đảm bảo nhất quán giữa `manage-codes`, `user-partners` và `user-segments` bằng gì?** → **Mongo transaction.** Repo đã có helper `WithTransaction` (`internal/module/database/mongodb/transaction.go`) chạy thật ở luồng rút tiền (`internal/service/withdraw.go:131`), nên hạ tầng là replica set. Bỏ được cơ chế bù trừ thủ công và job đối soát mã mồ côi.
+12. **Đảm bảo nhất quán giữa `manage-codes`, `user-partners` và `user-segments` bằng gì?** → **Mongo transaction.** Repo đã có helper `WithTransaction` (`internal/module/database/mongodb/transaction.go`) chạy thật ở luồng rút tiền (`internal/service/withdraw.go:131`), nên hạ tầng là replica set. Bỏ được cơ chế bù trừ thủ công và job đối soát bản ghi mã không nhất quán.
 
-13. **Người dùng đóng modal thì hỏi lại bao nhiêu lần?** → Cách nhau 7 ngày, tối đa 3 lần rồi thôi. Bỏ chặn cứng mà hỏi vô hạn thì cũng phiền tương đương.
+13. **Người dùng đóng modal thì hỏi lại bao nhiêu lần?** → Cách nhau 7 ngày, tối đa 3 lần rồi thôi. Bỏ blocking mà hỏi vô hạn thì cũng phiền tương đương.
 
-14. **Format mã của Parasola?** → **Theo đúng quy ước T-Fluencers**: `PRS_<8 hex ngẫu nhiên viết hoa>`, ví dụ `PRS_A3F91B2C`. Thoả sẵn yêu cầu chống dò mã, không cần quy ước riêng.
+14. **Format mã của Parasola?** → **Theo đúng quy ước T-Fluencers**: `PRS_<8 hex ngẫu nhiên viết hoa>`, ví dụ `PRS_A3F91B2C`. Thoả sẵn yêu cầu chống vét cạn, không cần quy ước riêng.
 
 15. **Quy mô nhân viên Parasola?** → **Nhỏ.** Ngưỡng rate limit và mục tiêu hiệu năng hiện tại đã rất dư; không tối ưu sớm, chỉ thêm cache nếu đo thấy vượt.
 
@@ -1077,7 +1101,7 @@ Tổng 16 FR.
 ## 13. Open Questions
 
 1. **Parasola đã có sẵn dữ liệu nhóm theo mã chưa, và chia nhóm theo tiêu chí gì?** (phòng ban / khu vực / cửa hàng…) — **câu duy nhất còn có thể làm đổi phạm vi.** Nếu Parasola không cung cấp được cột nhóm, FR-014 chỉ chạy được ở mức nhị phân nhân viên/người ngoài, tức là một trong ba mục tiêu gốc không đạt. Cần hỏi trước khi Parasola phát mã, vì cột nhóm phải có ngay từ file import đầu tiên.
-2. **Xử lý nhân viên nghỉ việc?** Chưa có cơ chế thu hồi nhãn hàng loạt — tạm thời Ops gỡ tay qua FR-009. Với quy mô nhân viên nhỏ thì chấp nhận được.
+2. **Xử lý nhân viên nghỉ việc?** Chưa có cơ chế thu hồi trạng thái hàng loạt — tạm thời Ops gỡ tay qua FR-009. Với quy mô nhân viên nhỏ thì chấp nhận được.
 
 ---
 
@@ -1087,6 +1111,7 @@ Tổng 16 FR.
 |---------|------|--------|---------|
 | 1.0 | 2026-08-06 | Nguyễn Đăng Định | PRD đầu tiên. Tham chiếu T-Fluencer, sửa 6 lỗi của bản đó, bổ sung phân nhóm nhân viên (T-Fluencer chưa có) |
 | 1.1 | 2026-08-06 | Nguyễn Đăng Định | Thu hẹp phạm vi về **chỉ Parasola**. Frontend chỉ làm `parasola/`, cắm theo pattern `ModalCompleteRegistration` sẵn có. Thêm persona P5 (12 partner còn lại không được ảnh hưởng) và các AC bảo vệ tương ứng |
-| 1.4 | 2026-08-06 | Nguyễn Đăng Định | Chốt 3 câu hỏi treo. **Dùng Mongo transaction** thay bù trừ — repo đã có `WithTransaction` chạy thật ở luồng rút tiền, nên hạ tầng là replica set; bỏ được cơ chế bù trừ thủ công và job cron đối soát mã mồ côi. **Format mã** theo đúng quy ước T-Fluencers (`PRS_<8 hex>`), thoả sẵn yêu cầu chống dò mã. **Quy mô nhân viên nhỏ** → nới mốc hiệu năng, ghi rõ không tối ưu sớm. Open Questions còn 2, trọng tâm là dữ liệu phân nhóm |
+| 1.5 | 2026-08-06 | Nguyễn Đăng Định | Chuẩn hoá thuật ngữ kỹ thuật trên cả PRD và tech spec: claim/giải phóng mã, atomic ở cấp document, multi-document transaction, partial write, tấn công vét cạn, attack vector, entropy, tenant-level feature toggle, silent failure. Bổ sung mục 0 — Thuật ngữ (16 định nghĩa) |
+| 1.4 | 2026-08-06 | Nguyễn Đăng Định | Chốt 3 câu hỏi treo. **Dùng Mongo transaction** thay bù trừ — repo đã có `WithTransaction` chạy thật ở luồng rút tiền, nên hạ tầng là replica set; bỏ được cơ chế bù trừ thủ công và job cron đối soát bản ghi không nhất quán. **Format mã** theo đúng quy ước T-Fluencers (`PRS_<8 hex>`), thoả sẵn yêu cầu chống vét cạn. **Quy mô nhân viên nhỏ** → nới mốc hiệu năng, ghi rõ không tối ưu sớm. Open Questions còn 2, trọng tâm là dữ liệu phân nhóm |
 | 1.3 | 2026-08-06 | Nguyễn Đăng Định | Soát nhất quán sau đợt vá v1.2: gom 2 field dismissal về FR-001 (đang khai lạc ở FR-008); sửa sơ đồ "Luồng xác nhận" ở mục 7 còn mô tả hành vi cũ (`staff-status` riêng, đóng modal không lưu); NFR-004 đổi sang `users/me`; sửa đếm sai Must Have 13→14; bổ sung 5 hạng mục thiếu trong Implementation Scope (GetMe, rate limit middleware, audit, cron đối soát, `utils/staff.ts`) |
-| 1.2 | 2026-08-06 | Nguyễn Đăng Định | Vá 12 lỗ hổng phát hiện khi review flow. **P0:** cấm ghi `isJoined`/`joinedAt` trong `confirm-is-staff` (sẽ thổi phồng số liệu partner); bù trừ khi chiếm mã thành công nhưng gắn nhãn lỗi; chốt phương án A cho thống kê hồi tố kèm ghi chú bắt buộc. **P1:** import cập nhật nhóm thay vì skip; dry-run + `importBatchId`; giới hạn số lần hỏi lại; rate limit dùng chung mọi đường nhập mã. **P2:** yêu cầu entropy khi Parasola đặt mã; ngữ nghĩa AND của `AllowedSegments` + cảnh báo trên admin UI; chặn xoá segment đang được event tham chiếu; gộp `staffStatus` vào `users/me` |
+| 1.2 | 2026-08-06 | Nguyễn Đăng Định | Vá 12 lỗ hổng phát hiện khi review flow. **P0:** cấm ghi `isJoined`/`joinedAt` trong `confirm-is-staff` (sẽ làm sai lệch tăng số liệu partner); bù trừ khi claim mã thành công nhưng ghi trạng thái lỗi; chốt phương án A cho thống kê hồi tố kèm ghi chú bắt buộc. **P1:** import cập nhật nhóm thay vì skip; dry-run + `importBatchId`; giới hạn số lần hỏi lại; rate limit dùng chung mọi đường nhập mã. **P2:** yêu cầu entropy khi Parasola đặt mã; ngữ nghĩa AND của `AllowedSegments` + cảnh báo trên admin UI; chặn xoá segment đang được event tham chiếu; gộp `staffStatus` vào `users/me` |
