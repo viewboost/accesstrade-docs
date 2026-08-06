@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 1.3
+**Version:** 1.4
 **Project Level:** Level 2
 **Status:** Draft
 **Phạm vi:** **Chỉ partner Parasola.** 12 partner còn lại không bị ảnh hưởng.
@@ -375,8 +375,8 @@ Body: { "partner": "<partnerId>", "isStaff": true, "code": "HDB000123" }
             mã tồn tại       → StaffCodeAlreadyUsed
      d. ghi user-partners với statusStaff = "employee", staffCode, staffCodeAt
      e. Nếu mã có Segment → upsert user-segments {user, segment}
-     f. Ghi audit log (FR-016)
-     g. Nếu (d) hoặc (e) lỗi → NHẢ MÃ (xem Xử lý lỗi bên dưới)
+        [ (c)(d)(e) nằm TRONG MỘT TRANSACTION — xem bên dưới ]
+     f. Sau khi commit: ghi audit log bất đồng bộ (FR-016)
 ```
 
 #### ⚠️ Quy tắc ghi `user-partners` — bắt buộc tuân thủ
@@ -410,19 +410,23 @@ UserPartnerDAO().UpdateOne(ctx, ..., bson.M{"user": userId, "partner": partnerId
 
 **Cấm tuyệt đối** trong luồng này: `isJoined`, `joinedAt`, `code` (referral), `statistic`, `contentStatistic`.
 
-#### Xử lý lỗi giữa chừng
+#### Xử lý lỗi giữa chừng — dùng transaction
 
-Chiếm mã (`manage-codes`) và gắn nhãn (`user-partners`) là **hai document** — MongoDB chỉ atomic trong phạm vi một document. Nếu bước (d)/(e) lỗi sau khi (c) đã thành công, mã bị chiếm nhưng không ai sở hữu: nhân viên mất mã, không nhập lại được, Ops nhìn dashboard thấy `isUsed: true` trỏ tới người không có nhãn nhân viên.
+Ba bước (c), (d), (e) ghi vào **ba collection khác nhau** (`manage-codes`, `user-partners`, `user-segments`). MongoDB chỉ atomic trong phạm vi một document, nên nếu (c) thành công rồi (d) lỗi thì mã bị chiếm mà không ai sở hữu: nhân viên mất mã, không nhập lại được, Ops nhìn dashboard thấy `isUsed: true` trỏ tới người không có nhãn nhân viên.
 
-**Bù trừ (compensating update)** — chọn phương án này thay vì transaction để không phụ thuộc cấu hình replica set:
+**Gói cả ba bước trong một transaction.** Repo đã có sẵn helper `databasemongodb.TransactionDatabase().WithTransaction()` (`internal/module/database/mongodb/transaction.go`), đang dùng thật ở luồng rút tiền (`internal/service/withdraw.go:131`) — hạ tầng Mongo là replica set, không cần xác minh thêm.
+
 ```
-(d) hoặc (e) lỗi
-  → nhả mã: {isUsed: false, $unset: {usedBy, usedAt}}
-  → trả lỗi CommonError, user thử lại được
-  → ghi audit log sự kiện "nhả mã do lỗi"
+WithTransaction:
+    c. chiếm mã       manage-codes
+    d. gắn nhãn       user-partners
+    e. gán nhóm       user-segments
+  → bất kỳ bước nào lỗi ⇒ toàn bộ rollback, mã trở về chưa dùng
 ```
 
-**Job đối soát** chạy hằng ngày: tìm mã `isUsed: true` mà `usedBy` không có `statusStaff = "employee"` ở partner tương ứng → ghi cảnh báo cho Ops. Đây là lưới an toàn cho trường hợp cả bước bù trừ cũng thất bại.
+Nhờ vậy **không cần** cơ chế bù trừ thủ công, cũng **không cần** job đối soát mã mồ côi — trạng thái nửa vời không thể xảy ra.
+
+Audit log (bước f) ghi **sau khi** transaction commit thành công, bất đồng bộ, để lỗi ghi log không làm hỏng nghiệp vụ.
 
 **Thông báo lỗi:**
 
@@ -442,8 +446,8 @@ Chiếm mã (`manage-codes`) và gắn nhãn (`user-partners`) là **hai documen
 - [ ] Mã được chuẩn hoá ở backend — user gõ `prs8f2a1c` hay ` PRS8F2A1C ` đều khớp
 - [ ] Xác nhận thành công + mã có nhóm → user xuất hiện trong segment tương ứng ngay
 - [ ] Không dùng lại key lỗi của referral code
-- [ ] Mô phỏng lỗi ở bước (d) → mã được nhả, user nhập lại thành công
-- [ ] Job đối soát phát hiện được mã mồ côi (`isUsed` nhưng chủ không có nhãn)
+- [ ] Mô phỏng lỗi ở bước (d) → **transaction rollback**, mã trở về `isUsed: false`, user nhập lại thành công
+- [ ] Mô phỏng lỗi ở bước (e) → rollback cả nhãn lẫn mã, không để lại trạng thái nửa vời
 
 ---
 
@@ -461,19 +465,34 @@ Chiếm mã (`manage-codes`) và gắn nhãn (`user-partners`) là **hai documen
 | Validate format | độ dài 6–32 ký tự, chỉ `A-Z 0-9 - _` |
 | Khoá tạm | vượt ngưỡng → khoá 30 phút, thông báo rõ thời gian mở lại |
 
+Quy mô nhân viên Parasola nhỏ, nên ngưỡng này rộng rãi so với nhu cầu thật — nhân viên nhập đúng mã thì không bao giờ chạm tới. Không cần nới thêm cho đợt onboard tập trung.
+
 **Áp cho MỌI đường nhập mã**, đếm chung một khoá theo user — bao gồm:
 - `POST /users/confirm-is-staff` (FR-006)
 - Đổi trạng thái từ trang Hồ sơ (FR-009)
 
 FR-009 cho phép đổi từ "không phải nhân viên" sang "là nhân viên" không giới hạn số lần; nếu đường đó không dùng chung bộ đếm thì đó là **cửa dò mã thứ hai**.
 
-#### Yêu cầu về cách Parasola đặt mã
+#### Format mã — theo đúng cách T-Fluencers đang làm
 
-Rate limit không cứu được mã đặt tuần tự: với `PRS001`, `PRS002`… thì 20 lần/10 phút vẫn quét hết vài nghìn mã trong một đêm. Cần thống nhất với Parasola trước khi phát mã:
+**Đã chốt:** dùng cùng quy ước với T-Fluencers.
 
-- **Tối thiểu 6 ký tự ngẫu nhiên** trong mã (ví dụ `PRS-8F2A1C`)
-- **Không tuần tự**, không suy ra được từ mã nhân sự, số điện thoại hay ngày vào làm
-- Prefix nhận diện (`PRS-`) thì được, nhưng phần còn lại phải ngẫu nhiên
+```
+PRS_<8 ký tự hex ngẫu nhiên viết hoa>
+
+Ví dụ:  PRS_A3F91B2C   PRS_7D0E4A88   PRS_C15B9F30
+```
+
+Cách sinh (T-Fluencers Handbook đang hướng dẫn Ops như vậy):
+```python
+import secrets
+codes = [f"PRS_{secrets.token_hex(4).upper()}" for _ in range(N)]
+# xuất ra Excel với cột "code" và cột "group"
+```
+
+Quy ước này thoả sẵn yêu cầu chống dò mã: 8 ký tự hex = 4 tỷ tổ hợp, không tuần tự, không suy ra được từ mã nhân sự hay số điện thoại. Prefix `PRS_` chỉ để nhận diện, không làm giảm entropy.
+
+Rate limit một mình không đủ nếu mã đặt tuần tự (`PRS001`, `PRS002`…) — 20 lần/10 phút vẫn quét hết vài nghìn mã trong một đêm. Format trên loại bỏ rủi ro đó ngay từ gốc.
 
 **Acceptance Criteria:**
 - [ ] Nhập sai quá ngưỡng → bị chặn kèm thông báo *"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 30 phút."*
@@ -828,14 +847,15 @@ T-Fluencer cũng có đặc tính này nhưng không ghi ra ở đâu, dẫn t�
 - Xoá segment bị từ chối khi còn được tham chiếu bởi **một trong hai**:
   - `manage-codes.segment`
   - `events.participationRequirements.allowedSegments` — bỏ sót chỗ này thì event thành gate rỗng, âm thầm cho tất cả vào hoặc chặn tất cả
-- Xác nhận thất bại giữa chừng → nhả mã (bù trừ), có job đối soát mã mồ côi
+- Xác nhận thất bại giữa chừng → transaction rollback toàn bộ; không thể tồn tại mã bị chiếm mà không có chủ
 
 ### NFR-004: Performance
 
 - Khối `staffStatus` trong `GET /users/me` không làm `users/me` chậm đi rõ rệt; partner chưa bật tính năng thì không phát sinh truy vấn nào
-- Import 5.000 mã < 30 giây (cả dry-run lẫn import thật)
-- Thống kê FR-014 < 3 giây với 10.000 user
-- Job đối soát mã mồ côi chạy ngoài giờ cao điểm, không ảnh hưởng traffic
+- Import 1.000 mã < 10 giây (cả dry-run lẫn import thật)
+- Thống kê FR-014 < 3 giây
+
+Quy mô nhân viên Parasola nhỏ nên các mốc này rất dư. Mục tiêu hiệu năng ở đây chỉ để chặn thiết kế sai kiểu N+1 query, không phải bài toán tải thật. **Không tối ưu sớm** — chỉ thêm cache khi đo thấy vượt ngưỡng.
 
 ### NFR-005: i18n
 
@@ -942,8 +962,7 @@ User mở chi tiết chiến dịch
 | **Admin API** | `backend/pkg/admin/service/user_partner.go` | Trả thêm field + filter + sửa trạng thái |
 | **Export** | `backend/pkg/admin/service/export_*.go` | +3 cột |
 | **Thống kê** | `backend/internal/module/database/mongodb/aggregate_pipeline/` | Pipeline breakdown theo nhóm |
-| **Audit** | `backend/internal/model/mg/audit.go` + service | 5 loại sự kiện (FR-016) |
-| **Cron** | `backend/internal/cron/staff_code_reconcile.go` | File mới — đối soát mã mồ côi |
+| **Audit** | `backend/internal/model/mg/audit.go` + service | 4 loại sự kiện (FR-016) |
 | **Locale** | `backend/internal/locale/staff_code.go` + `properties/{vi,en}/` | Key lỗi mới, **không** tái dùng key referral |
 | **Admin UI** | `admin/src/pages/manage-code/` | Trang mới |
 | **Admin UI** | `admin/src/pages/partner/components/modal.tsx` | +2 toggle |
@@ -1045,19 +1064,20 @@ Tổng 16 FR.
 
 11. **Thống kê có snapshot theo thời điểm đăng bài không?** → **Không** (phương án A). Tính theo trạng thái hiện tại, đổi lại phải in ghi chú trên mọi bảng và export. Snapshot cần thêm field vào content và vẫn không xử lý được dữ liệu cũ.
 
-12. **Đảm bảo nhất quán giữa `manage-codes` và `user-partners` bằng gì?** → **Bù trừ (compensating update) + job đối soát**, không dùng Mongo transaction — tránh phụ thuộc cấu hình replica set.
+12. **Đảm bảo nhất quán giữa `manage-codes`, `user-partners` và `user-segments` bằng gì?** → **Mongo transaction.** Repo đã có helper `WithTransaction` (`internal/module/database/mongodb/transaction.go`) chạy thật ở luồng rút tiền (`internal/service/withdraw.go:131`), nên hạ tầng là replica set. Bỏ được cơ chế bù trừ thủ công và job đối soát mã mồ côi.
 
 13. **Người dùng đóng modal thì hỏi lại bao nhiêu lần?** → Cách nhau 7 ngày, tối đa 3 lần rồi thôi. Bỏ chặn cứng mà hỏi vô hạn thì cũng phiền tương đương.
+
+14. **Format mã của Parasola?** → **Theo đúng quy ước T-Fluencers**: `PRS_<8 hex ngẫu nhiên viết hoa>`, ví dụ `PRS_A3F91B2C`. Thoả sẵn yêu cầu chống dò mã, không cần quy ước riêng.
+
+15. **Quy mô nhân viên Parasola?** → **Nhỏ.** Ngưỡng rate limit và mục tiêu hiệu năng hiện tại đã rất dư; không tối ưu sớm, chỉ thêm cache nếu đo thấy vượt.
 
 ---
 
 ## 13. Open Questions
 
-1. **Parasola đã có sẵn dữ liệu nhóm theo mã chưa?** Nếu chưa, FR-014 chỉ chạy được ở mức nhị phân cho tới khi có cột nhóm trong file import.
-2. **Nhóm nhân viên Parasola chia theo tiêu chí gì?** (phòng ban / khu vực / cửa hàng…) — ảnh hưởng tới việc đặt tên segment và cách trình bày bảng thống kê FR-014.
-3. **Quy mô nhân viên Parasola khoảng bao nhiêu?** Ảnh hưởng tới ngưỡng rate limit FR-007 và mục tiêu hiệu năng NFR-004.
-4. **Xử lý nhân viên nghỉ việc?** Hiện chưa có cơ chế thu hồi nhãn hàng loạt — tạm thời Ops gỡ tay qua FR-009.
-5. **Ngưỡng rate limit ở FR-007 đã hợp lý chưa?** Cần xác nhận với vận hành, có thể cần nới cho đợt onboard tập trung.
+1. **Parasola đã có sẵn dữ liệu nhóm theo mã chưa, và chia nhóm theo tiêu chí gì?** (phòng ban / khu vực / cửa hàng…) — **câu duy nhất còn có thể làm đổi phạm vi.** Nếu Parasola không cung cấp được cột nhóm, FR-014 chỉ chạy được ở mức nhị phân nhân viên/người ngoài, tức là một trong ba mục tiêu gốc không đạt. Cần hỏi trước khi Parasola phát mã, vì cột nhóm phải có ngay từ file import đầu tiên.
+2. **Xử lý nhân viên nghỉ việc?** Chưa có cơ chế thu hồi nhãn hàng loạt — tạm thời Ops gỡ tay qua FR-009. Với quy mô nhân viên nhỏ thì chấp nhận được.
 
 ---
 
@@ -1067,5 +1087,6 @@ Tổng 16 FR.
 |---------|------|--------|---------|
 | 1.0 | 2026-08-06 | Nguyễn Đăng Định | PRD đầu tiên. Tham chiếu T-Fluencer, sửa 6 lỗi của bản đó, bổ sung phân nhóm nhân viên (T-Fluencer chưa có) |
 | 1.1 | 2026-08-06 | Nguyễn Đăng Định | Thu hẹp phạm vi về **chỉ Parasola**. Frontend chỉ làm `parasola/`, cắm theo pattern `ModalCompleteRegistration` sẵn có. Thêm persona P5 (12 partner còn lại không được ảnh hưởng) và các AC bảo vệ tương ứng |
+| 1.4 | 2026-08-06 | Nguyễn Đăng Định | Chốt 3 câu hỏi treo. **Dùng Mongo transaction** thay bù trừ — repo đã có `WithTransaction` chạy thật ở luồng rút tiền, nên hạ tầng là replica set; bỏ được cơ chế bù trừ thủ công và job cron đối soát mã mồ côi. **Format mã** theo đúng quy ước T-Fluencers (`PRS_<8 hex>`), thoả sẵn yêu cầu chống dò mã. **Quy mô nhân viên nhỏ** → nới mốc hiệu năng, ghi rõ không tối ưu sớm. Open Questions còn 2, trọng tâm là dữ liệu phân nhóm |
 | 1.3 | 2026-08-06 | Nguyễn Đăng Định | Soát nhất quán sau đợt vá v1.2: gom 2 field dismissal về FR-001 (đang khai lạc ở FR-008); sửa sơ đồ "Luồng xác nhận" ở mục 7 còn mô tả hành vi cũ (`staff-status` riêng, đóng modal không lưu); NFR-004 đổi sang `users/me`; sửa đếm sai Must Have 13→14; bổ sung 5 hạng mục thiếu trong Implementation Scope (GetMe, rate limit middleware, audit, cron đối soát, `utils/staff.ts`) |
 | 1.2 | 2026-08-06 | Nguyễn Đăng Định | Vá 12 lỗ hổng phát hiện khi review flow. **P0:** cấm ghi `isJoined`/`joinedAt` trong `confirm-is-staff` (sẽ thổi phồng số liệu partner); bù trừ khi chiếm mã thành công nhưng gắn nhãn lỗi; chốt phương án A cho thống kê hồi tố kèm ghi chú bắt buộc. **P1:** import cập nhật nhóm thay vì skip; dry-run + `importBatchId`; giới hạn số lần hỏi lại; rate limit dùng chung mọi đường nhập mã. **P2:** yêu cầu entropy khi Parasola đặt mã; ngữ nghĩa AND của `AllowedSegments` + cảnh báo trên admin UI; chặn xoá segment đang được event tham chiếu; gộp `staffStatus` vào `users/me` |

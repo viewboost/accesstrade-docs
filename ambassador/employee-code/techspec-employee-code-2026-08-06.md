@@ -2,16 +2,16 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Draft
-**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v1.3
+**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v1.4
 **Repo:** `AT-Core/ambassador`
 
 ---
 
 ## 1. Tổng quan
 
-Tài liệu này mô tả cách hiện thực hoá PRD v1.3. Mỗi mục ánh xạ trực tiếp tới FR trong PRD.
+Tài liệu này mô tả cách hiện thực hoá PRD v1.4. Mỗi mục ánh xạ trực tiếp tới FR trong PRD.
 
 ### Nguyên tắc bám theo
 
@@ -26,7 +26,7 @@ Tài liệu này mô tả cách hiện thực hoá PRD v1.3. Mỗi mục ánh x�
 | 1 | `confirm-is-staff` **không bao giờ ghi** `isJoined` / `joinedAt` | `isJoined` là điều kiện xác định user thuộc partner nào (`internal/service/user.go:226`). Ghi nhầm → thổi phồng số creator của Parasola |
 | 2 | **Không đụng** `UserPartnerRaw.Code` | Trường này đang là referral code (`migration.go:1109 UserPartnerReferralCode`) |
 | 3 | Chiếm mã bằng **một** `findOneAndUpdate` | Hai user nhập cùng lúc chỉ một người thắng |
-| 4 | Chiếm mã thành công + ghi nhãn thất bại ⇒ **nhả mã** | Hai document khác nhau, không có transaction |
+| 4 | Ba bước ghi nằm trong **một transaction** | Ghi vào 3 collection; lỗi giữa chừng phải rollback sạch |
 
 ---
 
@@ -358,35 +358,38 @@ func (u *userImpl) ConfirmIsStaff(ctx context.Context, userId modelmg.AppID, bod
 		return errors.New(locale.StaffCodeKeyInvalid)
 	}
 
-	var claimed *modelmg.ManageCodeRaw
-	if partner.Options.RequireStaffCodeValidation {
-		claimed, err = u.claimStaffCode(ctx, partner.ID, code, userId)
-		if err != nil {
-			u.recordStaffCodeFailure(ctx, userId, code)
-			return err
-		}
-	}
-
-	// Gắn nhãn. Lỗi ở đây phải NHẢ MÃ.
-	if err := u.writeStaffStatus(ctx, userId, partner.ID,
-		constants.StatusStaffIsEmployee, code); err != nil {
-		u.releaseStaffCode(ctx, claimed)
+	// Ba bước ghi vào 3 collection — gói trong MỘT transaction.
+	// Lỗi bất kỳ bước nào ⇒ rollback sạch, mã trở về chưa dùng.
+	err = databasemongodb.TransactionDatabase().WithTransaction(ctx,
+		func(sc mongo.SessionContext) error {
+			var claimed *modelmg.ManageCodeRaw
+			if partner.Options.RequireStaffCodeValidation {
+				claimed, err = u.claimStaffCode(sc, partner.ID, code, userId)
+				if err != nil {
+					return err
+				}
+			}
+			if err := u.writeStaffStatus(sc, userId, partner.ID,
+				constants.StatusStaffIsEmployee, code); err != nil {
+				return err
+			}
+			if claimed != nil && !claimed.Segment.IsZero() {
+				return u.upsertUserSegment(sc, userId, claimed.Segment)
+			}
+			return nil
+		})
+	if err != nil {
+		u.recordStaffCodeFailure(ctx, userId, code)
 		return err
 	}
 
-	// Gán nhóm. Lỗi ở đây cũng phải NHẢ MÃ + hoàn tác nhãn.
-	if claimed != nil && !claimed.Segment.IsZero() {
-		if err := u.upsertUserSegment(ctx, userId, claimed.Segment); err != nil {
-			u.releaseStaffCode(ctx, claimed)
-			_ = u.writeStaffStatus(ctx, userId, partner.ID, constants.StatusStaffNotVerify, "")
-			return err
-		}
-	}
-
+	// Ghi log SAU khi commit, bất đồng bộ — lỗi log không được làm hỏng nghiệp vụ
 	go audit.LogStaffStatusChanged(userId, partner.ID, constants.StatusStaffIsEmployee, code)
 	return nil
 }
 ```
+
+**Lưu ý khi implement:** mọi lệnh DB bên trong closure phải truyền `sc` (`mongo.SessionContext`), không phải `ctx` gốc. Truyền nhầm `ctx` thì lệnh đó nằm ngoài transaction và không được rollback — đây là lỗi phổ biến và rất khó phát hiện vì luồng happy path vẫn chạy đúng.
 
 #### `writeStaffStatus` — hàm ghi DUY NHẤT được phép chạm `user-partners`
 
@@ -473,24 +476,9 @@ func (u *userImpl) claimStaffCode(
 	}
 	return nil, errors.New(locale.StaffCodeKeyAlreadyUsed)
 }
-
-// releaseStaffCode nhả mã khi các bước sau thất bại (bù trừ).
-func (u *userImpl) releaseStaffCode(ctx context.Context, code *modelmg.ManageCodeRaw) {
-	if code == nil || code.ID.IsZero() {
-		return
-	}
-	_ = daomongodb.ManageCodeDAO().GetShare().UpdateOne(ctx,
-		new(modelmg.ManageCodeRaw),
-		bson.M{"_id": code.ID},
-		bson.M{
-			"$set":   bson.M{"isUsed": false, "updatedAt": time.Now()},
-			"$unset": bson.M{"usedBy": "", "usedAt": ""},
-		})
-	go audit.LogStaffCodeReleased(code.ID, code.Code)
-}
 ```
 
-**Vì sao bù trừ thay vì Mongo transaction:** transaction yêu cầu replica set. Hạ tầng hiện chưa xác nhận có, và ràng buộc này không đáng để chặn cả tính năng. Bù trừ + job đối soát (mục 8.2) đủ an toàn cho nghiệp vụ này.
+**Vì sao dùng transaction:** repo đã có helper `WithTransaction` (`internal/module/database/mongodb/transaction.go`) với `writeconcern.WMajority()` + `readconcern.Snapshot()`, đang chạy thật ở luồng rút tiền (`internal/service/withdraw.go:131`). Transaction đòi replica set, nên hạ tầng có sẵn — không cần xác minh thêm, và không cần viết cơ chế bù trừ thủ công.
 
 ### 4.3 Rate limit middleware (FR-007)
 
@@ -731,11 +719,9 @@ Cân nhắc cache Redis 5 phút nếu đo thấy vượt 3 giây với 10.000 us
 
 ---
 
-## 8. Audit và job đối soát
+## 8. Audit
 
-### 8.1 Audit (FR-016)
-
-Dùng `internal/model/mg/audit.go` sẵn có. Năm loại sự kiện:
+Dùng `internal/model/mg/audit.go` sẵn có. Bốn loại sự kiện:
 
 | Action | Payload |
 |---|---|
@@ -743,22 +729,10 @@ Dùng `internal/model/mg/audit.go` sẵn có. Năm loại sự kiện:
 | `staff_code_failed` | user, partner, code đã thử, ip |
 | `staff_status_changed_by_admin` | admin, user, from → to, **reason** |
 | `staff_code_imported` | admin, partner, batchId, total/inserted/updated/skipped, filename |
-| `staff_code_released` | codeId, code, nguyên nhân |
 
-Ghi bất đồng bộ (`go audit.Log...`) để không làm chậm luồng chính.
+Ghi bất đồng bộ (`go audit.Log...`) **sau khi transaction commit** — lỗi ghi log không được làm hỏng nghiệp vụ, và không được ghi log cho giao dịch đã rollback.
 
-### 8.2 Job đối soát mã mồ côi
-
-`backend/internal/cron/staff_code_reconcile.go` — chạy hằng ngày.
-
-```
-Với mỗi manage-code có isUsed = true:
-    up := user-partners {user: usedBy, partner: code.partner}
-    nếu !IsStaff(up.statusStaff):
-        ghi cảnh báo cho Ops (mã bị chiếm nhưng chủ không có nhãn)
-```
-
-Đây là lưới an toàn cho trường hợp cả bước bù trừ ở mục 4.2 cũng thất bại (ví dụ tiến trình chết giữa chừng).
+**Không cần job đối soát mã mồ côi.** Transaction ở mục 4.2 đảm bảo không thể tồn tại mã bị chiếm mà chủ không có nhãn.
 
 ---
 
@@ -934,7 +908,7 @@ Component dùng chung, đọc `failReasons` từ `CalculateEligibility`:
 | FR-013 | `pkg/admin/service/user_partner.go` | `admin/src/pages/user-partner/` |
 | FR-014 | `aggregate_pipeline/staff_breakdown.go` | `admin/src/pages/event-statistic/` |
 | FR-015 | `pkg/admin/service/export_*.go` | — |
-| FR-016 | `audit`, `internal/cron/staff_code_reconcile.go` | — |
+| FR-016 | `audit` (4 loại sự kiện) | — |
 
 ---
 
@@ -966,7 +940,7 @@ Ba nhóm đầu chạy song song được; nhóm 4 phụ thuộc nhóm 1.
 15. Cột + filter `user-partner` (FR-013)
 16. Aggregate + tab thống kê (FR-014)
 17. Export (FR-015)
-18. Audit + job đối soát (FR-016)
+18. Audit (FR-016)
 
 ---
 
@@ -1025,7 +999,7 @@ grep -rn '"employee"' backend/ --include="*.go" | grep -v constants/staff_code.g
 2. Ops import mã cho Parasola qua dry-run trước, kiểm tra kết quả, rồi import thật
 3. Deploy `parasola/`
 4. Bật `enableStaffCode` + `requireStaffCodeValidation` cho riêng Parasola
-5. Theo dõi 48 giờ: tỉ lệ nhập thành công/thất bại, số lần chạm rate limit, cảnh báo từ job đối soát
+5. Theo dõi 48 giờ: tỉ lệ nhập thành công/thất bại, số lần chạm rate limit, số creator mới của Parasola
 
 ### Rollback
 
@@ -1037,7 +1011,7 @@ Tắt `options.enableStaffCode` của Parasola. Modal biến mất, API từ ch�
 |---|---|
 | Tỉ lệ nhập mã thất bại | > 30% → mã phát sai hoặc file import thiếu |
 | Số user chạm rate limit / ngày | > 10 → nghi có dò mã |
-| Mã mồ côi từ job đối soát | > 0 → có lỗi ở bước bù trừ |
+| Lỗi transaction khi xác nhận | > 0 → xem log, có thể do truyền nhầm ctx thay vì SessionContext |
 | Số creator mới của Parasola | tăng bất thường → **nghi `isJoined` bị ghi nhầm** |
 
 ---
@@ -1047,7 +1021,7 @@ Tắt `options.enableStaffCode` của Parasola. Modal biến mất, API từ ch�
 | Rủi ro | Mức | Giảm thiểu |
 |---|---|---|
 | Ghi nhầm `isJoined` → thổi phồng số creator | **Cao** | Một hàm ghi duy nhất có comment cảnh báo + unit test bắt câu update + theo dõi số creator sau release |
-| Mã bị chiếm nhưng gắn nhãn lỗi | Trung bình | Bù trừ + job đối soát hằng ngày |
+| Truyền nhầm `ctx` thay `SessionContext` trong transaction | Trung bình | Lệnh nằm ngoài transaction, happy path vẫn đúng nên khó phát hiện — có test mô phỏng lỗi giữa chừng |
 | Parasola phát mã tuần tự → dò được | Trung bình | Thống nhất yêu cầu entropy **trước khi** phát mã (PRD FR-007) |
 | Import nhầm file 5.000 dòng | Trung bình | Dry-run bắt buộc + xoá theo `importBatchId` |
 | Thống kê kỳ cũ đổi số | Thấp | Đã chọn phương án A có ý thức, in ghi chú trên mọi bảng/export |
@@ -1058,10 +1032,8 @@ Tắt `options.enableStaffCode` của Parasola. Modal biến mất, API từ ch�
 
 ## 17. Câu hỏi cần chốt trước khi code
 
-1. **Hạ tầng Mongo có replica set không?** Nếu có thì cân nhắc dùng transaction thay bù trừ ở mục 4.2 — gọn hơn. Nếu không, giữ nguyên thiết kế hiện tại.
-2. **Quy tắc đặt mã của Parasola?** Cần chốt trước khi họ phát mã, vì không sửa được sau (PRD FR-007).
-3. **Parasola chia nhóm theo tiêu chí gì?** Ảnh hưởng cách đặt tên segment và cách trình bày bảng FR-014.
-4. **Quy mô nhân viên Parasola?** Ảnh hưởng ngưỡng rate limit và mục tiêu hiệu năng.
+1. **Parasola chia nhóm theo tiêu chí gì, và đã có sẵn dữ liệu nhóm theo mã chưa?** Câu duy nhất còn có thể làm đổi phạm vi — không có cột nhóm thì FR-014 chỉ chạy được ở mức nhị phân. Cần hỏi trước khi Parasola phát mã.
+2. **Xử lý nhân viên nghỉ việc?** Chưa có thu hồi hàng loạt; quy mô nhỏ nên tạm gỡ tay qua FR-009.
 
 ---
 
@@ -1069,4 +1041,5 @@ Tắt `options.enableStaffCode` của Parasola. Modal biến mất, API từ ch�
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-08-06 | Nguyễn Đăng Định | Đổi từ bù trừ sang Mongo transaction (mục 4.2), bỏ job cron đối soát; chốt format mã theo T-Fluencers; nới mốc hiệu năng theo quy mô nhân viên nhỏ |
 | 1.0 | 2026-08-06 | Nguyễn Đăng Định | Tech spec đầu tiên, bám PRD v1.3 |
