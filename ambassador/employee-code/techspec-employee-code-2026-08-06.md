@@ -2,16 +2,16 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 2.0
-**Status:** Draft
-**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v2.0
+**Version:** 3.0 — bản chốt
+**Status:** Final
+**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v3.0
 **Repo:** `AT-Core/ambassador`
 
 ---
 
 ## 1. Tổng quan
 
-Tài liệu này mô tả cách hiện thực hoá PRD v2.0. Thuật ngữ dùng theo mục 0 của PRD.
+Tài liệu này mô tả cách hiện thực hoá PRD v3.0. Thuật ngữ dùng theo mục 0 của PRD.
 
 ### Nguyên tắc
 
@@ -19,22 +19,23 @@ Tài liệu này mô tả cách hiện thực hoá PRD v2.0. Thuật ngữ dùng
 
 Chỉ viết mới ở hai chỗ:
 1. Ba khác biệt bắt buộc do kiến trúc Ambassador (mục 1.2)
-2. Cột `group` + gán `Segment` + thống kê theo nhóm — T-Fluencers không có
+2. `applyType: staff_code` cho segment tự động (T-Fluencers chỉ có `referral_code`) + thống kê theo nhóm
 
 ### 1.1 Bảng đối chiếu file nguồn ↔ file đích
 
 | Chức năng | T-Fluencers | Ambassador |
 |---|---|---|
-| Model mã | `internal/model/mg/manage_code.go` | như nguồn, **thêm** `Group`, `Segment` |
+| Model mã | `internal/model/mg/manage_code.go` | **như nguồn, không thêm field nào** |
 | Constants | `internal/constants/staff.go` | `internal/constants/staff_code.go` |
 | Admin CRUD mã | `pkg/admin/{router,handler,service}/manage_code.go` | như nguồn |
-| Admin UI mã | `admin/src/pages/manage-code/` | như nguồn, thêm cột Nhóm |
+| Admin UI mã | `admin/src/pages/manage-code/` | như nguồn |
 | API xác nhận | `pkg/public/service/user.go` — `ConfirmIsStaff` | như nguồn, **trừ** quy tắc ghi ở mục 4.3 |
 | API cờ hiển thị modal | `pkg/public/service/partner.go` — `GetStatusEmployee` | như nguồn, thêm kiểm tra `PartnerOpts` |
 | Gate nộp bài | `pkg/public/service/content.go:114-146` | như nguồn |
 | Mã theo event | `pkg/public/service/event.go` — `InputCodeJoinEvent` | như nguồn |
 | Modal nhập mã | `frontend/src/components/layout/main/header/components/modal-tcb-employee.tsx` | `parasola/src/.../modal-staff-code.tsx` |
 | Modal từ chối | `frontend/.../modal-not-employee.tsx` | `parasola/.../modal-not-employee.tsx` |
+| Segment tự động | `internal/model/mg/segment.go` (`Type`, `ConditionForAutomatic`) + `internal/service/segment.go` (`CheckUserInSegmentWithReferralCode`) | port nguyên, **thêm** `applyType: staff_code` |
 | Aggregate thống kê | `aggregate_pipeline/creator_analytics.go` — `GetCreatorKPIsByStaffBreakdown` | **viết mới**, thêm chiều nhóm |
 
 ### 1.2 Ba khác biệt bắt buộc
@@ -77,10 +78,6 @@ type ManageCodeRaw struct {
 	Partner AppID  `bson:"partner" json:"partner"`
 	Type    string `bson:"type" json:"type"`
 	Code    string `bson:"code" json:"code"`
-
-	// Group/Segment: THÊM MỚI so với T-Fluencers, phục vụ thống kê theo nhóm.
-	Group   string `bson:"group,omitempty" json:"group,omitempty"`
-	Segment AppID  `bson:"segment,omitempty" json:"segment,omitempty"`
 
 	// IsUsed/UsedBy/UsedAt giữ đúng ngữ nghĩa T-Fluencers: chỉ script migration
 	// ghi, luồng người dùng KHÔNG ghi. Một mã dùng được cho nhiều người.
@@ -269,6 +266,7 @@ func (u *userImpl) ConfirmIsStaff(ctx context.Context, userId modelmg.AppID, bod
 
 	code := constants.NormalizeStaffCode(body.Code)
 	manageCode := new(modelmg.ManageCodeRaw)
+	_ = manageCode // chỉ dùng để validate, không lấy nhóm từ đây
 
 	if body.IsStaff {
 		if code == "" {
@@ -291,9 +289,9 @@ func (u *userImpl) ConfirmIsStaff(ctx context.Context, userId modelmg.AppID, bod
 		return err
 	}
 
-	// THÊM MỚI so với T-Fluencers: gán vào segment theo nhóm của mã
-	if body.IsStaff && !manageCode.Segment.IsZero() {
-		_ = u.upsertUserSegment(ctx, userId, manageCode.Segment)
+	// Gán segment tự động — port cơ chế T-Fluencers (mục 4.6)
+	if body.IsStaff {
+		_ = internalservice.Segment{}.CheckUserInSegmentWithStaffCode(ctx, userId, partner.ID, code)
 	}
 	return nil
 }
@@ -393,6 +391,90 @@ Port `InputCodeJoinEvent` (`pkg/public/service/event.go:53`) nguyên vẹn. Cầ
 
 Cờ `isRequireCode` trên event list (`event.go:515`) và event detail (`event.go:1074`) port theo nguồn.
 
+### 4.6 Segment tự động theo mã nhân viên
+
+Port cơ chế sẵn có của T-Fluencers, thêm một `applyType`.
+
+**Model** — `internal/model/mg/segment.go`, Ambassador hiện chưa có 2 field này:
+
+```go
+type SegmentRaw struct {
+	// ... các trường hiện có
+	Type                  string             `bson:"type" json:"type"` // manual | automatic
+	ConditionForAutomatic *SegmentConditions `bson:"conditionForAutomatic,omitempty" json:"conditionForAutomatic,omitempty"`
+}
+
+type SegmentConditions struct {
+	ApplyType     string   `bson:"applyType" json:"applyType"`
+	ReferralCodes []string `bson:"referralCodes,omitempty" json:"referralCodes,omitempty"`
+	StaffCodes    []string `bson:"staffCodes,omitempty" json:"staffCodes,omitempty"` // THÊM MỚI
+}
+```
+
+`internal/model/mg/user_segment.go` — bổ sung `Note string` (T-Fluencers có, Ambassador chưa).
+
+**Constants** — `internal/constants/segments.go`:
+```go
+const (
+	SegmentTypeManual    = "manual"
+	SegmentTypeAutomatic = "automatic"
+)
+const (
+	SegmentApplyTypeReferralCode = "referral_code" // như T-Fluencers
+	SegmentApplyTypeStaffCode    = "staff_code"    // THÊM MỚI
+)
+```
+
+**Service** — `internal/service/segment.go`, viết theo đúng khuôn `CheckUserInSegmentWithReferralCode`:
+
+```go
+// CheckUserInSegmentWithStaffCode thêm user vào mọi segment tự động có cấu hình
+// mã nhân viên này. Khuôn giống hệt CheckUserInSegmentWithReferralCode của
+// T-Fluencers, chỉ khác applyType và trường chứa danh sách mã.
+func (s Segment) CheckUserInSegmentWithStaffCode(
+	ctx context.Context, userID, partnerID modelmg.AppID, staffCode string,
+) error {
+	data := make([]*modelmg.SegmentRaw, 0)
+	_ = daomongodb.SegmentDAO().GetShare().Find(ctx, new(modelmg.SegmentRaw), bson.M{
+		"type":                             constants.SegmentTypeAutomatic,
+		"conditionForAutomatic.applyType":  constants.SegmentApplyTypeStaffCode,
+		"conditionForAutomatic.staffCodes": staffCode,
+		"partner":                          partnerID, // chỉ segment của partner này
+	})(&data)
+	if len(data) == 0 {
+		return nil
+	}
+
+	payloads := make([]interface{}, 0)
+	for _, segment := range data {
+		userSegment := new(modelmg.UserSegmentRaw)
+		_ = daomongodb.UserSegmentDAO().GetShare().FindOne(ctx, userSegment,
+			bson.M{"user": userID, "segment": segment.ID})
+		if userSegment.ID.IsZero() { // idempotent
+			payloads = append(payloads, &modelmg.UserSegmentRaw{
+				ID:        modelmg.NewAppID(),
+				User:      userID,
+				Segment:   segment.ID,
+				Note:      "Automatic add to segment by staff code",
+				CreatedAt: time.Now(),
+				CreatedBy: userID,
+			})
+		}
+	}
+	if len(payloads) > 0 {
+		_ = daomongodb.UserSegmentDAO().GetShare().InsertMany(ctx,
+			new(modelmg.UserSegmentRaw), payloads)
+	}
+	return nil
+}
+```
+
+Khác nguồn một điểm: lọc thêm `partner` để mã của partner này không kéo user vào segment của partner khác. T-Fluencers một partner nên không cần.
+
+**Index:** `{type: 1, "conditionForAutomatic.applyType": 1, "conditionForAutomatic.staffCodes": 1}`
+
+**Tương thích ngược:** segment hiện có của Ambassador không có `type` → truy vấn `type: "automatic"` không khớp → hành vi cũ giữ nguyên. Khi hiển thị, `type` rỗng coi như `manual`.
+
 ---
 
 ## 5. Backend — Admin API
@@ -419,46 +501,39 @@ func manageCode(e *echo.Group) {
 
 Mọi handler kiểm tra `s.Staff.IsAllowPartner(partnerID)`.
 
-### 5.2 Import Excel — khác T-Fluencers ở 2 điểm
+### 5.2 Import Excel
 
-**Điểm 1 — đọc theo tên cột.** T-Fluencers dùng `ManageCodeXLSX{ Code string \`xlsx:"0"\` }`, đọc theo vị trí; file đúng tên nhưng sai thứ tự cột sẽ import sai dữ liệu mà không phát sinh cảnh báo.
+Port nguyên của T-Fluencers. **File chỉ một cột là mã.**
 
 ```go
-headerIdx := map[string]int{}
-for i, cell := range sheet.Rows[0].Cells {
-	headerIdx[strings.ToLower(strings.TrimSpace(cell.String()))] = i
+// pkg/admin/model/request/manage_code.go
+type ManageCodeXLSX struct {
+	Code string `xlsx:"0" json:"code"`
 }
-codeCol, ok := headerIdx["code"]
-if !ok {
-	return nil, errors.New(locale.ManageCodeKeyMissingCodeColumn) // từ chối TOÀN BỘ
-}
-groupCol, hasGroup := headerIdx["group"]
 ```
 
-**Điểm 2 — cột `group` và tạo segment.**
-
 ```
-Mỗi dòng:
-  code := NormalizeStaffCode(cell[codeCol])
+Mỗi dòng (bỏ dòng 0 là header):
+  code := NormalizeStaffCode(readStruct.Code)
   rỗng → ghi vào errors[], sang dòng kế
 
-  group := trim(cell[groupCol])                   (nếu có cột)
-  segmentId := resolveSegment(partnerId, group)   // cache trong RAM theo lô
-
   existing := findOne({partner, code})
-  existing != nil → skipped++                     (như T-Fluencers)
-  existing == nil → thêm vào danh sách insert kèm {group, segment}
+  existing != nil → skipped++
+  existing == nil → thêm vào danh sách insert
+
+Cuối cùng: InsertMany
 ```
 
-`resolveSegment` tra `segments` theo `{partner, name}`; chưa có thì tạo mới và cache lại để nhiều dòng cùng nhóm không tạo trùng segment.
+Không có cột nhóm. Phân nhóm làm ở mục 4.6 bằng segment tự động, đúng cách T-Fluencers làm với mã giới thiệu.
+
+**Sửa một bug của T-Fluencers:** `ImportExcel` bên đó kiểm tra `len(newCodes) == 0` hai lần liên tiếp, nhánh `CommonKeyAllCodesAlreadyExist` là code chết. Ambassador bỏ nhánh thừa.
 
 ```go
 type ImportResult struct {
-	Total           int           `json:"total"`
-	Inserted        int           `json:"inserted"`
-	Skipped         int           `json:"skipped"`
-	SegmentsCreated []string      `json:"segmentsCreated"`
-	Errors          []ImportError `json:"errors"` // {row, code, reason}
+	Total    int           `json:"total"`
+	Inserted int           `json:"inserted"`
+	Skipped  int           `json:"skipped"`
+	Errors   []ImportError `json:"errors"` // {row, code, reason}
 }
 ```
 
@@ -543,7 +618,8 @@ func GetStaffBreakdownBySegment(cond bson.M) []bson.M {
 
 | Trang | Nội dung |
 |---|---|
-| `admin/src/pages/manage-code/` | Port từ T-Fluencers: `index.tsx`, `model.ts`, `type.d.ts`, `components/{filter,table,create-modal,import-modal}.tsx`. Thêm cột **Nhóm** và filter `group`. `import-modal` hiển thị bảng kết quả liệt kê từng dòng lỗi |
+| `admin/src/pages/manage-code/` | Port từ T-Fluencers: `index.tsx`, `model.ts`, `type.d.ts`, `components/{filter,table,create-modal,import-modal}.tsx`. `import-modal` hiển thị bảng kết quả liệt kê từng dòng lỗi |
+| `admin/src/pages/segment/components/modal.tsx` | +select `type` (manual/automatic), +select `applyType`, +ô nhập danh sách mã `mode="tags"` — port từ T-Fluencers |
 | `admin/src/pages/partner/components/modal.tsx` | 2 toggle `enableStaffCode` / `requireStaffCodeValidation`, dùng `RcSwitchFormNew` như 2 toggle BXH đã có |
 | `admin/src/pages/event/components/modal.tsx` | Switch `applyForStaff`; select `mode="tags"` cho `staffCodes` với `tokenSeparators={[',', ' ', '\n']}`; select nhiều `applyForSegments` — port nguyên từ T-Fluencers |
 | `admin/src/pages/user-partner/` | +3 cột (Nhân viên / Mã nhân viên / Nhóm), +2 filter |
@@ -623,6 +699,7 @@ inputCodeJoinEvent: (id: string): IApi => ({ url: `/events/${id}/input-code-join
 | FR-002 | `model/mg/manage_code.go`, `mongodb/{collection,index}.go`, `dao/` | — |
 | FR-003 | `pkg/admin/{router,handler,service}/manage_code.go` | `admin/src/pages/manage-code/` |
 | FR-004 | `pkg/admin/service/manage_code.go` (ImportExcel) | `admin/.../import-modal.tsx` |
+| FR-005 | `model/mg/{segment,user_segment}.go`, `constants/segments.go`, `internal/service/segment.go` | `admin/src/pages/segment/components/modal.tsx` |
 | FR-005 | `pkg/public/service/partner.go` | `parasola/src/models/main.ts` |
 | FR-006 | `pkg/public/service/user.go` | — |
 | FR-007 | — | `parasola/.../modal-staff-code.tsx`, `header/index.tsx` |
@@ -644,7 +721,8 @@ inputCodeJoinEvent: (id: string): IApi => ({ url: `/events/${id}/input-code-join
 
 **Nhóm 2 — Quản lý mã**
 4. Admin CRUD `manage-codes` (FR-003)
-5. Import Excel kèm cột `group` (FR-004)
+5. Import Excel (FR-004)
+5b. Segment tự động + `CheckUserInSegmentWithStaffCode` (FR-005)
 6. Trang admin `/manage-code` (FR-003, FR-004)
 
 **Nhóm 3 — Luồng người dùng**
@@ -677,7 +755,9 @@ inputCodeJoinEvent: (id: string): IApi => ({ url: `/events/${id}/input-code-join
 | `TestIsStaff_AmbiguousIsGuest` | `""`, `"not_verify"`, `"NOT_EMPLOYEE"` đều trả `false` |
 | `TestUpsertUserSegment_Idempotent` | Gọi 3 lần → chỉ 1 bản ghi `user-segments` |
 | `TestImportExcel_ReadsByColumnName` | File đảo thứ tự cột vẫn đọc đúng |
-| `TestImportExcel_CreatesSegmentOncePerGroup` | 50 dòng cùng nhóm → tạo đúng 1 segment |
+| `TestCheckUserInSegmentWithStaffCode` | Mã thuộc 2 segment → user vào cả 2; gọi lại lần nữa không tạo bản ghi trùng |
+| `TestSegmentAutomatic_PartnerIsolation` | Mã của partner A không kéo user vào segment của partner B |
+| `TestSegmentWithoutType_BehavesAsManual` | Segment cũ không có `type` → không bị gán tự động |
 | `TestContentGate_ThreeConditions` | `applyForStaff`, `staffCodes`, `applyForSegments` chặn đúng, độc lập và kết hợp |
 
 ### 12.2 Kịch bản tích hợp
@@ -723,7 +803,7 @@ grep -rn '"employee"' backend/ --include="*.go" | grep -v constants/staff_code.g
 |---|---|
 | Tỉ lệ nhập mã thất bại | > 30% → mã phát sai hoặc file import thiếu |
 | Số creator mới của Parasola | tăng bất thường → **nghi `isJoined` bị ghi nhầm** |
-| Số nhân viên chưa vào segment nào | > 0 → file import thiếu cột `group` |
+| Số nhân viên chưa vào segment nào | > 0 → Ops chưa cấu hình segment tự động cho các mã đó |
 
 ---
 
@@ -733,7 +813,7 @@ grep -rn '"employee"' backend/ --include="*.go" | grep -v constants/staff_code.g
 |---|---|---|
 | Ghi nhầm `isJoined` → sai lệch tăng số creator | **Cao** | Một hàm ghi duy nhất có comment cảnh báo + unit test bắt câu update + theo dõi số creator sau release |
 | Mã lộ ra ngoài Parasola | Trung bình | Chấp nhận theo mô hình T-Fluencers (mã dùng chung). Xử lý khi xảy ra: xoá mã, phát mã mới |
-| Parasola không gửi cột `group` | Trung bình | Hỏi trước khi họ phát mã; nếu không có thì FR-012 chỉ ra bảng nhị phân |
+| Ops quên cấu hình segment cho một số mã | Trung bình | Nhân viên dùng mã đó rơi vào dòng "Chưa phân nhóm"; sửa được bất cứ lúc nào bằng cách thêm mã vào segment (không phải import lại) |
 | Rò rỉ sang partner khác | Thấp | Cờ mặc định `false` + kiểm tra diff trước merge + kịch bản test 9 |
 | Import sai file | Thấp | Đọc theo tên cột + báo cáo từng dòng lỗi; mã chưa dùng xoá được từ admin |
 
@@ -741,8 +821,9 @@ grep -rn '"employee"' backend/ --include="*.go" | grep -v constants/staff_code.g
 
 ## 15. Câu hỏi cần chốt trước khi code
 
-1. **Parasola chia nhóm theo tiêu chí gì, và đã có sẵn dữ liệu nhóm theo mã chưa?** Không có cột `group` thì FR-012 chỉ ra được bảng nhị phân.
-2. **Có đặt mã theo nhóm luôn không** (`PRS_MIENBAC`)? Với mô hình mã dùng chung thì cách này bỏ được cột `group` và Ops chuẩn bị nhẹ hơn hẳn.
+_(Không còn.)_
+
+Việc cần trước khi Ops cấu hình: Parasola gửi danh sách mã kèm thông tin mã nào thuộc nhóm nào, để Ops tạo segment tự động tương ứng. Đây là thao tác vận hành, không ảnh hưởng thiết kế — và sửa lại được bất cứ lúc nào mà không cần import lại mã.
 
 ---
 
@@ -750,6 +831,7 @@ grep -rn '"employee"' backend/ --include="*.go" | grep -v constants/staff_code.g
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| **3.0** | 2026-08-06 | Nguyễn Đăng Định | **Bản chốt theo PRD v3.0.** Phân nhóm chuyển sang segment tự động port từ T-Fluencers (mục 4.6, `applyType: staff_code`); `manage-codes` trở về đúng cấu trúc nguồn, import file 1 cột. Status: Final |
 | 2.0 | 2026-08-06 | Nguyễn Đăng Định | Viết lại theo PRD v2.0 — bám T-Fluencers. Bỏ transaction, claim atomic, rate limit middleware, audit trail, cron đối soát, dry-run, xoá theo lô. Thêm bảng đối chiếu file nguồn ↔ file đích để port |
 | 1.3 | 2026-08-06 | Nguyễn Đăng Định | Dùng brute-force thay "tấn công vét cạn" |
 | 1.2 | 2026-08-06 | Nguyễn Đăng Định | Chuẩn hoá thuật ngữ theo mục 0 của PRD |

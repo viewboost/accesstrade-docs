@@ -2,9 +2,9 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 2.0
+**Version:** 3.0 — bản chốt
 **Project Level:** Level 2
-**Status:** Draft
+**Status:** Final
 **Phạm vi:** **Chỉ partner Parasola.** 12 partner còn lại không bị ảnh hưởng.
 
 ---
@@ -13,22 +13,17 @@
 
 PRD cho tính năng cho phép **nhân viên Parasola** tự xác nhận danh tính nội bộ trên Ambassador bằng mã do Parasola cấp.
 
-**Nguyên tắc của bản này: bám sát luồng T-Fluencers đang chạy production.** T-Fluencers đã vận hành thực tế và được nghiệm thu, nên lấy làm chuẩn. Chỉ thiết kế mới ở hai trường hợp:
+### Nguyên tắc của bản chốt
 
-1. **Ambassador khác kiến trúc nên không thể làm giống** (mục "Khác biệt bắt buộc")
-2. **T-Fluencers không có phần đó** — cụ thể là thống kê theo nhóm nhân viên (mục FR-004, FR-012)
+**Bám sát T-Fluencers.** T-Fluencers đã chạy production và được nghiệm thu nên lấy làm chuẩn. Mọi cơ chế đều port từ đó, kể cả phần phân nhóm.
+
+Chỉ khác T-Fluencers ở đúng **ba điểm bắt buộc** do Ambassador khác kiến trúc (mục 2.2). Ngoài ba điểm đó, không thêm bất kỳ cơ chế nào không có ở T-Fluencers.
 
 **Related Documents:**
 - T-Fluencers Handbook: https://handbook.diso.vn/wiki/admin/nhan-vien/03-quan-ly-ma-nhan-vien
 - T-Fluencers SRS: https://handbook.diso.vn/srs/admin-portal/14-code
 - Dossier phân tích code T-Fluencers: [tf-reference-employee-code-flow.md](./tf-reference-employee-code-flow.md)
-
-**Điểm cắm trong repo `AT-Core/ambassador`:**
-- `backend/internal/model/mg/user_partner.go`, `partner.go`, `event.go`, `segment.go`, `user_segment.go`
-- `backend/pkg/public/service/{user,partner,content}.go`
-- `backend/pkg/admin/router/user_segment.go` — `POST /user-segments/import-excel` đã có
-- `admin/src/pages/{user-partner,segment,event,partner}/`
-- `parasola/src/components/layout/main/header/index.tsx` — điểm hiển thị modal
+- Tech spec: [techspec-employee-code-2026-08-06.md](./techspec-employee-code-2026-08-06.md)
 
 ---
 
@@ -37,9 +32,11 @@ PRD cho tính năng cho phép **nhân viên Parasola** tự xác nhận danh tí
 | Thuật ngữ | Định nghĩa |
 |---|---|
 | **Trạng thái nhân viên** (`statusStaff`) | Thuộc tính trên `user-partners`: `employee` \| `not_employee` \| `not_verify`. Rỗng = chưa khai, phân loại như `not_verify` |
-| **Mã nhân viên** | Bản ghi trong `manage-codes`, do Admin import theo partner. Một mã dùng được cho nhiều người (theo mô hình T-Fluencers) |
-| **Nhóm** | Đơn vị phân loại nhân viên (phòng ban / khu vực). Biểu diễn bằng `Segment` sẵn có của Ambassador |
-| **Tenant-level feature toggle** | Cờ bật/tắt tính năng theo từng partner, lưu trong `PartnerOpts`. Khác ENV vốn có phạm vi toàn service |
+| **Mã nhân viên** | Bản ghi trong `manage-codes`, do Admin import theo partner. **Một mã dùng được cho nhiều người** — theo mô hình T-Fluencers |
+| **Segment thủ công** | Segment mà Admin gán user vào bằng tay hoặc import danh sách userId (`type: manual`) |
+| **Segment tự động** | Segment có điều kiện; user thoả điều kiện thì hệ thống tự thêm vào (`type: automatic`). T-Fluencers đã có, áp cho mã giới thiệu |
+| **`applyType`** | Loại điều kiện của segment tự động. T-Fluencers có `referral_code`; PRD này thêm `staff_code` |
+| **Tenant-level feature toggle** | Cờ bật/tắt theo từng partner, lưu trong `PartnerOpts`. Khác ENV vốn có phạm vi toàn service |
 | **Silent failure** | Lỗi xảy ra nhưng hệ thống vẫn báo thành công |
 | **Idempotent** | Thực hiện nhiều lần cho cùng kết quả như một lần |
 
@@ -49,11 +46,21 @@ PRD cho tính năng cho phép **nhân viên Parasola** tự xác nhận danh tí
 
 Parasola muốn phân biệt **nhân viên nội bộ** với creator bên ngoài trên Ambassador, để chạy chiến dịch riêng cho nội bộ và báo cáo tách bạch đóng góp của hai nhóm.
 
-Ambassador hiện **chưa có gì** cho việc này: `UserPartnerRaw` không có trường trạng thái nhân viên (có comment xác nhận cố ý bỏ tại `partner_creator_config.go:23`), không có bảng mã nhân viên, không có API xác nhận.
+Ambassador hiện chưa có gì cho việc này: `UserPartnerRaw` không có trường trạng thái nhân viên (có comment xác nhận cố ý bỏ tại `partner_creator_config.go:23`), không có bảng mã nhân viên, không có API xác nhận.
 
-**Giải pháp:** port luồng T-Fluencers sang Ambassador. Parasola cấp mã cho nhân viên qua kênh nội bộ → Admin import danh sách mã → Nhân viên nhập mã trên web → Hệ thống đối chiếu và ghi trạng thái nhân viên. Trạng thái này dùng để chặn campaign nội bộ và tách số liệu báo cáo.
+**Giải pháp — port luồng T-Fluencers:**
 
-**Phần thêm mới so với T-Fluencers:** file import có thêm cột `group`, dùng để gán nhân viên vào `Segment`. Đây là điều kiện tiên quyết cho yêu cầu *"thống kê kết quả theo nhóm nhân viên"* — T-Fluencers chỉ tách nhị phân nhân viên/người ngoài, không có dữ liệu nhóm.
+```
+Parasola cấp mã cho nhân viên (kênh nội bộ)
+  → Admin import danh sách mã vào Ambassador
+  → Nhân viên nhập mã trên web
+  → Hệ thống ghi trạng thái nhân viên + tự đưa vào nhóm tương ứng
+  → Dùng để chặn campaign nội bộ và tách số liệu báo cáo
+```
+
+**Về phân nhóm:** T-Fluencers đã có sẵn cơ chế **segment tự động** — segment cấu hình một danh sách mã, ai nhập mã trong danh sách thì tự vào segment đó (`internal/service/segment.go` — `CheckUserInSegmentWithReferralCode`, gọi từ `pkg/public/service/referral.go:75`). Hiện áp cho **mã giới thiệu**. PRD này port nguyên cơ chế đó và thêm một `applyType` mới cho **mã nhân viên**.
+
+Nhờ vậy phần "thống kê theo nhóm nhân viên" — thứ T-Fluencers chưa làm — được giải quyết bằng chính cơ chế sẵn có của T-Fluencers, không phát sinh khái niệm mới.
 
 **Phạm vi:** backend và admin xây theo hướng dùng chung (bật/tắt bằng cờ), nhưng phase này **chỉ bật cho Parasola và chỉ làm frontend cho `parasola/`**.
 
@@ -61,21 +68,24 @@ Ambassador hiện **chưa có gì** cho việc này: `UserPartnerRaw` không có
 
 ## 2. Bối cảnh
 
-### Hiện trạng Ambassador
+### 2.1 Hiện trạng Ambassador
 
-| Thành phần | Trạng thái |
-|---|---|
-| `UserPartnerRaw.statusStaff` | ❌ Không có |
-| `UserPartnerRaw.code` | ⚠️ **Đã bị chiếm** làm referral code (`migration.go:1109`) |
-| Collection `manage-codes` | ❌ Không có |
-| API xác nhận nhân viên | ❌ Không có |
-| `Segment` + `UserSegment` + import Excel | ✅ **Đã có đủ** (BE + admin UI) |
-| `EventOpts` | ⚠️ Có, nhưng thiếu `applyForStaff` / `staffCodes` / `applyForSegments` |
-| `PartnerOpts` (tenant-level toggle) | ✅ **Đã có** pattern (`AllowResubmitRejectedContent`) |
+| Thành phần | Ambassador | T-Fluencers |
+|---|---|---|
+| `UserPartnerRaw.statusStaff` | ❌ Không có | ✅ |
+| `UserPartnerRaw.code` | ⚠️ **Đã bị chiếm** làm referral code (`migration.go:1109`) | Dùng cho mã nhân viên |
+| Collection `manage-codes` | ❌ Không có | ✅ |
+| API `confirm-is-staff`, `status-employee` | ❌ Không có | ✅ |
+| `Segment` + `UserSegment` cơ bản | ✅ Có | ✅ |
+| `SegmentRaw.Type` + `ConditionForAutomatic` | ❌ **Không có** | ✅ Có, `applyType: referral_code` |
+| `UserSegmentRaw.Note` | ❌ Không có | ✅ |
+| `EventOpts.applyForStaff` / `staffCodes` / `applyForSegments` | ❌ Không có | ✅ |
+| `UserEventRaw.Options` | ❌ Không có | ✅ |
+| `PartnerOpts` (tenant toggle) | ✅ Có pattern (`AllowResubmitRejectedContent`) | Dùng ENV |
 
-### Khác biệt bắt buộc so với T-Fluencers
+### 2.2 Ba khác biệt bắt buộc
 
-Ba chỗ **không thể** làm giống, do Ambassador khác kiến trúc:
+Chỉ ba chỗ **không thể** làm giống T-Fluencers, do Ambassador khác kiến trúc:
 
 | # | T-Fluencers | Ambassador phải làm | Lý do |
 |---|---|---|---|
@@ -83,7 +93,20 @@ Ba chỗ **không thể** làm giống, do Ambassador khác kiến trúc:
 | 2 | Tạo `UserPartnerRaw` với `IsJoined: true, JoinedAt: now` | **Không được ghi** `isJoined`/`joinedAt` | `isJoined` ở Ambassador là điều kiện xác định user thuộc partner nào (`internal/service/user.go:226`), chỉ set khi user thực sự tham gia (`:491`). Ghi ở đây sẽ làm sai lệch tăng số creator của Parasola |
 | 3 | Bật/tắt bằng ENV `IS_VALIDATE_STAFF_CODE_EXISTS` | Bật/tắt bằng `PartnerOpts` | Ambassador có 13 partner; ENV toàn service nghĩa là bật cho Parasola là bật cho cả 12 partner kia |
 
-Ngoài ba điểm trên, mọi hành vi khác **giữ nguyên như T-Fluencers**.
+**Ngoài ba điểm trên, mọi hành vi khác giữ nguyên như T-Fluencers.**
+
+### 2.3 Những gì KHÔNG thêm vào
+
+Đã cân nhắc và **loại bỏ** khỏi bản chốt, vì T-Fluencers không có:
+
+- Ràng buộc một mã một người (`isUsed` enforcement), claim atomic, Mongo transaction
+- Rate limit, validate format mã
+- Audit trail
+- Job đối soát dữ liệu
+- Dry-run và xoá theo lô khi import
+- Giới hạn số lần hiển thị modal
+- Cho phép sửa lại trạng thái sau khi đã xác nhận
+- Cột `group` trong file import mã
 
 ---
 
@@ -93,7 +116,7 @@ Ngoài ba điểm trên, mọi hành vi khác **giữ nguyên như T-Fluencers**
 
 **P2. Creator bên ngoài trên Parasola** — chiếm đa số người dùng.
 
-**P3. Admin/Ops AccessTrade** — nhận file mã từ Parasola, import, theo dõi danh sách mã.
+**P3. Admin/Ops AccessTrade** — nhận file mã từ Parasola, import, tạo segment theo nhóm, theo dõi danh sách.
 
 **P4. Marketing Parasola** — cấu hình chiến dịch chỉ dành cho nhân viên hoặc cho nhóm cụ thể, xem báo cáo theo nhóm.
 
@@ -107,11 +130,10 @@ Ngoài ba điểm trên, mọi hành vi khác **giữ nguyên như T-Fluencers**
 
 **Priority:** Must Have
 
-**Thay đổi cụ thể:**
 ```go
-// backend/internal/model/mg/user_partner.go — UserPartnerRaw
-StatusStaff string `bson:"statusStaff,omitempty" json:"statusStaff,omitempty"` // "employee" | "not_employee" | "not_verify"
-StaffCode   string `bson:"staffCode,omitempty" json:"staffCode,omitempty"`     // mã nhân viên user đã nhập
+// backend/internal/model/mg/user_partner.go
+StatusStaff string `bson:"statusStaff,omitempty" json:"statusStaff,omitempty"`
+StaffCode   string `bson:"staffCode,omitempty" json:"staffCode,omitempty"`
 ```
 
 ```go
@@ -130,11 +152,11 @@ const (
 func IsStaff(statusStaff string) bool { return statusStaff == StatusStaffIsEmployee }
 ```
 
-Đặt tên `staffCode` thay vì `code` — xem Khác biệt bắt buộc #1.
+Đặt tên `staffCode` — Khác biệt bắt buộc #1.
 
 **Acceptance Criteria:**
 - [ ] 2 field `omitempty`, bản ghi cũ không bị ảnh hưởng
-- [ ] `constants.IsStaff()` là nơi duy nhất định nghĩa quy tắc, không nơi nào so sánh chuỗi trực tiếp
+- [ ] `constants.IsStaff()` là nơi duy nhất định nghĩa quy tắc
 - [ ] Có mirror `isStaff()` phía FE kèm comment yêu cầu giữ đồng bộ
 - [ ] `UserPartnerRaw.Code` (referral) không bị đụng
 
@@ -144,20 +166,15 @@ func IsStaff(statusStaff string) bool { return statusStaff == StatusStaffIsEmplo
 
 **Priority:** Must Have
 
-Giữ nguyên cấu trúc của T-Fluencers, thêm 2 field phục vụ phân nhóm.
+Port nguyên cấu trúc T-Fluencers, **không thêm field nào**.
 
 ```go
 // backend/internal/model/mg/manage_code.go — mới
 type ManageCodeRaw struct {
-    ID      AppID  `bson:"_id"`
-    Partner AppID  `bson:"partner"`
-    Type    string `bson:"type"`  // constants.ManageCodeApplyForEmployee
-    Code    string `bson:"code"`
-
-    // THÊM MỚI so với T-Fluencers — phục vụ thống kê theo nhóm (FR-004, FR-012)
-    Group   string `bson:"group,omitempty"`   // tên nhóm từ cột "group" của file import
-    Segment AppID  `bson:"segment,omitempty"` // segment tương ứng, tạo tự động khi import
-
+    ID        AppID     `bson:"_id"`
+    Partner   AppID     `bson:"partner"`
+    Type      string    `bson:"type"`        // constants.ManageCodeApplyForEmployee
+    Code      string    `bson:"code"`
     IsUsed    bool      `bson:"isUsed"`
     UsedBy    AppID     `bson:"usedBy,omitempty"`
     UsedAt    time.Time `bson:"usedAt,omitempty"`
@@ -166,19 +183,14 @@ type ManageCodeRaw struct {
 }
 ```
 
-**Ba trường `isUsed`/`usedBy`/`usedAt` giữ đúng ngữ nghĩa T-Fluencers:** chỉ được ghi bởi script migration/backfill, **không** ghi ở luồng người dùng nhập mã. Nghĩa là **một mã dùng được cho nhiều người** — đây là hành vi của T-Fluencers và được giữ nguyên.
+**`isUsed`/`usedBy`/`usedAt` giữ đúng ngữ nghĩa T-Fluencers:** chỉ script migration ghi, luồng người dùng **không** ghi. Nghĩa là **một mã dùng được cho nhiều người**.
 
-Hệ quả cần biết: mã hiển thị `isUsed: false` kể cả khi đã có người dùng; không truy được ai đã dùng mã nào từ phía `manage-codes`. Muốn biết ai là nhân viên thì tra `user-partners.statusStaff`.
+Hệ quả cần biết: mã hiển thị `isUsed: false` kể cả khi đã có người dùng; không truy được ai đã dùng mã nào từ `manage-codes`. Muốn biết ai là nhân viên thì tra `user-partners.statusStaff`.
 
-**Index:**
-```
-{ partner: 1, code: 1 }   — tra cứu khi xác nhận
-{ partner: 1, isUsed: 1 } — filter danh sách admin
-```
+**Index:** `{partner, code}`, `{partner, isUsed}`
 
 **Acceptance Criteria:**
 - [ ] Tạo mã trùng trong cùng partner → báo lỗi (kiểm tra ở tầng service như T-Fluencers)
-- [ ] `Group` optional — partner chưa phân nhóm vẫn dùng được
 - [ ] Luồng `confirm-is-staff` **không** ghi `isUsed`/`usedBy`/`usedAt`
 
 ---
@@ -187,69 +199,124 @@ Hệ quả cần biết: mã hiển thị `isUsed: false` kể cả khi đã có
 
 **Priority:** Must Have
 
-Trang `/manage-code`, port từ `admin/src/pages/manage-code/` của T-Fluencers.
+Port trang `/manage-code` từ `admin/src/pages/manage-code/` của T-Fluencers.
 
 | Method | Endpoint | Mô tả |
 |---|---|---|
-| `GET` | `/manage-codes` | Danh sách, filter `partner`, `code`, `group`, `isUsed` |
-| `POST` | `/manage-codes` | Tạo lẻ `{partner, code, group?}` |
+| `GET` | `/manage-codes` | Danh sách, filter `partner`, `code`, `isUsed` |
+| `POST` | `/manage-codes` | Tạo lẻ `{partner, code}` |
 | `DELETE` | `/manage-codes/:id` | Xoá — từ chối nếu `isUsed = true` |
 | `POST` | `/manage-codes/import-excel` | Import hàng loạt (FR-004) |
 
-**Bảng:** Mã \| Partner \| Nhóm \| Đã dùng \| Người dùng \| Ngày dùng \| Ngày tạo
+**Bảng:** Mã \| Partner \| Đã dùng \| Người dùng \| Ngày dùng \| Ngày tạo
 
 Mọi thao tác qua kiểm tra quyền partner theo pattern `IsAllowPartner` sẵn có.
 
 **Acceptance Criteria:**
 - [ ] CRUD hoạt động, chặn trùng mã trong cùng partner
 - [ ] Xoá mã đã dùng → từ chối kèm thông báo
-- [ ] Filter `group` hoạt động (cột mới)
 
 ---
 
-### FR-004: Import mã hàng loạt kèm nhóm
+### FR-004: Import mã hàng loạt
 
 **Priority:** Must Have
 
-**Đây là phần thêm mới so với T-Fluencers.** File import của T-Fluencers chỉ có một cột mã, nên không có dữ liệu nhóm — và đó là lý do T-Fluencers không làm được thống kê theo nhóm. Ambassador cần cột `group`.
+Port nguyên của T-Fluencers. **File Excel chỉ một cột là mã.**
 
-**Format file:**
+| `code` |
+|---|
+| `PRS_A3F91B2C` |
+| `PRS_7D0E4A88` |
 
-| `code` (bắt buộc) | `group` (tuỳ chọn) |
-|---|---|
-| `PRS_A3F91B2C` | `Nhóm Miền Bắc` |
-| `PRS_7D0E4A88` | `Nhóm Miền Bắc` |
-| `PRS_C15B9F30` | `Khối Vận hành` |
+**Xử lý:** bỏ dòng header → chuẩn hoá TRIM + UPPERCASE → mã đã tồn tại thì skip → insert phần còn lại.
 
-**Xử lý:**
-1. Đọc header **theo tên cột** (`code`, `group`) — T-Fluencers đọc theo vị trí (`xlsx:"0"`), file sai thứ tự cột sẽ silent failure
-2. Chuẩn hoá `code`: TRIM + UPPERCASE
-3. Với mỗi `group` chưa có: tạo `SegmentRaw{Name: group, Partner: partnerId}`; đã có thì tái dùng
-4. Gán `ManageCodeRaw.Segment`
-5. Mã đã tồn tại → skip (như T-Fluencers), ghi lại số dòng
-6. Insert phần còn lại
-
-**Kết quả trả về:**
-```json
-{ "total": 200, "inserted": 187, "skipped": 13,
-  "segmentsCreated": ["Nhóm Miền Bắc", "Khối Vận hành"],
-  "errors": [{ "row": 45, "code": "", "reason": "Mã trống" }] }
-```
+Không có cột nhóm. Việc phân nhóm làm ở FR-005 bằng segment tự động, đúng như cách T-Fluencers làm với mã giới thiệu.
 
 **Acceptance Criteria:**
-- [ ] Đọc theo **tên cột**, không theo vị trí
-- [ ] File thiếu cột `code` → từ chối toàn bộ, không import một phần
-- [ ] Cột `group` trống → mã vẫn import được, không gán segment
-- [ ] Segment mới tạo đúng partner, không tạo trùng khi nhiều dòng cùng nhóm
-- [ ] Báo cáo liệt kê từng dòng lỗi kèm số dòng
+- [ ] Import file 1 cột hoạt động, báo số dòng thành công / bị skip
+- [ ] Mã được chuẩn hoá TRIM + UPPERCASE trước khi lưu
 
 ---
 
-### FR-005: API kiểm tra trạng thái nhân viên
+### FR-005: Segment tự động theo mã nhân viên
 
 **Priority:** Must Have
 
-Giữ nguyên endpoint và response của T-Fluencers.
+**Đây là cách phân nhóm nhân viên.** Port cơ chế segment tự động sẵn có của T-Fluencers, thêm một `applyType` mới.
+
+#### Cơ chế hiện có ở T-Fluencers
+
+```go
+// internal/model/mg/segment.go
+Type                  string             // "manual" | "automatic"
+ConditionForAutomatic *SegmentConditions
+
+type SegmentConditions struct {
+    ApplyType     string   // "referral_code"
+    ReferralCodes []string
+}
+```
+
+```go
+// internal/service/segment.go — gọi từ pkg/public/service/referral.go:75
+CheckUserInSegmentWithReferralCode(ctx, userID, referralCode)
+// → tìm mọi segment automatic chứa mã này → thêm user vào
+// → UserSegmentRaw.Note = "Automatic add to segment by referral code"
+```
+
+#### Áp cho mã nhân viên
+
+Ambassador port toàn bộ cấu trúc trên, thêm:
+
+```go
+// backend/internal/constants/segments.go
+SegmentTypeManual    = "manual"
+SegmentTypeAutomatic = "automatic"
+
+SegmentApplyTypeReferralCode = "referral_code"   // như T-Fluencers
+SegmentApplyTypeStaffCode    = "staff_code"      // THÊM MỚI
+
+// SegmentConditions — thêm một danh sách mã song song với ReferralCodes
+type SegmentConditions struct {
+    ApplyType     string   `bson:"applyType"`
+    ReferralCodes []string `bson:"referralCodes,omitempty"`
+    StaffCodes    []string `bson:"staffCodes,omitempty"`
+}
+```
+
+Bổ sung `UserSegmentRaw.Note` (T-Fluencers có, Ambassador chưa).
+
+#### Ops dùng thế nào
+
+```
+1. Import toàn bộ mã nhân viên qua FR-004
+2. Tạo segment "Nhóm Miền Bắc"
+     type = automatic
+     applyType = staff_code
+     staffCodes = [PRS_A3F91B2C, PRS_7D0E4A88, ...]
+3. Nhân viên nhập mã → tự vào đúng segment
+```
+
+Sửa nhóm về sau chỉ cần sửa danh sách mã trong segment, không phải import lại file.
+
+**Admin UI** (`admin/src/pages/segment/components/modal.tsx`): thêm select `type`, select `applyType`, và ô nhập danh sách mã dạng `mode="tags"` — port từ T-Fluencers.
+
+**Acceptance Criteria:**
+- [ ] Tạo được segment `automatic` với `applyType = staff_code`
+- [ ] Nhân viên nhập mã thuộc segment → tự xuất hiện trong segment đó
+- [ ] Một mã nằm trong nhiều segment → user vào tất cả
+- [ ] Idempotent — nhập lại cùng mã không tạo bản ghi trùng
+- [ ] `Note` ghi rõ nguồn gán tự động
+- [ ] Segment `manual` giữ nguyên hành vi cũ, không bị ảnh hưởng
+
+---
+
+### FR-006: API kiểm tra trạng thái nhân viên
+
+**Priority:** Must Have
+
+Port nguyên endpoint và response của T-Fluencers.
 
 ```
 GET /partners/:id/status-employee        (yêu cầu đăng nhập)
@@ -258,13 +325,11 @@ GET /partners/:id/status-employee        (yêu cầu đăng nhập)
 
 **Logic:**
 ```
-partner chưa bật tính năng             → false
+partner chưa bật tính năng             → false     ← khác T-Fluencers (Khác biệt #3)
 chưa có bản ghi user-partners          → true
 statusStaff ∈ {employee, not_employee} → false
 còn lại (rỗng / not_verify)            → true
 ```
-
-Chỉ khác T-Fluencers ở dòng đầu — kiểm tra `PartnerOpts.EnableStaffCode` (Khác biệt bắt buộc #3).
 
 **Acceptance Criteria:**
 - [ ] Partner tắt tính năng → luôn `false`
@@ -273,7 +338,7 @@ Chỉ khác T-Fluencers ở dòng đầu — kiểm tra `PartnerOpts.EnableStaff
 
 ---
 
-### FR-006: API xác nhận nhân viên
+### FR-007: API xác nhận nhân viên
 
 **Priority:** Must Have
 
@@ -281,7 +346,7 @@ Chỉ khác T-Fluencers ở dòng đầu — kiểm tra `PartnerOpts.EnableStaff
 POST /users/confirm-is-staff        { partner, isStaff, code }
 ```
 
-**Luồng xử lý** — giữ nguyên T-Fluencers:
+**Luồng xử lý** — port T-Fluencers:
 ```
 1. Load user      → không tồn tại / bị ban ⇒ lỗi
 2. Load partner   → không tồn tại ⇒ lỗi
@@ -292,16 +357,16 @@ POST /users/confirm-is-staff        { partner, isStaff, code }
          tìm manage-codes {partner, code, type}
          không thấy ⇒ lỗi "Mã không hợp lệ"
 4. Upsert user-partners: statusStaff + staffCode
-5. Nếu mã có Segment → upsert user-segments {user, segment}   ← phần mới, phục vụ FR-012
+5. Nếu isStaff = true → CheckUserInSegmentWithStaffCode(userId, code)   ← FR-005
 ```
 
-Bước 5 là phần thêm cho phân nhóm. Idempotent — nhập lại cùng mã không tạo bản ghi trùng.
+Bước 5 gọi cơ chế FR-005, đúng như T-Fluencers gọi `CheckUserInSegmentWithReferralCode` sau khi user nhập mã giới thiệu.
 
-**Không ghi** `isUsed`/`usedBy`/`usedAt` — giữ đúng hành vi T-Fluencers (xem FR-002).
+**Không ghi** `isUsed`/`usedBy`/`usedAt` — giữ hành vi T-Fluencers.
 
 #### ⚠️ Quy tắc ghi `user-partners`
 
-T-Fluencers tạo bản ghi mới với `IsJoined: true, JoinedAt: time.Now()`. **Ambassador không được làm vậy** — xem Khác biệt bắt buộc #2.
+T-Fluencers tạo bản ghi mới với `IsJoined: true, JoinedAt: time.Now()`. **Ambassador không được làm vậy** — Khác biệt bắt buộc #2.
 
 Thao tác ghi duy nhất được phép:
 ```go
@@ -331,22 +396,22 @@ UserPartnerDAO().UpdateOne(ctx, ..., bson.M{"user": userId, "partner": partnerId
 
 **Acceptance Criteria:**
 - [ ] **`isJoined`/`joinedAt` không xuất hiện trong bất kỳ câu ghi nào** — có test khẳng định
-- [ ] User chưa từng tham gia Parasola, bấm "Tôi không phải nhân viên" → không bị tính vào danh sách creator của partner
+- [ ] User chưa từng tham gia Parasola, bấm "Tôi không thuộc Parasola" → không bị tính vào danh sách creator của partner
 - [ ] `UserPartnerRaw.Code` không bị thay đổi
-- [ ] Xác nhận thành công + mã có nhóm → user xuất hiện trong segment tương ứng
-- [ ] Nhập lại cùng mã → không tạo bản ghi `user-segments` trùng
+- [ ] Xác nhận thành công → user vào đúng các segment cấu hình theo mã đó
+- [ ] Ba user cùng nhập một mã → cả ba thành công
 
 ---
 
-### FR-007: Modal xác nhận trên Frontend Parasola
+### FR-008: Modal xác nhận trên Frontend Parasola
 
 **Priority:** Must Have
 
 **Port nguyên UX của T-Fluencers** (`modal-tcb-employee.tsx`). Chỉ làm trong `parasola/`.
 
-**Điểm cắm:** `parasola/src/components/layout/main/header/index.tsx` đã có sẵn cơ chế này cho màn đồng ý điều khoản — `initApp` gọi `users/me` → `useEffect [user]` kiểm tra `privacyAccepted === false` → hiển thị `ModalCompleteRegistration`. Modal mã nhân viên đi theo đúng cơ chế đó, dùng chung component `AppModal`.
+**Điểm cắm:** `parasola/src/components/layout/main/header/index.tsx` đã có sẵn cơ chế này cho màn đồng ý điều khoản — `initApp` gọi `users/me` → `useEffect [user]` kiểm tra `privacyAccepted === false` → hiển thị `ModalCompleteRegistration`. Modal mã nhân viên đi theo đúng cơ chế đó, dùng chung `AppModal`.
 
-Thứ tự ưu tiên khi cả hai cùng thoả điều kiện: **modal điều khoản trước, modal nhân viên sau** — không hiển thị chồng.
+Thứ tự ưu tiên: **modal điều khoản trước, modal nhân viên sau** — không hiển thị chồng.
 
 **Hành vi — giống T-Fluencers:**
 - Modal **blocking**: `onClose={() => {}}`, `keyboard={false}`, `hideFooter`, không nút Hủy
@@ -356,13 +421,13 @@ Thứ tự ưu tiên khi cả hai cùng thoả điều kiện: **modal điều k
 - Lựa chọn ghi nhận cố định, không tự thay đổi được
 - Lỗi từ backend hiển thị dưới ô mã, không đóng modal
 
-**Sửa một lỗi hiển thị của T-Fluencers:** bản TCB hiển thị mã viết hoa (`value={employeeCode?.toUpperCase()}`) nhưng gửi lên nguyên bản (`code: employeeCode.trim()`) — user thấy `ABC123`, DB lưu `abc123`. Ambassador chuẩn hoá ở backend để giá trị lưu luôn khớp giá trị hiển thị.
+**Sửa một lỗi hiển thị của T-Fluencers:** bản gốc hiển thị mã viết hoa (`value={employeeCode?.toUpperCase()}`) nhưng gửi lên nguyên bản (`code: employeeCode.trim()`) — user thấy `ABC123`, DB lưu `abc123`. Ambassador chuẩn hoá để giá trị lưu khớp giá trị hiển thị.
 
 **Phạm vi triển khai:**
 
 | Folder | Làm gì |
 |---|---|
-| `parasola/` | ✅ Toàn bộ FR-007, FR-009 |
+| `parasola/` | ✅ Toàn bộ FR-008, FR-010 |
 | `frontend/` và 12 folder partner còn lại | ❌ **Không đụng tới** |
 
 **Acceptance Criteria:**
@@ -376,20 +441,19 @@ Thứ tự ưu tiên khi cả hai cùng thoả điều kiện: **modal điều k
 
 ---
 
-### FR-008: Chiến dịch dành riêng cho nhân viên
+### FR-009: Chiến dịch dành riêng cho nhân viên
 
 **Priority:** Must Have
 
 Port đủ **cả ba cơ chế** của T-Fluencers vào `EventOpts`:
 
 ```go
-// backend/internal/model/mg/event.go — EventOpts
-ApplyForStaff    bool     `bson:"applyForStaff,omitempty" json:"applyForStaff"`
-StaffCodes       []string `bson:"staffCodes,omitempty" json:"staffCodes,omitempty"`
-ApplyForSegments []AppID  `bson:"applyForSegments,omitempty" json:"applyForSegments,omitempty"`
+ApplyForStaff    bool     `bson:"applyForStaff,omitempty"`
+StaffCodes       []string `bson:"staffCodes,omitempty"`
+ApplyForSegments []AppID  `bson:"applyForSegments,omitempty"`
 ```
 
-**Điểm chặn khi nộp bài** — thứ tự kiểm tra như T-Fluencers (`content.go:114-146`):
+**Điểm chặn khi nộp bài** — thứ tự như T-Fluencers (`content.go:114-146`):
 
 | Điều kiện | Kiểm tra | Lỗi |
 |---|---|---|
@@ -397,13 +461,9 @@ ApplyForSegments []AppID  `bson:"applyForSegments,omitempty" json:"applyForSegme
 | `StaffCodes` | `user-events.options.codeInput` nằm trong danh sách | Bạn cần nhập mã để tham gia chương trình này |
 | `ApplyForSegments` | đếm `user-segments` giao với danh sách > 0 | Bạn không đủ điều kiện tham gia chương trình này |
 
-**Mã riêng theo event:**
-```
-POST /events/:id/input-code-join-event   { code }
-→ upsert user-events.options { codeInput, statusEmployee }
-```
+**Mã riêng theo event:** `POST /events/:id/input-code-join-event` → upsert `user-events.options {codeInput, statusEmployee}`.
 
-`UserEventRaw` của Ambassador hiện **thiếu** field `Options` — cần bổ sung:
+`UserEventRaw` của Ambassador hiện **thiếu** `Options` — cần bổ sung:
 ```go
 type UserEventOpts struct {
     CodeInput      string `bson:"codeInput" json:"codeInput"`
@@ -413,20 +473,16 @@ type UserEventOpts struct {
 
 **Cờ ra FE:** `isRequireCode` trên event list và event detail, logic như T-Fluencers.
 
-**Admin UI** (`admin/src/pages/event/components/modal.tsx`):
-- Switch `applyForStaff`
-- Select `mode="tags"` cho `staffCodes`, `tokenSeparators={[',', ' ', '\n']}`
-- Select nhiều cho `applyForSegments`, chỉ liệt kê segment của partner đang chọn
+**Admin UI** (`admin/src/pages/event/components/modal.tsx`): switch `applyForStaff`; select `mode="tags"` cho `staffCodes`; select nhiều cho `applyForSegments`.
 
 **Acceptance Criteria:**
 - [ ] Ba điều kiện hoạt động độc lập và kết hợp được
 - [ ] Event không bật điều kiện nào → hành vi không đổi
 - [ ] Chỉ chọn được segment thuộc partner của event
-- [ ] Thông báo lỗi đúng từng trường hợp, có VI và EN
 
 ---
 
-### FR-009: Thông báo khi không đủ điều kiện
+### FR-010: Thông báo khi không đủ điều kiện
 
 **Priority:** Must Have
 
@@ -437,7 +493,7 @@ Port `modal-not-employee.tsx` của T-Fluencers.
 | Không phải nhân viên, vào event `applyForStaff` | Thử thách này dành riêng cho nhân viên Parasola | **Đã hiểu** / **Khám phá thêm** |
 | Không thuộc nhóm được phép | Bạn không đủ điều kiện tham gia chương trình này | **Đã hiểu** / **Khám phá thêm** |
 
-Modal này **đóng được** — khác modal FR-007. Giống T-Fluencers.
+Modal này **đóng được** — khác modal FR-008. Giống T-Fluencers.
 
 **Acceptance Criteria:**
 - [ ] Modal đóng được, "Khám phá thêm" điều hướng về trang chủ
@@ -445,14 +501,13 @@ Modal này **đóng được** — khác modal FR-007. Giống T-Fluencers.
 
 ---
 
-### FR-010: Bật/tắt theo từng partner
+### FR-011: Bật/tắt theo từng partner
 
 **Priority:** Must Have
 
-Thay ENV của T-Fluencers bằng `PartnerOpts` — xem Khác biệt bắt buộc #3.
+Thay ENV của T-Fluencers bằng `PartnerOpts` — Khác biệt bắt buộc #3.
 
 ```go
-// backend/internal/model/mg/partner.go — PartnerOpts
 // EnableStaffCode bật luồng nhập mã nhân viên cho partner này.
 EnableStaffCode bool `bson:"enableStaffCode,omitempty" json:"enableStaffCode"`
 // RequireStaffCodeValidation tương đương ENV IS_VALIDATE_STAFF_CODE_EXISTS
@@ -469,7 +524,7 @@ RequireStaffCodeValidation bool `bson:"requireStaffCodeValidation,omitempty" jso
 
 ---
 
-### FR-011: Admin — hiển thị và lọc theo nhân viên/nhóm
+### FR-012: Admin — hiển thị và lọc theo nhân viên/nhóm
 
 **Priority:** Must Have
 
@@ -484,11 +539,11 @@ Bổ sung vào `admin/src/pages/user-partner/`:
 
 ---
 
-### FR-012: Thống kê theo nhóm nhân viên
+### FR-013: Thống kê theo nhóm nhân viên
 
 **Priority:** Must Have
 
-**T-Fluencers không có phần này.** Dashboard T-Fluencers chỉ tách nhị phân staff/guest (`GetCreatorKPIsByStaffBreakdown`) vì file import mã chỉ một cột, không có dữ liệu nhóm. Yêu cầu gốc của Ambassador ghi rõ *"Có thống kê kết quả theo nhóm nhân viên"* nên phần này thiết kế mới.
+T-Fluencers có `GetCreatorKPIsByStaffBreakdown` nhưng chỉ tách nhị phân staff/guest. Bản này giữ nguyên quy tắc tính của T-Fluencers, thêm chiều nhóm lấy từ segment (FR-005).
 
 **Vị trí:** tab mới trong `admin/src/pages/event-statistic/`.
 
@@ -501,13 +556,13 @@ Bổ sung vào `admin/src/pages/user-partner/`:
 | └ Chưa phân nhóm | 12 | 7 | 50 | 0,1tr | 7tr |
 | **Tổng — Ngoài** | 770 | 640 | 3.340 | 9,3tr | 650tr |
 
-**Quy tắc tính** — giữ nguyên quy ước của T-Fluencers:
+**Quy tắc tính** — giữ nguyên quy ước T-Fluencers:
 - "Nhân viên" = `constants.IsStaff(statusStaff)`; mọi giá trị khác thuộc "Ngoài"
 - "Ngoài" = Tổng − Nhân viên, không cộng dồn từng loại
 - Không tính bài đã bị huỷ
-- Nhân viên chưa được gán nhóm gom vào dòng "Chưa phân nhóm"
+- Nhân viên chưa thuộc segment nào gom vào "Chưa phân nhóm"
 
-**Phân loại theo trạng thái hiện tại, không snapshot.** Nhân viên xác nhận muộn thì số liệu kỳ cũ sẽ thay đổi theo. Đây cũng là hành vi của T-Fluencers; khác ở chỗ Ambassador **in ghi chú rõ** trên bảng và export:
+**Phân loại theo trạng thái hiện tại, không snapshot.** Nhân viên xác nhận muộn thì số liệu kỳ cũ thay đổi theo. Đây cũng là hành vi T-Fluencers; khác ở chỗ Ambassador **in ghi chú rõ** trên bảng và export:
 
 > *Phân loại nhân viên theo trạng thái tại thời điểm xem báo cáo.*
 
@@ -519,11 +574,11 @@ Bổ sung vào `admin/src/pages/user-partner/`:
 
 ---
 
-### FR-013: Xuất dữ liệu
+### FR-014: Xuất dữ liệu
 
 **Priority:** Should Have
 
-Bổ sung 3 cột `Nhân viên` \| `Mã nhân viên` \| `Nhóm` vào file export hồ sơ/creator hiện có; thêm nút export cho bảng FR-012.
+Bổ sung 3 cột `Nhân viên` \| `Mã nhân viên` \| `Nhóm` vào file export hồ sơ/creator hiện có; thêm nút export cho bảng FR-013.
 
 Nguồn dữ liệu như T-Fluencers: ưu tiên `UserPartnerRaw.StaffCode`, fallback `UserRaw.StaffCode` nếu có.
 
@@ -538,21 +593,22 @@ Nguồn dữ liệu như T-Fluencers: ưu tiên `UserPartnerRaw.StaffCode`, fall
 ### NFR-001: Backward Compatibility
 - Mọi field mới `omitempty`, không cần migration dữ liệu
 - `EnableStaffCode` mặc định `false` — 13 partner hiện tại không đổi hành vi
+- Segment hiện có không có `Type` → coi như `manual`, hành vi không đổi
 - Không đụng `UserPartnerRaw.Code`
 
 ### NFR-002: Data Integrity
 - Luồng `confirm-is-staff` không bao giờ ghi `isJoined`/`joinedAt`/`code`
-- Upsert `user-segments` idempotent
-- Xoá segment bị từ chối khi còn được `manage-codes.segment` hoặc `events.options.applyForSegments` tham chiếu
+- Gán segment tự động là idempotent
+- Xoá segment bị từ chối khi còn được `events.options.applyForSegments` tham chiếu
 
 ### NFR-003: Performance
 - Quy mô nhân viên Parasola nhỏ. Các mốc dưới đây chỉ để chặn thiết kế sai kiểu N+1, không phải bài toán tải thật. **Không tối ưu sớm.**
 - Import 1.000 mã < 10 giây
-- Thống kê FR-012 < 3 giây
+- Thống kê FR-013 < 3 giây
 
 ### NFR-004: i18n
 - Chuỗi mới có cả VI và EN
-- Tên nhóm lấy nguyên từ file import, không dịch
+- Tên segment lấy nguyên do Ops đặt, không dịch
 
 ---
 
@@ -560,11 +616,12 @@ Nguồn dữ liệu như T-Fluencers: ưu tiên `UserPartnerRaw.StaffCode`, fall
 
 | Epic | FR | Nội dung |
 |---|---|---|
-| **EPIC-001** Nền tảng | FR-001, 002, 010 | Model, constants, collection, index, tenant toggle |
-| **EPIC-002** Quản lý mã | FR-003, 004 | Admin CRUD + import kèm nhóm |
-| **EPIC-003** Luồng người dùng | FR-005, 006, 007 | API + modal Parasola |
-| **EPIC-004** Chiến dịch | FR-008, 009 | Ba cơ chế gate + modal từ chối |
-| **EPIC-005** Báo cáo | FR-011, 012, 013 | Cột, filter, thống kê theo nhóm, export |
+| **EPIC-001** Nền tảng | FR-001, 002, 011 | Model, constants, collection, index, tenant toggle |
+| **EPIC-002** Quản lý mã | FR-003, 004 | Admin CRUD + import |
+| **EPIC-003** Phân nhóm | FR-005 | Segment tự động theo mã nhân viên |
+| **EPIC-004** Luồng người dùng | FR-006, 007, 008 | API + modal Parasola |
+| **EPIC-005** Chiến dịch | FR-009, 010 | Ba cơ chế gate + modal từ chối |
+| **EPIC-006** Báo cáo | FR-012, 013, 014 | Cột, filter, thống kê theo nhóm, export |
 
 ---
 
@@ -576,14 +633,13 @@ Nguồn dữ liệu như T-Fluencers: ưu tiên `UserPartnerRaw.StaffCode`, fall
 Parasola phát mã cho nhân viên (kênh nội bộ)
         │
         ▼
-Admin import Excel (code | group)
-        ├──► manage-codes  {partner, type, code, group, segment}
-        └──► segments      tạo tự động theo cột group
+Admin import Excel 1 cột  →  manage-codes {partner, type, code}
+Admin tạo segment automatic → segments {type, applyType: staff_code, staffCodes[]}
         │
         ▼
 Nhân viên nhập mã  →  POST /users/confirm-is-staff
         ├──► user-partners  {statusStaff, staffCode}
-        └──► user-segments  {user, segment}      ← phần thêm mới
+        └──► CheckUserInSegmentWithStaffCode → user-segments {user, segment, note}
         │
    ┌────┴───────────────┬────────────────────┐
    ▼                    ▼                    ▼
@@ -601,7 +657,7 @@ content.go           theo nhóm           admin user-partner
        Bước 1: chọn nhánh + nhập mã (cả hai nhánh đều bắt buộc)
        Bước 2: màn xác nhận → Confirm
        → POST /users/confirm-is-staff
-            ├─ thành công → ghi statusStaff + staffCode + segment
+            ├─ thành công → ghi statusStaff + staffCode → tự vào segment
             └─ mã sai     → hiển thị lỗi dưới ô mã, giữ modal
 ```
 
@@ -615,28 +671,32 @@ content.go           theo nhóm           admin user-partner
 |---|---|---|
 | **Model** | `model/mg/user_partner.go` | +2 field |
 | **Model** | `model/mg/manage_code.go` | File mới |
-| **Model** | `model/mg/user_event.go` | +`Options` (`UserEventOpts`) |
+| **Model** | `model/mg/segment.go` | +`Type`, +`ConditionForAutomatic` |
+| **Model** | `model/mg/user_segment.go` | +`Note` |
+| **Model** | `model/mg/user_event.go` | +`Options` |
 | **Model** | `model/mg/partner.go` | +2 field trong `PartnerOpts` |
 | **Model** | `model/mg/event.go` | +3 field trong `EventOpts` |
-| **Constants** | `constants/staff_code.go` | File mới |
+| **Constants** | `constants/staff_code.go`, `constants/segments.go` | File mới |
 | **DAO** | `module/database/mongodb/` | `ManageCodeDAO` + collection + index |
+| **Service** | `internal/service/segment.go` | `CheckUserInSegmentWithStaffCode` |
 | **Public API** | `pkg/public/{router,handler,service}/user.go` | `confirm-is-staff` |
 | **Public API** | `pkg/public/{router,handler,service}/partner.go` | `status-employee` |
 | **Public API** | `pkg/public/{router,handler,service}/event.go` | `input-code-join-event` |
 | **Public API** | `pkg/public/service/content.go` | 3 điểm chặn khi nộp bài |
 | **Admin API** | `pkg/admin/{router,handler,service}/manage_code.go` | File mới |
+| **Admin API** | `pkg/admin/service/segment.go` | Hỗ trợ `type` + `conditionForAutomatic` |
 | **Admin API** | `pkg/admin/service/user_partner.go` | Trả thêm field + filter |
 | **Export** | `pkg/admin/service/export_*.go` | +3 cột |
 | **Thống kê** | `aggregate_pipeline/` | Pipeline breakdown theo nhóm |
-| **Locale** | `internal/locale/staff_code.go` + `properties/{vi,en}/` | Key mới, không tái dùng key referral |
+| **Locale** | `internal/locale/staff_code.go` + `properties/{vi,en}/` | Key mới |
 | **Admin UI** | `admin/src/pages/manage-code/` | Trang mới |
+| **Admin UI** | `admin/src/pages/segment/components/modal.tsx` | +type, +applyType, +danh sách mã |
 | **Admin UI** | `admin/src/pages/partner/components/modal.tsx` | +2 toggle |
 | **Admin UI** | `admin/src/pages/event/components/modal.tsx` | +1 switch, +2 select |
 | **Admin UI** | `admin/src/pages/user-partner/` | +3 cột, +2 filter |
 | **Admin UI** | `admin/src/pages/event-statistic/` | Tab thống kê theo nhóm |
-| **Frontend** | `parasola/src/components/layout/main/header/index.tsx` | Trigger modal |
-| **Frontend** | `parasola/src/components/layout/main/header/components/modal-staff-code.tsx` | Component mới |
-| **Frontend** | `parasola/src/components/.../modal-not-employee.tsx` | Component mới |
+| **Frontend** | `parasola/src/.../header/index.tsx` | Trigger modal |
+| **Frontend** | `parasola/src/.../modal-staff-code.tsx`, `modal-not-employee.tsx` | Component mới |
 | **Frontend** | `parasola/src/models/main.ts`, `configs/api.ts`, `utils/staff.ts` | State, endpoint, mirror `isStaff` |
 
 ### KHÔNG làm
@@ -646,6 +706,8 @@ content.go           theo nhóm           admin user-partner
 - Không dùng lại `UserPartnerRaw.Code`
 - Không ghi `isJoined`/`joinedAt` trong luồng xác nhận
 - Không dùng ENV toàn cục
+- Không thêm cột nhóm vào file import mã
+- Không thêm ràng buộc một-mã-một-người, rate limit, audit trail, transaction
 - Không dựng dashboard analytics riêng — bổ sung vào trang admin đã có
 - Không đụng logic tính thưởng, xếp hạng, duyệt nội dung
 - Không tự sinh mã — Parasola cấp, Admin import
@@ -655,10 +717,9 @@ content.go           theo nhóm           admin user-partner
 ## 9. Assumptions
 
 1. Parasola phát mã cho nhân viên qua kênh nội bộ; Ambassador không gửi mã
-2. Parasola cung cấp được file danh sách mã, kèm cột nhóm nếu muốn thống kê theo nhóm
+2. Parasola cung cấp được danh sách mã, và cho biết mã nào thuộc nhóm nào để Ops cấu hình segment
 3. Trạng thái nhân viên gắn theo partner, không phải toàn hệ thống
-4. Tên nhóm trong file import là duy nhất trong phạm vi một partner
-5. `parasola/` tiếp tục dùng Umi + dva; modal mới bám pattern `ModalCompleteRegistration` sẵn có
+4. `parasola/` tiếp tục dùng Umi + dva; modal mới bám pattern `ModalCompleteRegistration` sẵn có
 
 ---
 
@@ -678,43 +739,43 @@ content.go           theo nhóm           admin user-partner
 
 | Yêu cầu gốc | FR đáp ứng |
 |---|---|
-| Có nơi để nhân viên nhập mã | FR-005, FR-006, FR-007 |
-| Có thống kê kết quả theo nhóm nhân viên | FR-004, FR-011, FR-012, FR-013 |
-| Có campaign dành riêng cho nhân viên | FR-008, FR-009 |
-| Import nhân viên để về sau còn phân loại | FR-002, FR-003, FR-004 |
+| Có nơi để nhân viên nhập mã | FR-006, FR-007, FR-008 |
+| Có thống kê kết quả theo nhóm nhân viên | FR-005, FR-012, FR-013, FR-014 |
+| Có campaign dành riêng cho nhân viên | FR-009, FR-010 |
+| Import nhân viên để về sau còn phân loại | FR-002, FR-003, FR-004, FR-005 |
 
 | Priority | FR |
 |---|---|
-| **Must Have** (12) | FR-001 → FR-012 |
-| **Should Have** (1) | FR-013 |
+| **Must Have** (13) | FR-001 → FR-013 |
+| **Should Have** (1) | FR-014 |
 
 ---
 
 ## 12. Resolved Questions
 
-1. **Có bám theo T-Fluencers không?** → **Có.** T-Fluencers đã chạy production và được nghiệm thu; lấy làm chuẩn. Chỉ thiết kế mới ở chỗ Ambassador khác kiến trúc (3 điểm ở mục 2) và chỗ T-Fluencers không có (thống kê theo nhóm).
+1. **Có bám theo T-Fluencers không?** → **Có.** T-Fluencers đã chạy production và được nghiệm thu; lấy làm chuẩn. Chỉ khác ở 3 điểm bắt buộc do kiến trúc (mục 2.2).
 
 2. **Một mã dùng được cho mấy người?** → **Nhiều người**, như T-Fluencers. Luồng xác nhận không ghi `isUsed`.
 
-3. **Modal có chặn không?** → **Có**, blocking như T-Fluencers. Cả hai nhánh đều nhập mã. Lựa chọn cố định.
+3. **Modal có chặn không?** → **Có**, blocking. Cả hai nhánh đều nhập mã. Lựa chọn cố định.
 
-4. **Có port `staffCodes` theo event không?** → **Có**, đủ cả ba cơ chế của T-Fluencers.
+4. **Có port `staffCodes` theo event không?** → **Có**, đủ cả ba cơ chế.
 
-5. **Format mã?** → Theo quy ước T-Fluencers: `PRS_<8 hex ngẫu nhiên viết hoa>`, ví dụ `PRS_A3F91B2C`.
+5. **Phân nhóm nhân viên bằng cách nào?** → **Segment tự động, port từ T-Fluencers.** T-Fluencers đã có `type: automatic` + `applyType: referral_code` (`internal/service/segment.go`, gọi từ `referral.go:75`). Ambassador thêm `applyType: staff_code` và gọi tương tự sau `confirm-is-staff`. **Không** thêm cột `group` vào file import — đó là cơ chế tự nghĩ, đã loại bỏ.
 
-6. **Bật/tắt bằng gì?** → `PartnerOpts` thay ENV. Bắt buộc, vì Ambassador có 13 partner.
+6. **Format mã?** → Theo quy ước T-Fluencers: `PRS_<8 hex ngẫu nhiên viết hoa>`, ví dụ `PRS_A3F91B2C`. Sinh bằng `f"PRS_{secrets.token_hex(4).upper()}"` như Handbook hướng dẫn.
 
-7. **Tên trường mã?** → `staffCode`, vì `UserPartnerRaw.Code` đã là referral code.
+7. **Bật/tắt bằng gì?** → `PartnerOpts` thay ENV. Bắt buộc, vì Ambassador có 13 partner.
 
-8. **Nhóm nhân viên lấy từ đâu?** → Cột `group` trong file import, tự tạo và gán `Segment`. Phần thêm mới vì T-Fluencers không có.
+8. **Tên trường mã?** → `staffCode`, vì `UserPartnerRaw.Code` đã là referral code.
 
 ---
 
 ## 13. Open Questions
 
-1. **Parasola có sẵn dữ liệu nhóm cho từng mã chưa, và chia nhóm theo tiêu chí gì?** Nếu không có cột nhóm, FR-012 chỉ ra được bảng nhị phân nhân viên/người ngoài — tức là một trong ba mục tiêu gốc không đạt. Cần hỏi trước khi Parasola phát mã, vì cột nhóm phải có ngay từ file import đầu tiên.
+_(Không còn — đã chốt toàn bộ.)_
 
-2. **Với mô hình một mã dùng chung, có nên đặt mã theo nhóm luôn không?** Ví dụ `PRS_MIENBAC`, `PRS_VANHANH` — mỗi nhóm một mã, gửi vào nhóm chat tương ứng. Cách này bỏ được cột `group` trong file import và Ops chuẩn bị nhẹ hơn hẳn. Đánh đổi: mã dễ đoán hơn.
+Việc cần làm trước khi Ops cấu hình: Parasola gửi danh sách mã **kèm thông tin mã nào thuộc nhóm nào**, để Ops tạo segment tương ứng. Đây là thao tác vận hành, không ảnh hưởng thiết kế.
 
 ---
 
@@ -722,10 +783,11 @@ content.go           theo nhóm           admin user-partner
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 2.0 | 2026-08-06 | Nguyễn Đăng Định | **Viết lại theo hướng bám T-Fluencers.** Bỏ các thay đổi tự đề xuất ở v1.x: single-use code + claim atomic + transaction, rate limit, audit trail, dry-run + xoá theo lô, giới hạn số lần hiển thị modal, modal đóng được, chỉ nhánh nhân viên nhập mã, sửa lại trạng thái sau khi xác nhận, bỏ `staffCodes` theo event. Giữ đúng 3 khác biệt bắt buộc do kiến trúc Ambassador (`staffCode`, không ghi `isJoined`, `PartnerOpts` thay ENV) và phần T-Fluencers không có (cột `group` + thống kê theo nhóm). 16 FR → 13 FR |
+| **3.0** | 2026-08-06 | Nguyễn Đăng Định | **Bản chốt.** Phân nhóm chuyển sang **segment tự động port từ T-Fluencers** (`applyType: staff_code`) thay cho cột `group` trong file import — cột `group` là cơ chế tự nghĩ, đã loại bỏ. `manage-codes` trở về đúng cấu trúc T-Fluencers. Bổ sung `SegmentRaw.Type`, `ConditionForAutomatic`, `UserSegmentRaw.Note` (T-Fluencers có, Ambassador chưa). 13 FR → 14 FR. Status: Final |
+| 2.0 | 2026-08-06 | Nguyễn Đăng Định | Viết lại theo hướng bám T-Fluencers, bỏ các thay đổi tự đề xuất ở v1.x |
 | 1.6 | 2026-08-06 | Nguyễn Đăng Định | Dùng brute-force thay "tấn công vét cạn" |
 | 1.5 | 2026-08-06 | Nguyễn Đăng Định | Chuẩn hoá thuật ngữ kỹ thuật, bổ sung mục 0 |
-| 1.4 | 2026-08-06 | Nguyễn Đăng Định | Chốt 3 câu hỏi treo: transaction, format mã, quy mô |
+| 1.4 | 2026-08-06 | Nguyễn Đăng Định | Chốt 3 câu hỏi treo |
 | 1.3 | 2026-08-06 | Nguyễn Đăng Định | Soát nhất quán sau đợt vá v1.2 |
 | 1.2 | 2026-08-06 | Nguyễn Đăng Định | Vá 12 lỗ hổng phát hiện khi review flow |
 | 1.1 | 2026-08-06 | Nguyễn Đăng Định | Thu hẹp phạm vi về chỉ Parasola |
