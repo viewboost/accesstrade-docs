@@ -4,14 +4,14 @@
 **Author:** Nguyễn Đăng Định
 **Version:** 1.0
 **Status:** Draft
-**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v1.2
+**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v1.3
 **Repo:** `AT-Core/ambassador`
 
 ---
 
 ## 1. Tổng quan
 
-Tài liệu này mô tả cách hiện thực hoá PRD v1.2. Mỗi mục ánh xạ trực tiếp tới FR trong PRD.
+Tài liệu này mô tả cách hiện thực hoá PRD v1.3. Mỗi mục ánh xạ trực tiếp tới FR trong PRD.
 
 ### Nguyên tắc bám theo
 
@@ -1069,4 +1069,4 @@ Tắt `options.enableStaffCode` của Parasola. Modal biến mất, API từ ch�
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | 2026-08-06 | Nguyễn Đăng Định | Tech spec đầu tiên, bám PRD v1.2 |
+| 1.0 | 2026-08-06 | Nguyễn Đăng Định | Tech spec đầu tiên, bám PRD v1.3 |

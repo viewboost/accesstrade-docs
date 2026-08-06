@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 1.2
+**Version:** 1.3
 **Project Level:** Level 2
 **Status:** Draft
 **Phạm vi:** **Chỉ partner Parasola.** 12 partner còn lại không bị ảnh hưởng.
@@ -123,14 +123,20 @@ PRD này giữ phần nghiệp vụ, bỏ các lỗi trên.
 
 **Priority:** Must Have
 
-**Description:** Thêm 2 field mới. **Không tái sử dụng** `UserPartnerRaw.Code` vì trường này đã dùng cho referral code.
+**Description:** Thêm 5 field mới. **Không tái sử dụng** `UserPartnerRaw.Code` vì trường này đã dùng cho referral code.
 
 **Thay đổi cụ thể:**
 ```go
 // backend/internal/model/mg/user_partner.go — UserPartnerRaw
+
+// Trạng thái nhân viên
 StatusStaff  string    `bson:"statusStaff,omitempty" json:"statusStaff,omitempty"`  // "employee" | "not_employee" | "not_verify"
 StaffCode    string    `bson:"staffCode,omitempty" json:"staffCode,omitempty"`      // mã nhân viên đã xác nhận
 StaffCodeAt  time.Time `bson:"staffCodeAt,omitempty" json:"staffCodeAt,omitempty"`  // thời điểm xác nhận
+
+// Giới hạn số lần hỏi lại khi user đóng modal (xem FR-008)
+StaffPromptDismissedAt  time.Time `bson:"staffPromptDismissedAt,omitempty" json:"-"`
+StaffPromptDismissCount int       `bson:"staffPromptDismissCount,omitempty" json:"-"`
 ```
 
 ```go
@@ -549,11 +555,7 @@ Ngừng hỏi khi: staffPromptDismissCount >= 3
 
 Sau khi ngừng hỏi, user vẫn khai được bất cứ lúc nào qua trang Hồ sơ (FR-009).
 
-```go
-// user_partner.go — 2 field phụ trợ
-StaffPromptDismissedAt time.Time `bson:"staffPromptDismissedAt,omitempty"`
-StaffPromptDismissCount int      `bson:"staffPromptDismissCount,omitempty"`
-```
+Hai field `staffPromptDismissedAt` / `staffPromptDismissCount` khai trong FR-001.
 
 **Phạm vi triển khai:**
 
@@ -830,9 +832,10 @@ T-Fluencer cũng có đặc tính này nhưng không ghi ra ở đâu, dẫn t�
 
 ### NFR-004: Performance
 
-- `GET /partners/:id/staff-status` không làm chậm màn hình đầu sau đăng nhập
-- Import 5.000 mã < 30 giây
+- Khối `staffStatus` trong `GET /users/me` không làm `users/me` chậm đi rõ rệt; partner chưa bật tính năng thì không phát sinh truy vấn nào
+- Import 5.000 mã < 30 giây (cả dry-run lẫn import thật)
 - Thống kê FR-014 < 3 giây với 10.000 user
+- Job đối soát mã mồ côi chạy ngoài giờ cao điểm, không ảnh hưởng traffic
 
 ### NFR-005: i18n
 
@@ -894,14 +897,16 @@ CalculateEligibility     theo nhóm             admin user-partner
 
 ```
 Đăng nhập xong
-  → GET /partners/:id/staff-status
+  → GET /users/me  (khối staffStatus đi kèm, không thêm round-trip)
   → shouldAskStaffStatus = false → kết thúc
   → shouldAskStaffStatus = true  → hiện modal
-       ├─ "Tôi không phải"  → POST confirm-is-staff {isStaff:false} → xong
+       ├─ "Tôi không phải"  → POST confirm-is-staff {isStaff:false} → xong, không hỏi lại
        ├─ "Tôi là nhân viên" + mã → POST confirm-is-staff {isStaff:true, code}
-       │      ├─ thành công → gắn nhãn + vào nhóm + đóng modal
-       │      └─ lỗi        → hiện lỗi dưới ô mã, giữ modal
-       └─ đóng modal        → không lưu, lần sau hỏi lại
+       │      ├─ thành công → chiếm mã + gắn nhãn + vào nhóm + đóng modal
+       │      ├─ lỗi ở bước gắn nhãn/gán nhóm → NHẢ MÃ, báo lỗi
+       │      └─ mã sai     → hiện lỗi dưới ô mã, giữ modal, tăng bộ đếm rate limit
+       └─ đóng modal        → ghi staffPromptDismissedAt + tăng dismissCount
+                              hỏi lại sau 7 ngày, tối đa 3 lần rồi thôi
 ```
 
 ### Luồng gate chiến dịch
@@ -923,20 +928,23 @@ User mở chi tiết chiến dịch
 
 | Vùng | File | Nội dung |
 |---|---|---|
-| **Model** | `backend/internal/model/mg/user_partner.go` | +3 field |
+| **Model** | `backend/internal/model/mg/user_partner.go` | +5 field |
 | **Model** | `backend/internal/model/mg/manage_code.go` | File mới |
 | **Model** | `backend/internal/model/mg/partner.go` | +2 field trong `PartnerOpts` |
 | **Model** | `backend/internal/model/mg/event.go` | +2 field trong `ParticipationRequirements` |
-| **Constants** | `backend/internal/constants/staff_code.go` | File mới — trạng thái + `IsStaff()` |
-| **DAO** | `backend/internal/module/database/mongodb/` | `ManageCodeDAO` + collection + index |
-| **Public API** | `backend/pkg/public/{router,handler,service}/user.go` | `confirm-is-staff` |
-| **Public API** | `backend/pkg/public/{router,handler,service}/partner.go` | `staff-status` |
+| **Constants** | `backend/internal/constants/staff_code.go` | File mới — trạng thái + `IsStaff()` + chuẩn hoá/validate mã |
+| **DAO** | `backend/internal/module/database/mongodb/` | `ManageCodeDAO` + collection + index (cần helper unique index) |
+| **Public API** | `backend/pkg/public/service/user.go` | `GetMe` +khối `staffStatus`; `ConfirmIsStaff` |
+| **Public API** | `backend/pkg/public/{router,handler,service}/partner.go` | `staff-status` (đường phụ) |
+| **Middleware** | `backend/internal/echo/middleware/staff_code_rate_limit.go` | File mới — chống dò mã (FR-007) |
 | **Eligibility** | `backend/pkg/public/service/eligibility.go` | +2 điều kiện |
-| **Admin API** | `backend/pkg/admin/{router,handler,service}/manage_code.go` | File mới — CRUD + import + export |
-| **Admin API** | `backend/pkg/admin/service/user_partner.go` | Trả thêm 3 field + filter |
+| **Admin API** | `backend/pkg/admin/{router,handler,service}/manage_code.go` | File mới — CRUD + import (dry-run) + xoá theo lô + export |
+| **Admin API** | `backend/pkg/admin/service/user_partner.go` | Trả thêm field + filter + sửa trạng thái |
 | **Export** | `backend/pkg/admin/service/export_*.go` | +3 cột |
 | **Thống kê** | `backend/internal/module/database/mongodb/aggregate_pipeline/` | Pipeline breakdown theo nhóm |
-| **Locale** | `backend/internal/locale/` | Key lỗi mới (VI + EN) |
+| **Audit** | `backend/internal/model/mg/audit.go` + service | 5 loại sự kiện (FR-016) |
+| **Cron** | `backend/internal/cron/staff_code_reconcile.go` | File mới — đối soát mã mồ côi |
+| **Locale** | `backend/internal/locale/staff_code.go` + `properties/{vi,en}/` | Key lỗi mới, **không** tái dùng key referral |
 | **Admin UI** | `admin/src/pages/manage-code/` | Trang mới |
 | **Admin UI** | `admin/src/pages/partner/components/modal.tsx` | +2 toggle |
 | **Admin UI** | `admin/src/pages/event/components/modal.tsx` | +1 switch, +1 select nhóm |
@@ -944,8 +952,9 @@ User mở chi tiết chiến dịch
 | **Admin UI** | `admin/src/pages/event-statistic/` | Tab thống kê theo nhóm |
 | **Frontend** | `parasola/src/components/layout/main/header/index.tsx` | Trigger modal, cạnh logic `privacyAccepted` đã có |
 | **Frontend** | `parasola/src/components/layout/main/header/components/modal-staff-code.tsx` | Component mới |
-| **Frontend** | `parasola/src/models/main.ts` | State + effect gọi `staff-status` / `confirm-is-staff` |
+| **Frontend** | `parasola/src/models/main.ts` | State + effect `confirmIsStaff` / `dismissStaffPrompt` / `getStaffStatus` |
 | **Frontend** | `parasola/src/configs/api.ts` | 2 endpoint mới |
+| **Frontend** | `parasola/src/utils/staff.ts` | Mirror của `constants.IsStaff`, giữ đồng bộ với Go |
 | **Frontend** | `parasola/src/pages/account/` | Mục "Thông tin nhân viên" (FR-009) |
 | **Frontend** | `parasola/src/pages/content/` hoặc trang chi tiết chiến dịch | Thông báo từ chối (FR-012) |
 
@@ -1005,8 +1014,10 @@ User mở chi tiết chiến dịch
 
 | Priority | FR |
 |---|---|
-| **Must Have** (13) | FR-001, 002, 003, 004, 005, 006, 007, 008, 010, 011, 012, 013, 014, 016 |
+| **Must Have** (14) | FR-001, 002, 003, 004, 005, 006, 007, 008, 010, 011, 012, 013, 014, 016 |
 | **Should Have** (2) | FR-009, FR-015 |
+
+Tổng 16 FR.
 
 ---
 
@@ -1056,4 +1067,5 @@ User mở chi tiết chiến dịch
 |---------|------|--------|---------|
 | 1.0 | 2026-08-06 | Nguyễn Đăng Định | PRD đầu tiên. Tham chiếu T-Fluencer, sửa 6 lỗi của bản đó, bổ sung phân nhóm nhân viên (T-Fluencer chưa có) |
 | 1.1 | 2026-08-06 | Nguyễn Đăng Định | Thu hẹp phạm vi về **chỉ Parasola**. Frontend chỉ làm `parasola/`, cắm theo pattern `ModalCompleteRegistration` sẵn có. Thêm persona P5 (12 partner còn lại không được ảnh hưởng) và các AC bảo vệ tương ứng |
+| 1.3 | 2026-08-06 | Nguyễn Đăng Định | Soát nhất quán sau đợt vá v1.2: gom 2 field dismissal về FR-001 (đang khai lạc ở FR-008); sửa sơ đồ "Luồng xác nhận" ở mục 7 còn mô tả hành vi cũ (`staff-status` riêng, đóng modal không lưu); NFR-004 đổi sang `users/me`; sửa đếm sai Must Have 13→14; bổ sung 5 hạng mục thiếu trong Implementation Scope (GetMe, rate limit middleware, audit, cron đối soát, `utils/staff.ts`) |
 | 1.2 | 2026-08-06 | Nguyễn Đăng Định | Vá 12 lỗ hổng phát hiện khi review flow. **P0:** cấm ghi `isJoined`/`joinedAt` trong `confirm-is-staff` (sẽ thổi phồng số liệu partner); bù trừ khi chiếm mã thành công nhưng gắn nhãn lỗi; chốt phương án A cho thống kê hồi tố kèm ghi chú bắt buộc. **P1:** import cập nhật nhóm thay vì skip; dry-run + `importBatchId`; giới hạn số lần hỏi lại; rate limit dùng chung mọi đường nhập mã. **P2:** yêu cầu entropy khi Parasola đặt mã; ngữ nghĩa AND của `AllowedSegments` + cảnh báo trên admin UI; chặn xoá segment đang được event tham chiếu; gộp `staffStatus` vào `users/me` |
