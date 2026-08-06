@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 1.5
+**Version:** 1.6
 **Project Level:** Level 2
 **Status:** Draft
 **Phạm vi:** **Chỉ partner Parasola.** 12 partner còn lại không bị ảnh hưởng.
@@ -46,7 +46,7 @@ Dùng thống nhất trong cả PRD và tech spec.
 | **Atomic ở cấp document** | Đảm bảo của MongoDB: một lệnh ghi lên **một** document là bất khả phân. Không mở rộng sang nhiều document — đó là lý do cần transaction |
 | **Multi-document transaction** | Cơ chế ACID của MongoDB gói nhiều lệnh ghi trên nhiều collection thành một đơn vị commit/rollback. Yêu cầu replica set. Repo dùng qua helper `WithTransaction` |
 | **Partial write** | Trạng thái không nhất quán khi một phần chuỗi ghi thành công còn phần sau thất bại — ví dụ mã đã claim nhưng `statusStaff` chưa ghi |
-| **Tấn công vét cạn** (brute-force) | Thử tuần tự hoặc ngẫu nhiên nhiều giá trị mã cho tới khi trúng một mã hợp lệ |
+| **Brute-force** | Thử tuần tự hoặc ngẫu nhiên nhiều giá trị mã cho tới khi trúng một mã hợp lệ. Giữ nguyên thuật ngữ tiếng Anh vì đây là cách gọi chuẩn trong bảo mật |
 | **Attack vector** | Một đường vào mà kẻ tấn công dùng được. Ở đây: mỗi endpoint nhận mã nhân viên là một attack vector, nên tất cả phải chung một bộ đếm rate limit |
 | **Entropy của mã** | Số bit ngẫu nhiên thực sự trong mã. Mã tuần tự có entropy ≈ 0 nên rate limit không đủ bảo vệ |
 | **Tenant-level feature toggle** | Cờ bật/tắt tính năng theo từng partner, lưu trong `PartnerOpts`. Khác với ENV vốn có phạm vi toàn service |
@@ -475,11 +475,11 @@ Audit log (bước f) ghi **sau khi** transaction commit thành công, bất đ�
 
 ---
 
-### FR-007: Chống tấn công vét cạn (brute-force)
+### FR-007: Chống brute-force
 
 **Priority:** Must Have
 
-**Description:** T-Fluencer không có rate limit và không validate format `Code`; kết hợp với việc mã đúng cho quyền vĩnh viễn, vét cạn bằng script là khả thi. Ambassador phải chặn.
+**Description:** T-Fluencer không có rate limit và không validate format `Code`; kết hợp với việc mã đúng cho quyền vĩnh viễn, brute-force bằng script là khả thi. Ambassador phải chặn.
 
 **Yêu cầu:**
 | Biện pháp | Ngưỡng |
@@ -514,9 +514,9 @@ codes = [f"PRS_{secrets.token_hex(4).upper()}" for _ in range(N)]
 # xuất ra Excel với cột "code" và cột "group"
 ```
 
-Quy ước này thoả sẵn yêu cầu chống vét cạn: 8 ký tự hex = 4 tỷ tổ hợp, không tuần tự, không suy ra được từ mã nhân sự hay số điện thoại. Prefix `PRS_` chỉ để nhận diện, không làm giảm entropy.
+Quy ước này thoả sẵn yêu cầu chống brute-force: 8 ký tự hex = 4 tỷ tổ hợp, không tuần tự, không suy ra được từ mã nhân sự hay số điện thoại. Prefix `PRS_` chỉ để nhận diện, không làm giảm entropy.
 
-Rate limit một mình không đủ nếu mã đặt tuần tự (`PRS001`, `PRS002`…) — 20 lần/10 phút vẫn vét cạn được vài nghìn mã trong một đêm. Format trên loại bỏ rủi ro đó ngay từ gốc.
+Rate limit một mình không đủ nếu mã đặt tuần tự (`PRS001`, `PRS002`…) — 20 lần/10 phút vẫn dò hết vài nghìn mã trong một đêm. Format trên loại bỏ rủi ro đó ngay từ gốc.
 
 **Acceptance Criteria:**
 - [ ] Nhập sai quá ngưỡng → bị chặn kèm thông báo *"Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 30 phút."*
@@ -897,7 +897,7 @@ FR-001, FR-002, FR-010, FR-016 — model, constants, collection, index, feature 
 FR-003, FR-004 — trang `/manage-code`, CRUD, import kèm nhóm, export.
 
 ### EPIC-003: Luồng xác nhận của người dùng
-FR-005, FR-006, FR-007, FR-008, FR-009 — API, chống vét cạn, modal, sửa lại.
+FR-005, FR-006, FR-007, FR-008, FR-009 — API, chống brute-force, modal, sửa lại.
 
 ### EPIC-004: Chiến dịch cho nhân viên
 FR-011, FR-012 — điều kiện tham gia, admin UI, thông báo từ chối.
@@ -980,7 +980,7 @@ User mở chi tiết chiến dịch
 | **DAO** | `backend/internal/module/database/mongodb/` | `ManageCodeDAO` + collection + index (cần helper unique index) |
 | **Public API** | `backend/pkg/public/service/user.go` | `GetMe` +khối `staffStatus`; `ConfirmIsStaff` |
 | **Public API** | `backend/pkg/public/{router,handler,service}/partner.go` | `staff-status` (đường phụ) |
-| **Middleware** | `backend/internal/echo/middleware/staff_code_rate_limit.go` | File mới — chống vét cạn (FR-007) |
+| **Middleware** | `backend/internal/echo/middleware/staff_code_rate_limit.go` | File mới — chống brute-force (FR-007) |
 | **Eligibility** | `backend/pkg/public/service/eligibility.go` | +2 điều kiện |
 | **Admin API** | `backend/pkg/admin/{router,handler,service}/manage_code.go` | File mới — CRUD + import (dry-run) + xoá theo lô + export |
 | **Admin API** | `backend/pkg/admin/service/user_partner.go` | Trả thêm field + filter + sửa trạng thái |
@@ -1092,7 +1092,7 @@ Tổng 16 FR.
 
 13. **Người dùng đóng modal thì hỏi lại bao nhiêu lần?** → Cách nhau 7 ngày, tối đa 3 lần rồi thôi. Bỏ blocking mà hỏi vô hạn thì cũng phiền tương đương.
 
-14. **Format mã của Parasola?** → **Theo đúng quy ước T-Fluencers**: `PRS_<8 hex ngẫu nhiên viết hoa>`, ví dụ `PRS_A3F91B2C`. Thoả sẵn yêu cầu chống vét cạn, không cần quy ước riêng.
+14. **Format mã của Parasola?** → **Theo đúng quy ước T-Fluencers**: `PRS_<8 hex ngẫu nhiên viết hoa>`, ví dụ `PRS_A3F91B2C`. Thoả sẵn yêu cầu chống brute-force, không cần quy ước riêng.
 
 15. **Quy mô nhân viên Parasola?** → **Nhỏ.** Ngưỡng rate limit và mục tiêu hiệu năng hiện tại đã rất dư; không tối ưu sớm, chỉ thêm cache nếu đo thấy vượt.
 
@@ -1111,7 +1111,8 @@ Tổng 16 FR.
 |---------|------|--------|---------|
 | 1.0 | 2026-08-06 | Nguyễn Đăng Định | PRD đầu tiên. Tham chiếu T-Fluencer, sửa 6 lỗi của bản đó, bổ sung phân nhóm nhân viên (T-Fluencer chưa có) |
 | 1.1 | 2026-08-06 | Nguyễn Đăng Định | Thu hẹp phạm vi về **chỉ Parasola**. Frontend chỉ làm `parasola/`, cắm theo pattern `ModalCompleteRegistration` sẵn có. Thêm persona P5 (12 partner còn lại không được ảnh hưởng) và các AC bảo vệ tương ứng |
-| 1.5 | 2026-08-06 | Nguyễn Đăng Định | Chuẩn hoá thuật ngữ kỹ thuật trên cả PRD và tech spec: claim/giải phóng mã, atomic ở cấp document, multi-document transaction, partial write, tấn công vét cạn, attack vector, entropy, tenant-level feature toggle, silent failure. Bổ sung mục 0 — Thuật ngữ (16 định nghĩa) |
-| 1.4 | 2026-08-06 | Nguyễn Đăng Định | Chốt 3 câu hỏi treo. **Dùng Mongo transaction** thay bù trừ — repo đã có `WithTransaction` chạy thật ở luồng rút tiền, nên hạ tầng là replica set; bỏ được cơ chế bù trừ thủ công và job cron đối soát bản ghi không nhất quán. **Format mã** theo đúng quy ước T-Fluencers (`PRS_<8 hex>`), thoả sẵn yêu cầu chống vét cạn. **Quy mô nhân viên nhỏ** → nới mốc hiệu năng, ghi rõ không tối ưu sớm. Open Questions còn 2, trọng tâm là dữ liệu phân nhóm |
+| 1.6 | 2026-08-06 | Nguyễn Đăng Định | Bỏ "tấn công vét cạn", dùng thẳng **brute-force** — "vét cạn" là thuật ngữ của bài toán tìm kiếm, không phải của bảo mật |
+| 1.5 | 2026-08-06 | Nguyễn Đăng Định | Chuẩn hoá thuật ngữ kỹ thuật trên cả PRD và tech spec: claim/giải phóng mã, atomic ở cấp document, multi-document transaction, partial write, brute-force, attack vector, entropy, tenant-level feature toggle, silent failure. Bổ sung mục 0 — Thuật ngữ (16 định nghĩa) |
+| 1.4 | 2026-08-06 | Nguyễn Đăng Định | Chốt 3 câu hỏi treo. **Dùng Mongo transaction** thay bù trừ — repo đã có `WithTransaction` chạy thật ở luồng rút tiền, nên hạ tầng là replica set; bỏ được cơ chế bù trừ thủ công và job cron đối soát bản ghi không nhất quán. **Format mã** theo đúng quy ước T-Fluencers (`PRS_<8 hex>`), thoả sẵn yêu cầu chống brute-force. **Quy mô nhân viên nhỏ** → nới mốc hiệu năng, ghi rõ không tối ưu sớm. Open Questions còn 2, trọng tâm là dữ liệu phân nhóm |
 | 1.3 | 2026-08-06 | Nguyễn Đăng Định | Soát nhất quán sau đợt vá v1.2: gom 2 field dismissal về FR-001 (đang khai lạc ở FR-008); sửa sơ đồ "Luồng xác nhận" ở mục 7 còn mô tả hành vi cũ (`staff-status` riêng, đóng modal không lưu); NFR-004 đổi sang `users/me`; sửa đếm sai Must Have 13→14; bổ sung 5 hạng mục thiếu trong Implementation Scope (GetMe, rate limit middleware, audit, cron đối soát, `utils/staff.ts`) |
 | 1.2 | 2026-08-06 | Nguyễn Đăng Định | Vá 12 lỗ hổng phát hiện khi review flow. **P0:** cấm ghi `isJoined`/`joinedAt` trong `confirm-is-staff` (sẽ làm sai lệch tăng số liệu partner); bù trừ khi claim mã thành công nhưng ghi trạng thái lỗi; chốt phương án A cho thống kê hồi tố kèm ghi chú bắt buộc. **P1:** import cập nhật nhóm thay vì skip; dry-run + `importBatchId`; giới hạn số lần hỏi lại; rate limit dùng chung mọi đường nhập mã. **P2:** yêu cầu entropy khi Parasola đặt mã; ngữ nghĩa AND của `AllowedSegments` + cảnh báo trên admin UI; chặn xoá segment đang được event tham chiếu; gộp `staffStatus` vào `users/me` |

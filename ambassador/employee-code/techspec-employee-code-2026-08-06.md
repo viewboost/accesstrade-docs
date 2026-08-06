@@ -2,16 +2,16 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 1.2
+**Version:** 1.3
 **Status:** Draft
-**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v1.5
+**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v1.6
 **Repo:** `AT-Core/ambassador`
 
 ---
 
 ## 1. Tổng quan
 
-Tài liệu này mô tả cách hiện thực hoá PRD v1.5. Mỗi mục ánh xạ trực tiếp tới FR trong PRD.
+Tài liệu này mô tả cách hiện thực hoá PRD v1.6. Mỗi mục ánh xạ trực tiếp tới FR trong PRD.
 
 **Thuật ngữ** dùng theo mục 0 của PRD (claim/giải phóng mã, atomic ở cấp document, multi-document transaction, partial write, attack vector, tenant-level feature toggle, silent failure, dry-run, idempotent).
 
@@ -1012,7 +1012,7 @@ Tắt `options.enableStaffCode` của Parasola. Modal biến mất, API từ ch�
 | Chỉ số | Ngưỡng cảnh báo |
 |---|---|
 | Tỉ lệ nhập mã thất bại | > 30% → mã phát sai hoặc file import thiếu |
-| Số user chạm rate limit / ngày | > 10 → nghi có tấn công vét cạn |
+| Số user chạm rate limit / ngày | > 10 → nghi có brute-force |
 | Lỗi transaction khi xác nhận | > 0 → xem log, có thể do truyền nhầm ctx thay vì SessionContext |
 | Số creator mới của Parasola | tăng bất thường → **nghi `isJoined` bị ghi nhầm** |
 
@@ -1043,6 +1043,6 @@ Tắt `options.enableStaffCode` của Parasola. Modal biến mất, API từ ch�
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.2 | 2026-08-06 | Nguyễn Đăng Định | Chuẩn hoá thuật ngữ theo mục 0 của PRD v1.5 |
+| 1.2 | 2026-08-06 | Nguyễn Đăng Định | Chuẩn hoá thuật ngữ theo mục 0 của PRD v1.6 |
 | 1.1 | 2026-08-06 | Nguyễn Đăng Định | Đổi từ bù trừ sang Mongo transaction (mục 4.2), bỏ job cron đối soát; chốt format mã theo T-Fluencers; nới mốc hiệu năng theo quy mô nhân viên nhỏ |
 | 1.0 | 2026-08-06 | Nguyễn Đăng Định | Tech spec đầu tiên, bám PRD v1.3 |
