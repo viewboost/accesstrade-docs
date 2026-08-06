@@ -3,7 +3,7 @@
 **Project:** Ambassador (Parasola)
 **Date:** 2026-08-06
 **Author:** Dang Dinh
-**Status:** ✅ Đã triển khai — PR #97 (merged 2026-08-05) + PR #99 (open). 3 đề xuất §7: **chờ duyệt**.
+**Status:** ✅ Đã triển khai — PR #97 (merged 2026-08-05) + PR #99 (open). 2 đề xuất §7: **chờ duyệt**.
 **Version:** 1.0
 **Tài liệu kỹ thuật:** `tech-spec.md` (spec implement)
 
@@ -127,7 +127,7 @@ Khoá cache nhúng **mốc kỳ** (`week_2026-08-03`) chứ không chỉ tên k�
 |------|-----|----------|--------|
 | EPIC-001: Kỳ xếp hạng theo tuần | FR-001, FR-002, FR-003, FR-005 | Must | ~1.5 ngày |
 | EPIC-002: Index + cache | FR-004 | Must | ~0.5 ngày |
-| EPIC-003: Hoàn thiện trải nghiệm (§7) | — | Should (chờ §7) | ~1 ngày |
+| EPIC-003: Hoàn thiện trải nghiệm (§7) | — | Should (chờ §7) | ~0.5 ngày |
 
 ## 7. Đề xuất cần Sếp phê duyệt
 
@@ -135,9 +135,8 @@ Khoá cache nhúng **mốc kỳ** (`week_2026-08-03`) chứ không chỉ tên k�
 |---|------------------------|---------|-----------------|------------|
 | 1 | Sáng thứ Hai bảng chưa có dữ liệu — **ẩn hay hiện trạng thái rỗng?** | **Hiện trạng thái rỗng** "Tuần này chưa có ai ghi điểm" — giữ khối trên trang | Cả khối bảng biến mất khỏi trang cho tới lượt crawl đầu tiên; creator mở trang thấy mục quen thuộc mất hẳn | ☐ |
 | 2 | Tuần lịch (T2–CN) hay **7 ngày kể từ ngày mở campaign?** | **Tuần lịch** — creator hiểu ngay không cần giải thích | Campaign mở giữa tuần có "tuần 1" ngắn hơn 7 ngày; nếu brand trao thưởng theo tuần thì tuần đầu không công bằng | ☐ |
-| 3 | Khối tiền cá nhân đứng cạnh bảng tuần — **có gắn nhãn "luỹ kế" không?** | **Có** — gắn nhãn, không đổi cách tính (tiền là tiền thật đã kiếm) | Creator có thể hiểu nhầm tiền cũng reset theo tuần | ☐ |
 
-> Cả 3 đề xuất **không chặn** việc bật tính năng, nhưng nên chốt trước khi bật cho campaign có trao thưởng.
+> Cả 2 đề xuất **không chặn** việc bật tính năng, nhưng nên chốt trước khi bật cho campaign có trao thưởng.
 
 ## 8. Out of Scope
 

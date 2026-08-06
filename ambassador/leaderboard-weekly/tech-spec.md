@@ -2,7 +2,7 @@
 
 **Ngày:** 2026-08-06 · **Branch thực tế:** `feat/leaderboard-weekly` (từ `origin/release`, rebase sang `develop`) · `perf/leaderboard-cache` (từ `origin/develop`)
 **PRD:** `prd-leaderboard-weekly-2026-08-06.md`
-**Trạng thái:** ✅ Đã triển khai FR-001→FR-005. **PR #97** merged 2026-08-05 vào `develop`; cache + sửa kèm → **PR #99** (open). 3 đề xuất §7 PRD chờ duyệt.
+**Trạng thái:** ✅ Đã triển khai FR-001→FR-005. **PR #97** merged 2026-08-05 vào `develop`; cache + sửa kèm → **PR #99** (open). 2 đề xuất §7 PRD chờ duyệt.
 
 ---
 
@@ -288,7 +288,7 @@ go test ./pkg/public/service/ -run LeaderBoardPeriod -v                  # khoá
 
 ## Unresolved
 
-- **3 đề xuất §7 PRD chờ Sếp duyệt** — trạng thái rỗng đầu tuần, định nghĩa tuần, nhãn cho khối tiền cá nhân.
+- **2 đề xuất §7 PRD chờ Sếp duyệt** — trạng thái rỗng đầu tuần, định nghĩa tuần.
 - **PR #99** (cache + sửa kèm A/B/C) chờ review.
 - **TypeScript chưa typecheck được** — `typescript` không có trong `node_modules` của Parasola lẫn admin, cần `yarn install` rồi chạy lại.
 - **Chưa chạy với dữ liệu thật** — chưa campaign nào bật kỳ tuần; cần 1 campaign staging để đối chiếu số liệu với `user_event_analytic_daily`.
