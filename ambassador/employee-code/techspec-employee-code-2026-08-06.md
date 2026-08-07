@@ -2,16 +2,16 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 3.2 — bản chốt
+**Version:** 4.0 — bản chốt
 **Status:** Final
-**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v3.2
+**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v4.0
 **Repo:** `AT-Core/ambassador`
 
 ---
 
 ## 1. Tổng quan
 
-Tài liệu này mô tả cách hiện thực hoá PRD v3.2. Thuật ngữ dùng theo mục 0 của PRD.
+Tài liệu này mô tả cách hiện thực hoá PRD v4.0. Thuật ngữ dùng theo mục 0 của PRD.
 
 ### Nguyên tắc
 
@@ -366,9 +366,20 @@ Việc gán segment **không** làm ở đây — nằm trọn trong `CheckUserI
 
 ### 4.4 Gate nộp bài
 
-Port `pkg/public/service/content.go:114-146`, giữ nguyên thứ tự kiểm tra:
+Port `pkg/public/service/content.go:114-146` của T-Fluencers, giữ nguyên thứ tự kiểm tra.
+
+> ⚠️ **Hai điều kiện đặt sai chỗ là hỏng, đọc kỹ:**
+>
+> **(a) Ambassador chưa có biến `userPartner` trong `content.go`.** T-Fluencers load ở `content.go:105`; Ambassador thì không — grep ra rỗng. Phải tự thêm bước load, nếu không đoạn dưới không compile. Biến `event` thì đã có sẵn (`content.go:95`, `:107`).
+>
+> **(b) Khối này đặt TRƯỚC lời gọi `Eligibility().JoinEvent()` ở `content.go:123`, không nhét vào trong.** `JoinEvent` thoát sớm khi user đã join (`eligibility.go:216`) và `CalculateEligibility` fail-open khi `Enabled=false` (`:64`) — nhét vào đó là gate mất tác dụng với mọi người đã join trước.
 
 ```go
+// BƯỚC THÊM: Ambassador chưa có sẵn biến này
+userPartner := new(modelmg.UserPartnerRaw)
+_ = daomongodb.UserPartnerDAO().GetShare().FindOne(ctx, userPartner,
+	bson.M{"user": userId, "partner": event.Partner})
+
 if event.Options != nil {
 	// 1. Chỉ dành cho nhân viên
 	if event.Options.ApplyForStaff {
@@ -800,8 +811,8 @@ inputCodeJoinEvent: (id: string): IApi => ({ url: `/events/${id}/input-code-join
 
 ## 11. Thứ tự triển khai
 
-**Nhóm 0 — Tiền đề** (chặn Nhóm 2b và Nhóm 4)
-0. **`user-segments` thêm `partner` + `note`, backfill từ `segments.partner`, `Delete` kiểm `IsAllowPartner` (FR-002b)** — làm trước, sửa sau thì FR-005 và FR-013 phải viết lại
+**Nhóm 0 — Tiền đề** (chặn Nhóm 3 và Nhóm 4)
+0. **`user-segments` thêm `partner` + `note`, backfill từ `segments.partner`, `Delete` kiểm `IsAllowPartner` (FR-003)** — làm trước, sửa sau thì FR-005 và FR-013 phải viết lại
 
 **Nhóm 1 — Nền tảng** (chặn các nhóm sau)
 1. Model + constants + collection + index + DAO (FR-001, FR-002)
@@ -930,6 +941,7 @@ Việc cần trước khi Ops cấu hình: Parasola gửi danh sách mã kèm th
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| **4.0** | 2026-08-07 | Nguyễn Đăng Định | Đồng bộ PRD v4.0. **Sửa lỗi code không compile ở mục 4.4:** `content.go` của Ambassador chưa load `userPartner` (khác T-Fluencers có ở `content.go:105`) — phải thêm bước `UserPartnerDAO().FindOne` trước khối gate. Bổ sung hàm "Áp dụng lại" segment. Đánh số FR lại theo PRD (FR-002b → FR-003, backfill → FR-017) |
 | **3.2** | 2026-08-07 | Nguyễn Đăng Định | Đồng bộ PRD v3.2. Thêm ràng buộc #4 (gate đặt độc lập trước `JoinEvent`) và #5 (mọi query `user-segments` kèm `partner`). Thêm Nhóm 0 tiền đề (FR-002b) vào thứ tự triển khai và Nhóm 5 phát hành (backfill FR-015) |
 | **3.1** | 2026-08-06 | Nguyễn Đăng Định | Soát với code Ambassador theo PRD v3.1. **Mục 6 viết lại:** pipeline cũ dùng `netContent`/`netView`/`netCash` — không tồn tại trong repo (thật ra là `statistic.view.total` / `statistic.cash.total` của `EventAnalyticDailyStatistic`), không nêu collection nguồn, `$lookup` không lọc segment nhân viên và `$arrayElemAt[...,0]` gán bừa một nhóm. Thay bằng 4 bước: tập nhân viên → bản đồ nhóm → số liệu → gộp trong Go; số bài đếm từ `contents`. **Mục 5.4 mới:** chặn xoá segment đang được event tham chiếu. **Mục 10, 11: đánh số lại FR** cho khớp PRD (bản cũ lệch một bậc từ FR-006 và lặp FR-005). Dọn tàn dư bản 1.x: bỏ `upsertUserSegment` không ai gọi, bỏ key locale `manageCodeKeyMissingCodeColumn` và test đọc-theo-tên-cột (import chỉ 1 cột), sửa kịch bản "import kèm nhóm", đổi ngưỡng theo dõi sau release |
 | 3.0 | 2026-08-06 | Nguyễn Đăng Định | **Bản chốt theo PRD v3.0.** Phân nhóm chuyển sang segment tự động port từ T-Fluencers (mục 4.6, `applyType: staff_code`); `manage-codes` trở về đúng cấu trúc nguồn, import file 1 cột. Status: Final |
