@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 3.0 — bản chốt
+**Version:** 3.2 — bản chốt
 **Project Level:** Level 2
 **Status:** Final
 **Phạm vi:** **Chỉ partner Parasola.** 12 partner còn lại không bị ảnh hưởng.
@@ -21,7 +21,7 @@ Chỉ khác T-Fluencers ở đúng **ba điểm bắt buộc** do Ambassador kh�
 
 **Related Documents:**
 - T-Fluencers Handbook: https://handbook.diso.vn/wiki/admin/nhan-vien/03-quan-ly-ma-nhan-vien
-- T-Fluencers SRS: https://handbook.diso.vn/srs/admin-portal/14-code
+- ~~T-Fluencers SRS `/srs/admin-portal/14-code`~~ — **không dùng làm căn cứ**: trang mô tả mã gán theo `Ref (Event)` và trạng thái `USED`, không khớp implementation (mã gắn partner, `isUsed` không bao giờ set ở luồng live)
 - Dossier phân tích code T-Fluencers: [tf-reference-employee-code-flow.md](./tf-reference-employee-code-flow.md)
 - Tech spec: [techspec-employee-code-2026-08-06.md](./techspec-employee-code-2026-08-06.md)
 
@@ -187,11 +187,44 @@ type ManageCodeRaw struct {
 
 Hệ quả cần biết: mã hiển thị `isUsed: false` kể cả khi đã có người dùng; không truy được ai đã dùng mã nào từ `manage-codes`. Muốn biết ai là nhân viên thì tra `user-partners.statusStaff`.
 
-**Index:** `{partner, code}`, `{partner, isUsed}`
+**Index:** `{partner, code}`, `{partner, isUsed}` — **không unique**, như T-Fluencers.
+
+Chống trùng mã làm ở **tầng service** (đọc trước, chặn nếu đã có). Nghĩa là hai admin import cùng lúc vẫn có thể tạo ra hai bản ghi cùng mã. Chấp nhận có ý thức: import là thao tác thủ công hiếm, hệ quả của mã trùng chỉ là một dòng thừa trong danh sách chứ không ảnh hưởng luồng xác nhận (`FindOne` lấy bản ghi đầu tiên là đủ để validate).
 
 **Acceptance Criteria:**
 - [ ] Tạo mã trùng trong cùng partner → báo lỗi (kiểm tra ở tầng service như T-Fluencers)
 - [ ] Luồng `confirm-is-staff` **không** ghi `isUsed`/`usedBy`/`usedAt`
+
+---
+
+### FR-002b: `user-segments` phải mang `partner`
+
+**Priority:** Must Have — **prerequisite của FR-005 và FR-013, làm TRƯỚC**
+
+**Vấn đề.** `UserSegmentRaw` hiện là `{User, Segment, CreatedAt, CreatedBy}` — **không có `partner`**. `SegmentRaw.Partner` có nhưng `omitempty`, tồn tại segment global cũ. Toàn bộ phân nhóm nhân viên (FR-005) và thống kê (FR-013) cưỡi lên bảng này, nên thiếu tenant discriminator là lỗi chặn release:
+
+| Hệ quả | Chi tiết |
+|---|---|
+| Báo cáo gán nhầm nhóm | Một người vừa là NV Parasola vừa nằm trong segment marketing của partner khác → thống kê Parasola gán họ vào nhóm của partner kia, **và tên nhóm partner khác hiện lên trong báo cáo Parasola** |
+| Admin partner khác xoá được nhóm NV Parasola | `pkg/admin/service/user_segment.go:110` — `Delete` xoá theo `{_id: {$in: ids}}`, **không gọi `IsAllowPartner`** (trong khi `Add` cùng file thì có) |
+
+Ambassador ở **pool model** (shared DB, tenant discriminator). Nguyên tắc của mô hình này: mọi bảng tenant-scoped phải mang tenant id, và filter fail-closed ở tầng dưới — không dựa vào kỷ luật viết query, vì một điều kiện quên là một lần rò dữ liệu.
+
+**Thay đổi cụ thể:**
+```go
+// backend/internal/model/mg/user_segment.go
+Partner AppID  `bson:"partner,omitempty" json:"partner,omitempty"`
+Note    string `bson:"note,omitempty" json:"note,omitempty"`   // dùng ở FR-005
+```
+
+Backfill `partner` từ `segments.partner` cho bản ghi hiện có.
+
+**Acceptance Criteria:**
+- [ ] `user-segments` có `partner`, đã backfill xong trước khi triển khai FR-005
+- [ ] **Mọi truy vấn / `$lookup` trên `user-segments` đều kèm điều kiện partner** — không có ngoại lệ
+- [ ] `UserSegment.Delete` kiểm `IsAllowPartner` như `Add`
+- [ ] Admin partner A không xoá được bản ghi `user-segments` của partner B
+- [ ] Thống kê FR-013 không bao giờ hiển thị tên segment của partner khác
 
 ---
 
@@ -212,9 +245,14 @@ Port trang `/manage-code` từ `admin/src/pages/manage-code/` của T-Fluencers.
 
 Mọi thao tác qua kiểm tra quyền partner theo pattern `IsAllowPartner` sẵn có.
 
+**Bắt buộc chọn partner tường minh.** `StaffRaw.Partner` là đơn trị và `IsPermissionAllPartner()` trả `true` khi `Partner` rỗng — admin chưa gắn partner tự động thành super-admin xuyên tenant. Với dữ liệu nhân sự thì mặc định đó sai hướng:
+- Trang `/manage-code` **không có chế độ "tất cả partner"**
+- Import / xoá đều yêu cầu `partner` trong request, không suy ra từ session
+
 **Acceptance Criteria:**
 - [ ] CRUD hoạt động, chặn trùng mã trong cùng partner
 - [ ] Xoá mã đã dùng → từ chối kèm thông báo
+- [ ] Admin có `Partner` rỗng **không** xem được danh sách mã của mọi partner
 
 ---
 
@@ -232,6 +270,8 @@ Port nguyên của T-Fluencers. **File Excel chỉ một cột là mã.**
 **Xử lý:** bỏ dòng header → chuẩn hoá TRIM + UPPERCASE → mã đã tồn tại thì skip → insert phần còn lại.
 
 Không có cột nhóm. Việc phân nhóm làm ở FR-005 bằng segment tự động, đúng như cách T-Fluencers làm với mã giới thiệu.
+
+**Segment sinh ra từ luồng mã nhân viên mang `source: "staff_import"`** — dùng ở FR-005 để phân biệt với segment marketing thông thường.
 
 **Acceptance Criteria:**
 - [ ] Import file 1 cột hoạt động, báo số dòng thành công / bị skip
@@ -302,7 +342,20 @@ Sửa nhóm về sau chỉ cần sửa danh sách mã trong segment, không ph�
 
 **Admin UI** (`admin/src/pages/segment/components/modal.tsx`): thêm select `type`, select `applyType`, và ô nhập danh sách mã dạng `mode="tags"` — port từ T-Fluencers.
 
+#### Segment nhân viên là org unit, không phải audience marketing
+
+Hai khái niệm khác nhau, PRD này tách rõ:
+
+| | Segment marketing | Segment nhân viên |
+|---|---|---|
+| Ai định nghĩa | Marketer, tự do | Sinh từ danh sách mã |
+| Dùng để | Lọc, gửi thông báo | **Gate quyền tham gia** |
+| Sửa thành viên | Thêm/xoá tay thoải mái | **Không cho thêm/xoá tay** |
+
+Segment mang `source: "staff_import"` **không cho admin thêm/xoá thành viên thủ công** trên UI. Thành viên chỉ thay đổi qua việc nhân viên nhập mã, hoặc admin sửa danh sách mã trong segment. Nếu cho thêm tay, một người có quyền admin đưa user vào segment *"Nhóm Miền Bắc"* là user đó qua gate campaign nhân viên mà chưa từng nhập mã.
+
 **Acceptance Criteria:**
+- [ ] Thêm tay user vào segment `staff_import` → **bị từ chối**
 - [ ] Tạo được segment `automatic` với `applyType = staff_code`
 - [ ] Nhân viên nhập mã thuộc segment → tự xuất hiện trong segment đó
 - [ ] Một mã nằm trong nhiều segment → user vào tất cả
@@ -357,10 +410,10 @@ POST /users/confirm-is-staff        { partner, isStaff, code }
          tìm manage-codes {partner, code, type}
          không thấy ⇒ lỗi "Mã không hợp lệ"
 4. Upsert user-partners: statusStaff + staffCode
-5. Nếu isStaff = true → CheckUserInSegmentWithStaffCode(userId, code)   ← FR-005
+5. Nếu isStaff = true → CheckUserInSegmentWithStaffCode(userId, partnerId, code)   ← FR-005
 ```
 
-Bước 5 gọi cơ chế FR-005, đúng như T-Fluencers gọi `CheckUserInSegmentWithReferralCode` sau khi user nhập mã giới thiệu.
+Bước 5 gọi cơ chế FR-005, đúng như T-Fluencers gọi `CheckUserInSegmentWithReferralCode` sau khi user nhập mã giới thiệu. Khác nguồn một tham số: có thêm `partnerId` để mã của partner này không kéo user vào segment của partner khác — T-Fluencers một partner nên không cần.
 
 **Không ghi** `isUsed`/`usedBy`/`usedAt` — giữ hành vi T-Fluencers.
 
@@ -416,12 +469,59 @@ Thứ tự ưu tiên: **modal điều khoản trước, modal nhân viên sau** 
 **Hành vi — giống T-Fluencers:**
 - Modal **blocking**: `onClose={() => {}}`, `keyboard={false}`, `hideFooter`, không nút Hủy
 - Hai lựa chọn: "Tôi là nhân viên Parasola" / "Tôi không thuộc Parasola"
-- **Cả hai nhánh đều bắt buộc nhập mã**, nút Xác nhận khoá tới khi có mã
+- **Chỉ nhánh "là nhân viên" mới nhập mã**; nút Xác nhận khoá tới khi có mã (xem lý do bên dưới)
 - Hai bước: chọn + nhập mã → màn xác nhận tóm tắt → Confirm
 - Lựa chọn ghi nhận cố định, không tự thay đổi được
 - Lỗi từ backend hiển thị dưới ô mã, không đóng modal
 
 **Sửa một lỗi hiển thị của T-Fluencers:** bản gốc hiển thị mã viết hoa (`value={employeeCode?.toUpperCase()}`) nhưng gửi lên nguyên bản (`code: employeeCode.trim()`) — user thấy `ABC123`, DB lưu `abc123`. Ambassador chuẩn hoá để giá trị lưu khớp giá trị hiển thị.
+
+#### Vì sao bỏ ràng buộc "người ngoài cũng nhập mã" của T-Fluencers
+
+T-Fluencers khoá nút Xác nhận ở **cả hai** nhánh: `disabled={isTcbEmployee === null || !employeeCode.trim()}`. Người chọn *"Tôi không thuộc Techcombank"* vẫn phải nhập một mã họ không được cấp.
+
+Với Ambassador đây là **ngõ cụt thật**, không phải chuyện thẩm mỹ: modal blocking + không có mã ⇒ creator ngoài **không dùng được web nữa**. TCB thoát được vì gần như toàn bộ người dùng của họ là CBNV; Parasola thì ngược lại, creator ngoài chiếm đa số (P2).
+
+Nên Ambassador giữ nguyên mọi thứ khác của modal TCB — blocking, hai bước, lựa chọn cố định — riêng nhánh *"Tôi không thuộc Parasola"* thì **một click là xong**, không cần mã.
+
+#### Bố cục — bám component sẵn có của Parasola
+
+Dùng `AppModal` (`parasola/src/components/app/modal`) với `closeButton={false}`, `keyboard={false}`, `hideFooter` — đúng cấu hình `ModalCompleteRegistration` đang dùng. Ô nhập dùng `components/form/input`.
+
+```
+┌──────────────────────────────────────────────┐
+│  [logo]  Bạn có phải nhân viên Parasola?     │   ← không có nút X
+├──────────────────────────────────────────────┤
+│  Parasola có những chiến dịch dành riêng     │
+│  cho nhân viên nội bộ.                       │
+│                                              │
+│  ┌────────────────┐  ┌────────────────┐      │
+│  │   [icon]       │  │   [icon]       │      │
+│  │ ─────────────  │  │ ─────────────  │      │
+│  │ ☐ Tôi là nhân  │  │ ☐ Tôi không    │      │
+│  │   viên Parasola│  │   thuộc Parasola│     │
+│  └────────────────┘  └────────────────┘      │
+│                                              │
+│  [ chỉ hiện khi chọn thẻ trái ]              │
+│  Mã nhân viên                                │
+│  ┌────────────────────────────────────┐      │
+│  │ Nhập mã được cấp                   │      │
+│  └────────────────────────────────────┘      │
+│  ⚠ lỗi từ backend hiện ở đây                 │
+│                                              │
+│              [   Xác nhận   ]                │
+└──────────────────────────────────────────────┘
+```
+
+Bước 2 — màn xác nhận, giữ nguyên khung cảnh báo vàng của TCB:
+
+> ⚠ Bạn đang xác nhận rằng bạn **là / không phải là** nhân viên Parasola
+> Mã xác minh: **PRS_A3F91B2C**
+>
+> Parasola sẽ dựa trên lựa chọn này để hiển thị chiến dịch phù hợp.
+> Lựa chọn này được ghi nhận cố định và không thay đổi được.
+>
+> [ Quay lại chỉnh sửa ]  [ Xác nhận ]
 
 **Phạm vi triển khai:**
 
@@ -459,7 +559,35 @@ ApplyForSegments []AppID  `bson:"applyForSegments,omitempty"`
 |---|---|---|
 | `ApplyForStaff` | `user-partners.statusStaff == "employee"` | Chương trình này chỉ áp dụng cho nhân viên của công ty |
 | `StaffCodes` | `user-events.options.codeInput` nằm trong danh sách | Bạn cần nhập mã để tham gia chương trình này |
-| `ApplyForSegments` | đếm `user-segments` giao với danh sách > 0 | Bạn không đủ điều kiện tham gia chương trình này |
+| `ApplyForSegments` | đếm `user-segments` giao với danh sách > 0 **và** `IsStaff(statusStaff)` | Bạn không đủ điều kiện tham gia chương trình này |
+
+#### ⚠️ Ràng buộc cắm gate — bắt buộc
+
+`content.go:123` **đã có sẵn** `Eligibility().JoinEvent()`. Hàm đó hiện có hai đặc tính khiến nó **không dùng được** cho gate nhân viên:
+
+```go
+// eligibility.go:216 — đã join thì thoát, không kiểm lại
+if err == nil && !existingUserEvent.ID.IsZero() { return nil }
+
+// eligibility.go:64 — Enabled = false thì Eligible = true (fail-open)
+if event.ParticipationRequirements == nil || !event.ParticipationRequirements.Enabled { ... }
+```
+
+**Cấm nhét ba điều kiện trên vào `CalculateEligibility`.** Làm vậy sẽ dính cả hai lỗi: campaign chạy mở 3 ngày → 500 creator ngoài join → Marketing bật `applyForStaff` → 500 người đó vẫn nộp bài và nhận thưởng tới hết campaign.
+
+Cách đúng — **khối kiểm tra độc lập, đặt trước lời gọi `JoinEvent`**:
+- Chạy ở **mỗi lần nộp bài**, không chỉ lần join đầu
+- **Không phụ thuộc** `ParticipationRequirements.Enabled` — bật `applyForStaff` là đủ để gate hoạt động
+- Đọc `statusStaff` tươi mỗi lần, không cache
+- Không grandfather: người đã join trước khi bật điều kiện, nếu không thoả, bị chặn từ bài kế tiếp
+
+Đây đúng cách T-Fluencers làm (`content.go:105-120`) — không sửa `JoinEvent` để tránh đụng luồng đang chạy của 12 partner khác.
+
+#### `AllowedSegments` luôn AND với `IsStaff`
+
+Segment là bảng admin ghi tay được. Nếu `ApplyForSegments` đứng một mình, người có quyền admin thêm tay 1 user vào segment *"Nhóm Miền Bắc"* là user đó qua gate **dù chưa từng nhập mã nào**. Gate bảo vệ tiền không được tin vào bảng ai cũng ghi được.
+
+Nên khi segment thuộc loại `staff_import` (FR-004), điều kiện luôn là `IsStaff AND inSegment`, bất kể admin có bật `ApplyForStaff` hay không.
 
 **Mã riêng theo event:** `POST /events/:id/input-code-join-event` → upsert `user-events.options {codeInput, statusEmployee}`.
 
@@ -473,12 +601,50 @@ type UserEventOpts struct {
 
 **Cờ ra FE:** `isRequireCode` trên event list và event detail, logic như T-Fluencers.
 
-**Admin UI** (`admin/src/pages/event/components/modal.tsx`): switch `applyForStaff`; select `mode="tags"` cho `staffCodes`; select nhiều cho `applyForSegments`.
+> **Nợ kế thừa có chủ ý.** T-Fluencers tính cờ này khác nhau ở hai chỗ: event list (`event.go:515`) = `len(StaffCodes) > 0`, **không xét user đã nhập mã chưa**; event detail (`event.go:1074`) chỉ `true` khi user **chưa** có mã hợp lệ. Cùng một event, hai màn hình trả hai giá trị. Ambassador port nguyên để giữ parity — ghi ra đây để dev không tưởng mình làm sai, và để lần sau có căn cứ sửa.
+
+#### Admin UI — `admin/src/pages/event/components/modal.tsx`
+
+Gom thành một section, theo pattern `<Divider orientation="left">` mà form Partner đang dùng cho *"Cấu hình BXH"* / *"Cấu hình nội dung"*. T-Fluencers để ba trường rải rác giữa các trường khác, Ops khó tìm.
+
+```
+──────── Cấu hình nhân viên ────────
+
+[Switch]  Chỉ dành cho nhân viên
+          Chỉ người đã xác nhận là nhân viên mới nộp bài được.
+
+[Select tags, cả dòng]  Mã tham gia riêng của chiến dịch
+          Placeholder: Dán danh sách mã, phân tách bằng dấu phẩy hoặc xuống dòng
+          Ghi chú dưới ô: Khác với mã nhân viên ở trang Quản lý mã.
+                          Mã ở đây chỉ dùng cho chiến dịch này.
+
+[Select nhiều]  Giới hạn theo nhóm nhân viên
+          Chỉ liệt kê segment của partner đang chọn
+```
+
+**Ba quyết định về nhãn:**
+
+| | T-Fluencers | Ambassador | Lý do |
+|---|---|---|---|
+| `applyForStaff` | "Chỉ nhân viên nội bộ" | **"Chỉ dành cho nhân viên"** | Bỏ chữ "nội bộ" vì Parasola không phải ngân hàng, nhân sự cửa hàng cũng là nhân viên |
+| `staffCodes` | "Mã code nhân viên" | **"Mã tham gia riêng của chiến dịch"** | Tên cũ trùng với mã ở `/manage-code` nhưng là hai vòng đời tách rời — Ops rất dễ nhầm |
+| `applyForSegments` | "User Segment" | **"Giới hạn theo nhóm nhân viên"** | Bản gốc để tiếng Anh giữa form tiếng Việt |
+
+Giữ nguyên `mode="tags"` với `tokenSeparators={[',', ' ', '\n']}` — Ops copy một cột Excel dán thẳng vào là ra đủ mã.
+
+**Cảnh báo khi chọn nhóm.** Nếu partner còn mã chưa thuộc segment nào, hiện ngay dưới ô:
+
+> ⚠️ Partner này còn {n} mã nhân viên chưa thuộc nhóm nào. Nhân viên dùng các mã đó sẽ không tham gia được chiến dịch này.
 
 **Acceptance Criteria:**
 - [ ] Ba điều kiện hoạt động độc lập và kết hợp được
 - [ ] Event không bật điều kiện nào → hành vi không đổi
 - [ ] Chỉ chọn được segment thuộc partner của event
+- [ ] **Bật `applyForStaff` nhưng `ParticipationRequirements.Enabled = false` → người ngoài vẫn bị chặn**
+- [ ] **User join khi campaign còn mở, admin bật `applyForStaff` sau → user đó không nộp được bài kế tiếp**
+- [ ] User nằm trong segment `staff_import` nhưng `statusStaff != employee` → **không qua gate**
+- [ ] Dán 200 mã một lần vào ô "Mã tham gia riêng" → tách đúng 200 tag
+- [ ] Có test khẳng định gate nằm trên đường nộp bài, không nằm sau nhánh "đã join"
 
 ---
 
@@ -531,7 +697,9 @@ RequireStaffCodeValidation bool `bson:"requireStaffCodeValidation,omitempty" jso
 Bổ sung vào `admin/src/pages/user-partner/`:
 
 **Cột mới:** `Nhân viên` (Có/Không) \| `Mã nhân viên` \| `Nhóm`
-**Filter mới:** `statusStaff` (Tất cả / Nhân viên / Không phải / Chưa xác nhận), `segment` (chọn nhiều)
+**Filter mới:** `statusStaff` **(chọn nhiều)** — Nhân viên / Không phải / Chưa xác nhận; `segment` (chọn nhiều)
+
+Theo quy ước áp dụng toàn sản phẩm: mọi bộ lọc là multi-select (BE dùng `$in`, URL dạng CSV).
 
 **Acceptance Criteria:**
 - [ ] Ba cột hiển thị đúng, giá trị rỗng hiện `—`
@@ -550,25 +718,51 @@ T-Fluencers có `GetCreatorKPIsByStaffBreakdown` nhưng chỉ tách nhị phân 
 | Nhóm | Số người | Đã tham gia | Số bài | Lượt xem | Chi phí |
 |---|---|---|---|---|---|
 | **Tổng — Nhân viên** | 210 | 168 | 1.180 | 3,1tr | 190tr |
-| ├ Nhóm Miền Bắc | 85 | 72 | 520 | 1,4tr | 82tr |
+| ├ Nhóm Miền Bắc | 80 | 68 | 500 | 1,3tr | 78tr |
 | ├ Nhóm Miền Nam | 78 | 61 | 410 | 1,1tr | 68tr |
 | ├ Khối Vận hành | 35 | 28 | 200 | 0,5tr | 33tr |
+| ├ Thuộc nhiều nhóm | 5 | 4 | 20 | 0,1tr | 4tr |
 | └ Chưa phân nhóm | 12 | 7 | 50 | 0,1tr | 7tr |
 | **Tổng — Ngoài** | 770 | 640 | 3.340 | 9,3tr | 650tr |
+
+#### Định nghĩa cột
+
+| Cột | Định nghĩa |
+|---|---|
+| **Số người** | Số user có `IsStaff(statusStaff) = true` ở partner đang xem, trong phạm vi bộ lọc |
+| **Đã tham gia** | Trong số đó, số user có **ít nhất một bài không bị huỷ** trong phạm vi bộ lọc |
+| Số bài / Lượt xem / Chi phí | Cộng dồn từ bài không bị huỷ trong phạm vi bộ lọc |
+
+#### "Nhóm nhân viên" là segment nào
+
+Chỉ tính segment thoả **cả ba**: `type = automatic`, `applyType = staff_code`, và thuộc đúng partner đang xem.
+
+Segment thủ công và segment `applyType = referral_code` **không** phải nhóm nhân viên — user nằm trong các segment đó vì lý do khác, gộp vào sẽ ra số vô nghĩa.
+
+#### Một người thuộc nhiều nhóm
+
+FR-005 cho phép một mã nằm trong nhiều segment, nên một nhân viên có thể thuộc từ hai nhóm trở lên. Quy tắc:
+
+- **Mỗi người được đếm đúng một lần**, vào dòng riêng **"Thuộc nhiều nhóm"** — không đếm lặp vào từng nhóm, cũng không chọn bừa một nhóm
+- Nhờ vậy tổng các dòng con luôn bằng dòng tổng "Nhân viên", Ops đối soát được
+- Ops **nên** cấu hình mỗi mã chỉ thuộc một segment nhân viên. Dòng "Thuộc nhiều nhóm" khác 0 là tín hiệu cấu hình segment bị chồng lấn, cần xem lại
 
 **Quy tắc tính** — giữ nguyên quy ước T-Fluencers:
 - "Nhân viên" = `constants.IsStaff(statusStaff)`; mọi giá trị khác thuộc "Ngoài"
 - "Ngoài" = Tổng − Nhân viên, không cộng dồn từng loại
 - Không tính bài đã bị huỷ
-- Nhân viên chưa thuộc segment nào gom vào "Chưa phân nhóm"
+- Nhân viên không thuộc segment nhân viên nào gom vào "Chưa phân nhóm"
 
 **Phân loại theo trạng thái hiện tại, không snapshot.** Nhân viên xác nhận muộn thì số liệu kỳ cũ thay đổi theo. Đây cũng là hành vi T-Fluencers; khác ở chỗ Ambassador **in ghi chú rõ** trên bảng và export:
 
 > *Phân loại nhân viên theo trạng thái tại thời điểm xem báo cáo.*
 
 **Acceptance Criteria:**
-- [ ] Tổng các nhóm con = dòng tổng "Nhân viên"
+- [ ] Tổng các nhóm con = dòng tổng "Nhân viên" — kể cả khi có người thuộc nhiều nhóm
 - [ ] Nhân viên + Ngoài = tổng toàn hệ thống
+- [ ] User thuộc 2 segment nhân viên → nằm ở dòng "Thuộc nhiều nhóm", **không** bị đếm hai lần
+- [ ] User nằm trong segment thủ công hoặc segment `referral_code` → **không** bị tính là nhóm nhân viên
+- [ ] Segment của partner khác không lọt vào bảng
 - [ ] Có ghi chú "không bao gồm bài đã huỷ" và ghi chú phân loại theo trạng thái hiện tại
 - [ ] Tải xong dưới 3 giây
 
@@ -580,11 +774,45 @@ T-Fluencers có `GetCreatorKPIsByStaffBreakdown` nhưng chỉ tách nhị phân 
 
 Bổ sung 3 cột `Nhân viên` \| `Mã nhân viên` \| `Nhóm` vào file export hồ sơ/creator hiện có; thêm nút export cho bảng FR-013.
 
-Nguồn dữ liệu như T-Fluencers: ưu tiên `UserPartnerRaw.StaffCode`, fallback `UserRaw.StaffCode` nếu có.
+Nguồn dữ liệu: `UserPartnerRaw.StaffCode`. T-Fluencers còn fallback sang `UserRaw.StaffCode`, nhưng `UserRaw` của Ambassador **không có** field đó — không port phần fallback.
 
 **Acceptance Criteria:**
 - [ ] Excel và CSV đều có 3 cột mới
 - [ ] Cột "Nhân viên" xuất "Có"/"Không"
+
+---
+
+### FR-015: Xử lý user Parasola hiện có trước khi bật cờ
+
+**Priority:** Must Have — **chặn release**
+
+**Vấn đề.** Parasola đang chạy thật và đã có user. Theo FR-006, `isOpenInputStaffCode` trả `true` cho mọi user có `statusStaff` rỗng — tức là **toàn bộ user hiện có**. Ngày bật cờ, tất cả họ gặp modal blocking ở lần vào tiếp theo.
+
+Ghi chú *"Migration dữ liệu: không cần"* ở NFR-001 chỉ đúng về schema. Về vận hành thì đây là cú sốc trải nghiệm cho toàn bộ tập người dùng đang hoạt động. T-Fluencers gặp đúng chuyện này và phải viết script backfill (`pkg/admin/service/migration.go`).
+
+**Giải pháp — backfill trước khi bật cờ:**
+
+```js
+// Đánh dấu toàn bộ user Parasola hiện có là "không phải nhân viên".
+// Chạy TRƯỚC khi bật options.enableStaffCode.
+db.getCollection('user-partners').updateMany(
+  { partner: <parasolaId>, statusStaff: { $exists: false } },
+  { $set: { statusStaff: 'not_employee', updatedAt: new Date() } }
+)
+```
+
+Sau bước này chỉ **user mới** thấy modal. Nhân viên đã đăng ký từ trước vẫn khai được qua trang Hồ sơ (đường sửa ở FR-009 phía admin), hoặc Ops đổi tay.
+
+**Vì sao chọn `not_employee` chứ không phải `not_verify`:** `not_verify` vẫn khiến `isOpenInputStaffCode` trả `true` → modal vẫn bung. Mục đích của backfill là để không bung.
+
+**Đánh đổi đã cân nhắc:** nhân viên đăng ký trước ngày bật cờ sẽ bị gán nhầm là người ngoài, phải khai lại thủ công. Chấp nhận được vì số nhân viên Parasola nhỏ, và đổi lại không làm phiền toàn bộ creator ngoài đang hoạt động.
+
+**Acceptance Criteria:**
+- [ ] Chạy backfill trên staging trước, đếm số bản ghi bị ảnh hưởng
+- [ ] Sau backfill + bật cờ, user cũ đăng nhập **không** thấy modal
+- [ ] User mới đăng ký sau đó **vẫn** thấy modal
+- [ ] Backfill chỉ chạm `statusStaff`, không đụng field nào khác
+- [ ] Có đường cho nhân viên đăng ký trước đó khai lại
 
 ---
 
@@ -599,7 +827,7 @@ Nguồn dữ liệu như T-Fluencers: ưu tiên `UserPartnerRaw.StaffCode`, fall
 ### NFR-002: Data Integrity
 - Luồng `confirm-is-staff` không bao giờ ghi `isJoined`/`joinedAt`/`code`
 - Gán segment tự động là idempotent
-- Xoá segment bị từ chối khi còn được `events.options.applyForSegments` tham chiếu
+- Xoá segment bị từ chối khi còn được `events.options.applyForSegments` tham chiếu — thực thi ở `pkg/admin/service/segment.go` (Delete). Bỏ sót chỗ này thì event thành gate rỗng, âm thầm chặn hoặc cho qua tất cả
 
 ### NFR-003: Performance
 - Quy mô nhân viên Parasola nhỏ. Các mốc dưới đây chỉ để chặn thiết kế sai kiểu N+1, không phải bài toán tải thật. **Không tối ưu sớm.**
@@ -616,12 +844,14 @@ Nguồn dữ liệu như T-Fluencers: ưu tiên `UserPartnerRaw.StaffCode`, fall
 
 | Epic | FR | Nội dung |
 |---|---|---|
+| **EPIC-000** Tiền đề | **FR-002b** | `user-segments` mang `partner` + backfill. **Phải xong trước EPIC-003 và EPIC-006** |
 | **EPIC-001** Nền tảng | FR-001, 002, 011 | Model, constants, collection, index, tenant toggle |
 | **EPIC-002** Quản lý mã | FR-003, 004 | Admin CRUD + import |
 | **EPIC-003** Phân nhóm | FR-005 | Segment tự động theo mã nhân viên |
 | **EPIC-004** Luồng người dùng | FR-006, 007, 008 | API + modal Parasola |
 | **EPIC-005** Chiến dịch | FR-009, 010 | Ba cơ chế gate + modal từ chối |
 | **EPIC-006** Báo cáo | FR-012, 013, 014 | Cột, filter, thống kê theo nhóm, export |
+| **EPIC-007** Phát hành | **FR-015** | Backfill user hiện có, chạy **trước** khi bật cờ |
 
 ---
 
@@ -684,7 +914,7 @@ content.go           theo nhóm           admin user-partner
 | **Public API** | `pkg/public/{router,handler,service}/event.go` | `input-code-join-event` |
 | **Public API** | `pkg/public/service/content.go` | 3 điểm chặn khi nộp bài |
 | **Admin API** | `pkg/admin/{router,handler,service}/manage_code.go` | File mới |
-| **Admin API** | `pkg/admin/service/segment.go` | Hỗ trợ `type` + `conditionForAutomatic` |
+| **Admin API** | `pkg/admin/service/segment.go` | Hỗ trợ `type` + `conditionForAutomatic`; chặn xoá segment còn được `events.options.applyForSegments` tham chiếu (NFR-002) |
 | **Admin API** | `pkg/admin/service/user_partner.go` | Trả thêm field + filter |
 | **Export** | `pkg/admin/service/export_*.go` | +3 cột |
 | **Thống kê** | `aggregate_pipeline/` | Pipeline breakdown theo nhóm |
@@ -731,7 +961,23 @@ content.go           theo nhóm           admin user-partner
 - Hạn dùng cho mã, thu hồi mã hàng loạt
 - Phân cấp nhóm nhiều tầng — phase 1 chỉ một tầng
 - Snapshot trạng thái nhân viên theo từng bài đăng
-- Phân quyền xem thống kê theo nhóm — admin partner thấy toàn bộ
+- Phân quyền xem thống kê theo nhóm — admin partner thấy toàn bộ. **T-Fluencers cũng không có.**
+
+### Bốn hạng mục T-Fluencers cũng chưa có — ghi kèm rủi ro tồn dư
+
+Không có tiền lệ để bám, không gánh trong phase này. Ghi ra để lần sau không ai tưởng đã làm.
+
+| Hạng mục | Rủi ro tồn dư | Điều kiện kích hoạt |
+|---|---|---|
+| **Vòng đời nghỉ việc** — đồng bộ theo kỳ, thu hồi hàng loạt, HRIS/SCIM | Trung bình. Nhân viên nghỉ vẫn nhận campaign nội bộ tới khi Ops gỡ tay. Ngang T-Fluencers vì cùng dùng mã dùng chung. Từ 01/01/2026 Luật BVDLCN 2025 + NĐ 356/2025 cho người rời đi quyền yêu cầu xoá dữ liệu — FR-009 (admin gỡ, có lý do) là mức tối thiểu, **phải giữ trong scope** | >1.000 nhân viên, hoặc kỳ đối soát đầu phát hiện người đã nghỉ vẫn nhận thưởng |
+| **Xác thực bằng email tên miền công ty + OTP / SSO / SCIM** | Trung bình. Mã là bearer token viết trên giấy, chuyền tay được. Đây là phương án trung gian rẻ hơn SSO nhiều bậc, mạnh hơn mã dùng chung nhiều bậc — chưa đưa vào vì chưa biết Parasola có cấp email cho nhân sự cửa hàng không | Parasola xác nhận ≥90% nhân viên có email tên miền công ty |
+| **Disclosure bắt buộc cho content nhân viên** | Trung bình. Luật Quảng cáo sửa đổi (Luật 75/2025/QH15) hiệu lực 01/01/2026 buộc người chuyển tải sản phẩm quảng cáo thông báo trước và trong khi thực hiện. Hệ thống đã biết ai là nhân viên nên ép hashtag cho nhóm này gần như miễn phí | Pháp chế yêu cầu, hoặc khi mở cho partner thứ hai |
+| **Snapshot đối soát cấp content** | Thấp. T-Fluencers **có** (`content_snapshot`), Ambassador không. Khi tranh chấp thưởng chỉ truy được tới `reconciliation_item`, không có chuỗi lịch sử view theo ngày | Có tranh chấp cần truy vết theo ngày |
+
+### Nợ kỹ thuật ghi nhận
+
+- **13 folder frontend fork.** Phase này chỉ làm `parasola/`. Partner thứ hai là chép tay lần nữa toàn bộ modal + model + api, không có cơ chế dùng chung.
+- **`isRequireCode` lệch giữa event list và detail** — port nguyên từ T-Fluencers, xem ghi chú ở FR-009.
 
 ---
 
@@ -746,8 +992,12 @@ content.go           theo nhóm           admin user-partner
 
 | Priority | FR |
 |---|---|
-| **Must Have** (13) | FR-001 → FR-013 |
+| **Must Have** (15) | FR-001, **002b**, 002 → 013, **015** |
 | **Should Have** (1) | FR-014 |
+
+Tổng 16 FR.
+
+**Thứ tự bắt buộc:** FR-002b trước FR-005 và FR-013 (cả hai xây trên `user-segments`, sửa sau thì phải làm lại). FR-015 chạy trước khi bật cờ ở FR-011.
 
 ---
 
@@ -773,9 +1023,19 @@ content.go           theo nhóm           admin user-partner
 
 ## 13. Open Questions
 
-_(Không còn — đã chốt toàn bộ.)_
+### Chặn code — cần quyết trước khi bắt đầu
 
-Việc cần làm trước khi Ops cấu hình: Parasola gửi danh sách mã **kèm thông tin mã nào thuộc nhóm nào**, để Ops tạo segment tương ứng. Đây là thao tác vận hành, không ảnh hưởng thiết kế.
+1. **Breakdown theo nhóm có dùng để chi tiền không?**
+   - **Không** (chỉ để xem) → giữ nguyên FR-013 như hiện tại: phân loại theo trạng thái tại thời điểm xem, có ghi chú trên bảng
+   - **Có** → phải đóng băng `isStaff` + `segment` vào `ReconciliationItem` lúc chốt kỳ, nếu không thì số kỳ đã chốt vẫn đổi khi có người xác nhận muộn. T-Fluencers có snapshot đối soát nhưng **không phủ chiều nhân viên** — chỗ này không có tiền lệ để bám
+
+### Cần Parasola xác nhận — không chặn code backend
+
+2. Có phát mã cho nhân viên không, phát qua kênh nào
+3. Chia nhóm theo tiêu chí gì (phòng ban / khu vực / cửa hàng), và mã nào thuộc nhóm nào
+4. Có chiến dịch nội bộ nào định chạy không — nếu không, FR-009 có thể hạ ưu tiên
+
+Lưu ý bối cảnh: tính năng này **không nằm trong yêu cầu hệ thống gốc** Parasola gửi (`[AT - PV] Parasola Ambassador_Working file Final - 2. Yêu cầu hệ thống_Parasola.csv` không nhắc gì tới nhân viên), và task chưa có BR, chưa kickoff. Toàn bộ PRD đang đứng trên giả định.
 
 ---
 
@@ -783,6 +1043,8 @@ Việc cần làm trước khi Ops cấu hình: Parasola gửi danh sách mã **
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| **3.2** | 2026-08-07 | Nguyễn Đăng Định | Áp feedback review của Vinh Nguyễn (`review-feedback-2026-08-07.md`) + soát bổ sung. **Thêm FR-002b** (`user-segments` thiếu `partner` — chặn FR-005/FR-013) và **FR-015** (backfill user Parasola hiện có trước khi bật cờ — nếu không, toàn bộ creator đang hoạt động bị modal chặn). **FR-009:** ràng buộc cấm nhét gate vào `CalculateEligibility`, `AllowedSegments` luôn AND `IsStaff`, ghi nhận nợ `isRequireCode`. **FR-003** bắt buộc partner tường minh. **FR-004/005** segment `staff_import` không cho thêm thành viên tay. **FR-012** filter multi-select. **FR-008** bỏ ràng buộc người ngoài nhập mã (ngõ cụt thật với Parasola) + chốt bố cục UI. Out of Scope thêm 4 hạng mục kèm rủi ro tồn dư + 2 nợ kỹ thuật |
+| **3.1** | 2026-08-06 | Nguyễn Đăng Định | Soát nhất quán với code Ambassador. **FR-013:** chốt định nghĩa cột "Số người"/"Đã tham gia"; chốt "nhóm nhân viên" chỉ gồm segment `automatic` + `applyType: staff_code` + đúng partner (trước đó không giới hạn → segment thủ công lọt vào); thêm dòng "Thuộc nhiều nhóm" để mỗi người đếm đúng một lần, giữ được bất biến tổng nhóm con = tổng nhân viên. **FR-014:** bỏ fallback `UserRaw.StaffCode` — Ambassador không có field này. **FR-007:** bổ sung `partnerId` vào chữ ký `CheckUserInSegmentWithStaffCode`. **FR-002:** ghi rõ index không unique, chống trùng ở tầng service là chấp nhận có ý thức. **NFR-002:** chỉ rõ nơi thực thi ràng buộc xoá segment |
 | **3.0** | 2026-08-06 | Nguyễn Đăng Định | **Bản chốt.** Phân nhóm chuyển sang **segment tự động port từ T-Fluencers** (`applyType: staff_code`) thay cho cột `group` trong file import — cột `group` là cơ chế tự nghĩ, đã loại bỏ. `manage-codes` trở về đúng cấu trúc T-Fluencers. Bổ sung `SegmentRaw.Type`, `ConditionForAutomatic`, `UserSegmentRaw.Note` (T-Fluencers có, Ambassador chưa). 13 FR → 14 FR. Status: Final |
 | 2.0 | 2026-08-06 | Nguyễn Đăng Định | Viết lại theo hướng bám T-Fluencers, bỏ các thay đổi tự đề xuất ở v1.x |
 | 1.6 | 2026-08-06 | Nguyễn Đăng Định | Dùng brute-force thay "tấn công vét cạn" |

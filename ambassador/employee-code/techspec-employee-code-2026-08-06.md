@@ -2,23 +2,23 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 3.0 — bản chốt
+**Version:** 3.2 — bản chốt
 **Status:** Final
-**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v3.0
+**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v3.2
 **Repo:** `AT-Core/ambassador`
 
 ---
 
 ## 1. Tổng quan
 
-Tài liệu này mô tả cách hiện thực hoá PRD v3.0. Thuật ngữ dùng theo mục 0 của PRD.
+Tài liệu này mô tả cách hiện thực hoá PRD v3.2. Thuật ngữ dùng theo mục 0 của PRD.
 
 ### Nguyên tắc
 
 **Port luồng T-Fluencers sang Ambassador.** Phần lớn công việc là chuyển code từ `Viewboost-2025/techcombank` sang `AT-Core/ambassador`, không thiết kế lại.
 
 Chỉ viết mới ở hai chỗ:
-1. Ba khác biệt bắt buộc do kiến trúc Ambassador (mục 1.2)
+1. Năm ràng buộc bắt buộc do kiến trúc Ambassador (mục 1.2)
 2. `applyType: staff_code` cho segment tự động (T-Fluencers chỉ có `referral_code`) + thống kê theo nhóm
 
 ### 1.1 Bảng đối chiếu file nguồn ↔ file đích
@@ -38,13 +38,15 @@ Chỉ viết mới ở hai chỗ:
 | Segment tự động | `internal/model/mg/segment.go` (`Type`, `ConditionForAutomatic`) + `internal/service/segment.go` (`CheckUserInSegmentWithReferralCode`) | port nguyên, **thêm** `applyType: staff_code` |
 | Aggregate thống kê | `aggregate_pipeline/creator_analytics.go` — `GetCreatorKPIsByStaffBreakdown` | **viết mới**, thêm chiều nhóm |
 
-### 1.2 Ba khác biệt bắt buộc
+### 1.2 Năm ràng buộc bắt buộc
 
 | # | Ràng buộc | Vì sao |
 |---|---|---|
 | 1 | Mã lưu ở `staffCode`, **không** dùng `UserPartnerRaw.Code` | `Code` ở Ambassador là referral code (`migration.go:1109`) |
 | 2 | `confirm-is-staff` **không bao giờ ghi** `isJoined`/`joinedAt` | `isJoined` xác định user thuộc partner nào (`internal/service/user.go:226`), chỉ set khi thực sự tham gia (`:491`). T-Fluencers gán cứng `IsJoined: true` — bê sang sẽ làm sai lệch tăng số creator Parasola |
 | 3 | Bật/tắt bằng `PartnerOpts`, không dùng ENV | Ambassador có 13 partner |
+| 4 | Gate nhân viên đặt **độc lập, trước** `Eligibility().JoinEvent()` | `JoinEvent` (`eligibility.go:216`) thoát sớm nếu đã join, và `CalculateEligibility` (`:64`) fail-open khi `Enabled=false`. Nhét gate vào đó = campaign mở 3 ngày rồi bật `applyForStaff` thì 500 người ngoài đã join vẫn nộp bài được tới hết campaign |
+| 5 | Mọi truy vấn `user-segments` kèm `partner` | Bảng thiếu tenant discriminator; thống kê sẽ gán nhầm nhóm và lộ tên nhóm partner khác |
 
 ---
 
@@ -187,7 +189,27 @@ CollectionManageCode = "manage-codes"
 i.newIndex("partner", "statusStaff"),
 ```
 
-**Migration dữ liệu: không cần.** Field mới đều `omitempty`; bản ghi cũ đọc ra `statusStaff = ""` và `IsStaff("")` trả `false` — đúng ngữ nghĩa "chưa xác nhận, tính là người ngoài".
+**Migration schema: không cần.** Field mới đều `omitempty`; bản ghi cũ đọc ra `statusStaff = ""` và `IsStaff("")` trả `false` — đúng ngữ nghĩa "chưa xác nhận, tính là người ngoài".
+
+**Nhưng có 2 script dữ liệu phải chạy** (FR-002b và FR-015):
+
+```js
+// 1. Backfill partner cho user-segments (FR-002b) — TRƯỚC khi làm FR-005/FR-013
+db.getCollection('user-segments').find({ partner: { $exists: false } }).forEach(function (us) {
+  var seg = db.getCollection('segments').findOne({ _id: us.segment });
+  if (seg && seg.partner) {
+    db.getCollection('user-segments').updateOne({ _id: us._id }, { $set: { partner: seg.partner } });
+  }
+});
+
+// 2. Đánh dấu user Parasola hiện có là "không phải nhân viên" (FR-015)
+//    TRƯỚC khi bật options.enableStaffCode, nếu không toàn bộ creator
+//    đang hoạt động sẽ bị modal blocking chặn ở lần vào tiếp theo.
+db.getCollection('user-partners').updateMany(
+  { partner: <parasolaId>, statusStaff: { $exists: false } },
+  { $set: { statusStaff: 'not_employee', updatedAt: new Date() } }
+);
+```
 
 Việc duy nhất khi release — bật cờ cho Parasola:
 ```js
@@ -338,18 +360,9 @@ func (u *userImpl) writeStaffStatus(
 		}, opts)
 }
 
-// upsertUserSegment idempotent — nhập lại cùng mã không tạo bản ghi trùng.
-func (u *userImpl) upsertUserSegment(ctx context.Context, userId, segmentId modelmg.AppID) error {
-	opts := options.Update().SetUpsert(true)
-	return daomongodb.UserSegmentDAO().GetShare().UpdateOne(ctx,
-		new(modelmg.UserSegmentRaw),
-		bson.M{"user": userId, "segment": segmentId},
-		bson.M{"$setOnInsert": bson.M{
-			"_id": modelmg.NewAppID(), "user": userId,
-			"segment": segmentId, "createdAt": time.Now(),
-		}}, opts)
-}
 ```
+
+Việc gán segment **không** làm ở đây — nằm trọn trong `CheckUserInSegmentWithStaffCode` (mục 4.6), đúng khuôn T-Fluencers.
 
 ### 4.4 Gate nộp bài
 
@@ -543,54 +556,126 @@ type ImportResult struct {
 - Response bổ sung `statusStaff`, `staffCode`, `segments[]` (lookup từ `user-segments`)
 - Filter `statusStaff` (map thẳng vào `cond`), `segments` (`$in` qua `user-segments`)
 
+### 5.4 Segment — hỗ trợ `type` và chặn xoá khi đang được dùng
+
+`pkg/admin/service/segment.go`:
+- Create/Update nhận thêm `type` và `conditionForAutomatic{applyType, staffCodes}`
+- **Delete**: từ chối nếu segment còn được `events.options.applyForSegments` tham chiếu (NFR-002)
+
+```go
+total := daomongodb.EventDAO().GetShare().CountByCondition(ctx, new(modelmg.EventRaw),
+    bson.M{"options.applyForSegments": segmentId})
+if total > 0 {
+    return errors.New(locale.SegmentKeyInUseByEvent)
+}
+```
+
+Bỏ qua bước này thì event trỏ tới segment đã xoá → điều kiện `applyForSegments` không khớp ai, chiến dịch âm thầm chặn toàn bộ người tham gia.
+
 ---
 
 ## 6. Backend — Thống kê theo nhóm
 
-`aggregate_pipeline/staff_breakdown.go` — file mới. T-Fluencers có `GetCreatorKPIsByStaffBreakdown` nhưng chỉ tách nhị phân; bản này thêm chiều nhóm.
+`aggregate_pipeline/staff_breakdown.go` — file mới. T-Fluencers có `GetCreatorKPIsByStaffBreakdown` nhưng chỉ tách nhị phân staff/guest; bản này thêm chiều nhóm.
+
+### 6.1 Vì sao không dùng một pipeline `$lookup`
+
+Cách hiển nhiên là `$lookup` `user-partners` và `user-segments` vào từng bản ghi analytics. **Không làm vậy**, vì hai lý do:
+
+1. `user-event-analytic-daily` có **một document cho mỗi user × event × ngày** — lookup theo từng document là lặp lại cùng một phép tra cứu hàng nghìn lần cho cùng một user.
+2. `$lookup` `user-segments` không lọc được đúng "nhóm nhân viên" nếu chỉ join theo `user`: user còn nằm trong segment thủ công và segment `referral_code` cho mục đích khác. Lấy `$arrayElemAt [..., 0]` sẽ gán bừa một segment bất kỳ.
+
+Tập nhân viên của một partner chỉ vài trăm người (NFR-003). Nên: lấy tập nhân viên và bản đồ nhóm bằng hai truy vấn nhỏ, gộp trong Go.
+
+### 6.2 Bốn bước
+
+**Bước 1 — tập nhân viên của partner**
 
 ```go
-// GetStaffBreakdownBySegment tách số liệu theo nhóm nhân viên.
-//
-// Phân loại theo statusStaff TẠI THỜI ĐIỂM CHẠY, không snapshot theo thời điểm
-// đăng bài. Số liệu kỳ cũ có thể đổi khi có nhân viên xác nhận muộn — mọi bảng
-// và export PHẢI in ghi chú này. Đây cũng là hành vi của T-Fluencers.
-func GetStaffBreakdownBySegment(cond bson.M) []bson.M {
+// user-partners: {partner, statusStaff: employee} → set[userId]
+// Chỉ so sánh qua constants.IsStaff, không so chuỗi trực tiếp.
+```
+
+**Bước 2 — bản đồ user → nhóm**
+
+```go
+// a. segments nhân viên của partner (thường vài chục bản ghi)
+bson.M{
+    "partner":                         partnerId,
+    "type":                            constants.SegmentTypeAutomatic,
+    "conditionForAutomatic.applyType": constants.SegmentApplyTypeStaffCode,
+}
+// → []{segmentId, name}
+
+// b. user-segments của đúng các segment đó, chỉ trong tập nhân viên
+[]bson.M{
+    {"$match": bson.M{
+        "user":    bson.M{"$in": staffIds},
+        "segment": bson.M{"$in": staffSegmentIds},
+    }},
+    {"$group": bson.M{"_id": "$user", "segments": bson.M{"$addToSet": "$segment"}}},
+}
+```
+
+Quy tắc gán nhóm — theo PRD FR-013:
+
+| Số segment nhân viên user thuộc | Xếp vào |
+|---|---|
+| 0 | `Chưa phân nhóm` |
+| 1 | segment đó |
+| ≥ 2 | `Thuộc nhiều nhóm` |
+
+Mỗi user rơi vào **đúng một** dòng ⇒ tổng các dòng con luôn bằng dòng tổng "Nhân viên".
+
+**Bước 3 — số liệu theo user**
+
+Lượt xem và chi phí lấy từ `user-event-analytic-daily`. Tên field theo `EventAnalyticDailyStatistic` của Ambassador (`model/mg/event_analytic_daily.go`) — **không** phải `netView`/`netCash` của T-Fluencers:
+
+```go
+func GetStaffKPIsByUser(cond bson.M) []bson.M {
 	return []bson.M{
-		{"$match": cond},
-		{"$lookup": bson.M{
-			"from": "user-partners",
-			"let":  bson.M{"uid": "$user", "pid": "$partner"},
-			"pipeline": []bson.M{{"$match": bson.M{"$expr": bson.M{"$and": []bson.M{
-				{"$eq": []interface{}{"$user", "$$uid"}},
-				{"$eq": []interface{}{"$partner", "$$pid"}},
-			}}}}},
-			"as": "up",
-		}},
-		{"$addFields": bson.M{
-			"isStaff": bson.M{"$eq": []interface{}{
-				bson.M{"$arrayElemAt": []interface{}{"$up.statusStaff", 0}}, "employee",
-			}},
-		}},
-		{"$lookup": bson.M{
-			"from": "user-segments", "localField": "user",
-			"foreignField": "user", "as": "us",
-		}},
-		{"$addFields": bson.M{
-			"segmentId": bson.M{"$arrayElemAt": []interface{}{"$us.segment", 0}},
-		}},
+		{"$match": cond}, // {partner, event?, date: {$gte, $lte}}
 		{"$group": bson.M{
-			"_id":     bson.M{"isStaff": "$isStaff", "segment": "$segmentId"},
-			"users":   bson.M{"$addToSet": "$user"},
-			"content": bson.M{"$sum": "$netContent"},
-			"view":    bson.M{"$sum": "$netView"},
-			"cash":    bson.M{"$sum": "$netCash"},
+			"_id":       "$user",
+			"totalView": bson.M{"$sum": "$statistic.view.total"},
+			"totalCash": bson.M{"$sum": "$statistic.cash.total"},
 		}},
 	}
 }
 ```
 
-**Quy tắc trình bày** (giữ quy ước T-Fluencers): `guest = total − staff`, không cộng dồn từng loại; nhân viên không có segment gom vào "Chưa phân nhóm"; loại trừ bài đã huỷ.
+Số bài đếm từ `contents` — collection analytics không giữ số lượng bài:
+
+```go
+func GetContentCountByUser(cond bson.M) []bson.M {
+	return []bson.M{
+		// cond: {partner, event?, createdAt: {$gte, $lte},
+		//        status: {"$ne": constants.StatusCancelled}}
+		{"$match": cond},
+		{"$group": bson.M{"_id": "$user", "totalContent": bson.M{"$sum": 1}}},
+	}
+}
+```
+
+Loại trừ đúng `StatusCancelled` — theo câu chữ PRD FR-013 "không tính bài đã bị huỷ". Bài `rejected` **vẫn được đếm**; nếu nghiệp vụ muốn loại luôn thì sửa PRD trước, không sửa lệch ở đây.
+
+**Bước 4 — gộp trong Go**
+
+```
+với mỗi user có số liệu:
+    isStaff  = staffIds.has(user)
+    groupKey = isStaff ? groupOf(user) : "guest"
+    cộng dồn vào dòng groupKey: view, cash, content
+    Số người   += 1
+    Đã tham gia += 1 nếu totalContent > 0
+
+Tổng — Nhân viên = cộng các dòng nhóm
+Tổng — Ngoài     = Tổng toàn bộ − Tổng nhân viên   (không cộng dồn từng loại)
+```
+
+### 6.3 Quy tắc trình bày
+
+Giữ quy ước T-Fluencers: `guest = total − staff`, không cộng dồn từng loại. Thêm hai dòng riêng `Thuộc nhiều nhóm` và `Chưa phân nhóm`. Mọi bảng và file export in ghi chú *"Phân loại nhân viên theo trạng thái tại thời điểm xem báo cáo."*
 
 ---
 
@@ -605,8 +690,9 @@ func GetStaffBreakdownBySegment(cond bson.M) []bson.M {
 | `staffCodeKeyRequired` | Vui lòng nhập mã nhân viên | Employee code is required |
 | `staffCodeKeyInvalid` | Mã nhân viên không hợp lệ | Invalid employee code |
 | `staffCodeKeyFeatureDisabled` | Tính năng chưa được bật cho đối tác này | Feature not enabled for this partner |
-| `manageCodeKeyMissingCodeColumn` | File thiếu cột "code" | Missing "code" column |
 | `manageCodeKeyAlreadyUsed` | Mã đã được sử dụng, không thể xoá | Code already used, cannot delete |
+| `manageCodeKeyEmptyFile` | File không có dữ liệu để import | No data to import |
+| `segmentKeyInUseByEvent` | Nhóm đang được chiến dịch sử dụng, không thể xoá | Segment is in use by an event |
 | `eventKeyApplyOnlyStaff` | Chương trình này chỉ áp dụng cho nhân viên của công ty | This program only applies to employees |
 | `eventKeyRequiredCode` | Bạn cần nhập mã để tham gia chương trình này | You need a code to join this program |
 | `eventKeyStaffCodeInvalid` | Mã tham gia chương trình không hợp lệ | Invalid program code |
@@ -695,49 +781,58 @@ inputCodeJoinEvent: (id: string): IApi => ({ url: `/events/${id}/input-code-join
 
 | FR | Backend | Frontend |
 |---|---|---|
-| FR-001 | `model/mg/user_partner.go`, `constants/staff_code.go` | `parasola/src/utils/staff.ts` |
-| FR-002 | `model/mg/manage_code.go`, `mongodb/{collection,index}.go`, `dao/` | — |
-| FR-003 | `pkg/admin/{router,handler,service}/manage_code.go` | `admin/src/pages/manage-code/` |
-| FR-004 | `pkg/admin/service/manage_code.go` (ImportExcel) | `admin/.../import-modal.tsx` |
-| FR-005 | `model/mg/{segment,user_segment}.go`, `constants/segments.go`, `internal/service/segment.go` | `admin/src/pages/segment/components/modal.tsx` |
-| FR-005 | `pkg/public/service/partner.go` | `parasola/src/models/main.ts` |
-| FR-006 | `pkg/public/service/user.go` | — |
-| FR-007 | — | `parasola/.../modal-staff-code.tsx`, `header/index.tsx` |
-| FR-008 | `model/mg/{event,user_event}.go`, `pkg/public/service/{content,event}.go` | `admin/src/pages/event/components/modal.tsx` |
-| FR-009 | — | `parasola/.../modal-not-employee.tsx` |
-| FR-010 | `model/mg/partner.go` | `admin/src/pages/partner/components/modal.tsx` |
-| FR-011 | `pkg/admin/service/user_partner.go` | `admin/src/pages/user-partner/` |
-| FR-012 | `aggregate_pipeline/staff_breakdown.go` | `admin/src/pages/event-statistic/` |
-| FR-013 | `pkg/admin/service/export_*.go` | — |
+| FR-001 Trạng thái nhân viên | `model/mg/user_partner.go`, `constants/staff_code.go` | `parasola/src/utils/staff.ts` |
+| FR-002 Collection `manage-codes` | `model/mg/manage_code.go`, `mongodb/{collection,index}.go`, `dao/` | — |
+| FR-003 Admin CRUD mã | `pkg/admin/{router,handler,service}/manage_code.go` | `admin/src/pages/manage-code/` |
+| FR-004 Import mã | `pkg/admin/service/manage_code.go` (ImportExcel) | `admin/.../import-modal.tsx` |
+| FR-005 Segment tự động | `model/mg/{segment,user_segment}.go`, `constants/segments.go`, `internal/service/segment.go`, `pkg/admin/service/segment.go` | `admin/src/pages/segment/components/modal.tsx` |
+| FR-006 API `status-employee` | `pkg/public/{router,handler,service}/partner.go` | `parasola/src/models/main.ts` |
+| FR-007 API `confirm-is-staff` | `pkg/public/{router,handler,service}/user.go` | — |
+| FR-008 Modal xác nhận | — | `parasola/.../modal-staff-code.tsx`, `header/index.tsx` |
+| FR-009 Chiến dịch cho nhân viên | `model/mg/{event,user_event}.go`, `pkg/public/service/{content,event}.go` | `admin/src/pages/event/components/modal.tsx` |
+| FR-010 Modal từ chối | — | `parasola/.../modal-not-employee.tsx` |
+| FR-011 Tenant toggle | `model/mg/partner.go` | `admin/src/pages/partner/components/modal.tsx` |
+| FR-012 Cột + filter admin | `pkg/admin/service/user_partner.go` | `admin/src/pages/user-partner/` |
+| FR-013 Thống kê theo nhóm | `aggregate_pipeline/staff_breakdown.go` | `admin/src/pages/event-statistic/` |
+| FR-014 Export | `pkg/admin/service/export_*.go` | — |
 
 ---
 
 ## 11. Thứ tự triển khai
 
+**Nhóm 0 — Tiền đề** (chặn Nhóm 2b và Nhóm 4)
+0. **`user-segments` thêm `partner` + `note`, backfill từ `segments.partner`, `Delete` kiểm `IsAllowPartner` (FR-002b)** — làm trước, sửa sau thì FR-005 và FR-013 phải viết lại
+
 **Nhóm 1 — Nền tảng** (chặn các nhóm sau)
 1. Model + constants + collection + index + DAO (FR-001, FR-002)
-2. `PartnerOpts` + toggle admin (FR-010)
+2. `PartnerOpts` + toggle admin (FR-011)
 3. Locale
 
 **Nhóm 2 — Quản lý mã**
 4. Admin CRUD `manage-codes` (FR-003)
 5. Import Excel (FR-004)
-5b. Segment tự động + `CheckUserInSegmentWithStaffCode` (FR-005)
 6. Trang admin `/manage-code` (FR-003, FR-004)
 
-**Nhóm 3 — Luồng người dùng**
-7. `status-employee` (FR-005)
-8. `confirm-is-staff` + `writeStaffStatus` + `upsertUserSegment` (FR-006)
-9. Modal Parasola + model + api (FR-007)
+**Nhóm 3 — Phân nhóm** (chặn nhóm 6)
+7. `SegmentRaw.Type` + `ConditionForAutomatic` + `UserSegmentRaw.Note` (FR-005)
+8. `CheckUserInSegmentWithStaffCode` + chặn xoá segment đang dùng (FR-005)
+9. Admin UI segment: `type`, `applyType`, danh sách mã (FR-005)
 
-**Nhóm 4 — Chiến dịch và báo cáo**
-10. `EventOpts` + `UserEventOpts` + gate ở `content.go` (FR-008)
-11. `input-code-join-event` + cờ `isRequireCode` (FR-008)
-12. Admin event UI (FR-008)
-13. `modal-not-employee` (FR-009)
-14. Cột + filter `user-partner` (FR-011)
-15. Aggregate + tab thống kê (FR-012)
-16. Export (FR-013)
+**Nhóm 4 — Luồng người dùng**
+10. `status-employee` (FR-006)
+11. `confirm-is-staff` + `writeStaffStatus` (FR-007)
+12. Modal Parasola + model + api (FR-008)
+
+**Nhóm 5 — Chiến dịch**
+13. `EventOpts` + `UserEventOpts` + gate ở `content.go` (FR-009)
+14. `input-code-join-event` + cờ `isRequireCode` (FR-009)
+15. Admin event UI (FR-009)
+16. `modal-not-employee` (FR-010)
+
+**Nhóm 6 — Báo cáo**
+17. Cột + filter `user-partner` (FR-012)
+18. Aggregate + tab thống kê (FR-013)
+19. Export (FR-014)
 
 ---
 
@@ -754,15 +849,18 @@ inputCodeJoinEvent: (id: string): IApi => ({ url: `/events/${id}/input-code-join
 | `TestNormalizeStaffCode` | ` prs_a3f91b2c ` → `PRS_A3F91B2C` |
 | `TestIsStaff_AmbiguousIsGuest` | `""`, `"not_verify"`, `"NOT_EMPLOYEE"` đều trả `false` |
 | `TestUpsertUserSegment_Idempotent` | Gọi 3 lần → chỉ 1 bản ghi `user-segments` |
-| `TestImportExcel_ReadsByColumnName` | File đảo thứ tự cột vẫn đọc đúng |
+| `TestImportExcel_NormalizesAndSkipsExisting` | File 1 cột: mã được TRIM + UPPERCASE; mã đã có bị skip và đếm vào `Skipped`; dòng trống vào `Errors` kèm số dòng |
 | `TestCheckUserInSegmentWithStaffCode` | Mã thuộc 2 segment → user vào cả 2; gọi lại lần nữa không tạo bản ghi trùng |
 | `TestSegmentAutomatic_PartnerIsolation` | Mã của partner A không kéo user vào segment của partner B |
 | `TestSegmentWithoutType_BehavesAsManual` | Segment cũ không có `type` → không bị gán tự động |
+| `TestSegmentDelete_BlockedWhenEventReferences` | Segment còn trong `events.options.applyForSegments` → xoá bị từ chối |
 | `TestContentGate_ThreeConditions` | `applyForStaff`, `staffCodes`, `applyForSegments` chặn đúng, độc lập và kết hợp |
+| `TestStaffBreakdown_MultiSegmentCountedOnce` | User thuộc 2 segment nhân viên → nằm ở dòng "Thuộc nhiều nhóm", tổng các dòng con = tổng nhân viên |
+| `TestStaffBreakdown_IgnoresNonStaffSegments` | User trong segment `manual` hoặc `referral_code` → không bị tính là nhóm nhân viên |
 
 ### 12.2 Kịch bản tích hợp
 
-1. **Nhân viên** — import mã kèm nhóm → nhập mã → `statusStaff = employee` + vào segment
+1. **Nhân viên** — import mã (file 1 cột) → tạo segment `automatic`/`staff_code` chứa mã đó → nhập mã → `statusStaff = employee` + tự vào segment
 2. **Người ngoài** — chọn "Tôi không thuộc Parasola" + nhập mã → `not_employee`, **không** xuất hiện trong danh sách creator của partner (kiểm tra `isJoined` không bị set)
 3. **Mã dùng chung** — 3 người cùng nhập một mã, cả 3 thành công, `manage-codes.isUsed` vẫn `false`
 4. **Modal blocking** — không đóng được bằng X, ESC, click ngoài; phải chọn mới qua
@@ -803,7 +901,8 @@ grep -rn '"employee"' backend/ --include="*.go" | grep -v constants/staff_code.g
 |---|---|
 | Tỉ lệ nhập mã thất bại | > 30% → mã phát sai hoặc file import thiếu |
 | Số creator mới của Parasola | tăng bất thường → **nghi `isJoined` bị ghi nhầm** |
-| Số nhân viên chưa vào segment nào | > 0 → Ops chưa cấu hình segment tự động cho các mã đó |
+| Dòng "Chưa phân nhóm" trong thống kê | Còn cao sau khi Ops đã cấu hình xong segment → có mã chưa được đưa vào segment nào |
+| Dòng "Thuộc nhiều nhóm" | > 0 → cấu hình segment bị chồng lấn, một mã đang nằm ở nhiều nhóm |
 
 ---
 
@@ -831,7 +930,9 @@ Việc cần trước khi Ops cấu hình: Parasola gửi danh sách mã kèm th
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| **3.0** | 2026-08-06 | Nguyễn Đăng Định | **Bản chốt theo PRD v3.0.** Phân nhóm chuyển sang segment tự động port từ T-Fluencers (mục 4.6, `applyType: staff_code`); `manage-codes` trở về đúng cấu trúc nguồn, import file 1 cột. Status: Final |
+| **3.2** | 2026-08-07 | Nguyễn Đăng Định | Đồng bộ PRD v3.2. Thêm ràng buộc #4 (gate đặt độc lập trước `JoinEvent`) và #5 (mọi query `user-segments` kèm `partner`). Thêm Nhóm 0 tiền đề (FR-002b) vào thứ tự triển khai và Nhóm 5 phát hành (backfill FR-015) |
+| **3.1** | 2026-08-06 | Nguyễn Đăng Định | Soát với code Ambassador theo PRD v3.1. **Mục 6 viết lại:** pipeline cũ dùng `netContent`/`netView`/`netCash` — không tồn tại trong repo (thật ra là `statistic.view.total` / `statistic.cash.total` của `EventAnalyticDailyStatistic`), không nêu collection nguồn, `$lookup` không lọc segment nhân viên và `$arrayElemAt[...,0]` gán bừa một nhóm. Thay bằng 4 bước: tập nhân viên → bản đồ nhóm → số liệu → gộp trong Go; số bài đếm từ `contents`. **Mục 5.4 mới:** chặn xoá segment đang được event tham chiếu. **Mục 10, 11: đánh số lại FR** cho khớp PRD (bản cũ lệch một bậc từ FR-006 và lặp FR-005). Dọn tàn dư bản 1.x: bỏ `upsertUserSegment` không ai gọi, bỏ key locale `manageCodeKeyMissingCodeColumn` và test đọc-theo-tên-cột (import chỉ 1 cột), sửa kịch bản "import kèm nhóm", đổi ngưỡng theo dõi sau release |
+| 3.0 | 2026-08-06 | Nguyễn Đăng Định | **Bản chốt theo PRD v3.0.** Phân nhóm chuyển sang segment tự động port từ T-Fluencers (mục 4.6, `applyType: staff_code`); `manage-codes` trở về đúng cấu trúc nguồn, import file 1 cột. Status: Final |
 | 2.0 | 2026-08-06 | Nguyễn Đăng Định | Viết lại theo PRD v2.0 — bám T-Fluencers. Bỏ transaction, claim atomic, rate limit middleware, audit trail, cron đối soát, dry-run, xoá theo lô. Thêm bảng đối chiếu file nguồn ↔ file đích để port |
 | 1.3 | 2026-08-06 | Nguyễn Đăng Định | Dùng brute-force thay "tấn công vét cạn" |
 | 1.2 | 2026-08-06 | Nguyễn Đăng Định | Chuẩn hoá thuật ngữ theo mục 0 của PRD |
