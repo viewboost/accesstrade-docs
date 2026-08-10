@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-06
 **Author:** Nguyễn Đăng Định
-**Version:** 4.0 — bản chốt
+**Version:** 4.1 — bản chốt
 **Status:** Final
 **PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v4.0
 **Repo:** `AT-Core/ambassador`
@@ -583,6 +583,98 @@ if total > 0 {
 
 Bỏ qua bước này thì event trỏ tới segment đã xoá → điều kiện `applyForSegments` không khớp ai, chiến dịch âm thầm chặn toàn bộ người tham gia.
 
+### 5.5 Nút "Áp dụng lại" — đồng bộ segment (FR-006)
+
+`CheckUserInSegmentWithStaffCode` chỉ chạy lúc user nhập mã. Ops sửa `staffCodes` của segment sau đó thì người đã xác nhận **không tự chuyển nhóm**. Không có hàm này thì nhân viên chuyển bộ phận kẹt nhóm cũ vĩnh viễn.
+
+```
+POST /segments/:id/resync        (admin, IsAllowPartner)
+→ { "added": 12, "removed": 3, "total": 85 }
+```
+
+```go
+// ResyncStaffSegment đồng bộ thành viên segment với danh sách staffCodes hiện tại.
+// Chỉ áp dụng cho segment type=automatic, applyType=staff_code.
+func (s segmentImpl) ResyncStaffSegment(ctx context.Context, segmentID modelmg.AppID) (*ResyncResult, error) {
+    seg := new(modelmg.SegmentRaw)
+    _ = daomongodb.SegmentDAO().GetShare().FindById(ctx, seg, segmentID)
+    if seg.ID.IsZero() || seg.Type != constants.SegmentTypeAutomatic ||
+        seg.ConditionForAutomatic == nil ||
+        seg.ConditionForAutomatic.ApplyType != constants.SegmentApplyTypeStaffCode {
+        return nil, errors.New(locale.SegmentKeyNotAutomaticStaff)
+    }
+    if !s.Staff.IsAllowPartner(seg.Partner) {
+        return nil, errors.New(locale.CommonKeyNoPermission)
+    }
+
+    // 1. Tập user ĐÚNG RA phải thuộc segment: nhân viên của partner này,
+    //    có staffCode nằm trong danh sách của segment.
+    want := make([]*modelmg.UserPartnerRaw, 0)
+    _ = daomongodb.UserPartnerDAO().GetShare().Find(ctx, new(modelmg.UserPartnerRaw), bson.M{
+        "partner":     seg.Partner,
+        "statusStaff": constants.StatusStaffIsEmployee,
+        "staffCode":   bson.M{"$in": seg.ConditionForAutomatic.StaffCodes},
+    })(&want)
+
+    // 2. Tập user ĐANG thuộc segment — LUÔN kèm partner (ràng buộc #5)
+    have := make([]*modelmg.UserSegmentRaw, 0)
+    _ = daomongodb.UserSegmentDAO().GetShare().Find(ctx, new(modelmg.UserSegmentRaw), bson.M{
+        "segment": segmentID,
+        "partner": seg.Partner,
+    })(&have)
+
+    // 3. Chênh lệch hai chiều: thêm ai thiếu, gỡ ai không còn thuộc
+    //    (dùng map[AppID]bool, bỏ qua chi tiết ở đây)
+    //    Thêm  → InsertMany user-segments {user, partner, segment,
+    //             note: "Resync by staff code"}
+    //    Gỡ    → DeleteMany {_id: {$in: thừa}}
+    return &ResyncResult{Added: len(add), Removed: len(rm), Total: len(want)}, nil
+}
+```
+
+**Ba điểm dễ sai:**
+- Truy vấn `user-segments` phải kèm `partner` — ràng buộc #5, không có ngoại lệ
+- Chỉ gỡ bản ghi của **chính segment này**, không đụng segment khác của cùng user
+- Chỉ chạy trên segment `staff_code`; segment `manual` và `referral_code` phải từ chối, nếu không sẽ xoá sạch thành viên segment thủ công
+
+**Admin UI:** nút "Áp dụng lại" trên `admin/src/pages/segment/components/modal.tsx`, chỉ hiện với segment `automatic` + `staff_code`. Chạy đồng bộ, hiện kết quả `Đã thêm {n} · Đã gỡ {m}`.
+
+### 5.6 Sửa lại trạng thái nhân viên (FR-010)
+
+Không cần endpoint mới cho phía user — `confirm-is-staff` đã cho ghi đè (mục 4.2). Chỉ cần thêm lối vào.
+
+**Phía Parasola** — `parasola/src/pages/account/`, mục "Thông tin nhân viên":
+
+| Trạng thái hiện tại | Hiển thị |
+|---|---|
+| `not_employee` hoặc rỗng | Ô nhập mã + nút "Xác nhận là nhân viên" → gọi `confirm-is-staff {isStaff: true, code}` |
+| `employee` | Hiện mã đã dùng, **không có nút gỡ**, kèm dòng "Cần thay đổi, vui lòng liên hệ hỗ trợ" |
+
+Một chiều `not_employee → employee`, tránh trò bật tắt để lách gate campaign.
+
+**Phía Admin** — `pkg/admin/service/user_partner.go`:
+
+```
+PUT /user-partners/:id/staff-status     { statusStaff, reason }
+```
+
+- Đổi được sang bất kỳ trạng thái nào
+- `reason` **bắt buộc**, độ dài tối thiểu 10 ký tự
+- Gỡ nhãn (`employee` → khác) ⇒ **gỡ luôn user khỏi mọi segment `staff_import` của partner đó**, nếu không user vẫn qua gate `applyForSegments`
+
+```go
+if oldStatus == constants.StatusStaffIsEmployee && newStatus != constants.StatusStaffIsEmployee {
+    // gỡ khỏi segment sinh từ mã nhân viên, giới hạn trong partner này
+    _ = daomongodb.UserSegmentDAO().GetShare().DeleteMany(ctx, new(modelmg.UserSegmentRaw), bson.M{
+        "user":    userId,
+        "partner": partnerId,
+        "segment": bson.M{"$in": staffImportSegmentIDs},
+    })
+}
+```
+
+UI: nút "Sửa trạng thái nhân viên" trong `admin/src/pages/user-partner/components/modal-edit.tsx`.
+
 ---
 
 ## 6. Backend — Thống kê theo nhóm
@@ -814,39 +906,48 @@ inputCodeJoinEvent: (id: string): IApi => ({ url: `/events/${id}/input-code-join
 
 ## 11. Thứ tự triển khai
 
-**Nhóm 0 — Tiền đề** (chặn Nhóm 3 và Nhóm 4)
-0. **`user-segments` thêm `partner` + `note`, backfill từ `segments.partner`, `Delete` kiểm `IsAllowPartner` (FR-003)** — làm trước, sửa sau thì FR-005 và FR-013 phải viết lại
+Đánh số FR theo PRD v4.0. **Nhóm 0 phải xong trước Nhóm 3 và Nhóm 6.**
+
+**Nhóm 0 — Tiền đề**
+1. `user-segments` thêm `partner` + `note`, backfill từ `segments.partner`, `Delete` kiểm `IsAllowPartner` — **FR-003**
+   Làm trước, sửa sau thì FR-006 và FR-015 phải viết lại.
 
 **Nhóm 1 — Nền tảng** (chặn các nhóm sau)
-1. Model + constants + collection + index + DAO (FR-001, FR-002)
-2. `PartnerOpts` + toggle admin (FR-011)
-3. Locale
+2. Model + constants + collection + index + DAO — **FR-001, FR-002**
+3. `PartnerOpts` + toggle admin — **FR-013**
+4. Locale (chỉ tiếng Việt)
 
 **Nhóm 2 — Quản lý mã**
-4. Admin CRUD `manage-codes` (FR-003)
-5. Import Excel (FR-004)
-6. Trang admin `/manage-code` (FR-003, FR-004)
+5. Admin CRUD `manage-codes`, bắt buộc partner tường minh — **FR-004**
+6. Import Excel 1 cột — **FR-005**
+7. Trang admin `/manage-code` — **FR-004, FR-005**
 
-**Nhóm 3 — Phân nhóm** (chặn nhóm 6)
-7. `SegmentRaw.Type` + `ConditionForAutomatic` + `UserSegmentRaw.Note` (FR-005)
-8. `CheckUserInSegmentWithStaffCode` + chặn xoá segment đang dùng (FR-005)
-9. Admin UI segment: `type`, `applyType`, danh sách mã (FR-005)
+**Nhóm 3 — Phân nhóm** (chặn Nhóm 6)
+8. `SegmentRaw.Type` + `ConditionForAutomatic` + `UserSegmentRaw.Note` — **FR-006**
+9. `CheckUserInSegmentWithStaffCode` + chặn xoá segment đang được event dùng — **FR-006**
+10. Hàm "Áp dụng lại" (`ResyncStaffSegment`, mục 5.5) — **FR-006**
+11. Admin UI segment: `type`, `applyType`, danh sách mã, nút Áp dụng lại — **FR-006**
 
 **Nhóm 4 — Luồng người dùng**
-10. `status-employee` (FR-006)
-11. `confirm-is-staff` + `writeStaffStatus` (FR-007)
-12. Modal Parasola + model + api (FR-008)
+12. `status-employee` — **FR-007**
+13. `confirm-is-staff` + `writeStaffStatus` — **FR-008**
+14. Modal Parasola + model + api — **FR-009**
+15. Sửa lại trạng thái: mục Hồ sơ (Parasola) + `PUT /user-partners/:id/staff-status` (admin), mục 5.6 — **FR-010**
 
 **Nhóm 5 — Chiến dịch**
-13. `EventOpts` + `UserEventOpts` + gate ở `content.go` (FR-009)
-14. `input-code-join-event` + cờ `isRequireCode` (FR-009)
-15. Admin event UI (FR-009)
-16. `modal-not-employee` (FR-010)
+16. `EventOpts` + `UserEventOpts` + gate ở `content.go` (**nhớ load `userPartner`, đặt trước `JoinEvent`**) — **FR-011**
+17. `input-code-join-event` + cờ `isRequireCode` — **FR-011**
+18. Admin event UI — **FR-011**
+19. `modal-not-employee` — **FR-012**
 
 **Nhóm 6 — Báo cáo**
-17. Cột + filter `user-partner` (FR-012)
-18. Aggregate + tab thống kê (FR-013)
-19. Export (FR-014)
+20. Cột + filter `user-partner` (filter multi-select) — **FR-014**
+21. Aggregate + tab thống kê theo nhóm — **FR-015**
+22. Export — **FR-016**
+
+**Nhóm 7 — Phát hành**
+23. Backfill `statusStaff = not_employee` cho user Parasola hiện có — **FR-017**
+    **Chạy trước khi bật `enableStaffCode`.** Không làm thì toàn bộ creator đang hoạt động bị modal blocking chặn.
 
 ---
 
@@ -944,6 +1045,7 @@ Việc cần trước khi Ops cấu hình: Parasola gửi danh sách mã kèm th
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| **4.1** | 2026-08-10 | Nguyễn Đăng Định | Soát chéo với PRD v4.0 và bịt 3 lỗ. **Mục 11 (thứ tự triển khai) toàn bộ đang dùng đánh số FR cũ**, lệch một bậc từ FR-003 — dev đọc sẽ làm nhầm việc; viết lại theo đúng 17 FR, bổ sung FR-010 và FR-017 vốn bị bỏ sót. **Thêm mục 5.5** — hàm `ResyncStaffSegment` cho nút "Áp dụng lại" (FR-006): revision v4.0 ghi là đã bổ sung nhưng thực tế chưa có dòng nào. **Thêm mục 5.6** — sửa lại trạng thái nhân viên (FR-010): trước đó chỉ có tên trong bảng ánh xạ, không có hướng dẫn triển khai |
 | **4.0** | 2026-08-07 | Nguyễn Đăng Định | Đồng bộ PRD v4.0. **Sửa lỗi code không compile ở mục 4.4:** `content.go` của Ambassador chưa load `userPartner` (khác T-Fluencers có ở `content.go:105`) — phải thêm bước `UserPartnerDAO().FindOne` trước khối gate. Bổ sung hàm "Áp dụng lại" segment. Đánh số FR lại theo PRD (FR-002b → FR-003, backfill → FR-017) |
 | **3.2** | 2026-08-07 | Nguyễn Đăng Định | Đồng bộ PRD v3.2. Thêm ràng buộc #4 (gate đặt độc lập trước `JoinEvent`) và #5 (mọi query `user-segments` kèm `partner`). Thêm Nhóm 0 tiền đề (FR-002b) vào thứ tự triển khai và Nhóm 5 phát hành (backfill FR-015) |
 | **3.1** | 2026-08-06 | Nguyễn Đăng Định | Soát với code Ambassador theo PRD v3.1. **Mục 6 viết lại:** pipeline cũ dùng `netContent`/`netView`/`netCash` — không tồn tại trong repo (thật ra là `statistic.view.total` / `statistic.cash.total` của `EventAnalyticDailyStatistic`), không nêu collection nguồn, `$lookup` không lọc segment nhân viên và `$arrayElemAt[...,0]` gán bừa một nhóm. Thay bằng 4 bước: tập nhân viên → bản đồ nhóm → số liệu → gộp trong Go; số bài đếm từ `contents`. **Mục 5.4 mới:** chặn xoá segment đang được event tham chiếu. **Mục 10, 11: đánh số lại FR** cho khớp PRD (bản cũ lệch một bậc từ FR-006 và lặp FR-005). Dọn tàn dư bản 1.x: bỏ `upsertUserSegment` không ai gọi, bỏ key locale `manageCodeKeyMissingCodeColumn` và test đọc-theo-tên-cột (import chỉ 1 cột), sửa kịch bản "import kèm nhóm", đổi ngưỡng theo dõi sau release |
