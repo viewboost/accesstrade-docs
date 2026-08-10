@@ -191,10 +191,10 @@ i.newIndex("partner", "statusStaff"),
 
 **Migration schema: không cần.** Field mới đều `omitempty`; bản ghi cũ đọc ra `statusStaff = ""` và `IsStaff("")` trả `false` — đúng ngữ nghĩa "chưa xác nhận, tính là người ngoài".
 
-**Nhưng có 2 script dữ liệu phải chạy** (FR-002b và FR-015):
+**Nhưng có 2 script dữ liệu phải chạy** (FR-003 và FR-017):
 
 ```js
-// 1. Backfill partner cho user-segments (FR-002b) — TRƯỚC khi làm FR-005/FR-013
+// 1. Backfill partner cho user-segments (FR-003) — TRƯỚC khi làm FR-006/FR-015
 db.getCollection('user-segments').find({ partner: { $exists: false } }).forEach(function (us) {
   var seg = db.getCollection('segments').findOne({ _id: us.segment });
   if (seg && seg.partner) {
@@ -202,7 +202,7 @@ db.getCollection('user-segments').find({ partner: { $exists: false } }).forEach(
   }
 });
 
-// 2. Đánh dấu user Parasola hiện có là "không phải nhân viên" (FR-015)
+// 2. Đánh dấu user Parasola hiện có là "không phải nhân viên" (FR-017)
 //    TRƯỚC khi bật options.enableStaffCode, nếu không toàn bộ creator
 //    đang hoạt động sẽ bị modal blocking chặn ở lần vào tiếp theo.
 db.getCollection('user-partners').updateMany(
@@ -794,18 +794,21 @@ inputCodeJoinEvent: (id: string): IApi => ({ url: `/events/${id}/input-code-join
 |---|---|---|
 | FR-001 Trạng thái nhân viên | `model/mg/user_partner.go`, `constants/staff_code.go` | `parasola/src/utils/staff.ts` |
 | FR-002 Collection `manage-codes` | `model/mg/manage_code.go`, `mongodb/{collection,index}.go`, `dao/` | — |
-| FR-003 Admin CRUD mã | `pkg/admin/{router,handler,service}/manage_code.go` | `admin/src/pages/manage-code/` |
-| FR-004 Import mã | `pkg/admin/service/manage_code.go` (ImportExcel) | `admin/.../import-modal.tsx` |
-| FR-005 Segment tự động | `model/mg/{segment,user_segment}.go`, `constants/segments.go`, `internal/service/segment.go`, `pkg/admin/service/segment.go` | `admin/src/pages/segment/components/modal.tsx` |
-| FR-006 API `status-employee` | `pkg/public/{router,handler,service}/partner.go` | `parasola/src/models/main.ts` |
-| FR-007 API `confirm-is-staff` | `pkg/public/{router,handler,service}/user.go` | — |
-| FR-008 Modal xác nhận | — | `parasola/.../modal-staff-code.tsx`, `header/index.tsx` |
-| FR-009 Chiến dịch cho nhân viên | `model/mg/{event,user_event}.go`, `pkg/public/service/{content,event}.go` | `admin/src/pages/event/components/modal.tsx` |
-| FR-010 Modal từ chối | — | `parasola/.../modal-not-employee.tsx` |
-| FR-011 Tenant toggle | `model/mg/partner.go` | `admin/src/pages/partner/components/modal.tsx` |
-| FR-012 Cột + filter admin | `pkg/admin/service/user_partner.go` | `admin/src/pages/user-partner/` |
-| FR-013 Thống kê theo nhóm | `aggregate_pipeline/staff_breakdown.go` | `admin/src/pages/event-statistic/` |
-| FR-014 Export | `pkg/admin/service/export_*.go` | — |
+| **FR-003 `user-segments` mang `partner`** | `model/mg/user_segment.go`, `pkg/admin/service/user_segment.go` | — |
+| FR-004 Admin CRUD mã | `pkg/admin/{router,handler,service}/manage_code.go` | `admin/src/pages/manage-code/` |
+| FR-005 Import mã | `pkg/admin/service/manage_code.go` (ImportExcel) | `admin/.../import-modal.tsx` |
+| FR-006 Segment tự động | `model/mg/segment.go`, `constants/segments.go`, `internal/service/segment.go`, `pkg/admin/service/segment.go` | `admin/src/pages/segment/components/modal.tsx` |
+| FR-007 API `status-employee` | `pkg/public/{router,handler,service}/partner.go` | `parasola/src/models/main.ts` |
+| FR-008 API `confirm-is-staff` | `pkg/public/{router,handler,service}/user.go` | — |
+| FR-009 Modal xác nhận | — | `parasola/.../modal-staff-code.tsx`, `header/index.tsx` |
+| **FR-010 Sửa lại trạng thái** | `pkg/admin/service/user_partner.go` | `parasola/src/pages/account/`, `admin/.../user-partner/` |
+| FR-011 Chiến dịch cho nhân viên | `model/mg/{event,user_event}.go`, `pkg/public/service/{content,event}.go` | `admin/src/pages/event/components/modal.tsx` |
+| FR-012 Modal từ chối | — | `parasola/.../modal-not-employee.tsx` |
+| FR-013 Tenant toggle | `model/mg/partner.go` | `admin/src/pages/partner/components/modal.tsx` |
+| FR-014 Cột + filter admin | `pkg/admin/service/user_partner.go` | `admin/src/pages/user-partner/` |
+| FR-015 Thống kê theo nhóm | `aggregate_pipeline/staff_breakdown.go` | `admin/src/pages/event-statistic/` |
+| FR-016 Export | `pkg/admin/service/export_*.go` | — |
+| **FR-017 Backfill trước khi bật cờ** | script Mongo (mục 3) | — |
 
 ---
 
