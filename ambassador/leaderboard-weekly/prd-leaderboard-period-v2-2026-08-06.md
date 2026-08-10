@@ -3,8 +3,9 @@
 **Project:** Ambassador (Parasola + 16 partner app)
 **Date:** 2026-08-06
 **Author:** Dang Dinh
-**Version:** 2.0 (mở rộng phạm vi sau review 2026-08-06)
-**Status:** 🔨 Pha 1 đang làm — PR #97 ở `develop`, PR #99 open. **`release` chưa có gì.** 3 đề xuất §7 chờ duyệt.
+**Version:** 2.1 (cập nhật trạng thái thật của pha 1 — 2026-08-10)
+**Status:** 🔨 **Pha 1 mới xong một nửa.** Đã ship logic kỳ (PR #97/#106/#108/#111 đều ở `develop`). **Chưa làm:** tầng partner, pin, `rankBy`/`valueBasis` có hiệu lực, ô `graceDays` ở admin, chặn per-platform. Xem §6.1. **`release` chưa có gì.** 3 đề xuất §7 chờ duyệt.
+**Kế hoạch đóng phần còn thiếu:** `ambassador/plans/260810-1716-leaderboard-pha1-con-lai/plan.md` — ~5.2 ngày, branch `feat/leaderboard-weekly`
 **Kế thừa:** `prd-leaderboard-weekly-2026-08-06.md` (v1.0 — chỉ Week, cấu hình phẳng ở cấp event). v1 giữ lại làm bản ghi phạm vi đã ship ở PR #97; **tài liệu này là bản có hiệu lực**.
 **Review:** `feedback-review-2026-08-06.md` (Vinh Nguyen) — R1–R6 đã chốt, đã hợp nhất vào tài liệu này
 **Tài liệu kỹ thuật:** `tech-spec.md` (spec implement) — **chưa cập nhật theo v2**, xem §6 pha 1
@@ -80,11 +81,14 @@ graceDays   : int (mặc định 2)             // xem FR-004
 | `event.options.leaderboard` | ghi đè cho một event | ops |
 | hardcode | `LIFETIME / VIEWS / [VIEWS, CASH] / COMPLETED / 2` | — |
 
-> PRD 04-02 §Resolved Questions chốt *"Config theo **Partner**, apply cho tất cả event của Partner đó"* và liệt kê *"Config BXH theo từng Event"* vào Out of Scope. PR #97 lại đặt `leaderboardPeriod` phẳng trên `EventOpts` — **đi ngược quyết định đã duyệt**. Ba tầng giữ được cả hai: quyết định 04-02 thành tầng mặc định, cấp event thành tầng ghi đè.
+> PRD 04-02 §Resolved Questions chốt *"Config theo **Partner**, apply cho tất cả event của Partner đó"* và liệt kê *"Config BXH theo từng Event"* vào Out of Scope. **Lưu ý phạm vi:** quyết định 04-02 nói về **cờ hiển thị** (`showLeaderboard` / `showLeaderboardAmount`), không nói về `period` — `period` khi đó chưa tồn tại. PR #97 đặt `leaderboardPeriod` phẳng trên `EventOpts` nên **không vi phạm 04-02**; đánh giá của review 2026-08-06 là *"Không sai, nhưng phải hợp nhất"*. Ba tầng giữ được cả hai: quyết định 04-02 thành tầng mặc định, cấp event thành tầng ghi đè.
+>
+> *Đính chính 2026-08-10: bản 2.0 viết PR #97 "đi ngược quyết định đã duyệt" — nặng hơn thực tế và hiểu sai phạm vi PRD 04-02. Đã sửa.*
 
 **AC:**
 - [ ] Field trên `EventOpts` là **struct `Leaderboard{}`**, không phải string phẳng — thêm `rankBy`/`metrics`/`graceDays` sau khỏi migrate lần hai
 - [ ] Event không cấu hình → kế thừa partner; partner không cấu hình → hardcode
+- [ ] **Merge theo từng field, không theo cả struct** — event chỉ đặt `period` thì `graceDays` của partner phải còn nguyên, không rơi về mặc định hệ thống
 - [ ] Nhân bản event giữ nguyên cấu hình kỳ (`cloneEventOptions` chép từng field bằng tay)
 - [ ] Không migration dữ liệu; rollback = đổi lại lựa chọn trong admin
 
@@ -131,7 +135,10 @@ Clamp theo vòng đời event — hai ca hỏng ngay trên landing nếu không 
 - [ ] Tầng service **không gọi thẳng** `util.TimeStartOfWeekInHCM(now)` — phải bọc qua hàm kỳ-hiển-thị, nếu không quy tắc không có hiệu lực
 - [ ] T2, T3 hiển thị kỳ trước; từ T4 hiển thị kỳ hiện tại
 - [ ] Anchor không lùi trước kỳ chứa `event.StartAt`, không tiến sau kỳ chứa `event.EndAt`
-- [ ] `graceDays` cấu hình được, không hardcode
+- [ ] `graceDays` cấu hình được, không hardcode — **và ops đặt được từ form admin, không phải sửa DB tay**
+- [ ] Bỏ trống ô `graceDays` → dùng mặc định, **không ghi `0` xuống DB** (con trỏ phải giữ nghĩa "chưa đặt", `0` là "tắt ân hạn")
+
+> *2026-08-10: AC "cấu hình được" của bản 2.0 quá lỏng — backend có `GraceDays *int` là coi như đạt, trong khi form admin không có ô nhập nên thực tế giá trị vĩnh viễn là 2. Đã tách thành hai AC kiểm được từ giao diện.*
 
 ### FR-005: Bảng ghi rõ khoảng thời gian đang tính — **Must Have**
 
@@ -223,6 +230,38 @@ Chia theo **chi phí frontend**, không theo tính năng.
 | **3** | Nhiều BXH mỗi event (definition model của creator-os) | — | 17 app — chỉ khi có nhu cầu thật | chưa ước |
 
 Pha 1 giao được cả ba kỳ + pin + cấu hình per-partner **mà không đụng một dòng FE nào**. Đề nghị dừng ở đó rồi đánh giá lại.
+
+### 6.1 Trạng thái thật của pha 1 — cập nhật 2026-08-10
+
+Bản 2.0 chỉ ghi một dòng *"Pha 1 | FR-001→FR-008 | ~5 ngày"*, không có ô tick từng FR. Hệ quả: pha 1 được ship từng phần, phần bị cắt không có chỗ nào bắt buộc phải khai báo, nên nhìn tài liệu vẫn thấy trọn vẹn. QA đọc PRD đi test rồi báo thiếu — đúng, và là lỗi tài liệu. Từ đây trạng thái ghi theo FR:
+
+| FR | Nội dung | Trạng thái | Bằng chứng |
+|---|---|---|---|
+| FR-001 | Ba kỳ LIFETIME / WEEK / MONTH | ✅ | `constants.LeaderboardPeriod*` |
+| FR-002a | Cấu hình ba tầng | ⚠️ **mới có tầng event** | `partner.options.leaderboard` không tồn tại ở model, API lẫn form admin |
+| FR-002b | `rankBy` / `metrics` / `valueBasis` | ⚠️ **khai struct, không nơi nào đọc** | `leaderboard_opts.go:22-24`; grep toàn repo chỉ ra chỗ khai và chỗ clone |
+| FR-003 | Biên kỳ theo giờ VN | ✅ | PR #108 sửa lệch 1 ngày ở kỳ tháng |
+| FR-004 | Ân hạn + clamp | ⚠️ **logic xong, thiếu ô nhập** | BE có `GraceDays *int` + `GetGraceDays()`; `admin/.../event/type.d.ts:103` khai kiểu nhưng form không có field → giá trị vĩnh viễn = 2 |
+| FR-005 | `isSettling` trong response | ✅ | parasola + frontend đều dùng |
+| FR-006 | Pin creator | ❌ **chưa có gì** | grep `pin` trong model/service: 0 kết quả |
+| FR-007 | Index + cache | ✅ | index `{event, date}`, khoá cache theo mốc kỳ |
+| FR-008 | Chặn per-platform ở admin | ❌ | chưa có validate |
+
+Lỗi §11: #1 ✅ · #3 ✅ · #4 ✅ · #2 ❌ · #5 ❌ · #7 ❌ · #6 không sửa được (thiếu field ở bảng daily), đã ở Out of Scope.
+
+**§11.2 là lỗi đang chạy thật, không phải tính năng thiếu:** `all_time` lọc/sắp theo `completed`, `week`/`month` theo `completed + pending`. Cùng một event, đổi kỳ thì thứ hạng đổi vì khác công thức chứ không vì khác khung thời gian.
+
+### 6.2 Điều chỉnh phạm vi FE — 2026-08-10
+
+Pha 2 rút từ **17 app xuống chỉ `parasola`** theo chốt của chủ sản phẩm. `frontend` đã port ở PR #111 (giữ nguyên, không revert). 15 app còn lại **không port**.
+
+Hệ quả: **FR-008 quan trọng hơn chứ không nhẹ đi.** Cấu hình kỳ nằm ở tầng partner/event dùng chung, nên bật kỳ tuần cho partner đang chạy trên app chưa port sẽ ra một hàng số 0 theo nền tảng. Chặn ở admin là thứ duy nhất ngăn việc đó.
+
+### 6.3 Kỷ luật ship — bổ sung sau sự cố 2026-08-10
+
+- Mỗi PR ghi rõ trong body **FR nào được đóng lại**; FR chưa đóng thì §6.1 giữ nguyên ❌.
+- Cắt phạm vi giữa chừng phải cập nhật §6.1 **trong cùng PR đó**, không để sang lần sau.
+- Không dùng comment trong code để định nghĩa lại phạm vi pha. Bản 2.0 để lọt việc này: `leaderboard_opts.go:10` tự ghi `RankBy / Metrics / ValueBasis` *"CHƯA có hiệu lực ở pha 1"*, trong khi review §6 xếp `rankBy`/`valueBasis` **vào** pha 1 — code tự khai mình đủ nên không ai soát ra.
 
 ## 7. Đề xuất cần Sếp phê duyệt
 
