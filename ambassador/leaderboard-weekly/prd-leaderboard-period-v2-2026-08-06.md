@@ -3,8 +3,10 @@
 **Project:** Ambassador (Parasola + 16 partner app)
 **Date:** 2026-08-06
 **Author:** Dang Dinh
-**Version:** 2.1 (cập nhật trạng thái thật của pha 1 — 2026-08-10)
-**Status:** 🔨 **Pha 1 mới xong một nửa.** Đã ship logic kỳ (PR #97/#106/#108/#111 đều ở `develop`). **Chưa làm:** tầng partner, pin, `rankBy`/`valueBasis` có hiệu lực, ô `graceDays` ở admin, chặn per-platform. Xem §6.1. **`release` chưa có gì.** 3 đề xuất §7 chờ duyệt.
+**Version:** 2.2 (đóng pha 1 — 2026-08-11)
+**Status:** ✅ **Pha 1 code xong toàn bộ FR-001→FR-008**, đã lên `feat/leaderboard-weekly` (PR #127 đã merge vào `develop`) và `feat/leaderboard-weekly-release` (PR #122 chờ merge vào `release`). Xem §6.1.
+⚠️ **Chưa nghiệm thu trên giao diện thật** — chưa ai chạy admin để bấm thử, xem §6.5.
+⚠️ **2 vấn đề mới phát hiện cần quyết định**, xem §6.4. 3 đề xuất §7 vẫn chờ duyệt.
 **Kế hoạch đóng phần còn thiếu:** `ambassador/plans/260810-1716-leaderboard-pha1-con-lai/plan.md` — ~5.2 ngày, branch `feat/leaderboard-weekly`
 **Kế thừa:** `prd-leaderboard-weekly-2026-08-06.md` (v1.0 — chỉ Week, cấu hình phẳng ở cấp event). v1 giữ lại làm bản ghi phạm vi đã ship ở PR #97; **tài liệu này là bản có hiệu lực**.
 **Review:** `feedback-review-2026-08-06.md` (Vinh Nguyen) — R1–R6 đã chốt, đã hợp nhất vào tài liệu này
@@ -238,18 +240,29 @@ Bản 2.0 chỉ ghi một dòng *"Pha 1 | FR-001→FR-008 | ~5 ngày"*, không c
 | FR | Nội dung | Trạng thái | Bằng chứng |
 |---|---|---|---|
 | FR-001 | Ba kỳ LIFETIME / WEEK / MONTH | ✅ | `constants.LeaderboardPeriod*` |
-| FR-002a | Cấu hình ba tầng | ⚠️ **mới có tầng event** | `partner.options.leaderboard` không tồn tại ở model, API lẫn form admin |
-| FR-002b | `rankBy` / `metrics` / `valueBasis` | ⚠️ **khai struct, không nơi nào đọc** | `leaderboard_opts.go:22-24`; grep toàn repo chỉ ra chỗ khai và chỗ clone |
+| FR-002a | Cấu hình ba tầng | ✅ | `internal/service/leaderboard_config.go` — `ResolveLeaderBoardConfig`; `LeaderboardOpts.MergeOver` trộn **từng field**; form partner có 4 ô + `graceDays` |
+| FR-002b | `rankBy` / `metrics` / `valueBasis` | ✅ | `LeaderboardRankFields` + `LeaderboardRankValueExpr` dùng chung cho cả hai pipeline; `EffectiveMetrics()` áp lớp phủ `showLeaderboardAmount` |
 | FR-003 | Biên kỳ theo giờ VN | ✅ | PR #108 sửa lệch 1 ngày ở kỳ tháng |
-| FR-004 | Ân hạn + clamp | ⚠️ **logic xong, thiếu ô nhập** | BE có `GraceDays *int` + `GetGraceDays()`; `admin/.../event/type.d.ts:103` khai kiểu nhưng form không có field → giá trị vĩnh viễn = 2 |
-| FR-005 | `isSettling` trong response | ✅ | parasola + frontend đều dùng |
-| FR-006 | Pin creator | ❌ **chưa có gì** | grep `pin` trong model/service: 0 kết quả |
-| FR-007 | Index + cache | ✅ | index `{event, date}`, khoá cache theo mốc kỳ |
-| FR-008 | Chặn per-platform ở admin | ❌ | chưa có validate |
+| FR-004 | Ân hạn + clamp | ✅ | ô "Số ngày ân hạn đầu kỳ" ở tab BXH + form partner; chỉ hiện với kỳ tuần/tháng |
+| FR-005 | `isSettling` trong response | ✅ | parasola + frontend đều dùng, có dòng ghi chú "Tuần này bắt đầu lên bảng từ thứ Tư" |
+| FR-006 | Pin creator | ✅ | `pin` nằm trên `user_event` (không tách collection); tab BXH có tìm theo tên, ghim/bỏ ghim, lý do, ngày hết hạn; cắt theo `size` sau khi ghép pin |
+| FR-007 | Index + cache | ✅ | index `{event, date}` + `{event, pin.rank}`; khoá cache nhúng mốc kỳ + `rankBy` + `valueBasis`; xoá theo pattern khi đổi ghim/cấu hình |
+| FR-008 | Chặn per-platform ở admin | ✅ | chặn cứng khi `showLeaderboardAmount = false` + kỳ tuần/tháng |
 
-Lỗi §11: #1 ✅ · #3 ✅ · #4 ✅ · #2 ❌ · #5 ❌ · #7 ❌ · #6 không sửa được (thiếu field ở bảng daily), đã ở Out of Scope.
+Lỗi §11: #1 ✅ · #2 ✅ · #3 ✅ · #4 ✅ · #5 ✅ · #7 ⚠️ chỉ gom hằng số · #6 không sửa được (thiếu field ở bảng daily), đã ở Out of Scope.
 
-**§11.2 là lỗi đang chạy thật, không phải tính năng thiếu:** `all_time` lọc/sắp theo `completed`, `week`/`month` theo `completed + pending`. Cùng một event, đổi kỳ thì thứ hạng đổi vì khác công thức chứ không vì khác khung thời gian.
+**§11.2 đã đóng:** `LeaderboardRankValueExpr` là chỗ duy nhất định nghĩa "giá trị xếp hạng", cả hai pipeline gọi chung. Trước đây `all_time` lọc/sắp theo `completed` còn `week`/`month` theo `completed + pending` — cùng một event, đổi kỳ thì thứ hạng đổi vì khác công thức chứ không vì khác khung thời gian.
+
+**§11.7 (`wildRift` hardcode) mới gom hằng số, chưa sửa gốc.** Sửa thật phải đổi mô hình dữ liệu sang bản ghi `(user, partner)` + migration — chưa ước lượng, chưa nằm trong pha nào.
+
+### Ngoài phạm vi FR — sửa thêm trong pha 1
+
+| Vấn đề | Vì sao phải sửa ngay |
+|---|---|
+| 5 endpoint BXH ở admin không kiểm partner | Staff của partner A biết id event của partner B là ghim được trên bảng của B — đổi cả thứ hạng lẫn giải thưởng của đối tác khác |
+| Đổi cấu hình BXH ở partner không xoá cache | Ops sửa xong nhìn từng event vẫn thấy bảng cũ suốt 10 phút TTL, không có lỗi nào báo |
+| `defer cursor.Close()` đặt trước khi kiểm lỗi | `Aggregate`/`Find` lỗi trả cursor nil → panic |
+| Ghim creator chưa tham gia sự kiện | `UpdateOne` khớp 0 document vẫn trả `nil` → admin báo "Thành công" mà không ghim gì |
 
 ### 6.2 Điều chỉnh phạm vi FE — 2026-08-10
 
@@ -257,11 +270,84 @@ Pha 2 rút từ **17 app xuống chỉ `parasola`** theo chốt của chủ sả
 
 Hệ quả: **FR-008 quan trọng hơn chứ không nhẹ đi.** Cấu hình kỳ nằm ở tầng partner/event dùng chung, nên bật kỳ tuần cho partner đang chạy trên app chưa port sẽ ra một hàng số 0 theo nền tảng. Chặn ở admin là thứ duy nhất ngăn việc đó.
 
+**Cập nhật 2026-08-11 — `frontend` đưa lên ngang `parasola` theo yêu cầu.** Bản port PR #111 mới có nhãn kỳ, thiếu `valueBasis` và `metrics`; để nguyên thì đó là bản sửa nửa vời, hại hơn không sửa. Hiện trạng hai app:
+
+| Trục | parasola | frontend | 15 app còn lại |
+|---|---|---|---|
+| `period` / mốc kỳ / `isSettling` | ✅ | ✅ | ❌ |
+| `valueBasis` | ✅ | ✅ | ❌ |
+| `metrics` | ✅ | ✅ | ❌ |
+| `source: pinned\|ranked` | ❌ pha 2 | ❌ pha 2 | ❌ |
+
+Hai thay đổi **nhìn thấy được** khi `frontend` deploy cùng BE mới — đều là về đúng spec PRD 04-02 FR-002, nhưng cần báo trước cho partner:
+
+1. Cấu hình mặc định `metrics = [view, cash]` → **cột tiền xuất hiện** trên mọi landing chạy `frontend` (app này trước đây chưa bao giờ render tiền). Tắt bằng `showLeaderboardAmount = false` ở partner, hoặc `metrics = [view]` ở event.
+2. `showLeaderboardAmount = false` trước đây ẩn **cả khối số** ở `frontend`; nay chỉ ẩn cột tiền, **số view hiện trở lại** — đúng lời hứa *"ẩn cash, giữ nguyên số view"* của PRD 04-02.
+
+Khi thiếu `metrics` (FE lên trước BE), `frontend` rơi về `[view]` chứ không phải `[view, cash]` như parasola — để deploy lệch không đổi gì trên trang.
+
 ### 6.3 Kỷ luật ship — bổ sung sau sự cố 2026-08-10
 
 - Mỗi PR ghi rõ trong body **FR nào được đóng lại**; FR chưa đóng thì §6.1 giữ nguyên ❌.
 - Cắt phạm vi giữa chừng phải cập nhật §6.1 **trong cùng PR đó**, không để sang lần sau.
 - Không dùng comment trong code để định nghĩa lại phạm vi pha. Bản 2.0 để lọt việc này: `leaderboard_opts.go:10` tự ghi `RankBy / Metrics / ValueBasis` *"CHƯA có hiệu lực ở pha 1"*, trong khi review §6 xếp `rankBy`/`valueBasis` **vào** pha 1 — code tự khai mình đủ nên không ai soát ra.
+
+### 6.4 Phát hiện mới khi rà soát — cần quyết định — 2026-08-11
+
+#### (a) `rankBy = view` đang đếm hai chỉ số khác nhau ở hai kỳ
+
+| Kỳ | Collection | Field xếp hạng |
+|---|---|---|
+| `all_time` | `user_event` | `statistic.pointTotal` — **point** |
+| `week` / `month` | `user_event_analytic_daily` | `statistic.view` — **view thuần** |
+
+`point` **không phải lúc nào cũng là view**:
+
+- content **không thuộc mission** → `point = view` (`content_flow.go`: `if mission == nil { update["statistic.point.total"] = contentInfo.View }`)
+- content **thuộc mission** → `point = mission.Reward` (`content.go`), không liên quan gì đến lượt xem
+
+⇒ Event có mission mà bật kỳ tuần/tháng thì thứ hạng **đổi bản chất tiêu chí**, không chỉ đổi khung thời gian. Đây là cùng họ với §11.2 nhưng ở tầng sâu hơn: `LeaderboardRankValueExpr` thống nhất được `completed` vs `completed + pending`, **không** thống nhất được việc hai collection lưu hai chỉ số khác nhau.
+
+`user_event_analytic_daily` **không có field `point`** (chỉ có `cash` / `view` / `like` / `comment`) nên nhánh tuần/tháng không thể xếp theo point kể cả khi muốn.
+
+| # | Hướng xử lý | Chi phí | Đánh đổi |
+|---|---|---|---|
+| 1 | Chặn ở admin: event có mission không cho chọn kỳ tuần/tháng | Rẻ nhất, làm ngay được | Mất tính năng cho nhóm event đó |
+| 2 | Đổi `all_time` sang `view` cho thống nhất | Nhỏ | **Đổi thứ hạng của bảng đang chạy thật** — phải có người chốt |
+| 3 | Thêm `point` vào bảng theo ngày + backfill | Đắt nhất, chưa ước | Đúng nhất |
+
+**Chưa chọn hướng nào.**
+
+#### (b) Bảng rỗng — ẩn hay hiện trạng thái rỗng
+
+v1.0 §7 đề xuất **hiện trạng thái rỗng**, chưa tick. v2.0 đóng đề xuất đó với lý do ân hạn T4 làm ca này *"gần như không còn xảy ra"*, nhưng vẫn ghi *"vẫn nên có empty state như lưới an toàn cho ca event vừa khai giảng"*.
+
+**Code đang ẩn hoàn toàn** — cả `parasola` lẫn `frontend` đều `return null` khi danh sách rỗng. Backend thì đã chuẩn bị sẵn: `emptyLeaderBoard` cố ý giữ nguyên `period` / `periodStartAt` / `periodEndAt` / `isSettling` / `valueBasis` / `metrics` đúng để FE render được nhãn kỳ trên khối rỗng — FE hiện không dùng tới.
+
+Ân hạn không cứu được ca **event vừa khai giảng**: FR-004 chốt anchor không lùi trước kỳ chứa `StartAt`, nên event mở hôm nay thì kỳ hiển thị là kỳ hiện tại, rỗng thật. Kỳ luỹ kế cũng rỗng cho tới content đầu tiên được duyệt.
+
+Đây là **khuyến nghị trong ghi chú, không phải FR có acceptance criteria** → chưa làm. Chốt xong thì hoặc làm empty state cho parasola + frontend, hoặc sửa mục này ghi rõ đã cân nhắc và chọn ẩn.
+
+### 6.5 Chưa nghiệm thu + nợ còn lại — 2026-08-11
+
+**Chưa ai chạy admin để bấm thử.** Kiểm tra tự động đã qua: `go build` sạch, 19 test BXH pass, `tsc --noEmit` 0 lỗi ở `admin` / `parasola` / `frontend`. Những thứ chỉ máy thật mới xác nhận được:
+
+- 4 dropdown cấu hình hiện đúng chữ tiếng Việt (Toàn thời gian / Theo tuần / Theo tháng)
+- Lưu cấu hình → chuyển tab → quay lại thấy giá trị mới
+- Ghim lỗi thì modal ở nguyên, không mất ngày + lý do vừa gõ
+- Ô `graceDays` ẩn/hiện theo kỳ
+- Staff partner khác bị chặn đúng
+- Đổi cấu hình ở partner phản ánh ngay trên event
+
+**Nợ đã báo, chưa sửa:**
+
+| Nợ | Ảnh hưởng |
+|---|---|
+| Landing chưa đọc `source: pinned\|ranked` | Dòng được ghim không phân biệt được với dòng lên bằng hạng thật — PRD xếp vào pha 2 |
+| Mỗi request landing tốn thêm 1 truy vấn partner | `ResolveLeaderBoardConfig` chạy **trước** khi tra cache |
+| `GetList` ghim nuốt lỗi phân quyền | Staff partner khác nhận `[]` + HTTP 200 thay vì 403; `Upsert`/`Delete` trả lỗi đúng. Không rò dữ liệu |
+| Ghim hết hạn nán lại tối đa 10 phút | `expiresAt` chỉ lọc lúc dựng bảng, không có gì xoá cache đúng lúc hết hạn |
+| `MergeOver` không cho event đặt `size` về 0 | Chưa chạm tới được — admin không có ô nhập `size` ở cả hai cấp |
 
 ## 7. Đề xuất cần Sếp phê duyệt
 
