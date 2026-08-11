@@ -3,10 +3,10 @@
 **Project:** Ambassador (Parasola + 16 partner app)
 **Date:** 2026-08-06
 **Author:** Dang Dinh
-**Version:** 2.2 (đóng pha 1 — 2026-08-11)
-**Status:** ✅ **Pha 1 code xong toàn bộ FR-001→FR-008**, đã lên `feat/leaderboard-weekly` (PR #127 đã merge vào `develop`) và `feat/leaderboard-weekly-release` (PR #122 chờ merge vào `release`). Xem §6.1.
+**Version:** 2.3 (đóng pha 1 + `frontend` ngang `parasola` — 2026-08-11)
+**Status:** ✅ **Pha 1 code xong toàn bộ FR-001→FR-008**, đã lên `feat/leaderboard-weekly` (PR #127 đã merge vào `develop`, PR #128 chờ merge) và `feat/leaderboard-weekly-release` (PR #122 chờ merge vào `release`). Xem §6.1.
 ⚠️ **Chưa nghiệm thu trên giao diện thật** — chưa ai chạy admin để bấm thử, xem §6.5.
-⚠️ **2 vấn đề mới phát hiện cần quyết định**, xem §6.4. 3 đề xuất §7 vẫn chờ duyệt.
+⚠️ **1 vấn đề chờ quyết định** (empty state, §6.4b). §6.4a đã bị bác bỏ. 3 đề xuất §7 vẫn chờ duyệt.
 **Kế hoạch đóng phần còn thiếu:** `ambassador/plans/260810-1716-leaderboard-pha1-con-lai/plan.md` — ~5.2 ngày, branch `feat/leaderboard-weekly`
 **Kế thừa:** `prd-leaderboard-weekly-2026-08-06.md` (v1.0 — chỉ Week, cấu hình phẳng ở cấp event). v1 giữ lại làm bản ghi phạm vi đã ship ở PR #97; **tài liệu này là bản có hiệu lực**.
 **Review:** `feedback-review-2026-08-06.md` (Vinh Nguyen) — R1–R6 đã chốt, đã hợp nhất vào tài liệu này
@@ -277,12 +277,19 @@ Hệ quả: **FR-008 quan trọng hơn chứ không nhẹ đi.** Cấu hình k�
 | `period` / mốc kỳ / `isSettling` | ✅ | ✅ | ❌ |
 | `valueBasis` | ✅ | ✅ | ❌ |
 | `metrics` | ✅ | ✅ | ❌ |
+| Ô view = đúng giá trị đem xếp hạng | ✅ | ✅ | ❌ |
+| Format số rút gọn Tỷ/Tr/N + CountUp | ✅ | ✅ | ❌ |
 | `source: pinned\|ranked` | ❌ pha 2 | ❌ pha 2 | ❌ |
 
-Hai thay đổi **nhìn thấy được** khi `frontend` deploy cùng BE mới — đều là về đúng spec PRD 04-02 FR-002, nhưng cần báo trước cho partner:
+**`frontend` bỏ dãy icon theo nền tảng, chuyển sang một tổng view như `parasola`.** Cách cũ lọc theo `applyForSources` nên event giới hạn nguồn thì tổng bày ra **không bằng** giá trị đem đi xếp hạng (xếp hạng tính mọi nền tảng); thêm nữa kỳ tuần/tháng không tách được view theo nền tảng nên phải rẽ nhánh riêng. Gộp về một tổng là hết cả hai. Bố cục card giữ nguyên — chỉ đồng bộ tính năng, không port layout bảng của `parasola`.
 
-1. Cấu hình mặc định `metrics = [view, cash]` → **cột tiền xuất hiện** trên mọi landing chạy `frontend` (app này trước đây chưa bao giờ render tiền). Tắt bằng `showLeaderboardAmount = false` ở partner, hoặc `metrics = [view]` ở event.
-2. `showLeaderboardAmount = false` trước đây ẩn **cả khối số** ở `frontend`; nay chỉ ẩn cột tiền, **số view hiện trở lại** — đúng lời hứa *"ẩn cash, giữ nguyên số view"* của PRD 04-02.
+Ba thay đổi **nhìn thấy được** trên landing chạy `frontend`, cần báo trước cho partner:
+
+1. **Không còn dãy icon theo nền tảng**, thay bằng một tổng lượt xem. Lý do ở đoạn trên — số cũ có thể không bằng giá trị đem đi xếp hạng.
+2. Cấu hình mặc định `metrics = [view, cash]` → **cột tiền xuất hiện** (app này trước đây chưa bao giờ render tiền). Tắt bằng `showLeaderboardAmount = false` ở partner, hoặc `metrics = [view]` ở event.
+3. `showLeaderboardAmount = false` trước đây ẩn **cả khối số**; nay chỉ ẩn cột tiền, **số view hiện trở lại** — đúng lời hứa *"ẩn cash, giữ nguyên số view"* của PRD 04-02 FR-002.
+
+Mục 2 và 3 là về đúng spec PRD 04-02. Mục 1 là quyết định trong đợt này, ghi ở đoạn trên.
 
 Khi thiếu `metrics` (FE lên trước BE), `frontend` rơi về `[view]` chứ không phải `[view, cash]` như parasola — để deploy lệch không đổi gì trên trang.
 
@@ -294,29 +301,27 @@ Khi thiếu `metrics` (FE lên trước BE), `frontend` rơi về `[view]` chứ
 
 ### 6.4 Phát hiện mới khi rà soát — cần quyết định — 2026-08-11
 
-#### (a) `rankBy = view` đang đếm hai chỉ số khác nhau ở hai kỳ
+#### (a) ~~`rankBy = view` đếm hai chỉ số khác nhau ở hai kỳ~~ — ĐÃ BÁC BỎ
 
-| Kỳ | Collection | Field xếp hạng |
-|---|---|---|
-| `all_time` | `user_event` | `statistic.pointTotal` — **point** |
-| `week` / `month` | `user_event_analytic_daily` | `statistic.view` — **view thuần** |
+> Bản đầu của mục này (2026-08-11) kết luận `all_time` xếp theo "point" còn `week`/`month` xếp theo "view", và event có mission thì hai kỳ đổi bản chất tiêu chí. **Kết luận đó SAI**, đã kiểm lại và bác bỏ trong cùng ngày. Giữ lại mục này để không ai đi lại vào cùng một chỗ.
 
-`point` **không phải lúc nào cũng là view**:
+Tên field gây hiểu nhầm: `all_time` xếp theo `statistic.pointTotal`, `week`/`month` xếp theo `statistic.view`. Nhưng trên `user_event`, **`point` là bản sao nguyên văn của `view`**:
 
-- content **không thuộc mission** → `point = view` (`content_flow.go`: `if mission == nil { update["statistic.point.total"] = contentInfo.View }`)
-- content **thuộc mission** → `point = mission.Reward` (`content.go`), không liên quan gì đến lượt xem
+```go
+// user_event.go — UserContentStatistic.GetPoint()
+return CommonStatisticContent{
+    Total: u.View.Total, Pending: u.View.Pending,
+    Rejected: u.View.Rejected, Completed: u.View.Completed,
+}
+```
 
-⇒ Event có mission mà bật kỳ tuần/tháng thì thứ hạng **đổi bản chất tiêu chí**, không chỉ đổi khung thời gian. Đây là cùng họ với §11.2 nhưng ở tầng sâu hơn: `LeaderboardRankValueExpr` thống nhất được `completed` vs `completed + pending`, **không** thống nhất được việc hai collection lưu hai chỉ số khác nhau.
+`buildSourceStatistic` gán `s.Point = s.GetPoint()` và dựng `s.View` từ các field `totalView*` của pipeline trên collection `content` (`$sum: "$statistic.view.total"`…). `PointTotal = GetPointTotal()` chỉ là tổng `Point` của các nền tảng.
 
-`user_event_analytic_daily` **không có field `point`** (chỉ có `cash` / `view` / `like` / `comment`) nên nhánh tuần/tháng không thể xếp theo point kể cả khi muốn.
+⇒ **`user_event.pointTotal` chính là tổng lượt xem.** Cả ba kỳ đều xếp theo view. Không có mâu thuẫn.
 
-| # | Hướng xử lý | Chi phí | Đánh đổi |
-|---|---|---|---|
-| 1 | Chặn ở admin: event có mission không cho chọn kỳ tuần/tháng | Rẻ nhất, làm ngay được | Mất tính năng cho nhóm event đó |
-| 2 | Đổi `all_time` sang `view` cho thống nhất | Nhỏ | **Đổi thứ hạng của bảng đang chạy thật** — phải có người chốt |
-| 3 | Thêm `point` vào bảng theo ngày + backfill | Đắt nhất, chưa ước | Đúng nhất |
+Chỗ `statistic.point = mission.Reward` (`content.go`) nằm trên collection **`content`**, không phải `user_event`, và không có đường nào chảy vào `pointTotal` — `user_event` được dựng lại từ các pipeline tổng hợp **view**. Xếp hạng theo điểm nhiệm vụ đi qua endpoint riêng (`leaderboard-by-point`, chỉ wildRift dùng).
 
-**Chưa chọn hướng nào.**
+**Không cần quyết định gì. Không có việc phải làm.**
 
 #### (b) Bảng rỗng — ẩn hay hiện trạng thái rỗng
 
