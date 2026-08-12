@@ -1,6 +1,6 @@
 # PRD — Cảnh báo lệch số liệu kỳ đối soát qua email
 
-**Trạng thái:** Đã triển khai (branch `hotfix/issue-view-content`, 11 commit, `d0dd15e4..e603507d`)
+**Trạng thái:** Đã triển khai (branch `hotfix/issue-view-content`, 12 commit, `d0dd15e4..fb3d122d`)
 **Ngày:** 2026-08-12
 **Tech spec:** [2026-08-12-reconciliation-alert-tech-spec.md](2026-08-12-reconciliation-alert-tech-spec.md)
 **Kế hoạch triển khai:** [superpowers/plans/2026-08-12-reconciliation-mismatch-alert-email.md](superpowers/plans/2026-08-12-reconciliation-mismatch-alert-email.md)
@@ -28,11 +28,13 @@ Ngoài ra còn một lỗ hổng chưa được che: **lượt xem được tín
 
 Khi một kỳ đối soát chạy xong, hệ thống tự động gửi **một email tổng hợp** tới admin đã tạo ra kỳ đó, liệt kê mọi item bị loại do lệch số liệu.
 
+Email đi qua **API AccessTrade** — cùng đường với email OTP vốn đã chạy thật trong hệ thống. Nội dung template do team AccessTrade lưu giữ; hệ thống chỉ gửi lên mã template kèm dữ liệu điền vào.
+
 Email chứa bảng chi tiết, mỗi dòng một item bị loại, gồm: mã item, mã người dùng, loại item, loại lệch, lý do (nguyên văn dòng `note` đã ghi vào database), giá trị chốt kỳ, giá trị thực tế, và mức chênh lệch.
 
 Đồng thời bổ sung **một guard mới**: trước khi chi tiền cho item loại content, hệ thống tính lại lượt xem được tính thưởng từ dữ liệu nguồn và so với giá trị đã chốt. Lệch dù chỉ một lượt xem cũng loại item và báo cáo — vì cả hai vế đều là số nguyên đếm được từ cùng một nguồn, nên lệch là dấu hiệu dữ liệu đã đổi giữa lúc chốt và lúc chi.
 
-Nguyên tắc bất di bất dịch: **việc cảnh báo không bao giờ được làm hỏng, chặn, hay thay đổi luồng chi tiền.** Gửi mail lỗi thì ghi log rồi thôi. Tiền đã chi xong trước khi email được nghĩ tới.
+Nguyên tắc bất di bất dịch: **việc cảnh báo không bao giờ được làm hỏng, chặn, hay thay đổi luồng chi tiền.** Gọi API lỗi thì ghi log rồi thôi. Tiền đã chi xong trước khi email được nghĩ tới.
 
 ## User Stories
 
@@ -43,7 +45,7 @@ Nguyên tắc bất di bất dịch: **việc cảnh báo không bao giờ đư�
 3. Là admin vận hành, tôi muốn nhận **một** email tổng hợp cho cả phiên thay vì mỗi lệch một email, để hộp thư không bị ngập khi có hàng loạt item lệch.
 4. Là admin vận hành, tôi muốn không nhận email nào khi kỳ chạy sạch không lệch gì, để email cảnh báo giữ được ý nghĩa báo động.
 5. Là admin vận hành, tôi muốn tiêu đề email nêu rõ đây là cảnh báo đối soát, để nhận ra ngay khi liếc hộp thư.
-6. Là admin vận hành, tôi muốn email có màu sắc phân biệt rõ với email hệ thống thông thường, để không nhầm với thông báo thường lệ.
+6. Là admin vận hành, tôi muốn email cảnh báo trông khác rõ với email hệ thống thông thường, để không nhầm với thông báo thường lệ.
 
 ### Đọc hiểu nội dung cảnh báo
 
@@ -58,7 +60,7 @@ Nguyên tắc bất di bất dịch: **việc cảnh báo không bao giờ đư�
 15. Là admin vận hành, tôi muốn chênh lệch âm nghĩa là thực tế thấp hơn con số đã chốt, để đọc dấu là hiểu ngay chiều lệch.
 16. Là admin vận hành, tôi muốn số liệu hiển thị theo quy ước Việt Nam (dấu chấm phân tách hàng nghìn), để đọc nhanh không nhầm hàng.
 17. Là admin vận hành, tôi muốn email nói rõ các item này đã bị từ chối và không được chi trong kỳ, để không hiểu nhầm là tiền vẫn đã ra.
-18. Là admin vận hành, tôi muốn đọc được email cả khi client mail của tôi chặn HTML, để không bị mất thông tin khi dùng thiết bị hạn chế.
+18. Là quản trị hệ thống, tôi muốn có sẵn một file HTML mẫu mô tả đầy đủ các biến, để bàn giao cho team AccessTrade setup template mà không phải giải thích thêm.
 
 ### Phát hiện lệch lượt xem thưởng
 
@@ -71,9 +73,9 @@ Nguyên tắc bất di bất dịch: **việc cảnh báo không bao giờ đư�
 ### Không phá hỏng luồng chi tiền
 
 24. Là admin vận hành, tôi muốn việc gửi email không bao giờ làm dừng hay chậm quá trình chi tiền, để cảnh báo không trở thành rủi ro mới.
-25. Là admin vận hành, tôi muốn kỳ đối soát vẫn hoàn tất bình thường ngay cả khi máy chủ mail hỏng, để sự cố hạ tầng phụ không ảnh hưởng nghiệp vụ chính.
+25. Là admin vận hành, tôi muốn kỳ đối soát vẫn hoàn tất bình thường ngay cả khi dịch vụ gửi mail hỏng hoặc từ chối, để sự cố hạ tầng phụ không ảnh hưởng nghiệp vụ chính.
 26. Là admin vận hành, tôi muốn hành vi chi tiền của hai guard đã tồn tại giữ nguyên không đổi một ly, để tính năng cảnh báo không âm thầm thay đổi cách hệ thống trả tiền.
-27. Là admin vận hành, tôi muốn hệ thống ghi log khi phát hiện lệch nhưng không gửi được email, để vẫn còn dấu vết điều tra khi email thất lạc.
+27. Là admin vận hành, tôi muốn hệ thống ghi log nguyên văn phản hồi khi dịch vụ mail từ chối, để biết chính xác vì sao email không đi.
 28. Là admin vận hành, tôi muốn hệ thống ghi log khi không tra được địa chỉ email người tạo kỳ, để biết vì sao mình không nhận được cảnh báo.
 29. Là quản trị hệ thống, tôi muốn nhiều item lệch được ghi nhận song song mà không mất bản ghi nào, vì hệ thống xử lý đối soát bằng nhiều luồng cùng lúc.
 30. Là quản trị hệ thống, tôi muốn quá trình gom lệch không gây tranh chấp dữ liệu, để kết quả cảnh báo luôn nhất quán.
@@ -82,10 +84,10 @@ Nguyên tắc bất di bất dịch: **việc cảnh báo không bao giờ đư�
 
 31. Là quản trị hệ thống, tôi muốn tính năng không cần thêm biến môi trường mới, để triển khai không kèm bước cấu hình dễ quên.
 32. Là quản trị hệ thống, tôi muốn người nhận được suy ra từ dữ liệu sẵn có trong hệ thống, để không phải bảo trì một danh sách email song song dễ lạc hậu.
-33. Là quản trị hệ thống, tôi muốn tính năng dùng lại hạ tầng gửi mail sẵn có thay vì thêm phụ thuộc mới, để bề mặt vận hành không phình ra.
-34. Là lập trình viên bảo trì, tôi muốn phần gom lệch tách khỏi phần gửi mail, để kiểm thử được logic mà không cần dựng máy chủ mail.
+33. Là quản trị hệ thống, tôi muốn tính năng dùng lại đúng kênh gửi mail đang chạy thật của hệ thống, để không phải vận hành song song hai hạ tầng gửi mail.
+34. Là lập trình viên bảo trì, tôi muốn phần gom lệch tách khỏi phần gửi mail, để kiểm thử được logic mà không cần gọi ra API bên ngoài.
 35. Là lập trình viên bảo trì, tôi muốn phần dựng nội dung email tách khỏi phần quyết định gửi cho ai, để sửa giao diện email không đụng tới logic nghiệp vụ.
-36. Là lập trình viên bảo trì, tôi muốn hạ tầng gửi mail hỗ trợ nhiều người nhận, để sau này mở rộng danh sách không phải sửa lại tầng dưới.
+36. Là lập trình viên bảo trì, tôi muốn mã template được khai báo tập trung một chỗ, để khi AccessTrade cấp mã thật thì chỉ phải sửa đúng một dòng.
 
 ## Implementation Decisions
 
@@ -97,7 +99,7 @@ Khó khăn: bản ghi kỳ đối soát **không có** trường lưu người t
 
 Lưu ý kỹ thuật: cấu trúc thông tin nhân viên được truyền quanh trong tầng service **không** chứa email; bắt buộc phải đọc bản ghi nhân viên đầy đủ từ database.
 
-Kết quả là **không thêm biến môi trường nào**. Tính năng chỉ dùng lại nhóm biến SMTP vốn đã tồn tại.
+Kết quả là **không thêm biến môi trường nào**. Tính năng dùng lại nhóm biến kết nối AccessTrade vốn đã tồn tại và đang chạy thật cho email OTP.
 
 ### Ba loại lệch được ghi nhận
 
@@ -123,8 +125,8 @@ Tách theo trách nhiệm, để phần logic thuần kiểm thử được mà 
 
 1. **Module gom lệch** — kiểu dữ liệu mô tả một lần lệch, và bộ gom an toàn đa luồng. Thuần logic, không chạm I/O.
 2. **Module tra người nhận** — suy ra email admin tạo kỳ. Chạm database, nhưng phần chuẩn hoá danh sách email tách riêng thành hàm thuần.
-3. **Module dựng nội dung email** — mẫu HTML và văn bản thuần, cùng hàm kết xuất. Chỉ trình bày, không tính toán: mọi số liệu vào mẫu đều đã là chuỗi định dạng sẵn.
-4. **Module điều phối gửi** — nối ba module trên với tầng gửi mail. Nơi **duy nhất** chạm SMTP.
+3. **Module dựng dữ liệu email** — kiểu dữ liệu mô tả nội dung email và hàm chuyển sang định dạng API AccessTrade yêu cầu. Chỉ dựng dữ liệu, không tính toán: mọi số liệu đều đã là chuỗi định dạng sẵn.
+4. **Module điều phối gửi** — nối ba module trên với API AccessTrade. Nơi **duy nhất** gọi ra ngoài hệ thống.
 
 Việc tách module 1 khỏi module 4 là có chủ đích: module 1 kiểm thử được không cần mock, module 4 chứa toàn bộ tác dụng phụ.
 
@@ -144,14 +146,18 @@ Hàm gửi cảnh báo **không trả về lỗi** — chữ ký không có giá
 
 - Không có lệch nào → về ngay.
 - Không tra được email người nhận → ghi log kèm số item lệch, về.
-- Kết xuất mẫu email thất bại → ghi log, về.
-- Gửi mail lỗi → ghi log kèm nội dung lỗi, về.
+- Gọi API thất bại → ghi log kèm nội dung lỗi, về.
+- API trả về trạng thái khác thành công → ghi log kèm nguyên văn phản hồi, về.
 
-Không có đường nào panic. Mẫu email kết xuất lỗi thì trả chuỗi rỗng thay vì panic, và bên gọi kiểm tra chuỗi rỗng trước khi gửi.
+Không có đường nào panic.
 
-### Mở rộng hạ tầng gửi mail
+Nhánh thứ tư đáng lưu ý: API trả mã HTTP 200 kèm trạng thái nằm trong thân phản hồi, nên bắt buộc phải đọc trạng thái mới biết email có thực sự được tiếp nhận hay không. Bỏ qua bước này sẽ dẫn tới việc ghi log "đã gửi thành công" trong khi email chưa hề đi.
 
-Hàm gửi mail sẵn có chỉ nhận **một** địa chỉ. Bổ sung một hàm nhận danh sách; hàm cũ giữ nguyên chữ ký và uỷ quyền cho hàm mới. Danh sách rỗng bị coi là lỗi cấu hình chứ không phải không-làm-gì im lặng, để bên gọi không tưởng nhầm là đã gửi thành công.
+### Mã template khai báo tập trung
+
+Mã template và đường dẫn API đặt trong một file hằng riêng, thay vì rải rác trong mã nghiệp vụ. File đó cũng gom luôn mã template OTP vốn đang được viết thẳng trong mã.
+
+Mã template cảnh báo **chưa được AccessTrade cấp**. Giá trị hiện tại đặt theo đúng quy ước đặt tên của mã OTP đã có. Sau khi bàn giao file HTML mẫu và nhận mã thật, chỉ cần sửa đúng một dòng.
 
 ### Định dạng số theo quy ước Việt Nam
 
@@ -179,12 +185,13 @@ Trong quá trình triển khai, hai test được kiểm chứng bằng cách **
 | Chuẩn hoá danh sách email | **Có** — cắt khoảng trắng, bỏ rỗng, hạ chữ thường, khử trùng giữ thứ tự | Hàm thuần tách được khỏi phần chạm database |
 | Định dạng số | **Có** — phủ số 0, số âm, dưới nghìn, đúng nghìn, hàng triệu | Hàm thuần, sai là sai toàn bộ nội dung email |
 | Dựng dữ liệu email | **Có** — đếm số dòng, ánh xạ đủ trường, xử lý điều kiện kỳ rỗng | Hàm thuần |
-| Kết xuất mẫu email | **Có** — mọi trường đều xuất hiện trong cả HTML lẫn văn bản thuần, kể cả khi danh sách rỗng | Kiểm thử được không cần I/O |
-| Hàm điều phối gửi | **Một phần** — chỉ khoá bất biến "không lệch thì không chạm database/mail" | Phần còn lại phụ thuộc database và SMTP thật |
+| Dựng dữ liệu gửi API | **Có** — đủ khoá cấp trên và cấp dòng, danh sách rỗng phải là mảng rỗng chứ không phải null | Hàm thuần; sai cấu trúc là API từ chối |
+| Hàm điều phối gửi | **Một phần** — chỉ khoá bất biến "không lệch thì không chạm database/API" | Phần còn lại phụ thuộc database và API AccessTrade thật |
+| Nội dung hiển thị email | **Không** | Template nằm ở hệ thống AccessTrade, ngoài tầm kiểm soát của repo |
 | Tra email người nhận | **Không** | Thuần I/O, cần database thật hoặc tầng mock chưa tồn tại trong dự án |
 | Guard trong luồng chi tiền | **Không** | Phụ thuộc các đối tượng truy cập database toàn cục, không kiểm thử đơn vị được nếu không tái cấu trúc — ngoài phạm vi |
 
-Tổng cộng **29 test mới** do tính năng này thêm; chạy cùng các test có sẵn trong hai package là 38 test, đều xanh.
+Tổng cộng **28 test mới** do tính năng này thêm, nằm trong `pkg/admin/service`; chạy cùng các test có sẵn của package là 37 test, đều xanh.
 
 ### Prior art trong dự án
 
@@ -199,7 +206,9 @@ Phong cách test bám theo các test sẵn có trong cùng khu vực: dùng thư
 - **Giao diện quản trị** để xem lại lịch sử cảnh báo. Email là kênh duy nhất; dấu vết còn lại nằm ở trạng thái item và log.
 - **Tự động sửa lệch hoặc chạy lại item bị loại.** Hệ thống chỉ báo cáo, con người quyết định.
 - **Sửa lỗi `panic` trong mẫu email xác thực sẵn có.** Đó là mã chết (xem Further Notes), đã thống nhất không đụng trong phạm vi này.
-- **Chuyển hướng sang hạ tầng gửi mail qua API bên ngoài.** Đã cân nhắc khi phát hiện SMTP là mã chết; quyết định giữ đường SMTP.
+- **Dọn dẹp hạ tầng SMTP không dùng.** Sau thay đổi này, `intenralsmtp` quay lại trạng thái không có nơi nào gọi tới. Việc xoá hẳn nằm ngoài phạm vi.
+- **Thiết kế giao diện email.** Repo chỉ cung cấp file HTML mẫu; nội dung hiển thị cuối cùng do team AccessTrade dựng và lưu giữ.
+- **Kiểm soát thời điểm template được setup bên AccessTrade.** Cho tới khi nhận được mã template thật, tính năng sẽ gọi API với mã tạm và bị từ chối — xem Further Notes.
 - **Gộp hai truy vấn tổng hợp làm một.** Guard mới chạy lại đúng pipeline mà bước kiểm tra tiền vừa chạy. Đúng chủ ý (bảo đảm hai con số đến từ cùng một lát cắt dữ liệu), có thể tối ưu sau mà không đổi ngữ nghĩa.
 
 ## Further Notes
@@ -210,13 +219,26 @@ Phong cách test bám theo các test sẵn có trong cùng khu vực: dùng thư
 
 Bắt buộc theo dõi sát tỉ lệ item bị từ chối ở kỳ đối soát đầu tiên sau khi triển khai, và đối chiếu với các kỳ trước.
 
-### Rủi ro vận hành 2 — Đây là lần đầu đường SMTP thực sự chạy
+### Rủi ro vận hành 2 — Mã template chưa được AccessTrade cấp
 
-Phát hiện trong quá trình triển khai: **toàn bộ hạ tầng SMTP trong dự án trước nay là mã chết.** Hàm gửi mail không có nơi nào gọi tới; email OTP thật đi qua một API bên ngoài với mẫu email nằm ở hệ thống khác.
+**Tính năng chưa gửi được email cho tới khi có mã template thật.** Mã hiện tại đặt theo quy ước, chưa tồn tại bên hệ thống AccessTrade, nên mọi lời gọi sẽ bị từ chối.
 
-Nghĩa là nhóm cấu hình SMTP **chưa từng được thực thi kiểm chứng** — có thể đang rỗng hoặc sai trên môi trường thật mà không ai biết. Kịch bản xấu nhất đã được chặn tốt (chỉ ghi log, không ảnh hưởng chi tiền), nhưng kịch bản **thực tế nhất** là: kỳ đầu có lệch, email im lặng không đến, chỉ còn lại dòng log.
+Việc bị chặn tốt: hệ thống ghi log nguyên văn phản hồi từ API và đi tiếp, không ảnh hưởng chi tiền. Nhưng nghĩa là **cho tới khi hoàn tất bàn giao, cảnh báo chỉ tồn tại dưới dạng dòng log.**
 
-Trước kỳ chạy đầu: gửi thử một email qua đường này ở môi trường staging. Sau kỳ chạy đầu: tìm trong log các dòng có tiền tố `[notifyMismatches]` để biết nhánh nào đã được đi vào.
+Các bước cần làm theo thứ tự:
+
+1. Gửi file HTML mẫu (kèm bảng mô tả biến ở đầu file) cho team AccessTrade.
+2. Nhận lại mã template.
+3. Cập nhật hằng mã template — đúng một dòng.
+4. Chạy thử ở môi trường dev, kiểm tra log tìm tiền tố `[notifyMismatches]` để biết nhánh nào đã được đi vào.
+
+Cần thống nhất thêm với team AccessTrade: template bên đó có hỗ trợ **vòng lặp trên mảng** hay không. Dữ liệu gửi lên đưa danh sách dòng lệch dưới dạng mảng đối tượng vì số dòng không cố định. Nếu hệ thống bên đó chỉ nhận biến phẳng, phải đổi sang đẩy một chuỗi HTML đã dựng sẵn — thay đổi này gói gọn trong một hàm.
+
+### Ghi chú — hạ tầng SMTP nay là mã chết
+
+Phát hiện trong quá trình triển khai: **toàn bộ hạ tầng SMTP trong dự án chưa từng có nơi nào gọi tới.** Bản triển khai đầu tiên của tính năng này dùng SMTP, sau đó chuyển sang API AccessTrade cho nhất quán với email OTP.
+
+Sau khi chuyển, SMTP quay lại trạng thái mã chết như trước. Việc xoá hẳn nằm ngoài phạm vi, nhưng nên cân nhắc dọn dẹp ở một thay đổi riêng để tránh người sau nhầm tưởng đó là kênh gửi mail đang hoạt động.
 
 ### Hạn chế đã biết
 
@@ -228,5 +250,4 @@ Trước kỳ chạy đầu: gửi thử một email qua đường này ở môi
 ### Chưa kiểm chứng được nếu thiếu môi trường thật
 
 - Truy vấn tra email người nhận đầu-cuối (cần database có dữ liệu lịch sử và nhân viên thật). Đã kiểm chứng **tĩnh** rằng tên trường, hằng số, và đường đi từ mã nhân viên sang email đều khớp mô hình dữ liệu thật.
-- Gửi mail thật qua SMTP.
 - Hình thức email hiển thị trên client thật (Gmail, Outlook). Mẫu dùng bố cục bảng theo đúng quy ước email, nhưng chưa kiểm tra bằng mắt.

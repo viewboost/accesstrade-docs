@@ -1,6 +1,7 @@
 # Tech Spec — Cảnh báo lệch số liệu kỳ đối soát qua email
 
-**Trạng thái:** Đã triển khai — branch `hotfix/issue-view-content`, 11 commit (`d0dd15e4..e603507d`)
+**Trạng thái:** Đã triển khai — branch `hotfix/issue-view-content`, 12 commit (`d0dd15e4..fb3d122d`)
+**Chưa chạy được:** đang chờ AccessTrade cấp `template_code` (xem mục 8.2)
 **PRD:** [2026-08-12-reconciliation-alert-prd.md](2026-08-12-reconciliation-alert-prd.md)
 **Ngày:** 2026-08-12
 
@@ -29,8 +30,8 @@ Running(rc, staffId)                        [reconciliation_running.go]
         │
         ├─ getMismatchRecipients(ctx, rc)      → tra history → staff.Email
         ├─ buildMismatchPayload(rc, items)     → định dạng số, dựng dữ liệu
-        ├─ GetReconciliationMismatchTemplate() → kết xuất HTML + plain text
-        └─ SendEmailToMany(recipients, ...)    → SMTP
+        ├─ buildMismatchTemplateData(payload)  → chuyển sang shape API AT
+        └─ core.Client().SmsGatewayAction(...) → POST /v1.0/partner/email/send
     }()
 ```
 
@@ -48,15 +49,15 @@ Running(rc, staffId)                        [reconciliation_running.go]
 | `backend/pkg/admin/service/reconciliation_mismatch_test.go` | mới | 109 | Test collector + `hasViewMismatch` |
 | `backend/pkg/admin/service/reconciliation_mismatch_recipient.go` | mới | 59 | Tra email admin tạo kỳ |
 | `backend/pkg/admin/service/reconciliation_mismatch_recipient_test.go` | mới | 36 | Test `normalizeRecipients` |
-| `backend/pkg/admin/service/reconciliation_mismatch_notify.go` | mới | 101 | Điều phối: định dạng → dựng payload → gửi |
-| `backend/pkg/admin/service/reconciliation_mismatch_notify_test.go` | mới | 100 | Test `formatNumber`, `buildMismatchPayload`, bất biến no-op |
-| `backend/internal/module/smtp/templates/reconciliation_mismatch_email.go` | mới | 224 | Mẫu HTML + plain text, hàm kết xuất |
-| `backend/internal/module/smtp/templates/reconciliation_mismatch_email_test.go` | mới | 93 | Test kết xuất mẫu |
+| `backend/pkg/admin/service/reconciliation_mismatch_notify.go` | mới | 147 | Điều phối: định dạng → dựng payload → gọi API |
+| `backend/pkg/admin/service/reconciliation_mismatch_notify_test.go` | mới | 157 | Test `formatNumber`, `buildMismatchPayload`, `buildMismatchTemplateData`, bất biến no-op |
+| `backend/internal/module/smtp/templates/reconciliation_mismatch_email.go` | mới | 37 | Struct payload (chỉ kiểu dữ liệu, không có template) |
+| `backend/internal/module/smtp/templates/reconciliation_mismatch_email.html` | mới | 176 | **File mẫu bàn giao AccessTrade**, kèm bảng mô tả biến |
+| `backend/internal/constants/email_template.go` | mới | 28 | Mã template + endpoint gửi mail |
 | `backend/pkg/admin/service/reconciliation_running.go` | sửa | +58/-3 | Nối collector, 3 guard, lời gọi gửi mail |
 | `backend/pkg/admin/service/reconciliation.go` | sửa | +20/-0 | `GetViewRewardedByContent` |
-| `backend/internal/module/smtp/aws.go` | sửa | +14/-3 | `SendEmailToMany` |
 
-Tổng: **915 thêm / 6 xoá**. Không đụng `env.example`, không đụng `internal/config/`.
+Tổng: **928 thêm / 3 xoá**. Không đụng `env.example`, không đụng `internal/config/`, không đụng `aws.go`.
 
 ---
 
@@ -191,9 +192,9 @@ Trường nguồn có **một định nghĩa duy nhất** trong `aggregate_pipel
 
 Cùng pipeline, cùng trường, cùng phép ép `float64 → int64`. Không có nguy cơ so float với int, cũng không có nguy cơ so "rewarded" với "pending".
 
-### 3.5 Mẫu email — `reconciliation_mismatch_email.go`
+### 3.5 Kiểu dữ liệu email — `reconciliation_mismatch_email.go`
 
-Package `emailtemplates`. Bám quy ước của `verify_email.go` (mẫu email duy nhất có sẵn):
+Package `emailtemplates`. Sau khi chuyển sang API AccessTrade, file này **chỉ còn kiểu dữ liệu** — không còn hằng template, không còn hàm kết xuất, vì nội dung email nằm ở hệ thống AccessTrade.
 
 ```go
 type MismatchRow struct {
@@ -207,33 +208,39 @@ type ReconciliationMismatchTemplatePayload struct {
     Rows                                  []MismatchRow
     Year, Company                         string
 }
-
-const ReconciliationMismatchTemplateSubject   = "[AccessTrade] Cảnh báo lệch số liệu đối soát"
-const ReconciliationMismatchTemplatePlainText = `...`
-const ReconciliationMismatchTemplate          = `...`
-
-func GetReconciliationMismatchTemplate(payload ReconciliationMismatchTemplatePayload) (subject, templateHtml, plainText string)
 ```
 
-Mọi trường đều là `string` đã định dạng sẵn — mẫu chỉ trình bày, không tính toán.
+Mọi trường đều là `string` đã định dạng sẵn.
 
-Dùng `html/template` cho HTML (tự động escape) và `text/template` cho plain text. Không dùng `template.HTML` ở bất kỳ đâu, nên không có lối bypass escaping.
+### 3.5b File mẫu bàn giao — `reconciliation_mismatch_email.html`
 
-**Khác biệt cố ý so với `verify_email.go`:**
+**Đây là hiện vật bàn giao, không phải mã chạy.** Gửi file này cho team AccessTrade để họ setup template.
 
-| | `verify_email.go` | Mẫu mới |
-|---|---|---|
-| Lỗi execute plain text | `panic(err)` | log + `return` (trả chuỗi rỗng) |
-| Màu header | `#0b0d0f` (đen) | `#b42318` (đỏ cảnh báo) |
-| `max-width` | 600px | 900px (bảng 8 cột) |
+176 dòng: một khối comment mở đầu liệt kê **7 biến cấp email** và **8 biến cấp dòng** kèm ý nghĩa từng biến, sau đó là HTML mẫu dùng cú pháp Go template (`{{.Ten}}`, `{{range .Rows}}`).
 
-Không panic là bắt buộc: mẫu này chạy trong luồng đối soát, không được phép làm sập tiến trình.
+Comment ghi rõ hai điều quan trọng cho bên nhận: cú pháp biến có thể đổi theo hệ thống của họ miễn giữ nguyên danh sách biến, và **số dòng trong bảng không cố định** — phụ thuộc số item lệch của từng kỳ.
 
-### 3.6 Điều phối gửi — `reconciliation_mismatch_notify.go`
+### 3.6 Hằng mã template — `internal/constants/email_template.go`
+
+```go
+const (
+    EmailTemplateOTPVerification     = "AMBASSADOR_EMAIL_OTP_VERIFICATION"
+    EmailTemplateReconciliationAlert = "AMBASSADOR_EMAIL_RECONCILIATION_ALERT"
+)
+
+const EmailSendEndpoint = "/v1.0/partner/email/send"
+```
+
+`EmailTemplateOTPVerification` là mã **đã được AccessTrade cấp** và đang chạy thật — trước đây viết thẳng trong `internal/service/otp.go`, nay gom về đây.
+
+`EmailTemplateReconciliationAlert` **chưa được cấp**. Giá trị hiện tại đặt theo quy ước đặt tên của mã OTP. Khi nhận được mã thật, sửa đúng một dòng này.
+
+### 3.7 Điều phối gửi — `reconciliation_mismatch_notify.go`
 
 ```go
 func formatNumber(v float64) string
 func buildMismatchPayload(rc *modelmg.ReconciliationRaw, items []ReconciliationMismatch) emailtemplates.ReconciliationMismatchTemplatePayload
+func buildMismatchTemplateData(payload emailtemplates.ReconciliationMismatchTemplatePayload) map[string]interface{}
 func (r reconciliationImpl) notifyMismatches(ctx context.Context, rc *modelmg.ReconciliationRaw, c *mismatchCollector)
 ```
 
@@ -243,33 +250,44 @@ Chi tiết tinh tế: `n := int64(v)` thực hiện **trước** `neg := n < 0`.
 
 **`buildMismatchPayload`** — ánh xạ đủ 8 trường `ReconciliationMismatch` → `MismatchRow`, `TotalMismatch = len(items)`. Guard `rc.Conditions != nil` vì đó là con trỏ, có thể nil ở dữ liệu cũ.
 
+**`buildMismatchTemplateData`** — chuyển payload sang `template_data` mà API AccessTrade nhận. Khoá dùng `snake_case` cho khớp quy ước của payload OTP sẵn có:
+
+```go
+{
+  "reconciliation_id":    "...",
+  "reconciliation_title": "...",
+  "period_from":          "01/07/2026",
+  "period_to":            "31/07/2026",
+  "total_mismatch":       "12",          // chuỗi, không phải số
+  "year":                 "2026",
+  "company":              "AccessTrade",
+  "rows": [
+    {"item_id":"...", "user_id":"...", "item_type":"content",
+     "kind":"cash", "note":"...", "expected":"1.000", "actual":"800", "diff":"-200"},
+    ...
+  ]
+}
+```
+
+Hai quyết định: `total_mismatch` là **chuỗi** cho khớp kiểu của `template_data` OTP; `rows` luôn là **mảng rỗng chứ không nil** để không serialize thành `null`.
+
 **`notifyMismatches`** — không trả về giá trị, nên lỗi **không thể** rò ra luồng đối soát. Bốn nhánh thoát, tất cả log rồi `return`:
 
 | Nhánh | Log |
 |---|---|
 | `c == nil \|\| c.Len() == 0` | (im lặng) |
 | `len(recipients) == 0` | vàng — kèm số item lệch |
-| `htmlContent == ""` | đỏ — render thất bại |
-| `SendEmailToMany` lỗi | đỏ — kèm nội dung lỗi |
+| `SmsGatewayAction` trả lỗi | đỏ — kèm nội dung lỗi |
+| `res["status"] != "success"` | đỏ — kèm nguyên văn phản hồi |
 | thành công | xanh — kèm số item |
 
-Hai guard đầu return **trước** khi gọi `getMismatchRecipients`, nên "không lệch thì không chạm DB/SMTP" là bất biến có test khoá.
+**Nhánh thứ tư đáng lưu ý:** API trả HTTP 200 kèm trạng thái nằm trong thân phản hồi. Bỏ qua bước đọc `status` sẽ dẫn tới ghi log "đã gửi thành công" trong khi email chưa hề đi. Cách xử lý này khớp với `SendOTPEmailAccessTrade` sẵn có.
+
+Hai guard đầu return **trước** khi gọi `getMismatchRecipients`, nên "không lệch thì không chạm DB/API" là bất biến có test khoá.
+
+Tham số `isDebug` truyền `false` — khác `SendOTPEmailAccessTrade` (truyền `true`) — vì cảnh báo chạy nền theo kỳ, không cần dump toàn bộ request/response vào log mỗi lần.
 
 Thông điệp log viết **không dấu** (quy ước dự án); comment trong code viết **có dấu** tiếng Việt.
-
-### 3.7 Mở rộng mailer — `aws.go`
-
-```go
-func SendEmail(to string, subject, plainText, htmlContent string) error {
-    return SendEmailToMany([]string{to}, subject, plainText, htmlContent)
-}
-
-func SendEmailToMany(to []string, subject, plainText, htmlContent string) error
-```
-
-Chữ ký `SendEmail` **giữ nguyên** để không phá call site. Danh sách rỗng trả lỗi `"no recipients"` chứ không im lặng thành công.
-
-Package tên `intenralsmtp` — typo có sẵn trong repo, giữ nguyên.
 
 ---
 
@@ -287,14 +305,15 @@ Kiểm chứng: test 200 goroutine ghi song song, chạy `-race`, sạch.
 
 ## 5. Kiểm thử
 
-**29 test mới** do thay đổi này thêm (24 ở `pkg/admin/service`, 5 ở `templates`). Chạy cùng các test có sẵn thì tổng là 38, đều xanh.
+**28 test mới**, tất cả ở `pkg/admin/service`. Chạy cùng các test có sẵn của package thì tổng là 37, đều xanh.
 
 ```bash
 cd backend
-go test ./pkg/admin/service/ -race -vet=off -count=1          # 33 pass (24 mới + 9 có sẵn)
-go test ./internal/module/smtp/templates/ -count=1            # 5 pass (đều mới)
+go test ./pkg/admin/service/ -race -vet=off -count=1          # 37 pass (28 mới + 9 có sẵn)
 go build ./cmd/...                                            # 3 binary, sạch
 ```
+
+Package `internal/module/smtp/templates` nay không còn test — 5 test kết xuất mẫu bị gỡ cùng hàm render khi chuyển sang API AccessTrade. Thay bằng 4 test cho `buildMismatchTemplateData` ở `pkg/admin/service`, kiểm chứng cấu trúc `template_data` gửi lên API.
 
 ### Hai test được chứng minh có "răng"
 
@@ -332,18 +351,18 @@ Không do thay đổi này gây ra. Ghi lại để người sau khỏi mất th
 
 **Không thêm biến nào.** Đã xác nhận: `git diff d0dd15e4..HEAD -- backend/env.example backend/internal/config/` trả về trống.
 
-Dùng lại nhóm biến SMTP **đã có sẵn**:
+Dùng lại nhóm biến kết nối AccessTrade **đã có sẵn và đang chạy thật** cho email OTP:
 
 ```
-SMTP_AWS_SES_ENABLE
-SMTP_AWS_SES_HOST
-SMTP_AWS_SES_PORT
-SMTP_AWS_SES_USERNAME
-SMTP_AWS_SES_PASSWORD
-SMTP_AWS_SES_FROM
+ACCESS_TRADE_SMS_END_POINT
+ACCESS_TRADE_SMS_ACCESS_KEY
+ACCESS_TRADE_SMS_SECRET_KEY
+ACCESS_TRADE_SMS_CHANNEL
 ```
 
-> **Cảnh báo:** nhóm biến này trước nay **chưa từng được thực thi kiểm chứng** — xem mục 8.
+Xác thực do `core.Client().SmsGatewayAction` lo: nó tự sinh `client-signature` từ access key + secret key + trace no + request time. Không cần thêm gì ở tầng gọi.
+
+Nhóm biến `SMTP_AWS_SES_*` **không còn liên quan** tới tính năng này.
 
 ---
 
@@ -357,23 +376,33 @@ Nếu lượt xem có biến động lành tính giữa lúc chốt kỳ và lú
 
 **Hành động bắt buộc:** theo dõi sát tỉ lệ item `rejected` ở kỳ đối soát đầu tiên, đối chiếu với các kỳ trước.
 
-### 8.2 Đây là call site SMTP đầu tiên thực sự chạy
+### 8.2 Chưa có `template_code` thật — TÍNH NĂNG CHƯA GỬI ĐƯỢC EMAIL
 
-Phát hiện trong quá trình triển khai: **toàn bộ hạ tầng SMTP là mã chết.**
+`EmailTemplateReconciliationAlert` hiện là `"AMBASSADOR_EMAIL_RECONCILIATION_ALERT"` — giá trị đặt theo quy ước, **chưa tồn tại bên AccessTrade**. Mọi lời gọi sẽ bị từ chối ở nhánh `res["status"] != "success"`.
+
+Việc này được chặn tốt (log rồi đi tiếp, không ảnh hưởng chi tiền), nhưng nghĩa là **cho tới khi hoàn tất bàn giao, cảnh báo chỉ tồn tại dưới dạng dòng log.**
+
+**Các bước theo thứ tự:**
+
+1. Gửi `internal/module/smtp/templates/reconciliation_mismatch_email.html` cho team AccessTrade.
+2. Thống nhất với họ: template bên đó có hỗ trợ **vòng lặp trên mảng** không? `template_data.rows` là mảng đối tượng vì số dòng lệch không cố định. Nếu hệ thống bên đó chỉ nhận biến phẳng, phải đổi sang đẩy một chuỗi HTML dựng sẵn — thay đổi gói gọn trong `buildMismatchTemplateData`.
+3. Nhận mã template, cập nhật hằng `EmailTemplateReconciliationAlert` — đúng một dòng.
+4. Chạy thử ở dev, `grep "\[notifyMismatches\]"` trong log để xác nhận nhánh thành công.
+
+### 8.3 Hạ tầng SMTP nay là mã chết
+
+Bản triển khai đầu của tính năng này dùng SMTP, sau đó chuyển sang API AccessTrade cho nhất quán với email OTP. Sau khi chuyển:
 
 ```
-intenralsmtp.SendEmail          → 0 call site trong toàn repo
+intenralsmtp.SendEmail          → 0 call site trong toàn repo (như trước khi có tính năng này)
 verify_email.go                 → chỉ struct payload được dùng; template HTML không ai dùng
 Email OTP thật                  → internal/service/otp.go, gọi API AccessTrade
-                                   template_code: "AMBASSADOR_EMAIL_OTP_VERIFICATION"
-                                   (template nằm ở hệ thống ngoài)
+                                   template_code: EmailTemplateOTPVerification
 ```
 
-Nghĩa là cấu hình SMTP production có thể sai hoặc rỗng mà không ai biết. Kịch bản xấu nhất đã được chặn tốt (chỉ log, không ảnh hưởng chi tiền), nhưng kịch bản **thực tế nhất** là: kỳ đầu có lệch, email im lặng không đến, chỉ còn dòng log.
+`aws.go` đã được đưa về **nguyên trạng** — `git diff` với commit gốc trả về trống.
 
-**Hành động bắt buộc:**
-1. Trước kỳ chạy đầu: gửi thử một email qua đường SMTP này ở staging.
-2. Sau kỳ chạy đầu: `grep "\[notifyMismatches\]"` trong log để biết nhánh nào đã đi vào.
+Nên cân nhắc dọn hẳn phần SMTP ở một thay đổi riêng, để người sau không nhầm tưởng đó là kênh gửi mail đang hoạt động.
 
 ---
 
@@ -389,12 +418,15 @@ Nghĩa là cấu hình SMTP production có thể sai hoặc rỗng mà không ai
 | 6 | `FindOne` không sort khi tra history `type=create` | Không phải gap | `Create()` chỉ gọi `CreateHistory` một lần; trùng lặp chỉ xảy ra nếu dữ liệu hỏng, và khi đó vẫn cùng `Author` |
 | 7 | `GetCashByContent` log sai tên DAO (`"Aggregate ContentFlowDAO err"` trong khi DAO thật là EventReward) | Minor | Lỗi có sẵn từ trước |
 | 8 | `verify_email.go:195` còn `panic(err)` | Minor | Mã chết, đã thống nhất không sửa trong phạm vi này |
+| 9 | Cấu trúc `template_data` chưa được AccessTrade xác nhận, đặc biệt là mảng lồng cho `rows` | **Chặn chạy thật** | Xem mục 8.2 |
+| 10 | Nội dung hiển thị email nằm ngoài repo, không test được | Chấp nhận | Đánh đổi khi dùng template phía AccessTrade |
 
 ---
 
 ## 10. Lịch sử commit
 
 ```
+fb3d122d  refactor(reconciliation): gửi email cảnh báo qua API AccessTrade thay vì SMTP
 e603507d  fix(reconciliation): chuan hoa log khong dau va them test bat bien notifyMismatches
 f2564b3b  feat(reconciliation): gửi email tổng hợp cảnh báo lệch số liệu cuối phiên đối soát
 446d2e4b  feat(email): thêm template cảnh báo lệch số liệu đối soát
@@ -408,4 +440,7 @@ a5468a54  Revert "feat(config): thêm cấu hình email cảnh báo cho admin"
 ca5e6b33  feat(config): thêm cấu hình email cảnh báo cho admin
 ```
 
-`ca5e6b33` và `a5468a54` là một cặp thêm-rồi-gỡ: bản thiết kế đầu dùng danh sách email cấu hình qua env, sau đó đổi hướng sang tra admin tạo kỳ nên revert nguyên vẹn.
+Hai lần đổi hướng giữa chừng, đều do yêu cầu nghiệp vụ chứ không phải sửa lỗi:
+
+- `ca5e6b33` + `a5468a54` — bản thiết kế đầu dùng danh sách email cấu hình qua env, sau đó đổi sang tra admin tạo kỳ nên revert nguyên vẹn.
+- `8fe3da70` + `446d2e4b` → `fb3d122d` — bản đầu gửi qua SMTP với template render trong repo, sau đó chuyển sang API AccessTrade. `fb3d122d` gỡ phần SMTP thừa và đưa `aws.go` về nguyên trạng.
