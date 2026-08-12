@@ -3,7 +3,7 @@
 **Project:** Ambassador (Parasola + 16 partner app)
 **Date:** 2026-08-06
 **Author:** Dang Dinh
-**Version:** 2.3 (đóng pha 1 + `frontend` ngang `parasola` — 2026-08-11)
+**Version:** 2.4 (`frontend` giữ dãy icon, thêm dòng tổng — 2026-08-12)
 **Status:** ✅ **Pha 1 code xong toàn bộ FR-001→FR-008**, đã lên `feat/leaderboard-weekly` (PR #127 đã merge vào `develop`, PR #128 chờ merge) và `feat/leaderboard-weekly-release` (PR #122 chờ merge vào `release`). Xem §6.1.
 ⚠️ **Chưa nghiệm thu trên giao diện thật** — chưa ai chạy admin để bấm thử, xem §6.5.
 ⚠️ **1 vấn đề chờ quyết định** (empty state, §6.4b). §6.4a đã bị bác bỏ. 3 đề xuất §7 vẫn chờ duyệt.
@@ -277,21 +277,32 @@ Hệ quả: **FR-008 quan trọng hơn chứ không nhẹ đi.** Cấu hình k�
 | `period` / mốc kỳ / `isSettling` | ✅ | ✅ | ❌ |
 | `valueBasis` | ✅ | ✅ | ❌ |
 | `metrics` | ✅ | ✅ | ❌ |
-| Ô view = đúng giá trị đem xếp hạng | ✅ | ✅ | ❌ |
-| Format số rút gọn Tỷ/Tr/N + CountUp | ✅ | ✅ | ❌ |
+| Ô view = đúng giá trị đem xếp hạng | ✅ | ✅ dòng tổng | ❌ |
+| Format số rút gọn Tỷ/Tr/N + CountUp | ✅ | ✅ dòng tổng | ❌ |
+| Dãy view theo nền tảng | ❌ | ✅ giữ như cũ | ✅ |
 | `source: pinned\|ranked` | ❌ pha 2 | ❌ pha 2 | ❌ |
 
-**`frontend` bỏ dãy icon theo nền tảng, chuyển sang một tổng view như `parasola`.** Cách cũ lọc theo `applyForSources` nên event giới hạn nguồn thì tổng bày ra **không bằng** giá trị đem đi xếp hạng (xếp hạng tính mọi nền tảng); thêm nữa kỳ tuần/tháng không tách được view theo nền tảng nên phải rẽ nhánh riêng. Gộp về một tổng là hết cả hai. Bố cục card giữ nguyên — chỉ đồng bộ tính năng, không port layout bảng của `parasola`.
+**`frontend` GIỮ dãy icon theo nền tảng, THÊM một dòng tổng bên dưới** (chốt của chủ sản phẩm 2026-08-12 — bản trước bỏ dãy icon, đã hoàn tác):
 
-Ba thay đổi **nhìn thấy được** trên landing chạy `frontend`, cần báo trước cho partner:
+```
+1  (o) Nguyen Van A
+       [YT] 980.000  [TT] 120.000        <- dòng 1: như cũ, không đổi
+       1,1Tr lượt xem   450.000đ         <- dòng 2: thêm mới, giống parasola
+```
 
-1. **Không còn dãy icon theo nền tảng**, thay bằng một tổng lượt xem. Lý do ở đoạn trên — số cũ có thể không bằng giá trị đem đi xếp hạng.
-2. Cấu hình mặc định `metrics = [view, cash]` → **cột tiền xuất hiện** (app này trước đây chưa bao giờ render tiền). Tắt bằng `showLeaderboardAmount = false` ở partner, hoặc `metrics = [view]` ở event.
-3. `showLeaderboardAmount = false` trước đây ẩn **cả khối số**; nay chỉ ẩn cột tiền, **số view hiện trở lại** — đúng lời hứa *"ẩn cash, giữ nguyên số view"* của PRD 04-02 FR-002.
+- **Dòng 1** giữ nguyên hành vi cũ: lọc theo `applyForSources`, format desktop số đầy đủ / mobile rút gọn. Chỉ dựng ở kỳ luỹ kế — kỳ tuần/tháng không tách được view theo nền tảng nên bày ra là một hàng số 0.
+- **Dòng 2** lấy tổng từ `pointTotal` (mọi nền tảng) theo `valueBasis`, cộng ô tiền từ `cashTotal` — đúng công thức `parasola`, format rút gọn Tỷ/Tr/N + đếm tăng dần.
 
-Mục 2 và 3 là về đúng spec PRD 04-02. Mục 1 là quyết định trong đợt này, ghi ở đoạn trên.
+⚠️ **Hai dòng có thể không khớp nhau, và đó là đúng.** Dòng 1 lọc theo `applyForSources` nên event giới hạn nguồn thì cộng dòng 1 **không ra** số ở dòng 2 — vì xếp hạng tính mọi nền tảng. Ai đọc bảng thấy lệch sẽ báo là lỗi; ghi ở đây để có chỗ trả lời.
 
-Khi thiếu `metrics` (FE lên trước BE), `frontend` rơi về `[view]` chứ không phải `[view, cash]` như parasola — để deploy lệch không đổi gì trên trang.
+Bố cục card giữ nguyên — chỉ đồng bộ tính năng, không port layout bảng của `parasola`.
+
+Hai thay đổi **nhìn thấy được** trên landing chạy `frontend`, cần báo trước cho partner:
+
+1. Xuất hiện **dòng tổng lượt xem + tiền kiếm được** dưới dãy icon. Tắt phần tiền bằng `showLeaderboardAmount = false` ở partner, hoặc `metrics = [view]` ở event.
+2. `showLeaderboardAmount = false` trước đây ẩn **cả khối số**; nay chỉ ẩn ô tiền, **số view vẫn hiện** — đúng lời hứa *"ẩn cash, giữ nguyên số view"* của PRD 04-02 FR-002.
+
+Khi thiếu `metrics` (FE lên trước BE), `frontend` mặc định đủ hai chỉ số giống `parasola` và giống mặc định của server.
 
 ### 6.3 Kỷ luật ship — bổ sung sau sự cố 2026-08-10
 
