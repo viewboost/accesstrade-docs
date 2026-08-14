@@ -1,7 +1,7 @@
 # PRD — Job cảnh báo bất thường dữ liệu view (vòng 2)
 
-**Trạng thái:** Đề xuất — chưa triển khai
-**Ngày:** 2026-08-13
+**Trạng thái:** Đã triển khai, **đã sửa lỗi thiết kế lớn ngày 14/08** — xem mục "Đính chính 14/08"
+**Ngày:** 2026-08-13 · sửa 2026-08-14
 **Phạm vi:** 7 alert thuộc "vòng 2" trong đề xuất phân loại 36 case gây lệch view
 **Liên quan:** [case.md](case.md) · [2026-08-12-reconciliation-alert-prd.md](2026-08-12-reconciliation-alert-prd.md) · [2026-08-12-reconciliation-alert-tech-spec.md](2026-08-12-reconciliation-alert-tech-spec.md)
 
@@ -133,6 +133,82 @@ Nguyên tắc thứ ba, thừa hưởng từ cơ chế cảnh báo đối soát:
 55. Là lập trình viên bảo trì, tôi muốn logic phát hiện tách hoàn toàn khỏi phần đọc database, để kiểm thử được mà không cần database thật.
 56. Là lập trình viên bảo trì, tôi muốn toàn bộ điều kiện loại trừ nằm ở một chỗ duy nhất, để khi Biz đổi quy tắc thì chỉ phải sửa một nơi.
 57. Là lập trình viên bảo trì, tôi muốn thêm một alert mới không phải đụng vào alert cũ, để mở rộng sang vòng 1 và vòng 3 về sau mà không sợ hồi quy.
+
+## Đính chính 14/08 — cổng loại trừ xây trên mô hình dữ liệu sai
+
+Bản PRD gốc mô tả cổng loại trừ nhóm D dựa trên **`missions`**. Điều đó **sai từ gốc**: luồng sinh thưởng theo view không đọc `missions` ở bất kỳ đâu.
+
+### Sự thật, đọc từ `UpdateRewardTypeByStatisticContent`
+
+Đây là đường **duy nhất** tạo reward theo view (`internal/service/event_schema.go`):
+
+```go
+schemas := find({event, status: active, type: "by-statistic",
+                 applyForSources: content.Source})
+if len(schemas) == 0 { return }
+for schema := range schemas {
+    if capped(schema)             { continue }
+    if date outside schema window { continue }
+    processRewardForSchema(...)   // LUÔN ghi một bản ghi
+}
+```
+
+Ba điều luồng này **không** làm, mà bản gốc lại đưa vào cổng loại trừ:
+
+- **Không đọc `missions`.** Mission là nhánh nghiệp vụ song song, không tham gia thưởng theo view.
+- **Không bỏ qua khi hết budget.** `processRewardForSchema` luôn ghi bản ghi; hết budget thì ghi doc overflow `cash = 0`, `isBudgetExceeded = true`, **vẫn mang `options.contentId`**.
+- **Không bỏ qua theo trạng thái content.** Content bị `rejected` vẫn có bản ghi reward, chỉ khác trạng thái của chính reward đó.
+
+Loại trừ theo bất kỳ điều nào ở trên sẽ **giấu bug thật sau một phán quyết "đúng thiết kế"**.
+
+### Hệ quả trước khi sửa
+
+Nhánh `mission_not_by_view` đứng **đầu tiên** nên nó nuốt toàn bộ. Log trace trên develop ngày 14/08 xác nhận: **8/8 content-ngày bị loại vì `mission_not_by_view`**, `expected = 0`.
+
+**Bốn trong bảy detector vô hiệu** — `reward_missing`, `milestone_missing`, `reward_lag` (dùng chung cổng) và `crawl_not_queued` (cũng gate theo `mission.Type`). Job vẫn chạy, vẫn báo 0, trông như khoẻ mạnh.
+
+### Cổng loại trừ sau khi sửa
+
+Còn đúng bốn lý do, mỗi lý do phản chiếu một bộ lọc trong luồng thật:
+
+| Lý do | Ứng với |
+|---|---|
+| `event_ended` | event kết thúc trước ngày đang xét |
+| `no_matching_schema` | không có schema `active` + `by-statistic` + `applyForSources` chứa nguồn của content |
+| `out_of_schema_window` | ngày nằm ngoài `[schema.StartAt, schema.EndAt]` của mọi schema khớp |
+| `cap_reached` | mọi schema khớp và trong cửa sổ đều cạn `Quantity` |
+
+Điểm tinh tế: luồng thật **bỏ qua schema cạn rồi thưởng qua schema còn lại**, nên cổng trả `expect = true` khi **có ít nhất một** schema sống sót — không phải khi tất cả đều sống.
+
+### `milestone_missing` sai ba chỗ, mỗi chỗ đủ làm nó vô dụng
+
+Đối chiếu `CheckPassSchemaTypeByViewMilestoneWithListSchema`:
+
+| Bản gốc | Sự thật |
+|---|---|
+| ngưỡng so với `TotalViewPendingRewarded` (aggregate trên `event-rewards`) | **`user-events.statistic.<source>.view.completed`**, cộng theo `applyForSources` của schema |
+| phép so `>=` | **`>`** |
+| "đã thưởng" = reward có `statistic.totalCashMilestone > 0` | **đếm `{event, user, schema._id, status != rejected} >= 1`** |
+| không kiểm tra `applyForSources` rỗng | rỗng thì bỏ qua schema |
+
+Schema mốc là loại **`by-view-milestone`**, không phải `by-content-milestone`.
+
+### Các thay đổi kéo theo
+
+- `reward_lag` gộp theo **event**, không theo mission.
+- `crawl_not_queued` xét: event còn hiệu lực **và** `content.Status != rejected`. Content chờ duyệt **vẫn được crawl** nên vẫn bị xét.
+- `Finding.Mission`, cột `mission` trong `view-anomaly-alerts`, và `anomalyRepo.MissionsOf` bị bỏ hoàn toàn.
+- Vân tay `reward_lag` đổi từ `kind + event + mission` thành `kind + event`.
+
+### Vì sao lọt qua cả vòng review
+
+Toàn bộ test của `shouldExpectReward` là test viết theo **giả định của chính người viết**. Chúng kiểm tra hàm khớp với ý định, không kiểm tra ý định có khớp với hệ thống. Reviewer cũng chỉ đối chiếu với brief.
+
+Bài kiểm tra duy nhất có giá trị là **đọc ngược từ luồng sinh reward ra**, và nó chỉ xảy ra khi có người nhìn vào dữ liệu thật.
+
+Đây là lần thứ ba cùng một kiểu lỗi trong tính năng này — trước đó là giả định milestone reward mang `Options.ContentID`, và giả định `StaffRaw` có trường `status`. Cả ba đều là **đoán mô hình dữ liệu thay vì đọc luồng thật**.
+
+---
 
 ## Implementation Decisions
 

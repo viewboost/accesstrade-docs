@@ -1,6 +1,6 @@
 # Tech Spec — Job cảnh báo bất thường dữ liệu view (vòng 2)
 
-**Trạng thái:** Đề xuất — chưa triển khai
+**Trạng thái:** Đã triển khai · **sửa lỗi thiết kế 14/08** — mục 5 và 7.2 đã viết lại hoàn toàn
 **PRD:** [2026-08-13-view-anomaly-alert-prd.md](2026-08-13-view-anomaly-alert-prd.md)
 **Danh mục case:** [case.md](case.md)
 **Tiền lệ kiến trúc:** [2026-08-12-reconciliation-alert-tech-spec.md](2026-08-12-reconciliation-alert-tech-spec.md)
@@ -31,7 +31,7 @@ cron "0 0 6 * * *"  (Asia/Ho_Chi_Minh)          [pkg/admin/schedule/init.go]
       │    ├─ detectCallbackEmpty(scope)      ─┤
       │    └─ detectCrawlNotQueued(scope)     ─┘
       │           │
-      │           └─ 2 detector đầu gọi shouldExpectReward(scope)  ★ module sâu
+      │           └─ reward_missing + reward_lag gọi shouldExpectReward  ★ module sâu
       │
       ├─ collector.Merge(findings)                [view_anomaly_collector.go]  ── thuần
       │    dedupe theo Fingerprint → gộp cụm → sắp xếp → cắt MaxRows
@@ -65,7 +65,7 @@ Toàn bộ đặt trong `pkg/admin/service/`, cùng chỗ với cảnh báo đ�
 | File | Vai trò | I/O |
 |---|---|---|
 | `view_anomaly_types.go` | `Finding`, `Severity`, `AlertKind`, `Fingerprint()`, `Report` | Không |
-| `view_anomaly_exclusion.go` | `shouldExpectReward` — loại trừ nhóm D | Không |
+| `view_anomaly_exclusion.go` | `shouldExpectReward` — cổng theo event-schemas | Không |
 | `view_anomaly_detect.go` | 7 hàm detector + registry | Không |
 | `view_anomaly_scanner.go` | Nạp dữ liệu theo lô, gọi detector | **Có** |
 | `view_anomaly_collector.go` | Dedupe, gộp cụm, sắp xếp, cắt | Không |
@@ -118,8 +118,7 @@ type Finding struct {
 
     // Các mã định danh — dùng cả cho Fingerprint lẫn cho email.
     Event   modelmg.AppID
-    Mission *modelmg.AppID   // nil với alert không gắn nhiệm vụ
-    Content modelmg.AppID    // Zero với alert dạng cụm
+    Content modelmg.AppID    // Zero với alert dạng cụm và với milestone_missing
     User    modelmg.AppID    // Zero với alert dạng cụm
     Source  string           // nền tảng, chỉ có ở vendor_outage
     Date    time.Time        // ngày dữ liệu bị nghi vấn, đã chuẩn hoá về 00:00 HCM
@@ -155,13 +154,13 @@ Thành phần theo từng loại:
 |---|---|
 | `reward_missing` | kind + content + date |
 | `milestone_missing` | kind + event + user + ngưỡng mốc |
-| `vendor_outage` | kind + source + date |
-| `reward_lag` | kind + event + mission + date |
+| `vendor_outage` | kind + source |
+| `reward_lag` | kind + event |
 | `view_duplicated` | kind + content + date |
 | `callback_empty` | kind + content |
 | `crawl_not_queued` | kind + content |
 
-Hai trường hợp cuối **không có date**: đây là sự cố trạng thái kéo dài, không phải sự cố của một ngày. Đưa date vào là bắn lại mỗi ngày.
+**Bốn kind không có date** — `vendor_outage`, `reward_lag`, `callback_empty`, `crawl_not_queued`. Đây là sự cố trạng thái kéo dài, không phải sự cố của một ngày. Đưa date vào là bắn lại mỗi ngày: một sự cố vendor ba ngày sẽ gửi ba email giống hệt nhau.
 
 ### 3.3 Report
 
@@ -236,17 +235,34 @@ Việc scanner tính sẵn `Today`/`LastClosed` thay vì để detector gọi `t
 
 `Expected` = view của ngày; `Actual` = 0. `Detail` ghi rõ `"co view nhung khong sinh event_reward"`.
 
-### 4.2 `detectMilestoneMissing` (E4)
+### 4.2 `detectMilestoneMissing` (E4) — viết lại 14/08
 
-**Bất thường:** `RewardedViewByUser[user] >= schema.Milestone.NumberOfView` nhưng không tồn tại `EventRewardRaw` nào của user đó trong event đó có `Statistic.TotalCashMilestone > 0`.
+Đối chiếu `CheckPassSchemaTypeByViewMilestoneWithListSchema` (`internal/service/event_schema.go`):
 
-**Then chốt — dùng đúng loại chỉ số:** ngưỡng xét trên **view được tính thưởng**, lấy từ `TotalViewPendingRewarded` của pipeline `GetTotalCashRewardByContent`, **không phải** `content.Statistic.View.Total`. Đây chính xác là case Phở Cung Đình: hai con số khác nhau, và so nhầm sẽ tạo báo động giả hàng loạt.
+```go
+// schema: status=active, type = "by-view-milestone"
+if len(s.ApplyForSources) == 0                        { skip }
+if !s.Quantity.IsUnlimited && s.Quantity.Remaining<=0 { skip }
+if s.Milestone == nil || s.Milestone.NumberOfView==0  { skip }
 
-**Điều kiện tiên quyết:** `shouldExpectReward(...)` trả `expect == true`, cộng thêm hai kiểm tra riêng của mốc:
-- `schema.Milestone != nil && schema.Milestone.NumberOfView > 0` — không có mốc thì không có gì để xét.
-- `schema.IsValid()` tại thời điểm quét — mốc đạt ngoài hiệu lực là E5, đúng thiết kế.
+viewTotal := Σ userEvent.Statistic.<source>.View.Completed   // theo ApplyForSources
+if viewTotal > float64(s.Milestone.NumberOfView) {           // > chứ không >=
+    if count(event-rewards, {event, user, schema._id, status != rejected}) >= 1 { skip }
+    → tạo reward mốc
+}
+```
 
-`Expected` = `Milestone.NumberOfView`; `Actual` = view được tính thưởng thực tế.
+**Ba sai sót của bản trước**, mỗi cái đủ làm detector vô dụng:
+
+| Bản trước | Sự thật |
+|---|---|
+| ngưỡng so với `TotalViewPendingRewarded` (aggregate trên `event-rewards`) | **`user-events.statistic.<source>.view.completed`** |
+| `>=` | **`>`** |
+| "đã thưởng" = reward có `statistic.totalCashMilestone > 0` | **đếm theo `{event, user, schema._id, status != rejected}`** |
+
+Kéo theo: `Scope.RewardedViewByUser` và `Scope.MilestoneRewardedUsers` bị thay bằng `Scope.UserEventViews` (`map[user]map[source]float64`) và `Scope.MilestoneClaimed` (`map[{user, schema}]bool`).
+
+Finding của detector này thuộc về **user**, không gắn content — `Finding.Content` để Zero.
 
 ### 4.3 `detectVendorOutage` (A6)
 
@@ -288,74 +304,82 @@ Dấu hiệu phân biệt với A1: **vẫn có** callback mới. A1 thì không
 
 ---
 
-## 5. Module loại trừ nhóm D
+## 5. Cổng loại trừ — viết lại 14/08
 
-### 5.1 Chữ ký
+> **Bản trước của mục này sai từ gốc.** Nó mô tả cổng dựa trên `missions`, trong khi luồng sinh thưởng theo view không đọc `missions` ở bất kỳ đâu. Hệ quả: nhánh `mission_not_by_view` đứng đầu tiên nuốt toàn bộ, làm 4/7 detector vô hiệu. Trace trên develop xác nhận 8/8 content-ngày bị loại vì lý do đó.
+
+### 5.1 Nguồn sự thật
+
+`UpdateRewardTypeByStatisticContent` (`internal/service/event_schema.go`) là đường **duy nhất** tạo reward theo view:
 
 ```go
-// ExcludeReason là lý do một content/ngày KHÔNG được kỳ vọng sinh thưởng.
-// Chuỗi rỗng nghĩa là không có lý do loại trừ nào.
+schemas := EventSchemaDAO().Find({
+    "event":           event.ID,
+    "status":          constants.StatusActive,
+    "type":            constants.EventSchemaTypeByStatistic,   // "by-statistic"
+    "applyForSources": content.Source,                          // array-contains
+})
+if len(schemas) == 0 { return }
+
+for _, schema := range schemas {
+    if !schema.Quantity.IsUnlimited && schema.Quantity.Remaining <= 0 { continue }
+    if doc.Date.Before(schema.StartAt) || doc.Date.After(schema.EndAt) { continue }
+    processRewardForSchema(...)   // LUÔN ghi bản ghi
+}
+```
+
+Ba điều luồng này **không** làm:
+
+| Không làm | Bằng chứng |
+|---|---|
+| Đọc `missions` | không xuất hiện trong hàm |
+| Bỏ qua khi hết budget | `processRewardForSchema` nhánh `maxCash <= 0` gọi `upsertOverflowReward` — ghi doc `Cash: 0`, `IsBudgetExceeded: true`, **có `Options.ContentID`** |
+| Bỏ qua theo trạng thái content | `switch content.Status` chỉ gán trạng thái cho **reward**, kể cả `rejected` |
+
+Loại trừ theo bất kỳ điều nào ở trên là **giấu bug thật sau phán quyết "đúng thiết kế"**.
+
+### 5.2 Chữ ký
+
+```go
 type ExcludeReason string
 
 const (
-    ExcludeMissionNotByView   ExcludeReason = "mission_not_by_view"    // D5
-    ExcludeMissionInactive    ExcludeReason = "mission_inactive"       // D1
-    ExcludeOutOfMissionWindow ExcludeReason = "out_of_mission_window"  // D4, E5
-    ExcludeEventEnded         ExcludeReason = "event_ended"            // D6
-    ExcludeBudgetExhausted    ExcludeReason = "budget_exhausted"       // D2
-    ExcludeCapReached         ExcludeReason = "cap_reached"            // D3
-    ExcludeContentNotApproved ExcludeReason = "content_not_approved"   // D8
-    ExcludeContentRejected    ExcludeReason = "content_rejected"       // D7
-    ExcludeConditionNotMet    ExcludeReason = "condition_not_met"      // D9
-    ExcludeApprovedOutOfRange ExcludeReason = "approved_out_of_range"  // D4
+    ExcludeEventEnded        ExcludeReason = "event_ended"
+    ExcludeNoMatchingSchema  ExcludeReason = "no_matching_schema"
+    ExcludeOutOfSchemaWindow ExcludeReason = "out_of_schema_window"
+    ExcludeCapReached        ExcludeReason = "cap_reached"
 )
 
-// shouldExpectReward trả lời: content này, ngày này, có được kỳ vọng sinh
-// bản ghi thưởng hay không.
-//
-// Hàm THUẦN — mọi dữ liệu cần thiết đã nằm trong tham số. Đây là điều kiện để
-// test phủ được từng nhánh mà không cần database.
-//
-// Trả về lý do chứ không chỉ bool: khi Ops nghi hệ thống bỏ sót, log ghi
-// "content X bi loai vi budget_exhausted" là bằng chứng kiểm chứng được.
-// Thiếu nó, module này là hộp đen không ai tin.
 func shouldExpectReward(
     event *modelmg.EventRaw,
-    schema *modelmg.EventSchemaRaw,
-    mission *modelmg.MissionRaw,
+    schemas []*modelmg.EventSchemaRaw,
     content *modelmg.ContentRaw,
     date time.Time,
-) (expect bool, reason ExcludeReason)
+) (bool, ExcludeReason)
 ```
 
-### 5.2 Thứ tự kiểm tra
+Tham số `mission` bị bỏ hoàn toàn. Hàm vẫn **thuần** và vẫn trả lý do.
 
-Rẻ trước, đắt sau; và cái nào loại được nhiều nhất thì đặt trước:
+### 5.3 Thứ tự
 
-1. `mission == nil || mission.Type != content-with-crawl` → `mission_not_by_view`. Đây là case **phải loại trừ đầu tiên** khi có báo "content đã duyệt mà không thấy trong đối soát".
-2. `content.Status != approved` → `content_not_approved` / `content_rejected` tuỳ trạng thái.
-3. `event.EndAt.Before(date)` → `event_ended`.
-4. `mission.Status != active` → `mission_inactive`.
-5. `date` ngoài `[mission.StartAt, mission.EndAt]` → `out_of_mission_window`.
-6. `content.ApprovedAt` ngoài `[mission.StartAt, mission.EndAt]` → `approved_out_of_range`.
-7. `event.Bpe.Remain <= 0` → `budget_exhausted`. **Điểm mù, xem 5.4.**
-8. `schema.Quantity` đã cạn, hoặc `schema.MaximumRewardPerUser` đã chạm → `cap_reached`.
-9. Hashtag/nguồn không thoả `event.Options.Hashtags` / `mission.ApplyForSources` → `condition_not_met`.
-10. Không nhánh nào khớp → `(true, "")`.
+1. `event == nil || content == nil` → `no_matching_schema`
+2. `event.EndAt` trước `date` → `event_ended`
+3. `matchingStatisticSchemas` rỗng → `no_matching_schema`
+4. Duyệt schema khớp: bỏ schema ngoài cửa sổ; gặp schema **còn cap** → `expect = true`
+5. Không schema nào trong cửa sổ → `out_of_schema_window`
+6. Có trong cửa sổ nhưng đều cạn → `cap_reached`
 
-### 5.3 Vì sao gom một chỗ
+### 5.4 Điểm tinh tế — "bất kỳ", không phải "tất cả"
 
-Hai detector cần cùng câu trả lời này. Hai bản sao sẽ lệch nhau trong vòng vài tháng, và khi lệch thì một trong hai alert bắt đầu bắn sai mà không ai biết vì sao. Một chỗ thì có một danh sách để rà khi Biz đổi quy tắc.
+Luồng thật **bỏ qua schema cạn rồi thưởng qua schema còn lại**. Nên cổng trả `expect = true` khi **có ít nhất một** schema sống sót cả hai bộ lọc.
 
-### 5.4 Điểm mù đã biết — thời điểm hết budget
+Bản trước làm ngược — loại trừ khi *bất kỳ* schema nào cạn — và điều đó làm im lặng những trường hợp thiếu thưởng thật.
 
-`event.Bpe` chỉ mang trạng thái **tại lúc quét**, hệ thống không có trường ghi thời điểm budget cạn.
+### 5.5 `matchingStatisticSchemas`
 
-Hệ quả cụ thể: một content không sinh thưởng vì **bug** trong khi budget vẫn còn, rồi budget cạn sau đó, sẽ bị nhánh 7 loại trừ **sai** và không bao giờ được báo.
+Cùng vị từ với truy vấn Mongo của luồng thật: `status = active`, `type = by-statistic`, `applyForSources` chứa `content.Source`.
 
-Đây là **bỏ sót, không phải báo động giả** — nó im lặng, khó phát hiện hơn nhiều. Không khắc phục được trong phạm vi này; chỉ giải quyết được bằng cách bổ sung trường thời điểm hết budget (backlog #2 trong [case.md](case.md)). Ghi lại ở đây để người sau không mất thời gian đi tìm.
-
----
+`ApplyForSources` rỗng **khớp với không gì cả** — luồng thật truyền `content.Source` vào truy vấn dưới dạng array-contains, còn luồng mốc nói thẳng bằng `if len(s.ApplyForSources) == 0 { return }`.
 
 ## 6. Tầng scanner
 
@@ -365,7 +389,7 @@ Theo đúng pattern các job hiện có trong `shedule.go`: cursor theo `_id`, l
 
 ```
 với mỗi event có IsValid() == true:
-    nạp schemas + missions của event  (một lần, giữ trong Scope)
+    nạp schemas + userEventViews + milestoneClaimed của event  (một lần, giữ trong Scope)
     lastId = zero
     vòng lặp:
         contents = ContentDAO.Find({event, status: approved, _id: {$gt: lastId}}, limit 200, sort _id)
