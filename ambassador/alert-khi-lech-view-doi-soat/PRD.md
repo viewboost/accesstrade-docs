@@ -37,8 +37,8 @@ Bảy loại bất thường được phát hiện:
 | `vendor_outage` | A6 | Nhiều content thuộc nhiều user khác nhau, cùng nền tảng, cùng đứng view trong cùng khoảng |
 | `reward_lag` | C4, E3 | Chênh lệch giữa view đã ghi nhận và view đã tính thưởng tồn tại quá một chu kỳ |
 | `view_duplicated` | B2 | View một ngày nhảy vọt bất thường so với chính content đó |
-| `callback_empty` | A2 | Có phản hồi crawl liên tiếp nhưng không sinh dữ liệu view |
-| `crawl_not_queued` | A3 | Content hợp lệ thuộc campaign đang chạy nhưng không có dấu vết crawl nào |
+| `callback_empty` | A2 | Vendor đã trả về nhiều lần liên tiếp nhưng payload không mang dữ liệu view |
+| `crawl_no_response` | A3 | Có phiếu crawl được tạo cho content trong ngày nhưng không phiếu nào nhận được hồi âm từ vendor — xem "Đính chính 14/08 (tiếp)" |
 
 Nguyên tắc thiết kế xuyên suốt, rút ra từ chính bản chất của bài toán: **cái đắt nhất ở đây không phải là phát hiện, mà là loại trừ.** Phần lớn chênh lệch giữa view và thưởng là **đúng thiết kế** — nhiệm vụ tắt rồi bật lại, hết budget, chạm cap, ngoài thời gian hiệu lực, content chưa duyệt, không thoả điều kiện hashtag hoặc kênh. Một alert không loại trừ được hết những nguyên nhân này sẽ bắn liên tục vào những trường hợp hệ thống chạy đúng, và sẽ bị Ops tắt đi trong vòng một tuần.
 
@@ -193,10 +193,16 @@ Còn đúng bốn lý do, mỗi lý do phản chiếu một bộ lọc trong lu�
 
 Schema mốc là loại **`by-view-milestone`**, không phải `by-content-milestone`.
 
+### Lỗ hổng thứ hai — hai ngày cuối của mọi event không được xét
+
+`ActiveEvents` lọc `endAt > now`, nên event biến mất khỏi lần quét ngay hôm sau khi kết thúc. Mà `reward_missing` chỉ xét ngày ≤ D−2. Kết quả: **hai ngày cuối của mọi event vĩnh viễn không được kiểm tra** — đúng lúc budget cạn, schema hết hạn, kỳ đối soát chốt số.
+
+Sửa bằng hàm mới `ActiveEventsInWindow(ctx, since)` với `endAt > since` thay vì `endAt > now`. Cổng `event_ended` vẫn loại đúng từng ngày sau khi event kết thúc, nên không nới lỏng gì.
+
 ### Các thay đổi kéo theo
 
 - `reward_lag` gộp theo **event**, không theo mission.
-- `crawl_not_queued` xét: event còn hiệu lực **và** `content.Status != rejected`. Content chờ duyệt **vẫn được crawl** nên vẫn bị xét.
+- `crawl_not_queued` đổi tên thành `crawl_no_response` và đổi hẳn cơ chế phát hiện — xem "Đính chính 14/08 (tiếp)" bên dưới.
 - `Finding.Mission`, cột `mission` trong `view-anomaly-alerts`, và `anomalyRepo.MissionsOf` bị bỏ hoàn toàn.
 - Vân tay `reward_lag` đổi từ `kind + event + mission` thành `kind + event`.
 
@@ -207,6 +213,24 @@ Toàn bộ test của `shouldExpectReward` là test viết theo **giả định 
 Bài kiểm tra duy nhất có giá trị là **đọc ngược từ luồng sinh reward ra**, và nó chỉ xảy ra khi có người nhìn vào dữ liệu thật.
 
 Đây là lần thứ ba cùng một kiểu lỗi trong tính năng này — trước đó là giả định milestone reward mang `Options.ContentID`, và giả định `StaffRaw` có trường `status`. Cả ba đều là **đoán mô hình dữ liệu thay vì đọc luồng thật**.
+
+## Đính chính 14/08 (tiếp) — A3 đổi thành `crawl_no_response`, quét thẳng `contents-callback`
+
+Bản gốc mô tả A3 là dò trên content: content hợp lệ mà không có dấu vết crawl trong `CrawlSilentDays` ngày. Đi từ hướng đó buộc alert phải tự suy ra "content này có đáng được crawl hôm nay không", tức là **suy luận lại bộ lọc của cả sáu job crawl** — mỗi job một điều kiện khác nhau, hay đổi, dễ giòn. Hướng đó đã bị thử và bỏ.
+
+**Cách làm sau khi sửa:** `contents-callback` tự nó là một sổ ghi nhận phiếu — mỗi phiếu đi qua đúng ba nhịp:
+
+| Nhịp | Ai ghi | Trạng thái |
+|---|---|---|
+| 1. Enqueue | Crawler tạo phiếu khi bắn request | `status: "processing"`, `information` rỗng, `receivedAt: nil` |
+| 2. Vendor trả lời | POST inbound từ vendor | set `receivedAt`, điền `information` |
+| 3. Xử lý | Job `ProcessContentCallback` chạy theo giờ | chuyển phiếu sang trạng thái đã xử lý/thất bại |
+
+Một phiếu còn `receivedAt: nil` **tự nó** là bằng chứng: nó chứng minh job crawl đã bắn request cho content này, không cần suy luận gì thêm về việc content có "đáng" được crawl hay không. `crawl_no_response` vì vậy đổi thành detector **cấp-run** — giống hệt `vendor_outage` — chạy đúng một lần ở cuối lượt quét, quét thẳng `contents-callback` thay vì đi từ content.
+
+**Giới hạn có chủ ý, nói thẳng ra để không ai hiểu nhầm phạm vi:** alert này **không** phát hiện được content mà crawler chưa từng tạo phiếu nào cả. Không có phiếu thì không có cách nào phân biệt "job crawl bỏ sót content này" với "content này vốn dĩ không thuộc diện crawl hôm nay" — và việc suy luận lại bộ lọc của cả sáu job crawl để tự trả lời câu đó đã được thử và bỏ vì quá giòn. Đây là một lỗ hổng phát hiện có thật, không phải chi tiết kỹ thuật có thể bỏ qua.
+
+**Ghi chú vận hành:** các bản ghi `view-anomaly-alerts` đang mang `kind: "crawl_not_queued"` trên develop trở thành **mồ côi** sau lần đổi tên này — không có bản ghi `crawl_no_response` nào kế thừa cooldown của chúng. Không có kế hoạch migrate dữ liệu cũ; hệ quả duy nhất là cooldown của các bản ghi cũ không còn tác dụng, alert `crawl_no_response` sẽ bắn như một sự cố mới dù bản chất có thể đã được biết tới trước đó dưới tên cũ.
 
 ---
 
@@ -267,8 +291,8 @@ Bốn alert cần ngưỡng, và **không alert nào trong số đó có ngưỡ
 | `vendor_outage` | Số content tối thiểu, số user tối thiểu, cửa sổ thời gian | 50 content / 10 user / 24 giờ |
 | `view_duplicated` | Bội số so với mức bình thường, sàn view tối thiểu | 1.8 lần / 1.000 view |
 | `reward_lag` | Số chu kỳ chờ trước khi báo | 1 chu kỳ (24 giờ) |
-| `callback_empty` | Số lần callback rỗng liên tiếp | 3 lần |
-| `crawl_not_queued` | Số ngày không có dấu vết crawl | 3 ngày |
+| `callback_empty` | Số lần callback **vendor đã trả về** rỗng liên tiếp (phiếu còn chờ không tính) | 3 lần |
+| `crawl_no_response` | Không còn dùng ngưỡng số ngày — chỉ cần 1 phiếu crawl trong ngày xét mà không có phiếu nào trong cùng content được vendor trả lời là bắn. `CrawlSilentDays` giờ là config chết, không detector nào đọc — cần dọn ở lần sau | không áp dụng |
 
 Đây là **giá trị khởi đầu, không phải giá trị đúng.** Chúng được đặt theo suy luận từ tài liệu case, chưa đối chiếu với phân bố dữ liệu thật. Bắt buộc hiệu chỉnh sau lần quét đầu.
 

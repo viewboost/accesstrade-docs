@@ -21,17 +21,19 @@ cron "0 0 6 * * *"  (Asia/Ho_Chi_Minh)          [pkg/admin/schedule/init.go]
       ├─ scanner.Run(ctx, cfg)                    [view_anomaly_scanner.go]  ── I/O
       │    │
       │    │  với mỗi event active (cursor _id, lô 200):
-      │    │    nạp ctx dữ liệu → gọi 7 detector
+      │    │    nạp ctx dữ liệu → gọi detector theo lô
       │    │
       │    ├─ detectRewardMissing(scope)      ─┐
       │    ├─ detectMilestoneMissing(scope)   ─┤
-      │    ├─ detectVendorOutage(scope)       ─┤
       │    ├─ detectRewardLag(scope)          ─┼─► []Finding   (thuần, không I/O)
       │    ├─ detectViewDuplicated(scope)     ─┤
-      │    ├─ detectCallbackEmpty(scope)      ─┤
-      │    └─ detectCrawlNotQueued(scope)     ─┘
+      │    └─ detectCallbackEmpty(scope)      ─┘
       │           │
       │           └─ reward_missing + reward_lag gọi shouldExpectReward  ★ module sâu
+      │
+      │  sau khi mọi lô đã quét xong — hai ngoại lệ cấp-run (mục 6.3):
+      │    ├─ detectVendorOutage(scope)       — tally toàn run, theo Source
+      │    └─ detectCrawlNoResponse(scope)    — sweep thẳng contents-callback
       │
       ├─ collector.Merge(findings)                [view_anomaly_collector.go]  ── thuần
       │    dedupe theo Fingerprint → gộp cụm → sắp xếp → cắt MaxRows
@@ -101,13 +103,13 @@ const (
     AlertRewardLag        = "reward_lag"         // C4, E3
     AlertViewDuplicated   = "view_duplicated"    // B2
     AlertCallbackEmpty    = "callback_empty"     // A2
-    AlertCrawlNotQueued   = "crawl_not_queued"   // A3
+    AlertCrawlNoResponse  = "crawl_no_response"  // A3 — đổi tên từ crawl_not_queued 14/08, xem mục 4.7
 )
 
 const (
     SeverityHigh   = "high"    // vendor_outage, view_duplicated, reward_missing
     SeverityMedium = "medium"  // milestone_missing, reward_lag
-    SeverityLow    = "low"     // callback_empty, crawl_not_queued
+    SeverityLow    = "low"     // callback_empty, crawl_no_response
 )
 
 // Finding là một phát hiện bất thường. Thuần dữ liệu, không có phương thức
@@ -158,9 +160,9 @@ Thành phần theo từng loại:
 | `reward_lag` | kind + event |
 | `view_duplicated` | kind + content + date |
 | `callback_empty` | kind + content |
-| `crawl_not_queued` | kind + content |
+| `crawl_no_response` | kind + content |
 
-**Bốn kind không có date** — `vendor_outage`, `reward_lag`, `callback_empty`, `crawl_not_queued`. Đây là sự cố trạng thái kéo dài, không phải sự cố của một ngày. Đưa date vào là bắn lại mỗi ngày: một sự cố vendor ba ngày sẽ gửi ba email giống hệt nhau.
+**Bốn kind không có date** — `vendor_outage`, `reward_lag`, `callback_empty`, `crawl_no_response`. Đây là sự cố trạng thái kéo dài, không phải sự cố của một ngày. Đưa date vào là bắn lại mỗi ngày: một sự cố vendor ba ngày sẽ gửi ba email giống hệt nhau.
 
 ### 3.3 Report
 
@@ -290,17 +292,93 @@ Dùng trung vị chứ không dùng trung bình: một ngày đã nhảy vọt s
 
 **Hạn chế đã biết, ghi rõ để không ai tưởng đây là detector đáng tin:** content đang lên xu hướng tăng gấp đôi view trong một ngày là chuyện bình thường. Detector này **không phân biệt được** viral với đếm trùng. Nó là tín hiệu để người xem, không phải kết luận. Đây là detector nhiều khả năng phải hiệu chỉnh ngưỡng nhất, và là ứng viên số một để tắt riêng nếu nhiễu.
 
-### 4.6 `detectCallbackEmpty` (A2)
+### 4.5b Vòng đời ba nhịp của `contents-callback`
 
-**Bất thường:** `CallbackEmptyStreak` bản ghi `ContentCallbackRaw` mới nhất liên tiếp có `Information` rỗng hoặc không có trường view, trong khi content vẫn ở trạng thái được crawl.
+Cả `callback_empty` và `crawl_no_response` đọc cùng một collection, `contents-callback`, và cả hai chỉ đúng nếu hiểu đúng vòng đời của một phiếu trong đó:
 
-Dấu hiệu phân biệt với A1: **vẫn có** callback mới. A1 thì không còn callback nào.
+| Nhịp | Ai ghi | Vị trí trong mã | Trạng thái phiếu sau nhịp |
+|---|---|---|---|
+| 1. Enqueue | Crawler tạo phiếu khi bắn request | `pkg/public/service/schedule.go:2406` (`InsertContentCallback`) | `status: "processing"`, `information` rỗng, `receivedAt: nil` |
+| 2. Vendor trả lời | POST inbound từ vendor | `pkg/public/service/content_callback.go:76` | set `receivedAt`, điền `information` |
+| 3. Xử lý | Job `ProcessContentCallback` chạy theo giờ | — | chuyển phiếu sang trạng thái đã xử lý/thất bại |
 
-### 4.7 `detectCrawlNotQueued` (A3)
+Điểm mấu chốt cả hai detector đều dựa vào: **`receivedAt == nil` là dấu hiệu duy nhất đáng tin của "vendor chưa trả lời"**, không phải `status` — `status` còn đi qua nhiều giá trị trung gian ở nhịp 3, còn `receivedAt` chỉ được set đúng một lần ở nhịp 2.
 
-**Bất thường:** content thuộc event đang hiệu lực, `Status == approved`, `Mission.Type == content-with-crawl`, nhưng **không có** `ContentCallbackRaw` nào trong `CrawlSilentDays` ngày gần nhất.
+### 4.6 `detectCallbackEmpty` (A2) — sửa 14/08
 
-**Bỏ qua:** `content.TotalNotFound >= 3` — đó là A1, ngừng crawl có chủ đích, thuộc vòng 1 chứ không phải alert này. Không loại trừ điều này thì mọi content đã bị đánh dấu crawl failed sẽ bắn vào đây mỗi ngày.
+**Bất thường:** trong tối đa `callbackPerContent` (5) bản ghi `ContentCallbackRaw` mới nhất của content, đủ `CallbackEmptyStreak` bản ghi **mà vendor đã thật sự trả lời** (`hasReturned`, tức `receivedAt != nil`) liên tiếp không mang dữ liệu view (`isEmptyCallback`: `Information` rỗng, hoặc có `Information` nhưng thiếu cả bốn khoá `view`/`views`/`playCount`/`play_count`).
+
+**Sửa so với bản gốc:** phiếu còn đang chờ vendor (`receivedAt == nil`) bị **bỏ qua hoàn toàn** khi tính chuỗi — không tính vào chuỗi rỗng, và cũng không cắt một chuỗi rỗng đang chạy. Bản gốc gọi `isEmptyCallback` trên mọi bản ghi kể cả phiếu đang chờ, và một phiếu đang chờ luôn "rỗng" theo định nghĩa đó — nên detector từng bắn vào cả vendor khoẻ mạnh nhưng trả lời chậm.
+
+Dấu hiệu phân biệt với A1: **vẫn có** callback được trả lời. A1 thì không còn callback nào cả.
+
+### 4.7 `detectCrawlNoResponse` (A3) — đổi tên và đổi cơ chế 14/08
+
+**Đổi tên:** `crawl_not_queued` → `crawl_no_response`. Lý do đổi tên và hệ quả với các bản ghi cũ trên develop — xem PRD, mục "Đính chính 14/08 (tiếp)".
+
+**Đổi cơ chế:** bản gốc dò trên content — đi từ content, tự suy luận content có "đáng được crawl hôm nay" không. Hướng đó buộc phải tái tạo lại bộ lọc của cả sáu job crawl bên trong alert, đã thử và bỏ vì quá giòn.
+
+Bản đã triển khai đi hướng ngược lại: **quét thẳng `contents-callback`**, giống hệt `vendor_outage` là detector cấp-run, chạy **đúng một lần** ở cuối `runScan` chứ không theo từng lô content. Một phiếu còn `receivedAt: nil` tự nó là bằng chứng: nó chứng minh job crawl **đã** bắn request cho content, không cần biết content có thuộc diện crawl hôm nay hay không — phiếu đã tồn tại rồi.
+
+**Sweep là BA bước, không phải hai:**
+
+```go
+// A) tìm nhanh các link ứng viên — link có ít nhất một phiếu còn kẹt
+//    trong [LastClosed, Today)
+links, _ := repo.StuckCallbackLinks(ctx, lastClosed, today)
+
+// B) lấy lại TOÀN BỘ phiếu (kẹt và đã trả lời) của đúng các link đó,
+//    trong cùng cửa sổ
+callbacks, _ := repo.CallbacksByLinks(ctx, links, lastClosed, today)
+
+// C) resolve callback -> content rồi đưa vào detectCrawlNoResponse
+byLink, _ := repo.ContentsByLinks(ctx, links)
+```
+
+Vì sao không gộp A và B thành một truy vấn duy nhất trả thẳng phiếu kẹt: nếu chỉ đưa cho detector đúng tập phiếu-kẹt-theo-cấu-trúc ở bước A, thì `hasReturned` không bao giờ có cơ hội thấy `true` — một content có một request kẹt và một request khác (cùng link) đã được trả lời sẽ bị báo động giả, vì detector không thấy được cái đã trả lời. Bước B nạp lại cả hai phía để `hasReturned` phân biệt được "kẹt thật" với "chỉ là request chậm hơn request khác trên cùng link". Bước A cũng là lý do truy vấn còn nằm được trên index `{link, createdAt}` sẵn có — một lượt quét `createdAt` trần trên toàn collection không có index nào đỡ.
+
+**Điều kiện query của bước A:** `createdAt` trong `[LastClosed, Today)` và `receivedAt: nil`.
+
+**Vì sao link, không phải content:** `contents-callback` được đánh index theo `link`, không theo content id, và `link` là **non-unique** — hai content khác nhau (ví dụ hai partner submit cùng một URL) có thể trỏ tới cùng một link. Một request crawl phủ cả link, nên nếu nhiều content dùng chung link, phát hiện phải **lan ra hết** các content đó — không được âm thầm bỏ sót content nào. `ContentsByLinks` trả `map[string][]*ContentRaw` (nhiều content mỗi link) chính vì lý do này.
+
+**Xử lý lỗi:** lỗi ở bất kỳ bước nào trong ba bước (`StuckCallbackLinks`, `CallbacksByLinks`, `ContentsByLinks`) làm **bỏ hẳn detector cho lượt quét đó** — không chạy tiếp với dữ liệu rỗng. Một sweep rỗng đọc y hệt "không có gì kẹt", nên nếu lỗi bị nuốt và coi như rỗng, một sự cố hạ tầng sẽ bị hiểu nhầm thành "mọi thứ ổn" đúng lúc cần cảnh báo nhất.
+
+**Giới hạn có chủ ý:** detector này **không** phát hiện được content mà crawler chưa từng tạo phiếu nào trong `contents-callback`. Không có phiếu thì không có cách nào phân biệt "job crawl bỏ sót content" với "content này vốn không thuộc diện crawl hôm nay" — việc tái tạo bộ lọc của sáu job crawl để tự trả lời câu đó đã bị loại bỏ vì quá giòn. Đây là lỗ hổng phát hiện có thật, ghi lại để không ai đọc code rồi tưởng nó bao phủ toàn bộ A3.
+
+**Bỏ qua khỏi kết quả:** một content mà **bất kỳ** phiếu nào trong cửa sổ đã được trả lời (`answered == true`) coi như content đó ổn — các phiếu khác còn kẹt trên cùng content không phải bằng chứng sự cố, chỉ là request enqueue quanh cái đã trả lời.
+
+`PendingCallbacks` (field trong `Scope`) và `StuckCallbackLinks`/`CallbacksByLinks`/`ContentsByLinks` (method trong `anomalyRepo`) là tên thật trong mã — bản trước của mục này gọi sai là `PendingCallbacks` (method, hai bước). Không tồn tại method nào tên `PendingCallbacks` trong `anomalyRepo`; đó là tên field của `Scope`.
+
+---
+
+## 4.8 Cửa sổ nạp event — sửa 14/08
+
+`ActiveEvents` lọc `endAt > now`, nên một event **biến mất khỏi lần quét ngay hôm sau khi nó kết thúc**.
+
+Ghép với cutoff của `reward_missing` (chỉ xét ngày ≤ `LastClosed − RewardLagCycleHours`, tức D−2):
+
+| Ngày quét | Event kết thúc 31/08 có được nạp? | Ngày xét được tới |
+|---|---|---|
+| 31/08 | có | 29/08 |
+| 01/09 | **không** | — |
+
+⇒ **30/08 và 31/08 không bao giờ được xét.** Hai ngày cuối của mọi event vĩnh viễn mù với `reward_missing` và `reward_lag` — đúng khoảng thời gian dễ hỏng nhất, khi budget cạn, schema hết hạn, và kỳ đối soát chốt số.
+
+Cổng `event_ended` trong `shouldExpectReward` hoàn toàn đúng ở mức từng ngày, nhưng **không bao giờ được gọi** vì event đã bị loại ở tầng nạp. Cổng đúng, tầng nạp sai.
+
+### Cách sửa
+
+Thêm **hàm mới** `ActiveEventsInWindow(ctx, since)` thay vì đổi `ActiveEvents` — giữ nguyên ngữ nghĩa hàm cũ cho bất kỳ chỗ nào khác dùng tới:
+
+```go
+"status":  constants.StatusActive,
+"startAt": bson.M{"$lte": time.Now()},
+"endAt":   bson.M{"$gt": since},        // since = LastClosed - LookbackDays
+```
+
+Event kết thúc trong cửa sổ lookback vẫn được nạp; ngày sau `endAt` vẫn bị `event_ended` loại. **Không nới lỏng ngữ nghĩa, chỉ ngừng cắt sớm.**
+
+`status: active` giữ nguyên: `EventRaw.IsValid()` kiểm tra status **và** cửa sổ ngày cùng lúc, nghĩa là status không tự đổi khi event kết thúc — nếu có thì vế ngày đã thừa.
 
 ---
 
@@ -392,17 +470,19 @@ với mỗi event có IsValid() == true:
     nạp schemas + userEventViews + milestoneClaimed của event  (một lần, giữ trong Scope)
     lastId = zero
     vòng lặp:
-        contents = ContentDAO.Find({event, status: approved, _id: {$gt: lastId}}, limit 200, sort _id)
+        contents = ContentDAO.Find({event, status: {$in: [approved, waiting_approved]}, _id: {$gt: lastId}}, limit 200, sort _id)
         nếu rỗng → thoát
         nạp theo batch contentIds:
             ContentAnalyticDailyDAO.Find({content: {$in: ids}, date: {$gte: from, $lte: LastClosed}})
             EventRewardDAO.Find({\"options.contentId\": {$in: ids}, date: {...}})
             ContentCallbackDAO — N bản mới nhất mỗi content
-        chạy 7 detector trên Scope
+        chạy detector theo lô trên Scope
         lastId = contents[cuối]._id
 ```
 
 Cửa sổ ngày quét: `ViewAnomalyLookbackDays` (mặc định 7), tính lùi từ `LastClosed`. Không quét lại toàn bộ lịch sử — cooldown lo phần chống lặp, không phải phạm vi quét.
+
+`ContentsPage` lọc `status $in [approved, waiting_approved]`, không chỉ `approved`: năm trong sáu job crawl chấp nhận cả `waiting_approved`, và luồng thưởng theo thống kê (`by-statistic`) không đọc `content.status` ở đâu cả — lọc chỉ trên `approved` sẽ giấu toàn bộ content đang chờ duyệt khỏi cả bảy detector.
 
 ### 6.2 Chỉ xét ngày đã đóng
 
@@ -417,6 +497,8 @@ Detector này cần dữ liệu **vượt phạm vi một lô và vượt phạm
 Giải pháp: scanner tích luỹ một bộ đếm `map[source]{contents, users map[AppID]struct{}}` **trong suốt lần quét**, và chạy `detectVendorOutage` **một lần duy nhất sau khi mọi lô đã quét xong**, thay vì mỗi lô một lần.
 
 Đây là ngoại lệ có chủ ý so với sáu detector còn lại. Chữ ký vẫn là hàm thuần — chỉ là `Scope` truyền vào ở bước cuối chứa bộ đếm toàn cục thay vì lát một lô.
+
+`crawl_no_response` là ngoại lệ cấp-run **thứ hai**, cùng hình dạng với `vendor_outage` nhưng vì lý do khác: nó không tích luỹ qua các lô như `vendor_outage`, mà **quét thẳng `contents-callback`** sau khi mọi lô đã chạy xong — xem mục 4.7 cho ba bước sweep và tên method thật (`StuckCallbackLinks`, `CallbacksByLinks`, `ContentsByLinks`).
 
 ### 6.4 Cô lập lỗi
 
@@ -530,11 +612,13 @@ type AlertConfig struct {
 
     RewardLagCycleHours int      // 24
     CallbackEmptyStreak int      // 3
-    CrawlSilentDays     int      // 3
+    CrawlSilentDays     int      // 3 — config CHẾT, xem ghi chú dưới
 }
 ```
 
 Thiếu bản ghi hoặc thiếu khoá → dùng mặc định trong mã. Job không được chết vì thiếu cấu hình.
+
+**`CrawlSilentDays` là config chết kể từ khi `crawl_no_response` đổi cơ chế 14/08.** Detector bản mới không đọc số ngày im lặng — nó chỉ cần một phiếu còn kẹt trong ngày đang xét (xem mục 4.7). Không có detector nào trong bảy cái còn đọc khoá này. Giữ nguyên trong `AlertConfig` để không phá format `common-configs` hiện có; cần dọn ở lần sau.
 
 ### 8.2 `DryRun`
 
@@ -620,8 +704,17 @@ Dự án hiện **không có** tầng mock cho truy cập database — mọi ser
 // Chỉ khai báo đúng những gì scanner cần — không mock cả IDatabase.
 type anomalyRepo interface {
     ActiveEvents(ctx context.Context) ([]*modelmg.EventRaw, error)
+    ActiveEventsInWindow(ctx context.Context, since time.Time) ([]*modelmg.EventRaw, error)
     ContentsPage(ctx context.Context, eventID modelmg.AppID, after modelmg.AppID, limit int) ([]*modelmg.ContentRaw, error)
     AnalyticsFor(ctx context.Context, ids []modelmg.AppID, from, to time.Time) (map[modelmg.AppID][]*modelmg.ContentAnalyticDailyRaw, error)
+    CallbacksFor(ctx context.Context, ids []modelmg.AppID, limitPerContent int) (map[modelmg.AppID][]*modelmg.ContentCallbackRaw, error)
+
+    // Ba method riêng cho crawl_no_response — dùng theo đúng thứ tự ba bước
+    // của mục 4.7, KHÔNG phải hai bước và KHÔNG có method nào tên
+    // "PendingCallbacks" (đó là tên field trong Scope, không phải method).
+    StuckCallbackLinks(ctx context.Context, from, to time.Time) ([]string, error)
+    CallbacksByLinks(ctx context.Context, links []string, from, to time.Time) ([]*modelmg.ContentCallbackRaw, error)
+    ContentsByLinks(ctx context.Context, links []string) (map[string][]*modelmg.ContentRaw, error)
     // ...
 }
 
