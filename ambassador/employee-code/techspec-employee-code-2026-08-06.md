@@ -1,17 +1,17 @@
 # Technical Specification: Luồng nhập mã nhân viên trên Ambassador (Parasola)
 
-**Date:** 2026-08-06
+**Date:** 2026-08-06 (cập nhật 2026-08-17)
 **Author:** Nguyễn Đăng Định
-**Version:** 5.0 — bỏ phân nhóm bằng segment
+**Version:** 5.1 — đồng bộ với code sau đợt QA
 **Status:** Final
-**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v5.0
+**PRD:** [prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md) v5.1
 **Repo:** `AT-Core/ambassador`
 
 ---
 
 ## 1. Tổng quan
 
-Tài liệu này mô tả cách hiện thực hoá PRD v5.0. Thuật ngữ dùng theo mục 0 của PRD.
+Tài liệu này mô tả cách hiện thực hoá PRD v5.1. Thuật ngữ dùng theo mục 0 của PRD.
 
 > **v5.0 — bỏ phân nhóm bằng segment.** Mục 4.6, 5.4, 5.5 và chiều nhóm ở mục 6 đã gỡ; `applyForSegments` không còn trong `EventOpts`; không backfill `partner` cho `user-segments`. Lý do đầy đủ ở FR-006 của PRD.
 
@@ -426,9 +426,21 @@ func manageCode(e *echo.Group) {
 
 Mọi handler kiểm tra `s.Staff.IsAllowPartner(partnerID)`.
 
-### 5.2 Import Excel
+**`GetList` phân trang trong bộ nhớ, `page` 0-based.** Không dùng được `GetFindOptsUsingPage` vì phải đối soát `isUsed` động với `user-partners` rồi mới lọc, nên phải cắt lát bằng tay sau khi đã lọc:
 
-Port nguyên của T-Fluencers. **File chỉ một cột là mã.**
+```go
+page := query.Page          // 0-based, ĐÚNG quy ước repo
+if page < 0 { page = 0 }
+limit := query.Limit
+if limit < 1 { limit = 20 } // khớp initState của model FE
+start := page * limit
+```
+
+Chỗ này rất dễ viết nhầm thành 1-based (`if page < 1 { page = 1 }` rồi `start := (page-1)*limit`). Hậu quả: FE gửi `page=0` bị kẹp lên 1 → `start=0`, `page=1` cũng ra `start=0` — **trang 1 và trang 2 trả cùng dữ liệu**, mọi trang sau lệch một nhịp, và với tổng 62 thì hai bản ghi cuối không bao giờ xem được. Quy ước repo là 0-based: `GetFindOptsUsingPage` dùng `SetSkip(Page * Limit)` và mọi màn admin gửi `page: current - 1`.
+
+### 5.2 Import Excel / CSV
+
+Port của T-Fluencers, mở rộng cho CSV. **File chỉ một cột là mã.**
 
 ```go
 // pkg/admin/model/request/manage_code.go
@@ -437,13 +449,41 @@ type ManageCodeXLSX struct {
 }
 ```
 
+**Hai hàm đọc, chọn theo đuôi file.** `readManageCodeRows` phân nhánh `.csv` → `readManageCodeRowsCSV`, còn lại → `readManageCodeRowsXLSX`. Cần cả CSV vì modal cho chọn `.csv` và nút "Tải file mẫu" phát ra đúng một file `.csv`: chỉ dùng `xlsx.OpenFile` thì tải mẫu về rồi nộp lại chính nó cũng báo lỗi, mà thông báo lại chung chung nên không ai đoán ra vì sao. **Không nhận `.xls`** — `tealeg/xlsx` không mở được BIFF cũ.
+
+Hai chi tiết bắt buộc ở nhánh CSV: `reader.FieldsPerRecord = -1` (file thật hay có dòng trống hoặc thừa dấu phẩy ở cuối, để mặc định thì cả file hỏng chỉ vì một dòng lệch cột), và cắt BOM `﻿` ở ô đầu tiên (Excel ghi ra, không cắt thì mã đầu file không bao giờ khớp).
+
+**Cắt đuôi rỗng ngay sau khi đọc**, trước khi vào vòng lặp:
+
+```go
+// Chỉ cắt ở ĐUÔI. Dòng trống giữa vùng dữ liệu vẫn phải báo — đó thường là
+// Ops xoá nhầm một ô và cần biết mã nào rơi.
+func trimTrailingEmptyRows(rows []manageCodeRow) []manageCodeRow {
+	end := len(rows)
+	for end > 0 {
+		last := rows[end-1]
+		if last.Err != "" || strings.TrimSpace(last.Code) != "" {
+			break
+		}
+		end--
+	}
+	return rows[:end]
+}
 ```
-Mỗi dòng (bỏ dòng 0 là header):
-  code := NormalizeStaffCode(readStruct.Code)
-  rỗng → ghi vào errors[], sang dòng kế
+
+Không có bước này thì file 20 mã do Excel xuất ra vẫn cho `Total` vài trăm và bảng lỗi đầy dòng `"Dòng trống"` — Excel coi mọi ô đã từng chạm tới là "có dòng". Lưu ý điều kiện `last.Err != ""`: dòng **đọc hỏng** ở cuối file không phải dòng rỗng, nó có mặt thật và phải được báo.
+
+```
+Mỗi dòng (bỏ dòng 0 là header, sau khi đã cắt đuôi rỗng):
+  code := NormalizeStaffCode(r.Code)
+  total++
+
+  r.Err != ""     → errors[] {row, "", "Không đọc được dòng"}, skipped++
+  code == ""      → errors[] {row, "", "Dòng trống"},          skipped++
+  seen[code]      → errors[] {row, code, "Trùng trong file"},  skipped++
 
   existing := findOne({partner, code})
-  existing != nil → skipped++
+  existing != nil → errors[] {row, code, "Mã đã tồn tại"},     skipped++
   existing == nil → thêm vào danh sách insert
 
 Cuối cùng: InsertMany
@@ -473,6 +513,11 @@ type ImportResult struct {
 Không còn. Chỉ giữ một sửa đổi trên `user_segment.go`: `Delete` yêu cầu `segmentId`, kiểm `IsAllowPartner` như `Add`, và ràng buộc `segment` vào điều kiện xoá (FR-003 rút gọn).
 
 ### 5.6 Sửa lại trạng thái nhân viên (FR-010)
+
+**Gán mã ở đường admin phải validate như luồng public.** `UpdateStaffStatus` ghi `staffCode` nên cũng phải chạy đúng bộ luật của `pkg/public/service/staff_code.go`: đối chiếu `manage-codes` khi `partner.Options.RequireStaffCodeValidation`, và chặn mã đã thuộc tài khoản khác ở **cả hai tầng** (`manage-codes.isUsed/usedBy` và `user-partners.staffCode` của user khác). Tầng thứ hai không phụ thuộc cờ — mã có thể chưa kịp đánh dấu `isUsed`.
+
+**`Reason` bắt buộc và phải ghi audit.** Kiểm trên chuỗi đã TRIM bằng `validation.By`, vì `validation.Required` chỉ bắt chuỗi rỗng nên một dấu cách lách qua được. Ghi vết bằng `internalservice.Audit().CreatePayload/CreateAudits` với `fromStatus`/`toStatus` và `fromStaffCode`/`toStaffCode`. Lỗi ghi audit **không** trả về lỗi cho caller: bản ghi trạng thái đã cập nhật xong.
+
 
 Không cần endpoint mới cho phía user — `confirm-is-staff` đã cho ghi đè (mục 4.2). Chỉ cần thêm lối vào.
 
@@ -564,7 +609,27 @@ Tổng — Ngoài = Tổng toàn bộ − Tổng nhân viên   (trừ, không c�
 
 ### 6.3 Quy tắc trình bày
 
-Giữ quy ước T-Fluencers: `guest = total − staff`, không cộng dồn từng loại. Bảng chỉ có hai dòng. Mọi bảng và file export in ghi chú *"Phân loại nhân viên theo trạng thái tại thời điểm xem báo cáo."*
+Giữ quy ước T-Fluencers: `guest = total − staff`, không cộng dồn từng loại. **Hai dòng tổng** dựng từ `StaffStatisticRow`; dưới đó là **bảng chi tiết từng người** (`StaffItemResponse`) gồm creator đã xác nhận là nhân viên và creator đã được gán mã nhưng chưa xác nhận. Ghi chú *"Phân loại nhân viên theo trạng thái tại thời điểm xem báo cáo"* in trên màn hình.
+
+Thứ tự cột bảng chi tiết: **Creator** → Mã nhân viên → Trạng thái → Số bài → Lượt xem → Chi phí.
+
+### 6.4 File xuất CSV
+
+Dựng ở FE (`components/staff-statistic-export.ts`), không thêm endpoint — dữ liệu bảng đã nằm sẵn trong model.
+
+**Một bảng phẳng, dòng 1 là tiêu đề.** Không chèn khối ngữ cảnh hay tổng quan lên đầu: chúng đẩy tiêu đề bảng xuống giữa file nên Excel/Sheets không lọc và sắp xếp được nếu chưa xoá tay mấy dòng đầu. Ngữ cảnh nằm ở tên file `thong-ke-nhan-vien-{đối-tác}-{từ}-{đến}.csv`.
+
+```
+User ID | Tên Creator | Hashtag | Mã nhân viên | Nhân viên | Số video | Tổng lượt xem | Phí quảng cáo
+```
+
+`Hashtag` lấy từ `UserRaw.Hashtag`, cần bổ sung vào `StaffItemResponse` (service đã load sẵn `userMap` nên không phát sinh truy vấn). Giá trị lưu **sẵn cả dấu `#`** — Parasola cho creator copy thẳng chuỗi này dán vào bài, và hàm kiểm nội dung ở `internal/service/content.go` cũng so trực tiếp — nên ghi nguyên, không thêm bớt.
+
+Cột `Nhân viên` ghi nhãn tiếng Việt qua `staffStatusLabel`, dùng chung đúng chữ với màn "Creator theo đối tác" để hai màn không gọi cùng một trạng thái bằng hai tên.
+
+**Hai bẫy CSV bắt buộc xử lý:** BOM `﻿` đầu file (không có thì Excel đọc UTF-8 thành tiếng Việt vỡ) và chèn nháy đơn trước ô chữ mở đầu bằng `=` `+` `-` `@` (Excel/Sheets coi là công thức; số điện thoại `+8498...` sẽ thành `#NAME?`).
+
+> **Đã cân nhắc rồi bỏ:** cột `Tổng lượt thích`. Dữ liệu lấy được từ `$statistic.like.total` ngay trong collection pipeline đang đọc, nhưng giữ nó buộc mọi bản ghi phân tích gánh thêm một phép `$sum` chỉ để phục vụ một cột không ai đọc.
 
 ---
 
@@ -578,6 +643,7 @@ Giữ quy ước T-Fluencers: `guest = total − staff`, không cộng dồn t�
 |---|---|---|
 | `staffCodeKeyRequired` | Vui lòng nhập mã nhân viên | Employee code is required |
 | `staffCodeKeyInvalid` | Mã nhân viên không hợp lệ | Invalid employee code |
+| `staffCodeKeyCodeAlreadyUsed` | Mã nhân viên này đã được tài khoản khác sử dụng | This employee code is already used by another account |
 | `staffCodeKeyFeatureDisabled` | Tính năng chưa được bật cho đối tác này | Feature not enabled for this partner |
 | `manageCodeKeyAlreadyUsed` | Mã đã được sử dụng, không thể xoá | Code already used, cannot delete |
 | `manageCodeKeyEmptyFile` | File không có dữ liệu để import | No data to import |
@@ -593,11 +659,19 @@ Giữ quy ước T-Fluencers: `guest = total − staff`, không cộng dồn t�
 |---|---|
 | `admin/src/pages/manage-code/` | Port từ T-Fluencers: `index.tsx`, `model.ts`, `type.d.ts`, `components/{filter,table,create-modal,import-modal}.tsx`. `import-modal` hiển thị bảng kết quả liệt kê từng dòng lỗi |
 | `admin/src/pages/partner/components/modal.tsx` | 2 toggle `enableStaffCode` / `requireStaffCodeValidation`, dùng `RcSwitchFormNew` như 2 toggle BXH đã có |
-| `admin/src/pages/event/components/modal.tsx` | Switch `applyForStaff`; select `mode="tags"` cho `staffCodes` với `tokenSeparators={[',', ' ', '\n']}` |
+| `admin/src/pages/event/components/modal.tsx` | Switch `applyForStaff`; select `mode="tags"` cho `staffCodes` với `tokenSeparators={[',', ' ', '\n']}` và prop `tooltip` (không dùng khối `Alert`) |
 | `admin/src/pages/user-partner/` | +2 cột (Nhân viên / Mã nhân viên), +1 filter `statusStaff` |
-| `admin/src/pages/event-statistic/` | Khối thống kê nhân viên / ngoài |
+| `admin/src/pages/event-statistic/` | Khối thống kê nhân viên / ngoài, bảng chi tiết, và `components/staff-statistic-export.ts` dựng CSV |
 
 Thêm menu vào `admin/src/locales/*/menu.ts` và service `admin/src/services/manage-code.ts`.
+
+#### Ba điểm dễ sai ở tầng FE
+
+**`RcFormSelectNew` phải có prop `tooltip` pass-through cho `Form.Item`.** Component dùng chung này vốn không khai `tooltip`. Trước khi thêm, **grep xem nhánh khác đã thêm chưa** — đã từng có hai nhánh cùng bổ sung prop này ở hai vị trí khác nhau trong file, git gộp cả hai mà không báo conflict, và build vỡ ở babel với `Identifier 'tooltip' has already been declared`. Mỗi nhánh đứng riêng đều build được nên chỉ lộ ra sau khi merge.
+
+**Phân trang bảng gom sẵn dữ liệu: khai `pageSize`, đừng khai `showSizeChanger`.** `GetPagination` dùng chung đã mặc định tắt ô đổi số dòng cho toàn bộ bảng của dự án; khai lại `true` là lệch chuẩn chung. Bảng thống kê nhân viên dùng 20 dòng/trang.
+
+**Modal import phải dọn trạng thái theo cả hai chiều.** `importResult` sống trong model nên đóng modal rồi mở lại vẫn thấy báo cáo lần trước; và sau mỗi lần import phải gỡ file khỏi ô chọn để không nộp lại nhầm chính file vừa import.
 
 ---
 
@@ -814,6 +888,7 @@ Việc cần trước khi Ops cấu hình: Parasola gửi danh sách mã nhân v
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| **5.1** | 2026-08-17 | **Đồng bộ với code sau đợt QA.**<br>**5.1:** `GetList` phân trang trong bộ nhớ, chốt `page` 0-based và `limit` mặc định 20, kèm mô tả hậu quả khi viết nhầm 1-based.<br>**5.2:** đổi tên mục thành Import Excel/CSV — hai hàm đọc theo đuôi file, `FieldsPerRecord = -1`, cắt BOM, thêm `trimTrailingEmptyRows` và bảng bốn loại `reason`.<br>**6.3:** bổ sung bảng chi tiết từng người và thứ tự cột Creator đứng đầu.<br>**6.4 (mới):** đặc tả file xuất CSV — bảng phẳng 8 cột, nguồn `Hashtag`, nhãn trạng thái tiếng Việt, hai bẫy BOM và ô mở đầu bằng `=+-@`; ghi lại lý do bỏ `Tổng lượt thích`.<br>**7:** thêm key `staffCodeKeyCodeAlreadyUsed`.<br>**8:** ghi ba điểm dễ sai ở FE — `tooltip` pass-through cho `RcFormSelectNew` (đã có lần hai nhánh cùng thêm gây vỡ build), không khai lại `showSizeChanger`, dọn trạng thái modal import hai chiều |
 | **5.0** | 2026-08-14 | Nguyễn Đăng Định | Đồng bộ PRD v5.0 — **bỏ phân nhóm bằng segment**. Gỡ mục 4.6 (`CheckUserInSegmentWithStaffCode`, `SegmentConditions`, `constants/segments.go`), mục 5.4–5.5 (`type`/`applyType`, chặn xoá segment đang dùng, `ResyncStaffSegment`). `EventOpts` còn `applyForStaff` + `staffCodes`; gate ở 4.4 còn hai điều kiện. Mục 3 bỏ script backfill `partner` cho `user-segments`. Mục 6 viết lại theo nhị phân nhân viên / ngoài, còn ba bước. Ràng buộc #5 đổi từ "mọi query kèm partner" thành "vá quyền `UserSegment.Delete`". Mục 7 bỏ 2 key locale, mục 8/10/11/12 bỏ hạng mục segment |
 | **4.1** | 2026-08-10 | Nguyễn Đăng Định | Soát chéo với PRD v4.0 và bịt 3 lỗ. **Mục 11 (thứ tự triển khai) toàn bộ đang dùng đánh số FR cũ**, lệch một bậc từ FR-003 — dev đọc sẽ làm nhầm việc; viết lại theo đúng 17 FR, bổ sung FR-010 và FR-017 vốn bị bỏ sót. **Thêm mục 5.5** — hàm `ResyncStaffSegment` cho nút "Áp dụng lại" (FR-006): revision v4.0 ghi là đã bổ sung nhưng thực tế chưa có dòng nào. **Thêm mục 5.6** — sửa lại trạng thái nhân viên (FR-010): trước đó chỉ có tên trong bảng ánh xạ, không có hướng dẫn triển khai |
 | **4.0** | 2026-08-07 | Nguyễn Đăng Định | Đồng bộ PRD v4.0. **Sửa lỗi code không compile ở mục 4.4:** `content.go` của Ambassador chưa load `userPartner` (khác T-Fluencers có ở `content.go:105`) — phải thêm bước `UserPartnerDAO().FindOne` trước khối gate. Bổ sung hàm "Áp dụng lại" segment. Đánh số FR lại theo PRD (FR-002b → FR-003, backfill → FR-017) |

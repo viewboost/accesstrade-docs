@@ -1,9 +1,9 @@
 # Product Requirements Document: Luồng nhập mã nhân viên trên Ambassador (Parasola)
 
-**Date:** 2026-08-06 (cập nhật 2026-08-14)
+**Date:** 2026-08-06 (cập nhật 2026-08-17)
 **Author:** Nguyễn Đăng Định
 **Reviewer:** Vinh Nguyễn — [review-feedback-2026-08-07.md](./review-feedback-2026-08-07.md)
-**Version:** 5.0 — bỏ phân nhóm bằng segment
+**Version:** 5.1 — đồng bộ với code sau đợt QA
 **Project Level:** Level 2
 **Status:** Final
 **Phạm vi:** **Chỉ partner Parasola.** 12 partner còn lại không bị ảnh hưởng.
@@ -225,7 +225,9 @@ Port trang `/manage-code` từ T-Fluencers.
 | `DELETE` | `/manage-codes/:id` | Xoá — từ chối nếu `isUsed = true` (xem cảnh báo FR-002) |
 | `POST` | `/manage-codes/import-excel` | Import hàng loạt (FR-005) |
 
-**Bảng:** Mã \| Partner \| Đã dùng \| Người dùng \| Ngày dùng \| Ngày tạo
+**Bảng:** Mã nhân viên \| Đối tác \| Đã dùng \| Người dùng \| Ngày dùng \| Ngày tạo
+
+**Phân trang dùng `page` 0-based, `limit` mặc định 20.** Đây là quy ước chung của repo: `GetFindOptsUsingPage` là `SetSkip(Page * Limit)` và mọi màn admin gửi `page: current - 1`. `GetList` của `/manage-codes` **tự phân trang trong bộ nhớ** (vì phải đối soát `isUsed` động với `user-partners` trước khi lọc) nên rất dễ tự đặt lại quy ước 1-based cho riêng nó — làm vậy thì trang 1 và trang 2 trả cùng một khoảng dữ liệu, mọi trang sau lệch một nhịp, và trang cuối không bao giờ tới được.
 
 **Bắt buộc chọn partner tường minh.** `StaffRaw.Partner` đơn trị (`staff.go:38`) và `IsPermissionAllPartner()` trả `true` khi `Partner` rỗng (`:92`) — admin chưa gắn partner tự thành super-admin xuyên tenant. Với dữ liệu nhân sự thì mặc định đó sai hướng:
 - Trang `/manage-code` **không có chế độ "tất cả partner"**
@@ -234,6 +236,7 @@ Port trang `/manage-code` từ T-Fluencers.
 **AC:**
 - [ ] CRUD hoạt động, chặn trùng mã trong cùng partner
 - [ ] Admin có `Partner` rỗng **không** xem được mã của mọi partner
+- [ ] Sang trang 2 ra đúng 20 bản ghi tiếp theo, không lặp lại trang 1; bản ghi cuối của trang cuối truy cập được
 
 ---
 
@@ -241,7 +244,7 @@ Port trang `/manage-code` từ T-Fluencers.
 
 **Priority:** Must Have
 
-Port nguyên T-Fluencers. **File Excel một cột.**
+Port nguyên T-Fluencers. **File một cột**, nhận cả `.xlsx` lẫn `.csv`.
 
 | `code` |
 |---|
@@ -250,11 +253,22 @@ Port nguyên T-Fluencers. **File Excel một cột.**
 
 Xử lý: bỏ dòng header → chuẩn hoá TRIM + UPPERCASE → mã đã tồn tại thì skip → insert phần còn lại. Không có cột nhóm — v5.0 không phân nhóm (FR-006).
 
+**Nhận cả `.csv`, không chỉ `.xlsx`.** Modal cho chọn `.csv` và nút "Tải file mẫu" phát ra đúng một file `.csv`; nếu backend chỉ mở bằng `xlsx.OpenFile` thì tải mẫu về rồi nộp lại chính nó cũng báo lỗi. Cố ý **không** nhận `.xls`: thư viện `tealeg/xlsx` không đọc được định dạng BIFF cũ, cho chọn rồi báo lỗi chung chung còn tệ hơn là không cho chọn.
+
+**Cắt phần đuôi rỗng của file.** Excel coi mọi ô đã từng chạm tới là "có dòng", nên file 20 mã vẫn trả về hàng trăm dòng rỗng phía sau; CSV do Excel xuất cũng hay kèm một loạt dòng chỉ có dấu phẩy. Không cắt thì mỗi dòng đó thành một bản ghi `"Dòng trống"`, `Total` phồng lên hàng trăm và bảng lỗi dài vô nghĩa. **Chỉ cắt ở đuôi** — dòng trống nằm GIỮA vùng dữ liệu vẫn phải báo, vì đó thường là Ops xoá nhầm một ô và cần biết mã nào rơi.
+
+**Báo cáo từng dòng lỗi kèm số dòng.** Khác T-Fluencers: bản đó skip im lặng nên Ops không biết dòng nào hỏng và vì sao. Ambassador trả về `{total, inserted, skipped, errors[]}`, mỗi `error` gồm `{row, code, reason}` với `reason` ∈ *Dòng trống* · *Trùng trong file* · *Mã đã tồn tại* · *Không đọc được dòng*. Dòng đọc hỏng cũng phải xuất hiện trong báo cáo, không được bỏ lặng — nếu không Ops đối chiếu "file 100 dòng, import báo 97" mà không biết 3 dòng nào rơi ở đâu, tưởng hệ thống ăn mất mã.
+
+**Hành vi modal sau khi import.** Import sạch, không dòng lỗi nào ⇒ **đóng modal**. Còn dòng lỗi ⇒ giữ modal để Ops đọc bảng lỗi, nhưng **gỡ file khỏi ô chọn**. Bắt buộc phải gỡ: giữ lại thì bấm "Tải lên" thêm lần nữa là nộp đúng file vừa import, mà các mã giờ đã nằm trong DB nên tất cả quay về dưới dạng *Mã đã tồn tại* — báo cáo đầy dòng trùng do chính lần import trước sinh ra.
+
 **Sửa một bug của T-Fluencers:** `ImportExcel` bên đó kiểm `len(newCodes) == 0` hai lần liên tiếp, nhánh thứ hai là code chết. Bỏ nhánh thừa.
 
 **AC:**
-- [ ] Import file 1 cột hoạt động, báo số dòng thành công / bị skip
+- [ ] Import file 1 cột hoạt động với cả `.xlsx` và `.csv`, báo số dòng thành công / bị skip
 - [ ] Mã chuẩn hoá TRIM + UPPERCASE trước khi lưu
+- [ ] File 20 mã có đuôi rỗng ⇒ `Total = 20`, bảng lỗi rỗng
+- [ ] Dòng trống ở GIỮA vùng dữ liệu vẫn được liệt kê trong bảng lỗi
+- [ ] Import sạch ⇒ modal tự đóng; có lỗi ⇒ modal ở lại nhưng ô chọn file đã trống
 
 ---
 
@@ -312,8 +326,16 @@ POST /users/confirm-is-staff        { partner, isStaff, code }
      nếu partner bật RequireStaffCodeValidation:
          tìm manage-codes {partner, code, type}
          không thấy ⇒ lỗi "Mã nhân viên không hợp lệ"
+         mã đã isUsed bởi user KHÁC ⇒ lỗi "Mã nhân viên này đã được tài khoản khác sử dụng"
+     mã đã nằm ở user-partners của user KHÁC cùng partner ⇒ cùng lỗi trên
 4. Upsert user-partners: statusStaff + staffCode
 ```
+
+#### Một mã chỉ thuộc về một tài khoản
+
+Chặn ở **hai tầng**, vì hai tầng ghi dữ liệu khác nhau và không phải lúc nào cũng đồng bộ: `manage-codes.isUsed/usedBy` (bảng mã do Admin quản), và `user-partners.staffCode` (mã user đã khai). Thiếu tầng thứ hai thì mã chưa kịp đánh dấu `isUsed` vẫn bị người thứ hai khai trùng, và báo cáo có hai creator cùng một mã nhân viên.
+
+Lỗi trả về là key **riêng** `StaffCodeKeyCodeAlreadyUsed` → *"Mã nhân viên này đã được tài khoản khác sử dụng"*. Không dùng lại key `AlreadyUsed` của luồng Admin (*"Mã đã được sử dụng, không thể xoá"*) — câu đó nói về thao tác xoá mã ở màn quản lý, hiện cho người dùng cuối là sai ngữ cảnh hoàn toàn.
 
 **Chuẩn hoá mã ở backend** (`TRIM` + `UPPERCASE`), không tin FE. T-Fluencers chuẩn hoá ở FE nhưng gửi nguyên bản nên giá trị lưu khác giá trị user thấy.
 
@@ -449,13 +471,22 @@ Một chiều `not_employee → employee` để tránh trò bật tắt lách ga
 **Phía Admin** — nút "Sửa trạng thái nhân viên" trong `admin/src/pages/user-partner/`:
 - Đổi được sang bất kỳ trạng thái nào
 - Gỡ nhãn → xoá luôn `staffCode` đã ghi, không để lại dữ liệu mồ côi
-- Bắt buộc nhập lý do
+- **Bắt buộc nhập lý do**, và lý do phải được **lưu lại** (xem dưới)
+
+**Đường admin phải áp đúng bộ luật của luồng người dùng tự khai (FR-008).** Gán mã ở đây cũng là ghi `staffCode`, nên cũng phải: đối chiếu `manage-codes` khi partner bật `RequireStaffCodeValidation`, và chặn mã đã thuộc về tài khoản khác — kiểm ở cả `manage-codes.isUsed/usedBy` lẫn `user-partners.staffCode`. Chỉ hiện dòng chữ nhắc trên form là **không đủ**: không có gì thực thi thì admin gán được mã không tồn tại và gán trùng mã của người khác, mà hai creator cùng một mã nhân viên thì báo cáo đối soát không còn quy về được ai.
+
+**Lý do phải ghi vào audit, không chỉ validate rồi bỏ.** Nhận field rồi vứt đi là bắt admin gõ vào chỗ không ai đọc được, và làm hỏng chính lập luận BVDLCN 2025 ở trên. Ghi qua `internalservice.Audit()` kèm trạng thái và mã **trước/sau**, để đọc lại còn biết đã đổi từ đâu sang đâu chứ không chỉ giá trị cuối. Kiểm bắt buộc trên chuỗi đã TRIM — một dấu cách lách qua được thì audit lưu về một dòng trắng. Lỗi ghi audit không được làm hỏng thao tác: trạng thái đã cập nhật xong, bắt admin làm lại chỉ vì mất một dòng log là đánh đổi sai.
 
 **AC:**
 - [ ] User tự chuyển `not_employee → employee` được
 - [ ] User **không** tự gỡ được nhãn nhân viên
 - [ ] Admin gỡ nhãn → `statusStaff` đổi và `staffCode` bị xoá
 - [ ] Nhân viên bị backfill nhầm ở FR-017 khai lại được
+- [ ] Không nhập lý do ⇒ bị từ chối; nhập toàn khoảng trắng cũng bị từ chối
+- [ ] Đổi trạng thái xong ⇒ có bản ghi audit chứa lý do và trạng thái/mã trước–sau
+- [ ] Admin gán mã đã thuộc tài khoản khác ⇒ bị từ chối
+- [ ] Partner bật "Chỉ chấp nhận mã đã cấp" ⇒ admin gán mã không có trong `manage-codes` bị từ chối
+- [ ] Nút submit của modal ghi "Cập nhật", không phải "Tạo mới"
 
 ---
 
@@ -520,11 +551,13 @@ Gom thành một section. Form này hiện dùng `Row`/`Col` với bộ `Rc*` (`
 
 [RcSwitchFormNew]  Chỉ dành cho nhân viên
 
-[RcFormSelectNew mode="tags", cả dòng]  Mã tham gia riêng của chiến dịch
+[RcFormSelectNew mode="tags", cả dòng]  Mã tham gia riêng của chiến dịch  (?)
    tokenSeparators={[',', ' ', '\n']}
    Placeholder: Dán danh sách mã, phân tách bằng dấu phẩy hoặc xuống dòng
-   Ghi chú: Khác với mã nhân viên ở trang Quản lý mã.
+   tooltip: Khác với mã nhân viên ở trang Quản lý mã. Mã ở đây chỉ dùng cho chiến dịch này.
 ```
+
+**Ghi chú đặt ở tooltip cạnh nhãn, không phải khối `Alert` dưới ô nhập.** Đây là bước trong `StepsForm`: một khối `Alert` chiếm nguyên một hàng sẽ đẩy cặp nút Quay lại / Tiếp theo xuống và kéo dài bước chỉ để nói một câu. Dùng prop `tooltip` của `Form.Item` (antd hỗ trợ từ 4.7, dự án đang 4.20), cùng khuôn với các ô đã có ở màn Đối tác.
 
 **Hai quyết định về nhãn:**
 
@@ -604,6 +637,17 @@ Giữ nguyên quy tắc nhị phân staff/guest của T-Fluencers. **Không có 
 
 Kèm bốn ô đếm phía trên: Tổng creator, Nhân viên, Không phải nhân viên, Chưa khai báo.
 
+**Bảng chi tiết "Nhân viên & creator đã gán mã".** Dưới hai dòng tổng là danh sách từng người:
+
+| Creator | Mã nhân viên | Trạng thái | Số bài | Lượt xem | Chi phí |
+|---|---|---|---|---|---|
+
+Gồm creator đã xác nhận là nhân viên **và** creator đã được gán mã nhưng chưa xác nhận — nên đây không phải tập con của ô đếm "Nhân viên".
+
+- **Creator đứng cột đầu**, trước Mã nhân viên và Trạng thái: người xem tìm theo tên trước, mã chỉ là thuộc tính của người đó
+- Cột Creator hiện avatar, tên, và số điện thoại ở dòng phụ; tên chỉ là link tới trang user khi tài khoản có quyền root, vì tài khoản khác bấm vào sẽ rơi vào 403
+- **20 dòng/trang, không có ô đổi số dòng.** Bảng gom sẵn toàn bộ dữ liệu và phân trang phía client; `GetPagination` dùng chung của dự án đã mặc định tắt `showSizeChanger` nên không khai báo lại
+
 **Quy tắc tính** — giữ quy ước T-Fluencers:
 - "Nhân viên" = `constants.IsStaff(statusStaff)`; mọi giá trị khác thuộc "Ngoài"
 - "Ngoài" = Tổng − Nhân viên, không cộng dồn từng loại
@@ -626,11 +670,32 @@ Kèm bốn ô đếm phía trên: Tổng creator, Nhân viên, Không phải nh�
 
 **Priority:** Should Have
 
-Bổ sung 2 cột `Nhân viên` \| `Mã nhân viên` vào file export hiện có; thêm nút export cho bảng FR-015.
+Hai việc tách rời: bổ sung 2 cột `Nhân viên` | `Mã nhân viên` vào file export creator hiện có, và thêm nút **Xuất CSV** cho bảng FR-015.
+
+#### File xuất của bảng FR-015
+
+Bám đúng khuôn báo cáo Parasola đang dùng: **một bảng phẳng**, dòng 1 là tiêu đề, từ dòng 2 là dữ liệu.
+
+| User ID | Tên Creator | Hashtag | Mã nhân viên | Nhân viên | Số video | Tổng lượt xem | Phí quảng cáo |
+|---|---|---|---|---|---|---|---|
+
+**Không chèn khối ngữ cảnh hay khối tổng quan lên đầu file.** Bản 5.0 xuất ba khối chồng nhau (ngữ cảnh bộ lọc → tổng quan → chi tiết), khiến tiêu đề bảng nằm giữa file: mở bằng Excel hay Sheets là không lọc và sắp xếp được nếu chưa xoá tay mấy dòng đầu — việc người nhận file luôn làm đầu tiên. Ngữ cảnh chuyển hết vào **tên file**: `thong-ke-nhan-vien-{đối-tác}-{từ}-{đến}.csv`.
+
+**Quy ước từng cột:**
+
+- `Hashtag` — hashtag cá nhân của creator, lấy từ `user.hashtag`. Giá trị lưu sẵn cả dấu `#` (Parasola cho creator copy thẳng chuỗi này để dán vào bài) nên ghi nguyên, không thêm bớt
+- `Nhân viên` — ghi **nhãn tiếng Việt** *Nhân viên* / *Không phải nhân viên* / *Chưa khai báo*, đúng chữ đang hiện trên bảng. Không ghi `"Có"/"Không"` như bản 5.0, cũng không ghi giá trị thô `employee`
+- `Số video` · `Tổng lượt xem` · `Phí quảng cáo` — số trần, không format nghìn, để Excel còn tính được
+
+**Cố ý không có `Tổng bình luận` và `Engagement (%)`** dù báo cáo mẫu của Parasola có: hai cột đó không phục vụ việc đối soát nhân viên. **Cũng không có `Tổng lượt thích`** — đã cân nhắc rồi bỏ ở v5.1, vì giữ nó buộc pipeline phân tích cộng thêm `statistic.like.total` trên mọi bản ghi chỉ để phục vụ một cột không ai đọc.
+
+**CSV phải chống Excel diễn giải nhầm:** BOM `﻿` để Excel nhận UTF-8 (không có thì tiếng Việt vỡ), CRLF, và ô chữ mở đầu bằng `=` `+` `-` `@` phải chèn nháy đơn — số điện thoại dạng `+8498...` không xử lý sẽ thành `#NAME?`.
 
 **AC:**
-- [ ] Excel và CSV đều có 2 cột mới
-- [ ] Cột "Nhân viên" xuất "Có"/"Không"
+- [ ] File export creator hiện có mọc thêm 2 cột `Nhân viên` | `Mã nhân viên`
+- [ ] File xuất bảng FR-015 có đúng 8 cột trên, dòng 1 là tiêu đề, không có khối phụ nào
+- [ ] Mở bằng Excel/Sheets lọc và sắp xếp được ngay, không cần xoá dòng nào
+- [ ] Tiếng Việt không vỡ; số điện thoại giữ nguyên dạng chữ
 
 ---
 
@@ -871,6 +936,7 @@ Bối cảnh: tính năng **không nằm trong yêu cầu hệ thống gốc** P
 
 | Version | Date | Changes |
 |---------|------|---------|
+| **5.1** | 2026-08-17 | **Đồng bộ PRD với code sau đợt QA.**<br>**FR-010:** đường admin phải áp đúng bộ luật FR-008 khi gán mã (đối chiếu `manage-codes` khi partner bật cờ, chặn mã đã thuộc tài khoản khác ở cả hai tầng) — trước đó chỉ có dòng chữ nhắc trên form, không có gì thực thi; lý do đổi trạng thái bắt buộc thật và phải ghi vào audit kèm trạng thái/mã trước–sau, kiểm trên chuỗi đã TRIM; thêm 5 AC kiểm được.<br>Không đổi phạm vi, chỉ ghi lại đúng những gì đã dựng và những luật phát hiện khi chạy thật.<br>**FR-004:** ghi rõ phân trang `page` 0-based, `limit` mặc định 20 — `GetList` tự phân trang trong bộ nhớ nên đã có lúc tự đặt lại quy ước 1-based, làm trang 1 và 2 trùng nhau và trang cuối không tới được.<br>**FR-005:** nhận cả `.csv` (nút tải mẫu phát ra `.csv`), cố ý loại `.xls`; cắt phần đuôi rỗng của file — Excel trả hàng trăm dòng rỗng sau vùng dữ liệu, không cắt thì `Total` phồng lên và bảng lỗi vô nghĩa; chỉ cắt ở đuôi, dòng trống ở giữa vẫn báo; bổ sung hợp đồng `errors[]` bốn loại lý do; chốt hành vi modal sau import (sạch thì đóng, có lỗi thì giữ nhưng gỡ file khỏi ô chọn để không nộp lại nhầm).<br>**FR-008:** bổ sung luật một mã chỉ thuộc một tài khoản, chặn ở cả `manage-codes.isUsed` lẫn `user-partners.staffCode`, dùng key lỗi riêng thay vì mượn câu của luồng xoá mã ở Admin.<br>**FR-011:** ghi chú mã chiến dịch chuyển từ khối `Alert` sang `tooltip` cạnh nhãn.<br>**FR-015:** bổ sung bảng chi tiết "Nhân viên & creator đã gán mã" vốn đã dựng nhưng PRD chưa mô tả — thứ tự cột với Creator đứng đầu, 20 dòng/trang, không có ô đổi số dòng.<br>**FR-016:** viết lại theo khuôn báo cáo Parasola — một bảng phẳng 8 cột, bỏ ba khối phụ ở đầu file vì chúng đẩy tiêu đề xuống giữa khiến không lọc/sắp xếp được; chốt nhãn cột "Nhân viên" là tiếng Việt; ghi rõ đã cân nhắc rồi bỏ `Tổng lượt thích` |
 | **5.0** | 2026-08-14 | **Bỏ phân nhóm bằng segment.** Lý do: Admin đã import danh sách mã bằng Excel (FR-005), lớp nhóm dựng thêm bên trên chỉ phục vụ một nhu cầu chưa được Parasola xác nhận (Open Question 3 treo từ 06/08) nhưng kéo theo bốn bề mặt phải nuôi — đồng bộ thủ công, cấm sửa thành viên tay, điều kiện gate thứ ba, breakdown báo cáo lệch khi một người thuộc nhiều nhóm.<br>**FR-006:** gỡ toàn bộ (segment `applyType: staff_code`, nút "Áp dụng lại", ràng buộc `source: staff_import`).<br>**FR-003:** rút gọn — không thêm `partner`/`note` vào `user-segments`, không backfill; chỉ giữ vá quyền cho `UserSegment.Delete` vì đó là lỗ hổng độc lập.<br>**FR-011:** còn hai cơ chế, bỏ `applyForSegments` và cảnh báo mã mồ côi.<br>**FR-010:** gỡ nhãn không còn bước gỡ khỏi nhóm, thay bằng xoá `staffCode`.<br>**FR-012:** còn một trường hợp từ chối.<br>**FR-014/016:** bỏ cột `Nhóm` và filter segment.<br>**FR-015:** về nhị phân Nhân viên / Ngoài như T-Fluencers, bỏ dòng nhóm, dòng "Chưa phân nhóm" và cảnh báo trùng nhóm.<br>Giữ nguyên số hiệu FR để không phá tham chiếu chéo. 17 → 16 FR còn hiệu lực |
 | **4.1** | 2026-08-10 | Sửa NFR-004 — lỗi phát hiện khi code. Bản 4.0 ghi "chỉ tiếng Việt, Ambassador không có en-US", nhưng đó là kết luận từ việc chỉ kiểm locale **frontend**. Backend có `internal/locale/properties/en/` 12 file và `MustLoadFile` sẽ `log.Fatal` nếu thiếu — làm đúng theo bản cũ thì **service không khởi động được**. Nay tách rõ: backend bắt buộc en+vi, chỉ frontend mới thuần Việt |
 | **4.0** | 2026-08-07 | **Bản chốt.** Áp feedback review của Vinh Nguyễn + kết quả tự soát lại toàn bộ khẳng định với code.<br>**FR mới:** FR-003 (`user-segments` thiếu `partner` — chặn FR-006/015), FR-010 (sửa lại trạng thái — bị cắt nhầm ở v2.0 khiến FR-017 tự mâu thuẫn), FR-017 (backfill user hiện có).<br>**FR-006:** thêm nút "Áp dụng lại" — sửa danh sách mã trong segment vốn không hồi tố, PRD v3.x hứa sai chỗ này.<br>**FR-011:** ràng buộc cấm nhét gate vào `CalculateEligibility`; `AllowedSegments` AND `IsStaff`; ghi nhận nợ `isRequireCode`; **lưu ý `content.go` chưa load `userPartner`** — code mẫu ở techspec v3.x không compile.<br>**FR-002:** ghi rõ điều kiện `isUsed` khi xoá mã là code chết.<br>**FR-008:** ghi rõ cho phép ghi đè khi gọi lại.<br>**Sửa 3 mô tả sai:** partner modal dùng antd `Switch` chứ không phải `RcSwitchFormNew`; event modal chưa có `Divider` nào; NFR-004 đòi VI+EN trong khi Ambassador chỉ có `vi-VN`.<br>**FR-009:** sửa lập luận sai — nhánh "không phải nhân viên" ở T-Fluencers không validate mã nên không phải ngõ cụt; lý do đúng là dữ liệu rác + copy sai.<br>Đánh số FR lại liền mạch, bỏ FR-002b. 14 → 17 FR |
