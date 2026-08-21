@@ -12,6 +12,8 @@ Dời toàn bộ lượt xem và thưởng của ngày 01/08 về ngày 31/07 �
 
 Mỗi lần chạy xử lý một chiến dịch, với ba tham số: mã chiến dịch, ngày nguồn (01/08/2026), ngày đích (31/07/2026).
 
+**Phạm vi đợt này: chỉ các chiến dịch có ngày kết thúc 31/07/2026.** Các chiến dịch kết thúc sau mốc đó, nếu gặp tình trạng tương tự, sẽ được rà soát và xử lý ở đợt riêng kèm báo cáo riêng. Đợt này không đụng tới chúng.
+
 ## 3. Những gì được dời
 
 - **Lượt xem, lượt thích, bình luận của từng video.** Cộng vào số của ngày 31/07, không ghi đè.
@@ -36,7 +38,7 @@ Mỗi lần chạy được lưu lịch sử vĩnh viễn: ai chạy, lúc nào,
 
 ## 5. Kết quả kỳ vọng
 
-Áp dụng cho chiến dịch được chạy. Các chiến dịch khác không bị ảnh hưởng.
+Áp dụng cho các chiến dịch có ngày kết thúc 31/07/2026 được chạy trong đợt này. Các chiến dịch khác không bị ảnh hưởng, và cũng chưa được xử lý.
 
 - Lượt xem và thưởng nằm ở ngày 31/07; ngày 01/08 bằng 0. Mọi màn hình thống kê và báo cáo đều thấy như vậy, không còn ngày nằm ngoài kỳ.
 - Tổng lượt xem, tổng chi phí của chiến dịch và số tiền của từng creator đều **không đổi**. Chỉ ngày ghi nhận đổi.
@@ -60,6 +62,7 @@ Không khắc phục được: giai đoạn gián đoạn không có dữ liệu
 - Không điều chỉnh khoản đã thanh toán, không chi trả hồi tố vào kỳ đã đóng.
 - Hồ sơ đối soát đã lập trước đó không tự cập nhật theo. Các khoản được dời đều truy ngược được để đối chiếu.
 - Không thay đổi thể lệ hay mức thưởng của chiến dịch.
+- **Các chiến dịch có ngày kết thúc sau 31/07/2026 không thuộc đợt này**, kể cả khi gặp tình trạng tương tự. Sẽ có đợt và báo cáo riêng.
 - Không xử lý trường hợp tràn nhiều hơn một ngày.
 - Khôi phục từ bản sao lưu thực hiện thủ công, không có thao tác hoàn tác tự động.
 - Xử lý nguyên nhân gốc để hệ thống không ghi nhận số liệu sau ngày kết thúc chiến dịch: hạng mục kỹ thuật riêng, làm song song.
