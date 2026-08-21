@@ -238,6 +238,18 @@ type MigrationJobReport struct {                 // KHÁC BẢN GỐC — field 
     ContentsOnOverflowDate []string            `bson:"contentsOnOverflowDate,omitempty" json:"contentsOnOverflowDate,omitempty"` // content.date = ngày tràn, chặn xóa doc
     CashBySchema     []MigrationJobCashBySchema `bson:"cashBySchema"               json:"cashBySchema"`
     PaidRewards      []MigrationJobPaidReward   `bson:"paidRewards,omitempty"      json:"paidRewards,omitempty"`
+    ByDate           []MigrationJobDayFigure    `bson:"byDate"                     json:"byDate"`
+}
+
+// Đối chiếu TRƯỚC – SAU theo TỪNG NGÀY. Đây là thứ người vận hành và advertiser
+// thực sự đọc để quyết định có chạy thật hay không. Số tổng ở trên không dựng
+// được bảng này. Tối thiểu hai dòng: ngày đích và ngày tràn.
+type MigrationJobDayFigure struct {
+    Date       string  `bson:"date"       json:"date"`       // ISO date
+    ViewBefore float64 `bson:"viewBefore" json:"viewBefore"`
+    ViewAfter  float64 `bson:"viewAfter"  json:"viewAfter"`
+    CashBefore float64 `bson:"cashBefore" json:"cashBefore"`
+    CashAfter  float64 `bson:"cashAfter"  json:"cashAfter"`
 }
 
 type MigrationJobContentItem struct {
@@ -856,4 +868,6 @@ zero dòng ngày tràn thì test phải đỏ đúng con số, không phải ch�
 | **Reward rơi vào kỳ chi khác sau khi đổi ngày** | Có chủ đích. Transfer quét theo `date < EndAt` của kỳ (`transfer.go:99`) nên kỳ kế tiếp sẽ nhặt lên. Báo trước cho vận hành |
 | **Biên bản đối soát cũ trỏ vào ngày tràn** | Bốn field truy vết trên `event-reward` (`mergedIntoRewardId`, `mergedFromRewardIds`, `originalDate`, `migrationJobId`) cho phép lần ngược |
 | **Nhánh đổi ngày làm reward rơi sang schema khác đơn giá** | Không xảy ra: nhánh đổi ngày giữ nguyên dòng và nguyên `schema`. Nhưng cash theo từng schema vẫn phải in trong report để nhìn ra nếu có |
+| **Biên bản đối soát đã lập cho ngày tràn KHÔNG tự khớp lại** | Migration không đụng tới bản ghi đối soát. Biên bản đã lập cho ngày tràn vẫn trỏ vào ngày đó — chỉ **truy ngược** được qua bốn field trên `event-reward`, không tự đồng bộ. Đừng hứa với advertiser là "số liệu đối soát khớp lại" |
+| **Thưởng dời về ngày đích không được chi hồi tố** | Transfer quét `date < EndAt` của kỳ chi (`transfer.go:99`) nên khoản dời sẽ vào **kỳ thanh toán kế tiếp**, không quay ngược vào kỳ đã chạy. Đúng ngày ghi nhận, chi ở kỳ sau |
 | **`quantity.remaining` lệch sau khi chạy** | Nó là số dẫn xuất, đếm số dòng reward chưa reject (`event_schema.go:731-745`). Nhánh cộng dồn giữ nguyên số dòng nên không lệch — đây là lý do **zero chứ không xóa** |

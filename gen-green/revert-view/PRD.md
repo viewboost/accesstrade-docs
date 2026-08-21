@@ -57,7 +57,20 @@ Hệ quả với người dùng:
   - *Không có reward ở ngày 01/08* → view tràn không được quy đổi, creator **mất tiền** thật.
   - *Có reward ở ngày 01/08* → creator **không mất tiền**, nhưng tiền nằm ở một ngày ngoài vòng đời event: sai kỳ đối soát, sai kỳ chi, và biên bản đối soát trỏ vào một ngày lẽ ra không tồn tại.
 
-- **Báo cáo event sai.** Biểu đồ và bảng thống kê của event xuất hiện thêm một cột ngày 01/08/2026 nằm ngoài thời gian chạy event, khiến admin và partner đối soát bị lệch. Tổng view của ngày cuối cùng (31/07) bị thiếu đúng bằng phần đã tràn sang.
+- **Báo cáo event sai.** Biểu đồ và bảng thống kê của event xuất hiện thêm một cột ngày 01/08/2026 nằm ngoài thời gian chạy event, khiến admin và partner đối soát bị lệch.
+
+> **Đính chính (vận hành xác nhận)** — khoảng thiếu **không phải một ngày**. Hệ thống ngừng cập nhật lượt xem
+> **từ 17/07/2026**; lần thu thập ngày 01/08 gom toàn bộ phần tích luỹ của cả giai đoạn 17/07–01/08 và ghi dồn
+> vào đúng một ngày 01/08. Hai hệ quả cho thiết kế:
+>
+> **(a) Cơ chế gộp không đổi.** Chỉ ngày 01/08 có dữ liệu để dời, nên thao tác vẫn là gộp một ngày về ngày đích.
+> Nhánh "content chỉ có doc ở ngày tràn, chưa từng có doc ngày đích" ở Planner đã lường sẵn trường hợp các
+> content không có doc trong suốt giai đoạn gián đoạn.
+>
+> **(b) Nhưng phân bổ theo ngày sẽ KHÔNG đúng sau khi chạy** — toàn bộ lượt xem của 15 ngày dồn vào 31/07, các
+> ngày 17/07–30/07 gần như bằng 0. Không khắc phục được: giai đoạn gián đoạn không có dữ liệu từng ngày nên
+> không có căn cứ chia lại. **Tổng đúng, phân bổ theo ngày không đúng.** Phải nói rõ với advertiser trước khi
+> chạy, đừng để họ tự phát hiện cái đỉnh ở 31/07.
 - **Reward milestone cũng rơi ra ngoài vòng đời event.** Reward loại `by-view-milestone` và
   `by-content-milestone` ghi `Date = TimeStartOfDayInHCM(time.Now())` — tức **ngày job chạy**, không phải ngày
   phát sinh view. Mốc thưởng đạt được trong ngày 01/08 sẽ mang `date = 01/08`, nằm ngoài event y như reward thường.
@@ -365,7 +378,7 @@ Song song với đó, mỗi lần trigger migration sinh ra một **bản ghi jo
   - `GET /migration-jobs?type=&limit=` — danh sách job mới nhất, sắp xếp theo `startedAt` giảm dần, lọc theo `type`, mặc định 20 bản ghi.
   - `GET /migration-jobs/:id` — chi tiết một job, dùng lại `routevalidation.Common().ParamID`. Trả 404 khi không tồn tại, phân biệt rõ với lỗi DB.
 - Lý do tách group: ở vcreator, `CheckKeyMigration` được gắn ở cấp group `/migration` (khác ambassador chỉ có `RequiredLogin`). Nếu để endpoint job trong group đó, mỗi lần poll đều phải kèm key migration — trong khi poll là thao tác chỉ đọc, lặp liên tục. Endpoint **trigger** vẫn nằm trong `/migration` và vẫn chịu `CheckKeyMigration`.
-- Báo cáo (trạng thái, lý do bị chặn, số doc bị đụng theo từng collection, tổng view và tổng cash trước/sau, danh sách content bị ảnh hưởng) nằm trong job record, đọc qua `GET /migration-jobs/:id`.
+- Báo cáo (trạng thái, lý do bị chặn, số doc bị đụng theo từng collection, tổng view và tổng cash trước/sau, **số liệu trước/sau tách theo từng ngày**, cash tách theo từng schema, danh sách content bị ảnh hưởng) nằm trong job record, đọc qua `GET /migration-jobs/:id`.
 - Báo cáo phải đọc được bằng mắt, không bắt người vận hành tự ghép field. Định dạng chốt:
 
 ```
@@ -522,7 +535,10 @@ Test tốt là test kiểm chứng **hành vi quan sát được từ bên ngoà
 - **Gộp nhiều hơn một ngày tràn.** Chỉ hỗ trợ ngày nguồn liền kề ngay sau ngày đích; guard chặn khi phát hiện còn dữ liệu ở ngày sau ngày nguồn.
 - **Sửa lệch giữa `Audit()` và `TotalManualView`.** Lỗi sẵn có của hệ thống, không thuộc phạm vi migration này.
 - **Content đăng sau `endAt`.** Nếu ngày tràn còn content thật (`content.date` sau `endAt`), migration báo cáo lại chứ không tự sửa `content.date` — đó là vấn đề khác, cùng gốc với lỗi crawler.
-- **Hoàn tác tự động.** Có backup nhưng không có endpoint rollback; khôi phục làm thủ công từ collection backup.
+- **Hoàn tác tự động.** Có backup nhưng không có endpoint rollback; khôi phục làm thủ công từ collection backup. Khi báo ra ngoài, phải nói rõ là **khôi phục thủ công** — đừng để bên nhận hiểu là bấm một nút lùi được.
+- **Đồng bộ lại biên bản đối soát đã lập.** Migration không đụng tới bản ghi đối soát. Biên bản đã lập cho ngày tràn vẫn trỏ vào ngày đó; bốn field truy vết chỉ giúp **lần ngược**, không tự khớp lại.
+- **Chi trả hồi tố.** Khoản thưởng dời về ngày đích sẽ vào kỳ thanh toán kế tiếp, không quay ngược vào kỳ đã chạy.
+- **Khôi phục phân bổ lượt xem theo từng ngày của giai đoạn gián đoạn 17/07–31/07.** Không có dữ liệu để chia lại.
 - **Điều chỉnh tiền đã chuyển.** Nếu phát hiện reward đã chi ở ngày nguồn, migration dừng và giao lại cho vận hành.
 - **Thay đổi giao diện admin.** Không có thay đổi phía frontend — job được theo dõi bằng cách gọi thẳng endpoint, không có màn hình danh sách job.
 - **Hủy job đang chạy.** Không có endpoint stop; job chạy tới khi xong hoặc chết. Job `running` bị treo do process restart cũng không được tự dọn — phải sửa tay, và nó sẽ chặn lần trigger tiếp theo trên cùng event.
