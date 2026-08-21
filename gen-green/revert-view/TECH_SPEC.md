@@ -535,11 +535,24 @@ func BuildRewardPlan(in RewardInput) []RewardAction
 
 Luật chọn nhánh:
 
-| Loại | Có dòng ngày đích cùng `schema._id` **và** cùng `status`? | Nhánh |
+| Dòng ở ngày tràn | Có dòng ngày đích cùng `schema._id` **và** cùng `status`? | Nhánh |
 |---|---|---|
-| `by-statistic` | Có | `Accumulate` |
-| `by-statistic` | Không | `MoveDate` |
+| `by-statistic`, chưa đối soát (`status != completed`) | Có | `Accumulate` |
+| `by-statistic`, chưa đối soát | Không | `MoveDate` |
+| `by-statistic`, **đã đối soát** (`status = completed`) | Không xét | `MoveDate` |
 | `by-view-milestone` / `by-content-milestone` | Luôn không (mỗi bộ một dòng, 1.2(f)) | `MoveDate` |
+
+> **Bổ sung — dòng đã đối soát KHÔNG BAO GIỜ đi nhánh cộng dồn.** `Accumulate` chỉ chạy khi hai dòng cùng
+> `status`, nghĩa là hai dòng `completed` vẫn lọt vào nhánh đó: một dòng bị zero, một dòng phình lên. Tổng
+> không đổi, nhưng **một con số đã chốt đối soát với partner bị đưa về 0**, và hồ sơ đối soát trỏ vào dòng đó
+> mở ra thấy 0, phải lần theo con trỏ mới ra tiền.
+>
+> Nhánh `MoveDate` không có vấn đề này: dòng giữ nguyên `_id` và nguyên số, chỉ đổi `date` — hồ sơ đối soát cũ
+> vẫn trỏ đúng dòng, đúng số. Nên với dòng đã đối soát, luôn `MoveDate`.
+>
+> Hệ quả chấp nhận được: có thể tồn tại hai dòng `completed` cùng `schema._id` + `contentId` + `date` ở ngày
+> đích. Không gây đúp số — mọi thống kê phía sau đều `$sum`, và luồng recompute không còn được gọi cho ngày
+> đích nữa (xem 1.2(d)).
 
 Khớp theo `schema._id` chứ không theo `type`: một event có nhiều schema cùng type `by-statistic` khác nguồn,
 khác đơn giá (1.2(e)). Khớp cả `status` vì đó là một phần khóa nhận dạng reward (`event_schema.go:291-299`).

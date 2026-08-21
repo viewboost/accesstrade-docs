@@ -329,18 +329,21 @@ Song song với đó, mỗi lần trigger migration sinh ra một **bản ghi jo
 - **MergeOverflowDayExecutor** — module mỏng, chỉ điều phối I/O: backup → ghi doc `content-analytic-daily` ngày đích theo `MergePlan` và xóa doc ngày nguồn → xử lý `content-flow` cho `Audit()` → **chuyển reward ngày nguồn sang ngày đích** → xóa và recompute `event-analytic-daily` cùng `user-event-analytic-daily`. Không chứa công thức tính toán.
 - **MergeOverflowDayRewardPlanner** — module sâu, thuần logic, tách khỏi Executor. Đầu vào: danh sách `event-reward` của hai ngày. Đầu ra: danh sách hành động, mỗi hành động thuộc đúng một trong ba nhánh:
 
-  | Loại reward | Có dòng ngày đích cùng `schema._id` + `status`? | Hành động |
+  | Dòng reward ở ngày nguồn | Có dòng ngày đích cùng `schema._id` + `status`? | Hành động |
   |---|---|---|
-  | `by-statistic` | Có | **Cộng dồn** vào dòng ngày đích, zero dòng ngày nguồn, gắn con trỏ liên kết |
-  | `by-statistic` | Không | **Đổi `date`** sang ngày đích, giữ nguyên số, ghi lại ngày gốc |
+  | `by-statistic`, chưa đối soát | Có | **Cộng dồn** vào dòng ngày đích, zero dòng ngày nguồn, gắn con trỏ liên kết |
+  | `by-statistic`, chưa đối soát | Không | **Đổi `date`** sang ngày đích, giữ nguyên số, ghi lại ngày gốc |
+  | `by-statistic`, **đã đối soát** (`status = completed`) | Không xét | **Đổi `date`**. Không bao giờ cộng dồn — xem lý do dưới |
   | `by-view-milestone` / `by-content-milestone` | Luôn là không (mỗi bộ chỉ một dòng) | **Đổi `date`** sang ngày đích. Không cộng, không xóa |
+
+  Dòng **đã đối soát** không đi nhánh cộng dồn, vì cộng dồn sẽ đưa một con số đã chốt với partner về 0 và bắt người đọc hồ sơ đối soát phải lần theo con trỏ mới ra tiền. Đổi ngày thì dòng giữ nguyên mã và nguyên số, hồ sơ cũ vẫn trỏ đúng.
 
   Cộng dồn nghĩa là `statistic.totalView += ...`, `totalCashView += ...`, tương tự cho like/comment/milestone, và `cash += ...`. Không gọi lại hàm recompute nào.
 
   Nhánh đổi ngày được chọn thay vì "cộng vào một dòng khác schema" vì dòng kết quả phải còn giải thích được: `cash` của một reward phải suy ra được từ `schema.cashReward` của chính nó. Trộn hai schema vào một dòng là làm mất khả năng đó.
 
 - **Trường truy vết trên `event-reward`** — thêm mới, để đối soát cũ trỏ vào ngày nguồn vẫn lần ra được tiền đi đâu. Bốn trường:
-  - `mergedIntoRewardId` — đặt trên dòng ngày nguồn, trỏ sang dòng ngày đích (nhánh cộng dồn);
+  - `mergedIntoRewardId` — đặt trên dòng ngày nguồn, trỏ sang dòng ngày đích. **Chỉ có ở nhánh cộng dồn** — nhánh đổi ngày không có "khoản gốc" nào khác để trỏ tới, vì bản thân dòng đó là khoản gốc, chỉ đổi ngày;
   - `mergedFromRewardIds` — đặt trên dòng ngày đích, liệt kê các dòng đã gộp vào nó;
   - `originalDate` — ngày gốc, dùng cho cả nhánh cộng dồn lẫn nhánh đổi ngày;
   - `migrationJobId` — lần chạy nào gây ra, nối thẳng vào job record.

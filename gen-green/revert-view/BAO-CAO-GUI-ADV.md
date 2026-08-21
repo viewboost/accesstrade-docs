@@ -52,8 +52,9 @@ Cụ thể những gì được dời:
   cho cả hai ngày. Sau khi tính lại, số của ngày 01/08 về 0.
 - Bảng thành tích tích luỹ của từng creator. Cập nhật lại cho khớp.
 
-Mỗi khoản thưởng được dời đều lưu con trỏ về khoản gốc và ngày gốc, để đối
-soát sau này truy ngược được.
+Mọi khoản thưởng bị tác động đều ghi lại ngày ghi nhận ban đầu và mã lần
+chạy, nên truy ngược được. Khoản được dời nguyên vẹn giữ nguyên mã khoản
+thưởng, nên hồ sơ đối soát cũ vẫn trỏ đúng khoản đó.
 
 
 CƠ CHẾ AN TOÀN
@@ -72,10 +73,12 @@ CÁC BƯỚC THỰC HIỆN
 
 1. Sao lưu toàn bộ dữ liệu liên quan.
 2. Chạy thử, không ghi vào dữ liệu thật.
-3. Xuất bản đối chiếu TRƯỚC – SAU theo từng ngày, kèm dòng tổng chi phí.
-4. Gửi bản đối chiếu để quý công ty xác nhận.
-5. Thực thi sau khi được xác nhận. Không tự động chạy.
-6. Kiểm tra kết quả và gửi lại bản xác nhận.
+3. Đối chiếu kết quả chạy thử: tổng lượt xem trước và sau, tổng chi phí
+   trước và sau, số liệu của từng ngày. Chỉ thực thi khi các con số này
+   khớp. Không khớp thì dừng và rà lại.
+4. Thực thi.
+5. Kiểm tra lại sau khi chạy.
+6. Gửi quý công ty bản xác nhận kết quả kèm số liệu trước và sau.
 
 
 KẾT QUẢ MONG ĐỢI
@@ -91,8 +94,8 @@ KẾT QUẢ MONG ĐỢI
 - Tổng chi phí của chiến dịch không đổi.
 - Số tiền của từng creator không đổi, chỉ đổi ngày ghi nhận.
 - Thưởng cột mốc của creator giữ nguyên, không mất mốc đã đạt.
-- Mỗi khoản thưởng được dời đều truy ngược được về khoản gốc và ngày gốc,
-  phục vụ đối soát.
+- Mọi khoản thưởng bị tác động đều truy ngược được về ngày ghi nhận ban
+  đầu, phục vụ đối soát.
 - Thưởng được ghi nhận đúng ngày trong kỳ chiến dịch. Việc chi trả thực
   hiện ở kỳ thanh toán kế tiếp.
 
@@ -137,5 +140,5 @@ NGOÀI PHẠM VI
 
 MỐC THỜI GIAN
 
-Bản đối chiếu ở Bước 3 dự kiến gửi trước ngày [___].
-Bước 5 chờ xác nhận từ quý công ty.
+Dự kiến hoàn tất trước ngày [___].
+Bản xác nhận kết quả sẽ được gửi ngay sau khi chạy xong.
