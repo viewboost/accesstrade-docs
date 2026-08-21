@@ -27,8 +27,10 @@ Mọi khoản thưởng bị tác động đều ghi lại ngày ghi nhận ban 
 1. Sao lưu toàn bộ dữ liệu liên quan.
 2. Chạy thử. Công cụ mặc định không ghi vào dữ liệu thật; muốn ghi phải khai báo rõ trong lệnh chạy.
 3. Đối chiếu kết quả chạy thử: tổng lượt xem và tổng chi phí trước – sau, số liệu của từng ngày. Không khớp thì dừng và rà lại.
-4. Thực thi. Công cụ tự dừng nếu gặp một trong ba tình huống: có khoản đã thanh toán ở ngày 01/08, có số liệu ghi vào các ngày sau 01/08, hoặc có bản ghi trùng lặp.
+4. Thực thi. Công cụ tự dừng nếu phát hiện khoản đã thanh toán ở ngày 01/08, hoặc phát hiện bản ghi trùng lặp.
 5. Kiểm tra lại và gửi quý công ty bản xác nhận kết quả kèm số liệu trước – sau.
+
+Công cụ cũng dừng nếu phát hiện số liệu còn bị ghi vào các ngày sau 01/08. Trường hợp đó nghĩa là phạm vi sự cố rộng hơn một ngày; xử lý riêng ngày 01/08 sẽ vẫn còn ngày nằm ngoài kỳ, nên cần thống nhất lại cách xử lý trước khi chạy.
 
 Mỗi lần chạy được lưu lịch sử vĩnh viễn: ai chạy, lúc nào, tham số gì, kết quả ra sao.
 
