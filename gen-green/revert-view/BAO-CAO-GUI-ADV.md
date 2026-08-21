@@ -1,144 +1,106 @@
 BÁO CÁO: XỬ LÝ SAI LỆCH SỐ LIỆU CHIẾN DỊCH
 
 
-TÌNH HÌNH
+1. TÌNH HÌNH
 
-Từ ngày 17/07/2026, hệ thống ngừng cập nhật lượt xem cho chiến dịch. Đến
-ngày 01/08/2026 — sau khi chiến dịch đã kết thúc ngày 31/07 — hệ thống thu
-thập lại một lần. Toàn bộ lượt xem tích luỹ của giai đoạn 17/07–01/08 được
-ghi dồn vào ngày 01/08, là ngày nằm ngoài kỳ chiến dịch. Thưởng tương ứng
-cũng được ghi nhận ở ngày 01/08.
+Từ 17/07/2026 hệ thống ngừng cập nhật lượt xem cho chiến dịch. Ngày
+01/08/2026 — sau khi chiến dịch đã kết thúc 31/07 — hệ thống thu thập lại một
+lần và ghi dồn toàn bộ lượt xem tích luỹ của cả giai đoạn vào đúng ngày 01/08,
+là ngày nằm ngoài kỳ. Thưởng tương ứng cũng nằm ở ngày 01/08.
 
-Số liệu không mất. Thưởng không mất. Cả hai đang nằm ngoài kỳ chiến dịch.
-
-
-GIẢI PHÁP
-
-Dời toàn bộ lượt xem và thưởng đang nằm ở ngày 01/08/2026 về ngày
-31/07/2026 — ngày kết thúc thật của chiến dịch.
-
-Dời nguyên số: không tính lại, không tạo mới, không thay đổi giá trị. Chỉ
-thay đổi ngày ghi nhận.
+Số liệu và thưởng không mất, chỉ nằm sai ngày.
 
 
-ĐẦU VÀO CỦA MỖI LẦN CHẠY
+2. GIẢI PHÁP
 
-- Mã chiến dịch cần xử lý
-- Ngày nguồn (ngày bị ghi tràn): 01/08/2026
-- Ngày đích (ngày kết thúc chiến dịch): 31/07/2026
+Dời toàn bộ lượt xem và thưởng của ngày 01/08 về ngày 31/07 — ngày kết thúc
+thật của chiến dịch. Dời nguyên số: không tính lại, không tạo mới, không đổi
+giá trị. Chỉ đổi ngày ghi nhận.
 
-Mỗi lần chạy xử lý đúng một chiến dịch.
+Mỗi lần chạy xử lý một chiến dịch, với ba tham số: mã chiến dịch, ngày nguồn
+(01/08/2026), ngày đích (31/07/2026).
 
 
-THAO TÁC
+3. NHỮNG GÌ ĐƯỢC DỜI
 
-1. Dời toàn bộ lượt xem thu thập được và thưởng theo lượt xem từ ngày
-   01/08/2026 sang ngày 31/07/2026.
-2. Dời toàn bộ thưởng theo cột mốc liên quan từ ngày 01/08/2026 sang ngày
-   31/07/2026.
-
-Cụ thể những gì được dời:
-
-- Lượt xem, lượt thích, bình luận của từng video. Cộng vào số của ngày
-  31/07, không ghi đè.
-- Bản ghi thu thập gốc từ các nền tảng. Dời theo để cơ chế kiểm tra chất
+- Lượt xem, lượt thích, bình luận của từng video. Cộng vào số của ngày 31/07,
+  không ghi đè.
+- Bản ghi thu thập gốc từ các nền tảng. Dời theo, để cơ chế kiểm tra chất
   lượng số liệu không đánh dấu ngày 31/07 là bất thường.
-- Thưởng theo lượt xem của từng creator trên từng video. Nếu ngày 31/07 đã
-  có khoản cùng loại thì cộng thêm vào khoản đó, nếu chưa có thì dời nguyên
-  khoản sang.
-- Thưởng theo cột mốc (đạt mốc lượt xem, đạt mốc số lượng video). Dời sang
-  ngày 31/07, không xóa và không tạo lại.
-- Báo cáo tổng hợp theo ngày của chiến dịch và của từng creator. Tính lại
-  cho cả hai ngày. Sau khi tính lại, số của ngày 01/08 về 0.
-- Bảng thành tích tích luỹ của từng creator. Cập nhật lại cho khớp.
+- Thưởng theo lượt xem của từng creator trên từng video. Cộng vào khoản cùng
+  loại ở ngày 31/07 nếu đã có; chưa có thì dời nguyên khoản sang.
+- Thưởng theo cột mốc. Dời sang ngày 31/07, không xóa và không tạo lại, để
+  creator không mất mốc đã đạt.
+- Các bảng số liệu tổng hợp của chiến dịch và của từng creator. Tính lại, sau
+  đó số của ngày 01/08 về 0.
 
-Mọi khoản thưởng bị tác động đều ghi lại ngày ghi nhận ban đầu và mã lần
-chạy, nên truy ngược được. Khoản được dời nguyên vẹn giữ nguyên mã khoản
-thưởng, nên hồ sơ đối soát cũ vẫn trỏ đúng khoản đó.
+Mọi khoản thưởng bị tác động đều ghi lại ngày ghi nhận ban đầu và mã lần chạy.
+Khoản được dời nguyên vẹn giữ nguyên mã khoản thưởng, nên hồ sơ đối soát cũ
+vẫn trỏ đúng khoản đó.
 
 
-CƠ CHẾ AN TOÀN
-
-- Mặc định chạy thử, không ghi vào dữ liệu thật.
-- Muốn ghi thật phải khai báo rõ trong lệnh chạy.
-- Tự dừng nếu phát hiện khoản đã thanh toán ở ngày 01/08.
-- Tự dừng nếu phát hiện số liệu bị ghi vào các ngày sau 01/08, tức là tràn
-  nhiều hơn một ngày — nằm ngoài phạm vi xử lý của công cụ này.
-- Tự dừng nếu phát hiện bản ghi trùng lặp.
-- Sao lưu toàn bộ dữ liệu trước khi ghi.
-- Lưu lịch sử vĩnh viễn: ai chạy, lúc nào, tham số gì, kết quả ra sao.
-
-
-CÁC BƯỚC THỰC HIỆN
+4. CÁC BƯỚC THỰC HIỆN
 
 1. Sao lưu toàn bộ dữ liệu liên quan.
-2. Chạy thử, không ghi vào dữ liệu thật.
-3. Đối chiếu kết quả chạy thử: tổng lượt xem trước và sau, tổng chi phí
-   trước và sau, số liệu của từng ngày. Chỉ thực thi khi các con số này
-   khớp. Không khớp thì dừng và rà lại.
-4. Thực thi.
-5. Kiểm tra lại sau khi chạy.
-6. Gửi quý công ty bản xác nhận kết quả kèm số liệu trước và sau.
+2. Chạy thử. Công cụ mặc định không ghi vào dữ liệu thật; muốn ghi phải khai
+   báo rõ trong lệnh chạy.
+3. Đối chiếu kết quả chạy thử: tổng lượt xem và tổng chi phí trước – sau, số
+   liệu của từng ngày. Không khớp thì dừng và rà lại.
+4. Thực thi. Công cụ tự dừng nếu gặp một trong ba tình huống: có khoản đã
+   thanh toán ở ngày 01/08, có số liệu ghi vào các ngày sau 01/08, hoặc có bản
+   ghi trùng lặp.
+5. Kiểm tra lại và gửi quý công ty bản xác nhận kết quả kèm số liệu trước–sau.
+
+Mỗi lần chạy được lưu lịch sử vĩnh viễn: ai chạy, lúc nào, tham số gì, kết quả
+ra sao.
 
 
-KẾT QUẢ MONG ĐỢI
+5. KẾT QUẢ KỲ VỌNG
 
-Áp dụng cho các chiến dịch được chạy. Các chiến dịch khác không bị ảnh hưởng.
+Áp dụng cho chiến dịch được chạy. Các chiến dịch khác không bị ảnh hưởng.
 
-- Tất cả lượt xem và thưởng sẽ ở ngày 31/07 thay vì ngày 01/08.
-- Lượt xem và thưởng của ngày 01/08 sẽ luôn bằng 0.
-- Các màn hình thống kê và báo cáo sẽ thấy số ở ngày 31/07 thay vì
-  ngày 01/08.
-- Báo cáo chiến dịch không còn ngày nằm ngoài kỳ.
-- Tổng lượt xem của chiến dịch không đổi.
-- Tổng chi phí của chiến dịch không đổi.
-- Số tiền của từng creator không đổi, chỉ đổi ngày ghi nhận.
+- Lượt xem và thưởng nằm ở ngày 31/07; ngày 01/08 bằng 0. Mọi màn hình thống
+  kê và báo cáo đều thấy như vậy, không còn ngày nằm ngoài kỳ.
+- Tổng lượt xem, tổng chi phí của chiến dịch và số tiền của từng creator đều
+  KHÔNG đổi. Chỉ ngày ghi nhận đổi.
 - Thưởng cột mốc của creator giữ nguyên, không mất mốc đã đạt.
-- Mọi khoản thưởng bị tác động đều truy ngược được về ngày ghi nhận ban
-  đầu, phục vụ đối soát.
-- Thưởng được ghi nhận đúng ngày trong kỳ chiến dịch. Việc chi trả thực
-  hiện ở kỳ thanh toán kế tiếp.
+- Mọi khoản thưởng bị tác động đều truy ngược được về ngày ghi nhận ban đầu.
+- Thưởng được ghi nhận đúng ngày trong kỳ. Việc chi trả thực hiện ở kỳ thanh
+  toán kế tiếp.
 
 
-RỦI RO
+6. RỦI RO
 
-1. Phân bổ theo ngày sẽ không phản ánh thực tế.
-   - Toàn bộ lượt xem của giai đoạn 17/07–01/08 dồn vào một ngày duy nhất
-     là 31/07.
-   - Biểu đồ theo ngày sẽ thấy các ngày 17/07–30/07 gần như bằng 0 và ngày
-     31/07 là một đỉnh rất cao.
-   - Không khắc phục được. Trong giai đoạn gián đoạn, hệ thống không ghi
-     được lượt xem phát sinh từng ngày nên không có căn cứ để chia lại.
-   - Chúng tôi chọn giữ tổng đúng thay vì đoán một cách chia không có
-     cơ sở.
-   - Tổng lượt xem và tổng chi phí là con số dùng để đối soát. Biểu đồ theo
-     ngày trong giai đoạn này chỉ nên đọc ở mức tham khảo.
+1. Phân bổ theo ngày không phản ánh thực tế. Toàn bộ lượt xem của giai đoạn
+   17/07–01/08 dồn vào một ngày 31/07, nên biểu đồ theo ngày sẽ thấy các ngày
+   17/07–30/07 gần như bằng 0 và ngày 31/07 là một đỉnh rất cao.
 
-2. Nếu phát hiện khoản đã thanh toán ở ngày 01/08, hệ thống dừng lại.
-   Chúng tôi sẽ trao đổi riêng trước khi làm bất cứ điều gì.
+   Không khắc phục được: giai đoạn gián đoạn không có dữ liệu từng ngày nên
+   không có căn cứ để chia lại. Chúng tôi giữ tổng đúng thay vì đoán một cách
+   chia không có cơ sở. Tổng lượt xem và tổng chi phí là con số dùng để đối
+   soát; biểu đồ theo ngày trong giai đoạn này chỉ nên đọc ở mức tham khảo.
+
+2. Nếu phát hiện khoản đã thanh toán ở ngày 01/08, công cụ dừng lại và chúng
+   tôi trao đổi riêng trước khi làm bất cứ điều gì.
 
 3. Báo cáo có thể lệch tạm thời trong lúc chạy. Sẽ chạy ngoài giờ cao điểm.
 
-4. Toàn bộ dữ liệu được sao lưu trước khi xử lý. Việc khôi phục thực hiện
-   thủ công từ bản sao lưu, không có thao tác hoàn tác tự động.
 
+7. NGOÀI PHẠM VI
 
-NGOÀI PHẠM VI
-
-- Không khôi phục được phân bổ lượt xem theo từng ngày của giai đoạn
-  17/07–31/07.
-- Không điều chỉnh các khoản đã thanh toán.
-- Không chi trả hồi tố vào kỳ thanh toán đã đóng.
-- Các biên bản đối soát đã lập trước đó không tự động cập nhật theo. Mọi
-  khoản được dời đều truy ngược được để đối chiếu.
+- Không chia lại lượt xem theo từng ngày cho giai đoạn 17/07–31/07.
+- Không điều chỉnh khoản đã thanh toán, không chi trả hồi tố vào kỳ đã đóng.
+- Hồ sơ đối soát đã lập trước đó không tự cập nhật theo. Các khoản được dời
+  đều truy ngược được để đối chiếu.
 - Không thay đổi thể lệ hay mức thưởng của chiến dịch.
 - Không xử lý trường hợp tràn nhiều hơn một ngày.
-- Xử lý nguyên nhân gốc để hệ thống không ghi nhận số liệu sau ngày kết
-  thúc chiến dịch: hạng mục kỹ thuật riêng, làm song song.
-- Mỗi lần chạy xử lý một chiến dịch. Các chiến dịch khác không bị đụng.
+- Khôi phục từ bản sao lưu thực hiện thủ công, không có thao tác hoàn tác
+  tự động.
+- Xử lý nguyên nhân gốc để hệ thống không ghi nhận số liệu sau ngày kết thúc
+  chiến dịch: hạng mục kỹ thuật riêng, làm song song.
 
 
-MỐC THỜI GIAN
+8. MỐC THỜI GIAN
 
 Dự kiến hoàn tất trước ngày [___].
-Bản xác nhận kết quả sẽ được gửi ngay sau khi chạy xong.
+Bản xác nhận kết quả gửi ngay sau khi chạy xong.
