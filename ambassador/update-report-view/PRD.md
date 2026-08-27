@@ -102,7 +102,9 @@ Ngoài ra ba trần ngân sách khác nhau — theo sự kiện, theo user, theo
 
 ### Nguyên tắc kỹ thuật
 
-**Giữ nguyên ngữ nghĩa mọi cột và dòng đang có; chỉ cột và dòng mới mang con số tách.** Nhờ vậy file Excel gửi partner không có tình trạng cùng tên cột mà số khác nhau giữa hai kỳ, kỳ cũ và kỳ mới không dùng chung một cột với hai nghĩa, và không cần helper suy đoán bản ghi nào là cũ.
+**Giữ nguyên ngữ nghĩa mọi cột và dòng đang có; chỉ cột và dòng mới mang con số tách.** Nhờ vậy file Excel gửi partner không có tình trạng cùng tên cột mà số khác nhau giữa hai kỳ, và kỳ cũ với kỳ mới không dùng chung một cột với hai nghĩa.
+
+**Kỳ đối soát cũ suy lại từ bất biến, không đoán.** Bản ghi tạo trước khi hai field ra đời không có key nào trong hai key ấy nên cả hai decode ra `0`. Một hàm trên model xử lý việc này: khi phần được tính thưởng bằng `0`, suy lại bằng `tổng chờ đối soát − phần không được tính thưởng`. Với kỳ cũ thì cả hai đều vắng mặt nên kết quả là toàn bộ số tổng — đúng với thực tế lúc đó, khi chưa có khái niệm view vượt ngân sách và mọi view chờ đối soát đều được trả tiền. Nhánh suy lại không bao giờ chạm dữ liệu mới, vì kỳ tạo sau thay đổi này không thể có phần được tính thưởng bằng `0` — điều kiện bỏ qua content đã loại thẳng những dòng như vậy ngay lúc tạo kỳ. Đây là suy luận từ một bất biến, không phải heuristic đoán bản ghi nào là cũ.
 
 **Cấm phép trừ ở frontend.** Backend cấp thẳng con số cần hiển thị.
 
@@ -112,22 +114,21 @@ Ngoài ra ba trần ngân sách khác nhau — theo sự kiện, theo user, theo
 
 ### Thay đổi schema
 
-Bốn field mới, không xoá hay đổi field nào đang có trên production.
+Bốn field mới, không xoá hay đổi field nào đang có trên production. Tên field **không mang chữ "budget"**, vì phần không được trả tiền đến từ nhiều nguyên nhân chứ không riêng ngân sách; chữ "budget" chỉ giữ ở đường ghi và ở các điều kiện lọc, nơi nó đúng nghĩa.
 
 ```go
 // Cấp nguồn, phục vụ trang cá nhân
-UserContentStatistic.ViewRewarded     CommonStatisticContent // Cashback = đã đối soát, Completed = chờ đối soát
-UserContentStatistic.ViewExceedBudget CommonStatisticContent // dữ liệu thô, không hiển thị
+UserContentStatistic.ViewRewarded    CommonStatisticContent // Cashback = đã đối soát, Completed = chờ đối soát
 
 // Cấp sự kiện
-UserEventStatistic.ViewRewardedTotal  CommonStatisticContent // Total = Cashback + Completed
+UserEventStatistic.ViewRewardedTotal CommonStatisticContent // Total = Cashback + Completed
 
 // Analytic, dùng chung cho hai collection
-EventAnalyticDailyStatistic.ViewExceedBudget CommonStatisticContent
+EventAnalyticDailyStatistic.ViewNotRewarded CommonStatisticContent // dữ liệu thô, không hiển thị
 
 // Kỳ đối soát
-ReconciliationItemContent.TotalViewPendingRewarded int64 // khớp TotalCashPending
-ReconciliationItemContent.TotalViewPendingExceeded int64 // giữ trong DB, không hiển thị
+ReconciliationItemContent.TotalViewPendingRewarded    int64 // khớp TotalCashPending
+ReconciliationItemContent.TotalViewPendingNotRewarded int64 // giữ trong DB, không hiển thị
 ```
 
 ### Quy ước bucket
@@ -174,11 +175,11 @@ Hàm này tính lại từ đầu mỗi lần chạy nên tự chữa lành — 
 
 ### Banner cảnh báo ngân sách — nội dung phải nói đúng hành vi thật
 
-Banner được sửa để hiển thị được (xem mục Sửa kèm), nhưng câu chữ ba mức ngưỡng đang **nói sai**. Hai chuỗi ở mức 95% và 100% được sao chép nguyên văn từ ứng dụng Techcombank, nơi tính năng chặn nộp bài là thật. Ở Ambassador, cờ chặn chỉ được **ghi** xuống cơ sở dữ liệu bằng string key, không có field trên model, không nơi nào đọc, không có toggle, và **không có chốt chặn nào trong luồng nộp nội dung**. Ba đường kiểm chứng độc lập trong review đều cho cùng kết quả: ngân sách chỉ ảnh hưởng tới việc tính thưởng và việc hiển thị, không ảnh hưởng tới quyền nộp bài.
+Banner được sửa để hiển thị được (xem mục Sửa kèm), nhưng câu chữ ba mức ngưỡng ở bản đầu **nói sai**. Hai chuỗi ở mức 95% và 100% được sao chép nguyên văn từ ứng dụng Techcombank, nơi tính năng chặn nộp bài là thật. Ở Ambassador, cờ chặn chỉ được **ghi** xuống cơ sở dữ liệu bằng string key, không có field trên model, không nơi nào đọc, không có toggle, và **không có chốt chặn nào trong luồng nộp nội dung**. Ba đường kiểm chứng độc lập trong review đều cho cùng kết quả: ngân sách chỉ ảnh hưởng tới việc tính thưởng và việc hiển thị, không ảnh hưởng tới quyền nộp bài.
 
 Ngoài ra bộ ngưỡng 75/95/100 trong backend chỉ dùng để chống gửi trùng cảnh báo Telegram, không dùng để chặn gì. Hàm xử lý chỉ chạy khi ngân sách còn lại không đủ trả một phần thưởng cụ thể — tức gần 100%, không phải 95%.
 
-Vì vậy ở mức 95–99% hệ thống **vẫn nhận bài đăng bình thường**, và lượt xem phát sinh thêm **hoàn toàn có thể không được tính thưởng**. Cả hai vế của câu đang chạy đều sai.
+Vì vậy ở mức 95–99% hệ thống **vẫn nhận bài đăng bình thường**, và lượt xem phát sinh thêm **hoàn toàn có thể không được tính thưởng**. Cả hai vế của câu ban đầu đều sai.
 
 Quyết định: giữ nguyên khung render, chỉ đổi ba hằng câu chữ và hậu tố tiêu đề.
 
@@ -190,7 +191,7 @@ Bỏ cả hai emoji. Riêng emoji ăn mừng ở mức 100% là ăn mừng đún
 
 Tooltip trợ giúp bổ sung phạm vi: banner chỉ phản ánh ngân sách **sự kiện**, trong khi ambassador còn có thể chạm hạn mức riêng của mình hoặc hạn mức của từng nội dung.
 
-Ba hằng câu chữ này có **14 bản sao giống nhau từng byte**, phải áp đồng loạt rồi verify bằng checksum. Test hiện chỉ khẳng định theo mức ngưỡng, **không** khẳng định nội dung chuỗi — nên đổi text sẽ không làm test đỏ; cần kiểm mắt hoặc bổ sung khẳng định chuỗi để khoá lại.
+Ba hằng câu chữ này có **14 bản sao giống nhau từng byte**, phải áp đồng loạt rồi verify bằng checksum. Test chỉ khẳng định theo mức ngưỡng, **không** khẳng định nội dung chuỗi — nên đổi text không làm test đỏ; cần kiểm mắt hoặc bổ sung khẳng định chuỗi để khoá lại.
 
 ### Sửa kèm
 
@@ -251,18 +252,22 @@ Mapper ánh xạ trường sang trường không có nhánh rẽ. Không viết 
 
 Chạy lại toàn bộ luồng tính thưởng trên dữ liệu có sẵn và xác nhận collection phần thưởng không thay đổi. Không thay đổi nào được phép chạm vào đường ghi.
 
-## Ghi nhận từ review lượt 2 — không bắt buộc sửa trong đợt này
+## Ghi nhận từ review lượt 2
+
+Hai mục dưới đây **chưa xử lý**, ghi lại để có dấu vết.
 
 **Guard lượt xem mới đang chặn chi tiền.** Quy trình chạy kỳ đối soát thêm điều kiện loại bỏ content khi số lượt xem được tính thưởng ghi trong bản ghi lệch so với số tính lại, **không có dung sai**. Guard này chạy **sau khi kiểm tiền đã đạt** — tức tiền đã đúng, content vẫn bị loại chỉ vì con số báo cáo lệch một đơn vị. Tiền có thể khớp mà view lệch khi phần thưởng gồm cả lượt thích và bình luận bù trừ nhau, khi đơn giá mỗi view của schema bị sửa, hoặc do chỉ đọc bản ghi đầu tiên với content có nhiều schema. Điểm giảm nhẹ: bản ghi phần thưởng không đổi trạng thái nên kỳ sau tính lại và tự lành — ambassador chậm một kỳ chứ không mất tiền. Đây là **thay đổi hành vi trên đường tiền** và không nằm trong tài liệu này; ghi lại để có dấu vết.
 
 **Gọi aggregate hai lần cho cùng một truy vấn.** Hai hàm lấy tiền và lấy lượt xem được tính thưởng theo content chạy cùng một truy vấn với điều kiện y hệt, chỉ đọc field khác nhau từ kết quả. Trong vòng chạy đối soát chúng được gọi liên tiếp cho từng content qua nhóm năm mươi worker, làm gấp đôi tải lên cơ sở dữ liệu đúng lúc chạy đối soát. Gộp thành một lần gọi trả cả hai giá trị là đủ.
 
-**Bốn mục tồn từ review lượt 1, tính đến 18/08 vẫn chưa làm.**
+**Bốn mục tồn từ review lượt 1 — trạng thái tính đến 27/08.**
 
-1. Đổi tên field `exceedBudget` thành `notRewarded` — nice-to-have, còn ở mười ba file. **Nếu làm thì phải làm trong đợt này**, vì các field đó chưa từng được ghi xuống production nên đổi bây giờ không cần migration; đổi sau khi merge thì tốn một đợt riêng. Giữ nguyên tên mang chữ "budget" ở đường ghi và ở các điều kiện lọc, vì ở đó tên đang đúng nghĩa; chỉ bỏ chữ "budget" ở các field thống kê, nơi ngân sách chỉ là một trong nhiều nguyên nhân.
-2. Xoá hoặc cập nhật trang thống kê phụ — còn nguyên năm file ở hai ứng dụng, số vẫn mâu thuẫn với trang cá nhân. Trang này không có menu, link hay nút nào trỏ tới, chỉ vào được bằng cách gõ thẳng địa chỉ. Đề nghị xoá; giữ lại nghĩa là phải bảo trì song song thêm một nguồn số nữa.
-3. Kỳ đối soát cũ hiển thị `0` ở cột "được tính thưởng" cạnh một số tiền khác `0`. Hai cách xử lý, **không dùng heuristic đoán**: backfill cho các kỳ cũ, hoặc hiển thị dấu gạch ngang cho bản ghi chưa có field kèm tooltip "kỳ trước khi tách số".
-4. Cập nhật tài liệu theo hướng đã chốt — mục này chính là việc đó.
+1. **Đã xong.** Đổi tên field `exceedBudget` thành `notRewarded`. Tên còn sót duy nhất nằm trong một test đóng vai chốt chặn, khẳng định payload không còn key `viewExceedBudget`.
+2. **Chưa xong.** Trang thống kê phụ vẫn còn ở hai ứng dụng, số vẫn mâu thuẫn với trang cá nhân. Trang này không có menu, link hay nút nào trỏ tới, chỉ vào được bằng cách gõ thẳng địa chỉ. Đề nghị xoá; giữ lại nghĩa là phải bảo trì song song thêm một nguồn số nữa. **Đây là mục tồn duy nhất còn lại từ lượt 1.**
+3. **Đã xong.** Kỳ đối soát cũ không còn hiển thị `0` — hàm suy lại trên model xử lý, xem mục Nguyên tắc kỹ thuật. Áp cho cả bảng admin lẫn file Excel.
+4. **Đã xong.** Cập nhật tài liệu — mục này chính là việc đó.
+
+**Banner ngân sách (phát hiện chính của lượt 2) — đã xong.** Ba hằng câu chữ đã đổi theo hướng chốt ở trên, áp đủ 14 bản và verify bằng checksum: cả 14 file cho ra cùng một giá trị.
 
 ## Out of Scope
 
@@ -272,7 +277,7 @@ Số lượt thích và số bình luận cũng phồng theo đúng cơ chế. P
 
 Chỉ số tương tác trong kỳ đối soát sai theo hai cách độc lập: tử số lấy từ collection content nên không bị chặn theo mốc thời gian của kỳ, mẫu số lấy từ phần thưởng thì bị chặn và còn phồng.
 
-**Backfill.** Không chạy lần này. Bản ghi cũ hiển thị 0 ở cột mới.
+**Backfill.** Kỳ đối soát cũ **không cần** backfill — hàm suy lại trên model đã xử lý. Với thống kê theo nguồn và analytic theo ngày thì có hai job migration để chạy lại khi cần số quá khứ đúng; hệ thống hoạt động bình thường ngay sau deploy mà chưa cần chạy chúng, vì hàm thống kê tính lại từ đầu mỗi lần chạy nên tự chữa lành.
 
 **Tính năng chặn nộp bài khi hết ngân sách.** Nếu sản phẩm thật sự muốn "dừng nhận bài đăng mới" thì đó là quyết định tính năng, không phải sửa câu chữ. Cần đủ bốn phần: field trên model event, hàm đọc, expose ra admin kèm công tắc, **và một chốt chặn thật trong luồng nộp nội dung**. Ambassador hiện không có phần nào trong bốn phần đó. Tách issue riêng, không gộp vào đợt này.
 
@@ -284,7 +289,7 @@ Chỉ số tương tác trong kỳ đối soát sai theo hai cách độc lập:
 
 **Deploy theo bước.** Backend trước — khi đó field mới toàn số 0 và mọi màn hiển thị y hệt hôm nay. Chạy backfill nếu và khi cần. Deploy frontend cuối cùng. Không bước nào cần cửa sổ bảo trì.
 
-**Bản ghi cũ.** Kỳ đối soát tạo trước thay đổi này sẽ hiện **0** ở cột "được tính thưởng", ngay cạnh một số tiền khác 0 — cả trên bảng admin lẫn trong file Excel gửi partner. Cột "chờ đối soát" bên cạnh vẫn đúng vì nó là số tổng. Đây là đánh đổi đã chấp nhận khi quyết định không backfill; một dòng chú thích trong file export sẽ giảm rủi ro partner tưởng là lỗi.
+**Bản ghi cũ.** Kỳ đối soát tạo trước thay đổi này **không** hiện 0 ở cột "được tính thưởng". Hai field mới vắng mặt trong document cũ nên decode ra 0, nhưng một hàm trên model suy lại từ bất biến `được tính thưởng + không được tính thưởng = tổng chờ đối soát`: với kỳ cũ cả hai đều vắng mặt nên kết quả là toàn bộ số tổng — đúng với thực tế lúc đó, khi mọi view chờ đối soát đều được trả tiền. Áp cho cả bảng admin lẫn file Excel gửi partner. Nhánh suy lại không chạm dữ liệu mới, vì kỳ tạo sau thay đổi này không thể có phần được tính thưởng bằng 0.
 
 **Số pha trộn ở màn thống kê.** Chọn khoảng ngày trải qua thời điểm deploy sẽ ra số pha trộn — ngày mới đã trừ, ngày cũ chưa. Chạy lại hai job analytic theo ngày khi cần số quá khứ đúng.
 
