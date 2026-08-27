@@ -1,10 +1,12 @@
 # PRD — Tách view được tính thưởng
 
-Ngày viết: 2026-08-05 · Cập nhật: 2026-08-06 sau review PR #101
+Ngày viết: 2026-08-05 · Cập nhật: 2026-08-18 sau review lượt 2 PR #101
 Nhánh: `hotfix/issue-view-content` · TECH_SPEC: `2026-08-05-tach-view-tinh-thuong-design.md`
 Nhãn triage: `ready-for-agent`
 
-> **Lịch sử hướng đi.** Bản đầu hiển thị con số "lượt xem **không** được tính thưởng" cạnh mỗi con số view. Review PR #101 bác hướng đó vì con số ấy chỉ phủ một trong nhiều nguyên nhân. Tài liệu này đã viết lại theo hướng được chốt: mọi màn hiển thị phần **được** tính thưởng, phần chênh giải thích bằng tooltip.
+> **Lịch sử hướng đi.** Bản đầu hiển thị con số "lượt xem **không** được tính thưởng" cạnh mỗi con số view. Review lượt 1 PR #101 (06/08) bác hướng đó vì con số ấy chỉ phủ một trong nhiều nguyên nhân. Tài liệu này đã viết lại theo hướng được chốt: mọi màn hiển thị phần **được** tính thưởng, phần chênh giải thích bằng tooltip.
+>
+> **Review lượt 2 (18/08).** Phần lõi không hồi quy: thông báo và lịch sử ví lấy đúng số được tính thưởng, bảng creator không còn phép trừ hay `Math.max`, 149 test backend. Lượt này phát sinh một vấn đề mới ở **banner ngân sách** — câu chữ đang nói sai với hành vi thật — cùng bốn mục tồn từ lượt 1. Cả hai nhóm đã được ghi vào tài liệu này.
 
 ## Problem Statement
 
@@ -68,6 +70,8 @@ Không một field nào đang có bị đổi ý nghĩa trong database. Dữ li�
 20. Là ambassador, tôi muốn phân biệt được phần đã đối soát và phần còn chờ đối soát, để biết còn bao nhiêu tiền đang trên đường.
 21. Là ambassador, tôi muốn khối tổng ở đầu trang nói rõ dòng nào là tập con của dòng nào, để tôi không cộng nhầm rồi tưởng trang bị lỗi.
 22. Là ambassador, tôi muốn banner cảnh báo ngân sách hoạt động, để biết trước khi event sắp hết tiền chứ không phải sau khi đã đăng bài.
+22a. Là ambassador, tôi muốn banner nói đúng sự thật về việc lượt xem phát sinh thêm có được tính thưởng hay không, và **không** khẳng định hệ thống đã dừng nhận bài đăng khi thực tế nó vẫn nhận.
+22b. Là ambassador, tôi muốn banner trấn an rõ rằng phần thưởng đã ghi nhận trước đó vẫn được chi trả, để không hiểu nhầm là mất tiền.
 23. Là ambassador, tôi muốn nhãn cột nói rõ đó là lượt xem chứ không phải tiền, để không nhầm với hai dòng tiền ngay phía trên có tên giống hệt.
 24. Là ambassador, tôi muốn sắp xếp bảng theo từng cột cho đúng.
 25. Là ambassador, tôi muốn trải nghiệm giống nhau trên mọi ứng dụng white-label.
@@ -168,6 +172,26 @@ Hàm này tính lại từ đầu mỗi lần chạy nên tự chữa lành — 
 
 Đường tính toán phần thưởng tuyệt đối không bị chạm. Aggregate phục vụ phép trừ chống trả thưởng trùng phải giữ nguyên: lọc thêm điều kiện vượt ngân sách ở đó sẽ khiến hệ thống tưởng view chưa được xử lý và tính thưởng lại, ghi đè lên bản ghi đã hoàn tất.
 
+### Banner cảnh báo ngân sách — nội dung phải nói đúng hành vi thật
+
+Banner được sửa để hiển thị được (xem mục Sửa kèm), nhưng câu chữ ba mức ngưỡng đang **nói sai**. Hai chuỗi ở mức 95% và 100% được sao chép nguyên văn từ ứng dụng Techcombank, nơi tính năng chặn nộp bài là thật. Ở Ambassador, cờ chặn chỉ được **ghi** xuống cơ sở dữ liệu bằng string key, không có field trên model, không nơi nào đọc, không có toggle, và **không có chốt chặn nào trong luồng nộp nội dung**. Ba đường kiểm chứng độc lập trong review đều cho cùng kết quả: ngân sách chỉ ảnh hưởng tới việc tính thưởng và việc hiển thị, không ảnh hưởng tới quyền nộp bài.
+
+Ngoài ra bộ ngưỡng 75/95/100 trong backend chỉ dùng để chống gửi trùng cảnh báo Telegram, không dùng để chặn gì. Hàm xử lý chỉ chạy khi ngân sách còn lại không đủ trả một phần thưởng cụ thể — tức gần 100%, không phải 95%.
+
+Vì vậy ở mức 95–99% hệ thống **vẫn nhận bài đăng bình thường**, và lượt xem phát sinh thêm **hoàn toàn có thể không được tính thưởng**. Cả hai vế của câu đang chạy đều sai.
+
+Quyết định: giữ nguyên khung render, chỉ đổi ba hằng câu chữ và hậu tố tiêu đề.
+
+- **75% ≤ x < 95%** — nói rõ lượt xem lúc này vẫn được tính thưởng, và khi chạm 100% thì lượt xem mới không còn sinh thưởng. Tạo động lực bằng sự thật, không bằng hối thúc.
+- **95% ≤ x < 100%** — ngân sách sắp cạn, lượt xem phát sinh thêm **có thể** không được tính thưởng; phần thưởng đã ghi nhận vẫn được chi trả ở kỳ đối soát gần nhất.
+- **x ≥ 100%** — đã dùng hết ngân sách thưởng, lượt xem phát sinh từ giờ sẽ không được tính thưởng; phần thưởng đã ghi nhận vẫn được chi trả. Bỏ câu "chương trình đã khép lại" vì hết ngân sách không phải hết chiến dịch.
+
+Bỏ cả hai emoji. Riêng emoji ăn mừng ở mức 100% là ăn mừng đúng lúc ambassador hết cửa nhận thưởng; badge phần trăm và màu đỏ đã đủ truyền mức độ.
+
+Tooltip trợ giúp bổ sung phạm vi: banner chỉ phản ánh ngân sách **sự kiện**, trong khi ambassador còn có thể chạm hạn mức riêng của mình hoặc hạn mức của từng nội dung.
+
+Ba hằng câu chữ này có **14 bản sao giống nhau từng byte**, phải áp đồng loạt rồi verify bằng checksum. Test hiện chỉ khẳng định theo mức ngưỡng, **không** khẳng định nội dung chuỗi — nên đổi text sẽ không làm test đỏ; cần kiểm mắt hoặc bổ sung khẳng định chuỗi để khoá lại.
+
 ### Sửa kèm
 
 Ba lỗi có sẵn ở trang cá nhân được sửa trong cùng đợt: nhãn cột lượt xem trùng nhãn dòng tiền; hàm sắp xếp của ba cột đều so sánh cùng một giá trị; và trường ngân sách của event không được expose ra API nên banner cảnh báo cùng nhãn hạn mức chưa bao giờ hiển thị.
@@ -227,6 +251,19 @@ Mapper ánh xạ trường sang trường không có nhánh rẽ. Không viết 
 
 Chạy lại toàn bộ luồng tính thưởng trên dữ liệu có sẵn và xác nhận collection phần thưởng không thay đổi. Không thay đổi nào được phép chạm vào đường ghi.
 
+## Ghi nhận từ review lượt 2 — không bắt buộc sửa trong đợt này
+
+**Guard lượt xem mới đang chặn chi tiền.** Quy trình chạy kỳ đối soát thêm điều kiện loại bỏ content khi số lượt xem được tính thưởng ghi trong bản ghi lệch so với số tính lại, **không có dung sai**. Guard này chạy **sau khi kiểm tiền đã đạt** — tức tiền đã đúng, content vẫn bị loại chỉ vì con số báo cáo lệch một đơn vị. Tiền có thể khớp mà view lệch khi phần thưởng gồm cả lượt thích và bình luận bù trừ nhau, khi đơn giá mỗi view của schema bị sửa, hoặc do chỉ đọc bản ghi đầu tiên với content có nhiều schema. Điểm giảm nhẹ: bản ghi phần thưởng không đổi trạng thái nên kỳ sau tính lại và tự lành — ambassador chậm một kỳ chứ không mất tiền. Đây là **thay đổi hành vi trên đường tiền** và không nằm trong tài liệu này; ghi lại để có dấu vết.
+
+**Gọi aggregate hai lần cho cùng một truy vấn.** Hai hàm lấy tiền và lấy lượt xem được tính thưởng theo content chạy cùng một truy vấn với điều kiện y hệt, chỉ đọc field khác nhau từ kết quả. Trong vòng chạy đối soát chúng được gọi liên tiếp cho từng content qua nhóm năm mươi worker, làm gấp đôi tải lên cơ sở dữ liệu đúng lúc chạy đối soát. Gộp thành một lần gọi trả cả hai giá trị là đủ.
+
+**Bốn mục tồn từ review lượt 1, tính đến 18/08 vẫn chưa làm.**
+
+1. Đổi tên field `exceedBudget` thành `notRewarded` — nice-to-have, còn ở mười ba file. **Nếu làm thì phải làm trong đợt này**, vì các field đó chưa từng được ghi xuống production nên đổi bây giờ không cần migration; đổi sau khi merge thì tốn một đợt riêng. Giữ nguyên tên mang chữ "budget" ở đường ghi và ở các điều kiện lọc, vì ở đó tên đang đúng nghĩa; chỉ bỏ chữ "budget" ở các field thống kê, nơi ngân sách chỉ là một trong nhiều nguyên nhân.
+2. Xoá hoặc cập nhật trang thống kê phụ — còn nguyên năm file ở hai ứng dụng, số vẫn mâu thuẫn với trang cá nhân. Trang này không có menu, link hay nút nào trỏ tới, chỉ vào được bằng cách gõ thẳng địa chỉ. Đề nghị xoá; giữ lại nghĩa là phải bảo trì song song thêm một nguồn số nữa.
+3. Kỳ đối soát cũ hiển thị `0` ở cột "được tính thưởng" cạnh một số tiền khác `0`. Hai cách xử lý, **không dùng heuristic đoán**: backfill cho các kỳ cũ, hoặc hiển thị dấu gạch ngang cho bản ghi chưa có field kèm tooltip "kỳ trước khi tách số".
+4. Cập nhật tài liệu theo hướng đã chốt — mục này chính là việc đó.
+
 ## Out of Scope
 
 Các nơi khác cũng đang phồng số view nhưng không sửa lần này: file Excel danh sách ambassador theo partner, thẻ tổng lượt xem trên dashboard admin, và hai tab thống kê của ambassador ngoài trang cá nhân.
@@ -236,6 +273,8 @@ Số lượt thích và số bình luận cũng phồng theo đúng cơ chế. P
 Chỉ số tương tác trong kỳ đối soát sai theo hai cách độc lập: tử số lấy từ collection content nên không bị chặn theo mốc thời gian của kỳ, mẫu số lấy từ phần thưởng thì bị chặn và còn phồng.
 
 **Backfill.** Không chạy lần này. Bản ghi cũ hiển thị 0 ở cột mới.
+
+**Tính năng chặn nộp bài khi hết ngân sách.** Nếu sản phẩm thật sự muốn "dừng nhận bài đăng mới" thì đó là quyết định tính năng, không phải sửa câu chữ. Cần đủ bốn phần: field trên model event, hàm đọc, expose ra admin kèm công tắc, **và một chốt chặn thật trong luồng nộp nội dung**. Ambassador hiện không có phần nào trong bốn phần đó. Tách issue riêng, không gộp vào đợt này.
 
 **View vượt ngân sách bị khoá vĩnh viễn.** Sau khi kỳ đối soát chạy, mọi bản ghi phần thưởng chờ xử lý đều chuyển sang hoàn tất, kể cả bản ghi vượt ngân sách, nên phép trừ chống trả thưởng trùng coi như chúng đã xong. Nếu event được nạp thêm ngân sách sau đó thì số view kia không có đường nào để được trả. Cần một phiên thiết kế riêng.
 
