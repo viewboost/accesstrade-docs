@@ -1,0 +1,43 @@
+﻿,KỊCH BẢN KIỂM THỬ
+,Tên chức năng,Bảo mật API công khai — Green Creator
+,Môi trường,Develop
+,Link test (site),https://vcreator-green.diso.vn/
+,API base,https://api-dev-vcreator.diso.vn
+,Mã trường hợp kiểm thử,SEC
+,Điều kiện chung,Tất cả gọi ở trạng thái CHƯA đăng nhập (cửa sổ ẩn danh hoặc không kèm token).
+
+Mã TC,Nhóm,Mục đích kiểm thử,Độ ưu tiên,Điều kiện,Các bước thực hiện,Kết quả mong muốn,Kết quả,Ghi chú
+SEC-01,Đã xử lý,Không tra được dữ liệu của người khác qua user_id,Cao,"Chưa đăng nhập.
+Có sẵn 1 user_id bất kỳ.","1. Gọi GET /user-statistic?user=<id>
+2. Gọi GET /user-statistic/contents?user=<id>
+3. Gọi GET /user-statistic/invitees?user=<id>","Cả 3 đều trả HTTP 404.
+Không trả về thu nhập, nội dung hay danh sách giới thiệu của người đó.",Pass,
+SEC-02,Đã xử lý,Bảng xếp hạng không lộ thu nhập của creator,Cao,"Chưa đăng nhập.
+Có sẵn 1 event_id.","1. Gọi GET /events/{id}/leaderboards
+2. Kiểm tra phần thống kê của mỗi người","Không còn bất kỳ trường thu nhập/tiền nào.
+Chỉ còn tên, ảnh, lượt xem, điểm và thứ hạng.",Pass,
+SEC-03,Đã xử lý,Danh sách nội dung không lộ thu nhập từng bài,Cao,"Chưa đăng nhập.
+Có sẵn 1 event_id.","1. Gọi GET /events/{id}/content
+2. Kiểm tra phần thống kê của mỗi bài","Không còn trường thu nhập/tiền.
+Chỉ còn điểm, lượt xem, lượt thích, bình luận.",Pass,
+SEC-04,Đã xử lý,Thống kê tổng chỉ trả các trường cần thiết,Trung bình,Chưa đăng nhập.,"1. Gọi GET /events/statistic
+2. Kiểm tra các trường trả về","Trả về tổng lượt xem, tổng nội dung, số người tham gia.
+Không kèm các trường thừa.",Pass,
+SEC-05,Đã xử lý,Không thể ghép nhiều API để lấy thu nhập diện rộng,Cao,Chưa đăng nhập.,"1. Lấy danh sách user_id từ /events/{id}/content
+2. Thử tra từng user_id qua /user-statistic","Bước 2 trả về 404.
+Có user_id cũng không truy ra được thu nhập của người đó.",Pass,
+SEC-06,Đã xử lý,Bảng xếp hạng vẫn hiển thị bình thường,Cao,"Chưa đăng nhập.
+Event có nhiều người tham gia.","1. Mở bảng xếp hạng và cuộn qua các trang
+2. Kiểm tra dữ liệu hiển thị","Bảng xếp hạng hoạt động bình thường.
+Mỗi mục có đủ tên, ảnh, lượt xem, điểm.",Pass,
+SEC-07,Đã xử lý,Số liệu tổng trên trang chủ vẫn đúng,Cao,Chưa đăng nhập.,"1. Gọi GET /events/statistic
+2. Đối chiếu số liệu hiển thị trên trang chủ","Tổng lượt xem, tổng nội dung, số người tham gia hiển thị đầy đủ và đúng.",Pass,
+SEC-08,Đã xử lý,Số liệu ngân sách theo từng nhãn không lộ công khai,Cao,"Chưa đăng nhập.
+Có sẵn 1 mã nhãn (partner).","1. Gọi GET /events/statistic?partner=<id>
+2. Kiểm tra trường số liệu hoa hồng","Không còn trường số liệu hoa hồng (totalCommission).
+Các số khác (lượt xem, nội dung, người tham gia) vẫn trả bình thường.",Pass,
+SEC-11,Đã xử lý,Endpoint không còn dùng đã được đóng,Trung bình,Chưa đăng nhập.,"1. Gọi GET /events/user-newest
+2. Kiểm tra mã phản hồi HTTP",Trả về HTTP 404 (endpoint đã đóng).,Pass,
+SEC-12,Đã xử lý,Giới hạn nguồn gọi API (CORS),Cao,Chưa đăng nhập.,"1. Gọi GET /events/statistic với Origin lạ
+2. Kiểm tra header phản hồi","Chỉ chấp nhận nguồn thuộc danh sách tên miền chính thức, không mở cho mọi nguồn.",Pass,
+SEC-13,Kế hoạch bổ sung,Giới hạn tần suất gọi nhóm API công khai,Trung bình,Chưa đăng nhập.,1. Gọi lặp lại nhanh một endpoint công khai nhiều lần,"Bị giới hạn tần suất khi gọi quá nhiều, không thể tải dữ liệu hàng loạt.",Chưa thực hiện,
