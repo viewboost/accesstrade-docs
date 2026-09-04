@@ -1,14 +1,16 @@
-# Tóm tắt: Rút tiền thủ công TPBank (báo cáo senior dev)
+# Tóm tắt: Bật lại rút tiền, bỏ qua gọi TPBank (báo cáo senior dev)
 
-> Bản rút gọn để trình bày nhanh — chi tiết đầy đủ xem `docs/spec/0002-luong-rut-tien-thu-cong-tpbank.md`.
+> Bản rút gọn để trình bày nhanh — chi tiết đầy đủ xem [PRD.md](./PRD.md).
+>
+> **Đây là bản cập nhật lần 2**, thay thế thiết kế đầy đủ ban đầu (trạng thái `awaiting_manual`, job export định kỳ, tab web-admin). Không còn thay đổi ở repo `web-admin`.
 
 ## Vấn đề
 
-TPBank lỗi xác thực (401) trên API chi hộ + tra cứu trạng thái → team đã bật `WITHDRAW_DISABLED` để chặn khẩn cấp → **user rút tiền luôn bị reject cứng**, không có ETA sửa xong.
+TPBank lỗi xác thực (401) trên API chi hộ → team đã bật `WITHDRAW_DISABLED` để chặn khẩn cấp → **user rút tiền luôn bị reject cứng**, không có ETA sửa xong.
 
 ## Giải pháp
 
-Tắt `WITHDRAW_DISABLED`, thêm field mới `ManualFulfillment`: khi bật, request rút tiền vẫn được validate + trừ tiền ngay (giữ nguyên optimistic-deduct hiện có), nhưng **bỏ qua gọi TPBank**, đánh dấu trạng thái mới `awaiting_manual`. Một job cron generate file Excel định kỳ để nhân viên nội bộ (MSHT Operator) tải, chuyển cho Kế toán AT xử lý tay (chuyển khoản ngoài hệ thống), rồi nộp kết quả ngược lại qua web-admin.
+Thêm field mới `ManualFulfillment`: khi bật, request rút tiền vẫn được validate + trừ tiền ngay (giữ nguyên optimistic-deduct hiện có), nhưng **bỏ qua gọi TPBank**. Withdraw giữ nguyên trạng thái `pending` có sẵn (không có trạng thái mới). Đội vận hành tự tra danh sách `pending` qua Metabase, xử lý tay, rồi nộp kết quả (thành công/thất bại) qua 1 API nội bộ mới bằng file Excel 2 cột.
 
 ## Luồng tổng quan
 
@@ -25,80 +27,47 @@ User bấm "Rút tiền"
   Có         Không
    │           │
    ▼           ▼
-awaiting_manual   (luồng cũ: gọi TPBank như hiện tại)
+bỏ qua gọi TPBank   (luồng cũ: gọi TPBank như hiện tại)
+status = pending (không đổi)
    │
-   │  (job cron định kỳ)
+   │  (vận hành tự tra qua Metabase, chuyển khoản tay)
    ▼
-Generate file .xlsx (status=awaiting_manual, chưa exportedAt)
-   │
-   ▼
-Upload MinIO (bucket DataExport, package `external/service/upload` có sẵn)
+Vận hành nộp file .xlsx (request_id, result) qua API nội bộ mới
    │
    ▼
-Đánh dấu Withdraw: exportedAt, manualExportId
+Xử lý ĐỒNG BỘ trong request (không chạy nền), trả báo cáo theo dòng ngay
    │
    ▼
-MSHT Operator vào web-admin → tab "Rút tiền thủ công"
+Mỗi dòng: tìm theo request_id + status=pending
    │
-   ├─► Tải file export ──► gửi Kế toán AT qua email/Slack (ngoài hệ thống)
-   │                              │
-   │                              ▼
-   │                     Kế toán AT chuyển khoản tay
-   │                     điền cột "Kết quả" (dropdown: Thành công/Thất bại)
-   │                     gửi lại file qua email/Slack
-   │                              │
-   ◄──────────────────────────────┘
-   │
-   ▼
-MSHT Operator upload file kết quả (xác nhận TOTP)
-   │
-   ▼
-API trả 200 ngay (Status export → "processing"), xử lý NỀN
-(pattern goroutine giống WithdrawBatchTransfer đã có)
-   │
-   ▼
-Backend đọc từng dòng theo request_id + status=awaiting_manual
-   │
-   ├─ "Thành công" ──► set success
-   └─ "Thất bại"   ──► set rejected + hoàn tiền (giống WithdrawErr hiện có)
-   │
-   ▼
-Đếm lại: còn awaiting_manual thuộc export này? ──► Status export: error/completed
+   ├─ không tìm thấy / status khác / result không hợp lệ ──► bỏ qua, ghi lý do
+   ├─ "success" ──► set success
+   └─ "rejected" ──► set rejected + hoàn tiền (giống WithdrawErr hiện có)
 ```
 
-## Thay đổi chính (backend `withdraw`)
+## Thay đổi chính (backend `withdraw`, repo duy nhất bị ảnh hưởng)
 
 | Thành phần | Thay đổi |
-| --- | --- |
+|---|---|
 | Config | `Withdraw.ManualFulfillment` (bool, mới, tách biệt `WITHDRAW_DISABLED`) |
-| Status | `awaiting_manual` (mới, tách biệt `pending` — job sync tự động không quét nhầm) |
-| `WithdrawBSON` | + `ManualExportID` (dùng `IsZero()` làm cờ, không cần thêm `ExportedAt` riêng) |
-| Collection mới | `manualFulfillmentExports` (metadata file, `Status` 4 giá trị: pending/processing/error/completed, `ResultRuns[]`) |
-| Job mới | cron generate file export định kỳ (`app/schedule/schedule.go`, lib có sẵn) |
-| API mới (basic auth riêng) | `GET .../exports`, `GET .../exports/:id/download`, `GET .../exports/:id/result-download`, `POST .../exports/:exportId/result` |
-| Storage | dùng `external/service/upload` có sẵn trong submodule (MinIO, bucket `DataExport` có sẵn) — chỉ cần cấu hình, không sửa submodule |
-
-## Thay đổi chính (`web-admin`)
-
-Tab mới "Rút tiền thủ công" trong Partner Detail (gated `partnerId === 'tpbank'`), dựng từ 2 pattern có sẵn:
-
-- Bảng phân trang + Drawer lịch sử (`export-requests/`)
-- `RcModalConfirmTotp` cho hành động ảnh hưởng tiền thật (`reconciliation/`)
-
-Mỗi dòng export có 3 action: **Tải file export**, **Upload kết quả** (ẩn khi `Status=completed`, đổi label khi `processing`), **Lịch sử nộp** (Drawer). API nộp kết quả trả về ngay lập tức, không đợi xử lý xong — kết quả xem lại qua badge `Status` hoặc Drawer.
+| Status | không đổi — tái sử dụng `pending` có sẵn |
+| `NewWithdraw` | thêm 1 nhánh `if` trước bước gọi TPBank, bỏ qua `TPBankGenerateWithdrawToken`/`TPBankRequestTransfer` khi flag bật |
+| API mới (basic auth riêng) | 1 endpoint `POST .../manual-fulfillment/result`, nhận `.xlsx` (`request_id`, `result`), xử lý đồng bộ, trả báo cáo theo dòng |
+| Export/job/UI | **không có** — vận hành tự tra Metabase, không cần hệ thống sinh file |
 
 ## Repo cần đổi
 
-| Repo | Remote gốc để branch | Cần đổi |
-| --- | --- | --- |
-| `withdraw` | `tp/release` | ✅ Toàn bộ backend |
-| `external` (submodule) | — | ❌ Không (chỉ cấu hình, dùng package có sẵn) |
-| `web-admin` | `origin/release` | ✅ Tab mới |
+| Repo | Cần đổi |
+|---|---|
+| `withdraw` | ✅ 1 flag config + 1 nhánh trong `NewWithdraw` + 1 API mới |
+| `external` (submodule) | ❌ Không |
+| `web-admin` | ❌ Không (khác với bản thiết kế đầu tiên) |
 
 ## Rủi ro đã biết, chấp nhận
 
-- Crash giữa 2 bước (update status / hoàn tiền) của cùng 1 dòng: rủi ro đã tồn tại sẵn ở `WithdrawErr` (luồng TPBank tự động hiện tại), không thêm transaction — giữ nguyên mức rủi ro hệ thống đang chấp nhận.
+- Job đồng bộ trạng thái tự động (`WithdrawSyncAllPendingStatus`) hiện đã bị comment-out hoàn toàn trên production, nên tái sử dụng `pending` không có rủi ro job này poll nhầm các bản ghi chưa từng gửi TPBank. Nếu job được bật lại sau này, cần thêm filter loại trừ khi đó.
+- Hoàn tiền dùng đúng pattern `WithdrawErr` hiện có (update status trước, hoàn tiền sau, không transaction) — chấp nhận cùng mức rủi ro crash-giữa-2-bước đã tồn tại sẵn trong luồng tự động.
 
 ## Response cho client
 
-`w.Status = awaiting_manual` chỉ tồn tại trong DB/logic nội bộ. Khi trả về client (mobile app, lịch sử giao dịch), hệ thống **map thành `pending`** ở tầng response — không đổi gì phía client, không cần phối hợp FE.
+Không đổi gì — `status` trả về vẫn luôn là `pending` cho tới khi được đóng qua API nộp kết quả, đúng như hành vi hiện tại.
