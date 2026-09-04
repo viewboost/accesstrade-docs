@@ -3,12 +3,12 @@
 | | |
 |---|---|
 | **Mã tài liệu** | SDD-AMB-STAFF-FE-001 |
-| **Phiên bản** | 2.0 |
+| **Phiên bản** | 3.0 |
 | **Ngày ban hành** | 2026-09-04 |
 | **Người biên soạn** | Nguyễn Đăng Định |
-| **Người duyệt** | _chưa phân công_ |
+| **Người rà soát** | Thành Trung |
 | **Trạng thái** | Bản thảo |
-| **Tài liệu yêu cầu** | [PRD-AMB-STAFF-FE-001](./prd-staff-code-frontend-2026-09-03.md) phiên bản 2.0 |
+| **Tài liệu yêu cầu** | [PRD-AMB-STAFF-FE-001](./prd-staff-code-frontend-2026-09-03.md) phiên bản 3.0 |
 | **Kho mã nguồn** | `AT-Core/ambassador` |
 | **Nhánh tham chiếu** | `release` — mọi số hiệu dòng trong tài liệu đo trên `origin/release` ngày 2026-09-04 |
 
@@ -24,7 +24,7 @@
 
 ### 1.1 Mục đích
 
-Tài liệu mô tả phương án hiện thực hoá PRD-AMB-STAFF-FE-001 phiên bản 2.0.
+Tài liệu mô tả phương án hiện thực hoá PRD-AMB-STAFF-FE-001 phiên bản 3.0.
 
 ### 1.2 Phạm vi
 
@@ -59,8 +59,8 @@ Kỹ sư phát triển giao diện thực hiện hạng mục, kỹ sư rà soá
 | Trạng thái ứng dụng | `src/models/main.ts` | tương ứng | Bổ sung 3 thuộc tính, 2 tác vụ |
 | Kiểu dữ liệu | `src/interfaces/app.ts`, `event.ts` | tương ứng | Bổ sung thuộc tính |
 | Hộp thoại nhập mã tham gia | `src/pages/home/components/modal-event-code/` | tương ứng | Tái sử dụng |
-| Hộp thoại không đủ điều kiện | `src/components/common/modal-not-employee/` | tương ứng | Tái sử dụng, điều chỉnh nội dung |
-| Mục tại trang Hồ sơ | `src/pages/account/components/form-staff/` | tương ứng | Tái sử dụng, bổ sung lớp dựng danh sách |
+| Hộp thoại không đủ điều kiện | `src/components/common/modal-not-employee/` | tương ứng | Tái sử dụng khung, **bổ sung ô nhập mã và hai biến thể** |
+| Mục tại trang Hồ sơ | `src/pages/account/components/form-staff/` | — | **Không thực hiện** (FE-005 gỡ ở PRD 3.0) |
 | Kiểm soát tại điểm nộp bài | 3 điểm | 3 điểm khác | Gom về một đơn vị |
 | Hộp thoại xác nhận chủ động | `src/…/modal-staff-code.tsx` | — | Không thực hiện (FE-006) |
 
@@ -73,6 +73,8 @@ Kỹ sư phát triển giao diện thực hiện hạng mục, kỹ sư rà soá
 | C3 | KHÔNG ĐƯỢC tự kích hoạt hộp thoại khi tải trang |
 | C4 | KHÔNG ĐƯỢC tái sử dụng `modal-staff-code.tsx` cùng các thuộc tính trạng thái đi kèm |
 | C5 | KHÔNG ĐƯỢC phát sinh thay đổi tại `backend/`, `admin/`, `parasola/`, `fecredit/` và 12 thư mục đối tác còn lại |
+| C6 | Điều kiện hiển thị ô nhập mã PHẢI bám `staffGateReason`; KHÔNG ĐƯỢC bám `isOpenInputStaffCode` (Mục 4.8) |
+| C7 | KHÔNG ĐƯỢC phát sinh yêu cầu mạng tỉ lệ với số đối tác của ứng dụng |
 
 ---
 
@@ -111,7 +113,8 @@ return undefined;
  * mang thông tin đối tác (config/routes.ts:114-155). Các tuyến dùng chung —
  * /tai-khoan, /thong-bao, /trang-ca-nhan — không gắn với đối tác nào.
  *
- * Không suy đoán trong trường hợp không xác định: giá trị sai dẫn tới ghi
+ * Giá trị undefined KHÔNG phải trường hợp lỗi: nó chọn biến thể rút gọn của
+ * hộp thoại FE-004 (Mục 4.8). Không suy đoán, vì giá trị sai dẫn tới ghi
  * user-partners.statusStaff vào sai đối tác, ảnh hưởng điều kiện xét thưởng.
  */
 export function resolveCurrentPartner(mainState: { partnerDetail?: any }): any | undefined {
@@ -278,7 +281,9 @@ Không bổ sung `visibleModalStaffCode` và `staffCodeDismissed` (ràng buộc 
 **Hai tác vụ bất đồng bộ:**
 
 ```ts
-// Phục vụ FE-005. Không điều khiển hiển thị hộp thoại — khác bản tham chiếu.
+// Tiền kiểm cờ tính năng của đối tác, gọi khi hộp thoại FE-004 mở (Mục 4.8).
+// Đúng MỘT đối tác, đúng MỘT lần, chỉ với người dùng đã bị chặn — ràng buộc C7.
+// Không điều khiển hiển thị hộp thoại xác nhận như bản tham chiếu.
 *checkPartnerEmployeeStatus({ payload, callback }, { call, put }) {
   const response = yield call(servicePartner.getStatusEmployee, payload.partnerId);
   if (response?.code !== AppConst.ResponseCode.success) return;
@@ -297,7 +302,7 @@ Không bổ sung `visibleModalStaffCode` và `staffCodeDismissed` (ràng buộc 
 },
 ```
 
-`checkPartnerEmployeeStatus` chỉ được gọi từ trang Hồ sơ. Tác vụ này KHÔNG ĐƯỢC gắn vào hiệu ứng khởi tạo của thành phần đầu trang như bản tham chiếu (`fecredit/…/header/index.tsx:100-107`) — đó chính là cơ chế kích hoạt hộp thoại chủ động mà FE-006 không áp dụng.
+`checkPartnerEmployeeStatus` chỉ được gọi tại thời điểm hộp thoại FE-004 mở. Tác vụ này KHÔNG ĐƯỢC gắn vào hiệu ứng khởi tạo của thành phần đầu trang như bản tham chiếu (`fecredit/…/header/index.tsx:100-107`) — đó chính là cơ chế kích hoạt hộp thoại chủ động mà FE-006 không áp dụng, và cũng là cách phát sinh yêu cầu mạng cho mọi người dùng thay vì cho người bị chặn.
 
 ### 4.5 Tầng kiểu dữ liệu
 
@@ -383,10 +388,12 @@ Ba điểm khởi tạo tại Mục 3.3 thay thế thân hàm bằng hook này, 
     !visibleModalLogin &&
     !visibleModalCompleteReg
   }
-  partnerName={partnerDetail?.name}
+  partner={resolveCurrentPartner(mainState)}   // undefined ⇒ biến thể rút gọn
   …
 />
 ```
+
+Điều kiện hiển thị đọc `staffGateReason`, KHÔNG đọc `isOpenInputStaffCode` — ràng buộc C6, cơ sở tại Mục 4.8.3.
 
 ### 4.7 Hộp thoại nhập mã tham gia riêng — FE-003
 
@@ -407,65 +414,68 @@ Mã nhập vào được chuẩn hoá tại thời điểm nhập bằng `normal
 
 Nội dung hiển thị KHÔNG ĐƯỢC gọi đối tượng này là "mã nhân viên": mã được đối chiếu trực tiếp với `event.Options.StaffCodes` và không tra cứu bảng `manage-codes` (`event.go:1218-1245`).
 
-### 4.8 Hộp thoại không đủ điều kiện — FE-004
+### 4.8 Hộp thoại chặn kèm khai báo — FE-004
 
-Tái sử dụng `fecredit/src/components/common/modal-not-employee/` (71 dòng). Hộp thoại đóng được.
+Tái sử dụng khung của `fecredit/src/components/common/modal-not-employee/` (71 dòng), bổ sung ô nhập mã. Đây là **đường khai báo duy nhất** của `frontend/`.
 
-Hai điều chỉnh so với bản nguồn:
+#### 4.8.1 Hai biến thể
 
-| # | Điều chỉnh | Cơ sở |
+| Biến thể | Điều kiện | Nội dung |
 |---|---|---|
-| 1 | Tên đối tác lấy động từ `partnerDetail?.name` | Bản nguồn cố định chuỗi tên đối tác (`modal-staff-code.tsx:145`) do chỉ phục vụ một đối tác |
-| 2 | Bổ sung lối đi tới mục "Thông tin nhân viên" | Theo FE-006, đây là điểm tiếp xúc duy nhất giữa hệ thống và nhân viên chưa khai báo |
+| Đầy đủ | `resolveCurrentPartner()` trả về đối tác **và** `enabled === true` | Giải thích + ô nhập mã + nút xác nhận |
+| Rút gọn | Không xác định được đối tác, **hoặc** `enabled === false` | Chỉ giải thích, kèm lối đi phù hợp |
 
-### 4.9 Mục "Thông tin nhân viên" — FE-005
+Trên `/trang-ca-nhan` luôn là biến thể rút gọn: tuyến này có thao tác nộp bài nhưng không mang đối tác trong trạng thái ứng dụng (Mục 3.3). Lối đi dẫn tới trang chiến dịch, nơi biến thể đầy đủ khả dụng.
 
-**Nguồn danh sách đối tác:** `mainState.partners`, đã nạp bởi `getListPartner` (`models/main.ts:234-247`) và đã được backend lọc theo tên miền.
+Quyết định không bổ sung trường `partner` vào `EventDetailResponse` để nhập được ở mọi nơi — xem PRD, DEC-13.
 
-Thiết kế KHÔNG ĐƯỢC sử dụng `user.partnerApproval`. Thuộc tính này thuộc thực thể `user-socials`:
+#### 4.8.2 Tiền kiểm cờ tính năng
 
-| Vị trí | Tham chiếu |
-|---|---|
-| Định nghĩa mô hình | `backend/internal/model/mg/user_social.go:26` |
-| Gán giá trị | `backend/pkg/public/service/user.go:602-603` |
-| Kiểu phía giao diện | `frontend/src/interfaces/user.ts:383,403` — thuộc `IUserSocial` |
+Khi hộp thoại mở và đã xác định được đối tác, gọi `checkPartnerEmployeeStatus` với định danh đối tác đó và đọc cờ `enabled`.
 
-Nội dung của nó là trạng thái phê duyệt tài khoản mạng xã hội theo đối tác, khác với quan hệ người dùng × đối tác trong `user-partners` — nơi lưu `statusStaff`.
+Cơ sở: `checkStaffGate` không kiểm `PartnerOpts.EnableStaffCode` (`backend/pkg/public/service/staff_gate.go:23-46`) trong khi `ConfirmIsStaff` có kiểm (`staff_code.go:99`), nên tồn tại cấu hình mà người dùng bị chặn nhưng không khai báo được. Tiền kiểm tránh việc hiển thị một ô nhập chắc chắn thất bại.
 
-Không có API công khai trả về trực tiếp danh sách `user-partners` của người dùng: `backend/pkg/public/service/partner.go:337-341` có tính tập định danh này nhưng chỉ dùng để sắp thứ tự, không đưa vào `PartnerAppResponse`.
+Chi phí: một yêu cầu, một đối tác, chỉ với người dùng đã bị chặn. Đây là ranh giới của ràng buộc C7.
 
-**Quy trình dựng danh sách:**
+Lớp phòng vệ thứ hai: khi `ConfirmIsStaff` trả mã lỗi tương ứng, hiển thị thông báo hướng dẫn liên hệ bộ phận hỗ trợ, KHÔNG hiển thị nguyên văn thông báo backend.
 
-```
-mainState.partners
-  → với mỗi đối tác: GET /partners/:id/status-employee
-  → giữ lại đối tác có enabled === true
-  → hiển thị mỗi đối tác một dòng
-```
+#### 4.8.3 ⚠️ Điều kiện hiển thị PHẢI bám `staffGateReason`
 
-**Ràng buộc thực thi:**
+Ràng buộc C6. Đây là chỗ dễ cài đặt sai nhất của yêu cầu này.
 
-| # | Ràng buộc |
-|---|---|
-| 1 | Giới hạn số yêu cầu đồng thời; giá trị đề xuất: 4 |
-| 2 | Hiển thị dần; KHÔNG chặn hiển thị toàn trang để chờ đủ dữ liệu |
-| 3 | Một yêu cầu thất bại chỉ làm ẩn dòng tương ứng |
-| 4 | Ngưỡng cần xem xét lại kiến trúc: khoảng 30 đối tác. Số liệu hiện tại: 17 |
+| Cờ | Hành vi sau khi người dùng đã trả lời | Dùng được làm điều kiện hiển thị? |
+|---|---|---|
+| `staffGateReason` | Chỉ rỗng khi trạng thái là `employee` | **Có** |
+| `isOpenInputStaffCode` | `false` vĩnh viễn, kể cả khi trả lời "không thuộc đối tác" (`staff_code.go:61-66`) | **Không** |
 
-**Nội dung mỗi dòng:**
+`ConfirmIsStaff` cho phép ghi đè theo chiều `not_employee → employee`, nên người đã lỡ chọn "không thuộc" và người bị gán trạng thái bởi tiến trình backfill vẫn PHẢI được mời nhập lại, không giới hạn số lần.
 
-| `statusStaff` | Hiển thị |
-|---|---|
-| `employee` | Mã ở chế độ chỉ đọc, kèm hướng dẫn liên hệ bộ phận hỗ trợ |
-| Giá trị khác | Ô nhập mã và nút xác nhận |
+Dùng nhầm `isOpenInputStaffCode` sẽ chặn đúng nhóm cần khai lại. Khiếm khuyết chỉ biểu hiện với người đã từng trả lời, nên không lộ ra trong kiểm thử bằng tài khoản mới. Kịch bản IT-13 và điều kiện rà soát tại Mục 7.3 gác điểm này.
 
-Không hiển thị thao tác gỡ trạng thái nhân viên; backend đã từ chối thao tác này (`staff_code.go:105-116`).
+#### 4.8.4 Luồng xác nhận
 
-**Vị trí trên trang.** Bổ sung một khối vào `src/pages/account/index.tsx` theo đúng cấu trúc hai khối hiện có: vùng chứa `.p-3c.p-md-6c.bg-white.rounded-2`, tiêu đề `.fw-bold.fs-10.fs-md-4`, `AppSpacer`, nội dung biểu mẫu.
+1. Người dùng nhập mã, chuẩn hoá tại thời điểm nhập bằng `normalizeStaffCode`
+2. Gọi `POST /users/confirm-is-staff` với `{ partner, isStaff: true, code }`
+3. Tải lại dữ liệu chi tiết chiến dịch để backend tính lại `staffGateReason`
+4. Mở biểu mẫu nộp bài
 
-Khối được đặt phía trên khối "Thông tin tài khoản" và phía dưới khối "Nhập mã giới thiệu", đáp ứng AC-005.7.
+Tầng giao diện KHÔNG ĐƯỢC tự suy diễn rằng điều kiện đã thoả sau khi gọi thành công.
 
-Sử dụng `FormField` (`components/common/form-field`) cho từng dòng và `toast` từ `@/components/app/toast/manager`.
+#### 4.8.5 Nội dung hiển thị
+
+Tên đối tác lấy động từ `partnerDetail?.name`. Bản nguồn cố định chuỗi tên đối tác (`modal-staff-code.tsx:145`) do chỉ phục vụ một đối tác.
+
+#### 4.8.6 Trường hợp không xử lý được bằng giao diện
+
+Người dùng đã mang trạng thái `employee` nhưng mã đã khai không đúng: họ qua được cổng kiểm soát nên không gặp hộp thoại này, và không tự gỡ nhãn được (`staff_code.go:105-116`). Xử lý qua bộ phận hỗ trợ hoặc phân hệ quản trị.
+
+### 4.9 Mục "Thông tin nhân viên" — FE-005: không thực hiện
+
+Gỡ khỏi phạm vi ở PRD phiên bản 3.0. Không thay đổi `src/pages/account/`.
+
+Chức năng khai báo và khai báo lại chuyển vào Mục 4.8. Cơ sở đầy đủ tại PRD, FE-005.
+
+Hệ quả tới thiết kế: không còn bước dựng danh sách đối tác, không còn ràng buộc giới hạn yêu cầu đồng thời, không còn nhu cầu endpoint gộp. `GET /partners/:id/status-employee` vẫn được dùng, nhưng cho một đối tác tại Mục 4.8.2.
 
 ### 4.10 Hạng mục không thực hiện — FE-006
 
@@ -482,8 +492,8 @@ Cơ chế kiểm chứng nêu tại Mục 7.3.
 | FE-001 | `utils/staff.ts`, `utils/staff.test.ts` |
 | FE-002 | `utils/staff.ts`, `hooks/use-post-content-gate.ts`, `header/index.tsx:157`, `not-logged-in/index.tsx:42`, `logged-in-view/index.tsx:31` |
 | FE-003 | `pages/home/components/modal-event-code/`, `configs/api.ts`, `services/event.ts` |
-| FE-004 | `components/common/modal-not-employee/`, `header/index.tsx` |
-| FE-005 | `pages/account/index.tsx`, `pages/account/components/form-staff/`, `models/main.ts`, `services/partner.ts` |
+| FE-004 | `components/common/modal-not-employee/`, `header/index.tsx`, `models/main.ts`, `services/partner.ts`, `services/user.ts` |
+| FE-005 | Không thực hiện — không phát sinh thành phần |
 | FE-006 | Không phát sinh thành phần |
 | FE-007 | Toàn bộ; kiểm chứng theo Mục 7 |
 
@@ -496,10 +506,9 @@ Cơ chế kiểm chứng nêu tại Mục 7.3.
 | 1 | `utils/staff.ts` và kiểm thử đơn vị | — |
 | 2 | Cấu hình endpoint, ba hàm dịch vụ, kiểu dữ liệu, trạng thái, hai tác vụ | — |
 | 3 | `hooks/use-post-content-gate.ts` và tích hợp vào ba điểm khởi tạo | 1, 2 |
-| 4 | Hộp thoại không đủ điều kiện, gắn tại thành phần đầu trang | 3 |
+| 4 | Hộp thoại chặn kèm ô nhập mã và tiền kiểm cờ, gắn tại thành phần đầu trang | 3 |
 | 5 | Hộp thoại nhập mã tham gia và bước tải lại dữ liệu chiến dịch | 3 |
-| 6 | Mục "Thông tin nhân viên" tại trang Hồ sơ | 1, 2 |
-| 7 | Kiểm thử hồi quy đối tác chưa bật tính năng và kiểm tra trực quan | 1–6 |
+| 6 | Kiểm thử hồi quy đối tác chưa bật tính năng và kiểm tra trực quan | 1–5 |
 
 ---
 
@@ -517,6 +526,7 @@ Hạ tầng sẵn có: `frontend/jest.config.js` (khai báo bí danh `@/`) cùng
 | `resolveStaffGateAction` | Có `staffGateReason`: `blocked`. Chỉ có `isRequireCode`: `require-code`. Có cả hai: `blocked`. Không có gì: `allow` |
 | `isStaff` | `employee`: đúng. `not_employee`, `not_verify`, chuỗi rỗng, không xác định: sai |
 | `normalizeStaffCode` | Chữ thường chuyển thành chữ hoa. Khoảng trắng hai đầu bị loại bỏ. Giá trị không xác định trả về chuỗi rỗng |
+| Chọn biến thể hộp thoại | Có đối tác và `enabled = true`: biến thể đầy đủ. Không có đối tác: biến thể rút gọn. Có đối tác nhưng `enabled = false`: biến thể rút gọn |
 
 ### 7.2 Kiểm thử tích hợp
 
@@ -529,11 +539,14 @@ Hạ tầng sẵn có: `frontend/jest.config.js` (khai báo bí danh `@/`) cùng
 | IT-05 | Nhập mã không hợp lệ | Thông báo lỗi hiển thị; hộp thoại không đóng |
 | IT-06 | Thao tác nộp bài tại `/trang-ca-nhan` | Được kiểm soát đúng |
 | IT-07 | Đóng hộp thoại phụ Threads/Facebook rồi quay lại biểu mẫu | Biểu mẫu mở lại; không kiểm soát lần thứ hai |
-| IT-08 | Người dùng không có đối tác nào bật tính năng | Trang Hồ sơ không hiển thị mục "Thông tin nhân viên" |
-| IT-09 | Người dùng có hai đối tác bật tính năng | Hiển thị hai dòng; khai báo tại một đối tác không ảnh hưởng đối tác còn lại |
-| IT-10 | Trạng thái `employee` | Không có thao tác gỡ trên giao diện |
-| IT-11 | Một yêu cầu `status-employee` thất bại | Các dòng còn lại vẫn hiển thị |
+| IT-08 | Trên `/:partner/:slug`, nhập mã nhân viên hợp lệ trong hộp thoại chặn | Hộp thoại đóng, biểu mẫu nộp bài mở, không cần thao tác bổ sung |
+| IT-09 | Trên `/trang-ca-nhan`, bị chặn | Biến thể rút gọn: không có ô nhập, có lối đi tới trang chiến dịch |
+| IT-10 | Đối tác có chiến dịch `applyForStaff` nhưng chưa bật `EnableStaffCode` | Biến thể rút gọn kèm hướng dẫn liên hệ hỗ trợ; không hiển thị ô nhập |
+| IT-11 | Trang `/tai-khoan` | Không phát sinh yêu cầu `status-employee`; giao diện không đổi so với hiện trạng |
 | IT-12 | Mất kết nối mạng khi gửi biểu mẫu | Có thông báo lỗi; giao diện không treo (nhánh `app.tsx:85-91`) |
+| **IT-13** | **Người dùng đã từng chọn "không thuộc đối tác" (`statusStaff = not_employee`), sau đó thao tác nộp bài vào chiến dịch nội bộ** | **Vẫn nhận được hộp thoại kèm ô nhập mã; nhập đúng thì khai báo thành công.** Gác ràng buộc C6 |
+| IT-14 | Người dùng bị gán trạng thái bởi tiến trình backfill | Như IT-13 |
+| IT-15 | Lặp lại IT-13 nhiều lần trong cùng phiên | Không giới hạn số lần mời nhập |
 
 ### 7.3 Điều kiện thông qua rà soát mã nguồn
 
@@ -555,8 +568,16 @@ grep -rn "user\.statusStaff\|user?.statusStaff" frontend/src
 git diff origin/release -- frontend/src/services | grep -n "skipErrorHandler"
 # Kỳ vọng: không có kết quả
 
-# Mục 4.9 — không sử dụng partnerApproval để dựng danh sách đối tác
-grep -rn "partnerApproval" frontend/src/pages/account
+# C6 — không dùng isOpenInputStaffCode làm điều kiện hiển thị
+grep -rn "isOpenInputStaffCode" frontend/src
+# Kỳ vọng: không có kết quả
+
+# FE-005 đã gỡ — không đụng trang Hồ sơ
+git diff --stat origin/release -- frontend/src/pages/account
+# Kỳ vọng: không có kết quả
+
+# C7 — status-employee không được gọi theo vòng lặp danh sách đối tác
+grep -rn "getStatusEmployee\|status-employee" frontend/src | grep -iE "map|forEach|Promise.all"
 # Kỳ vọng: không có kết quả
 
 # Không tái xuất hiện lớp phân nhóm đã loại bỏ tại PRD-AMB-STAFF-001 v5.0
@@ -586,7 +607,7 @@ Tác vụ `build-frontend` chỉ kích hoạt khi có thay đổi trong `fronten
 
 | # | Điều kiện | Bên chịu trách nhiệm |
 |---|---|---|
-| 1 | Xác nhận `options.enableStaffCode` của đối tác đang được bật | Backend / Vận hành |
+| 1 | Xác nhận `options.enableStaffCode` của đối tác đang được bật. Bắt buộc **trước khi** bất kỳ chiến dịch nào của đối tác bật `applyForStaff` — xem Mục 4.8.2 | Backend / Vận hành |
 | 2 | Tiến trình backfill `statusStaff` đã chạy cho đối tác (`admin/service/migration_backfill_staff_status.go`) | Backend |
 
 Hạng mục không phát sinh thay đổi tại backend và phân hệ quản trị, do đó không cần đồng bộ thời điểm phát hành và không có bước di trú dữ liệu.
@@ -601,8 +622,9 @@ Hạng mục không phát sinh thay đổi tại backend và phân hệ quản t
 | R2 | Tái sử dụng hàm phân giải đối tác nguyên trạng, dẫn tới suy giảm chức năng không phát sinh lỗi | Cao | Mục 3.1; kiểm thử đơn vị tại Mục 7.1 |
 | R3 | Bỏ sót một điểm khởi tạo biểu mẫu | Trung bình | Tập trung vào một đơn vị (P4); kịch bản IT-01, IT-02 kiểm cả ba điểm |
 | R4 | Gắn hộp thoại trong trang thay vì thành phần đầu trang, dẫn tới thao tác tại `/trang-ca-nhan` bị chặn mà không hiển thị | Trung bình | Mục 4.6; kịch bản IT-06 |
-| R5 | Nhân viên không tìm thấy đường khai báo | Trung bình | Lối đi tại FE-004 (Mục 4.8); vị trí hiển thị tại Mục 4.9 |
-| R6 | Số yêu cầu mạng của FE-005 ảnh hưởng thời gian tải trang Hồ sơ | Thấp | Ràng buộc thực thi tại Mục 4.9 |
+| R5 | **Dùng `isOpenInputStaffCode` làm điều kiện hiển thị**, khiến người đã trả lời "không thuộc đối tác" không khai lại được. Chỉ biểu hiện với tài khoản đã từng trả lời | **Cao** | Ràng buộc C6; Mục 4.8.3; kịch bản IT-13, IT-14; điều kiện rà soát tại Mục 7.3 |
+| R6 | Đối tác bật `applyForStaff` nhưng chưa bật `EnableStaffCode`, người dùng bị chặn mà không khai báo được | Trung bình | Tiền kiểm tại Mục 4.8.2; điều kiện tiên quyết tại Mục 8.3; kịch bản IT-10 |
+| R7 | Nhân viên không tham gia chiến dịch nội bộ nào sẽ giữ trạng thái `not_employee`, làm giảm độ phủ báo cáo | Thấp | Hạn chế đã chấp nhận; xem PRD, FE-005 và OI-02 |
 
 ---
 
@@ -611,7 +633,7 @@ Hạng mục không phát sinh thay đổi tại backend và phân hệ quản t
 | # | Nội dung | Bên xử lý |
 |---|---|---|
 | OI-01 | Xác nhận `options.enableStaffCode` của đối tác FE CREDIT trên production đang được bật. Endpoint yêu cầu xác thực nên không tự kiểm chứng được | Backend |
-| OI-02 | Hộp thoại FE-003 có chấp nhận hiển thị đồng thời thông báo tại chỗ và thông báo nổi hay không (Mục 3.2). Trường hợp không chấp nhận, cần điều chỉnh trình xử lý lỗi toàn cục bằng một hạng mục riêng | Sản phẩm / Kỹ thuật |
+| OI-02 | Hộp thoại FE-003 và FE-004 có chấp nhận hiển thị đồng thời thông báo tại chỗ và thông báo nổi hay không (Mục 3.2). Trường hợp không chấp nhận, cần điều chỉnh trình xử lý lỗi toàn cục bằng một hạng mục riêng | Sản phẩm / Kỹ thuật |
 
 ---
 
@@ -619,5 +641,6 @@ Hạng mục không phát sinh thay đổi tại backend và phân hệ quản t
 
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
+| 3.0 | 2026-09-04 | Đồng bộ với PRD 3.0 sau rà soát của Thành Trung: gỡ thiết kế mục tại trang Hồ sơ, chuyển khai báo vào hộp thoại chặn với hai biến thể; bổ sung tiền kiểm cờ tính năng cho đúng một đối tác; bổ sung ràng buộc C6 (bám `staffGateReason`) và C7 (không phát sinh yêu cầu tỉ lệ số đối tác); bổ sung kịch bản IT-13…IT-15 và rủi ro R5…R7 |
 | 2.0 | 2026-09-04 | Chuẩn hoá toàn bộ văn phong theo khuôn tài liệu thiết kế kỹ thuật: bổ sung quy ước động từ tình thái, tách Nguyên tắc thiết kế và Ràng buộc bắt buộc thành mục riêng có mã định danh, chuyển kịch bản kiểm thử sang dạng bảng có mã, tách Phát hành & Vận hành khỏi Rủi ro. Nội dung kỹ thuật và các tham chiếu mã nguồn giữ nguyên |
 | 1.0 | 2026-09-04 | Bản đầu, đo trên `origin/release`. Ghi nhận bốn khác biệt hạ tầng giữa `frontend/` và `fecredit/`. Đính chính số điểm khởi tạo biểu mẫu: 3 |
