@@ -982,11 +982,9 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 
 ## 13. Open Questions
 
-1. **`vpbank` không có phân hệ `contract`** — chủ đích (chưa ký hợp đồng điện tử) hay thiếu sót? Quyết định `contract` là cờ phân hệ hay màn lõi. Cần trước M3.
-2. **Ngưỡng bán kính ảnh hưởng** — số đối tác tối đa trên một triển khai trước khi cần tách. Cần trước khi lên production.
+1. **Ngưỡng bán kính ảnh hưởng** — số đối tác tối đa trên một triển khai trước khi cần tách. Cần trước khi lên production.
 3. **Chủ sở hữu quy trình NFR-009** — ai quyết định phân loại một yêu cầu riêng của đối tác. Cần trước M2.
-4. **PC-012 nhóm khác biệt hành vi** — 4 tệp (`not-logged-in` Δ914, `header` Δ659, `models/main` Δ288, `interfaces/event` Δ251) cần **đối tác chấp thuận** trước cutover. Chưa xác định đầu mối phía 5 đối tác. Cần trước M1.
-5. **`vpbank` còn import `FacebookSection` sống** trong khi 4 app kia đã comment — sót lại hay đang dùng thật? Cần trước M3.
+3. **PC-012 nhóm khác biệt hành vi** — 4 tệp (`not-logged-in` Δ914, `header` Δ659, `models/main` Δ288, `interfaces/event` Δ251) cần **đối tác chấp thuận** trước cutover. Chưa xác định đầu mối phía 5 đối tác. Cần trước M1.
 
 ### Đã đóng
 
@@ -997,6 +995,8 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 | `partner-app/` cùng repository hay tách? | **Cùng repository `ambassador`** | 04/09 |
 | PRE-1 có tách thành task độc lập xử lý ngay? | **Không.** Giữ nguyên luồng TikTok, port sang `partner-app` | 04/09 |
 | Mười thư mục đối tác đã ngừng xử lý thế nào? | **Không thuộc phạm vi, không đụng tới** | 04/09 |
+| `vpbank` không có `contract` — chủ đích hay sót? | **Không điều tra.** Mặc định: `contract` là **cờ phân hệ**, `vpbank` giữ nguyên `contract = false` — khớp hành vi hiện tại. Nếu là thiếu sót thì bật cờ, không phải sửa mã | 04/09 |
+| `vpbank` còn import `FacebookSection` sống? | **Không điều tra.** Mặc định: `partner-app` **không hiện thực Facebook** (4/5 app đã tắt). Nếu tới M3 phát hiện `vpbank` dùng thật thì xử lý tại đợt đó, ghi thành rủi ro chứ không chặn | 04/09 |
 
 ---
 
