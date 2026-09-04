@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-03
 **Author:** Nguyễn Đăng Định
-**Version:** 1.4
+**Version:** 1.5
 **Reviewer:** _chưa có_
 **Project Level:** Level 2
 **Status:** Draft — phạm vi đã chốt đủ, chờ review
@@ -28,6 +28,8 @@ Lý do phải tách chứ không nối vào: PRD v5.1 giả định **một đ�
 **Tên đối tác phải hiện đúng ở mọi chỗ có chữ.** Bản `fecredit` hard-code "FE CREDIT AMBASSADOR" trong nội dung modal (`modal-staff-code.tsx:145`) vì chỉ phục vụ một đối tác. Trên site đa đối tác, mọi câu chữ nhắc tới đối tác phải lấy tên động theo ngữ cảnh đang xem. Đây là ràng buộc xuyên suốt FE-003, FE-004, FE-005 — không nhắc lại ở từng mục.
 
 **Đánh số riêng bằng tiền tố `FE-`** để không lẫn với `FR-0xx` của PRD v5.1. Mục 11 map hai bên.
+
+**Techspec:** [techspec-staff-code-frontend-2026-09-04.md](./techspec-staff-code-frontend-2026-09-04.md)
 
 **Related Documents:**
 - PRD gốc (backend + admin + app white-label): [./prd-employee-code-2026-08-06.md](./prd-employee-code-2026-08-06.md)
@@ -214,14 +216,20 @@ Viết lại `resolveCurrentPartner` cho `frontend/`, thay vì port hàm của b
 | App | Số điểm | Vị trí |
 |---|---|---|
 | `fecredit/` | 3 | header, khối thống kê, khối chi tiết |
-| **`frontend/`** | **4+** | `src/components/layout/main/header/index.tsx:161`<br>`src/pages/home/components/not-logged-in/index.tsx:46`<br>`src/pages/home/components/logged-in-view/index.tsx:35`<br>`src/pages/home/components/post-modal/index.tsx:72,89` |
+| **`frontend/`** | **3** | `src/components/layout/main/header/index.tsx:157` → nút `:374`<br>`src/pages/home/components/not-logged-in/index.tsx:42` → nút `:178`<br>`src/pages/home/components/logged-in-view/index.tsx:31` → nút `:129` |
+
+> **Đính chính (v1.5, đo lại trên `origin/release`).** Bản v1.0–v1.4 ghi "4+ điểm" và tính cả `post-modal/index.tsx:72,89`. Sai: hai dispatch đó là **mở lại** form sau khi đóng modal con Threads/Facebook (`handleCloseThreadsModal`, `handleCloseFacebookModal`), không phải điểm vào — chặn ở đó là bắt người dùng qua gate hai lần trong một luồng.
+>
+> Con số đúng là **3**, nhưng cái bẫy vẫn còn nguyên và nằm ở chỗ khác: **điểm thứ ba dùng lại ở hai trang.** `logged-in-view` được render cả ở trang chi tiết chiến dịch lẫn `/trang-ca-nhan` (qua `src/pages/profile/index.tsx:118`), và `PostContentModal` mount ở hai nơi (`src/layouts/event-detail/index.tsx:292` và `logged-in-view/index.tsx:163`). Nên hàm kiểm tra phải đọc `eventHome` từ nơi gọi, và hai modal phải mount ở header — mount trong trang thì bấm nộp bài ở `/trang-ca-nhan` sẽ bị chặn im lặng.
 
 Modal nộp bài còn được mount ở **hai chỗ** (`src/layouts/event-detail/index.tsx:292` và `src/pages/home/components/logged-in-view/index.tsx:163`), và `src/pages/profile/index.tsx:118` dùng lại khối thống kê.
 
 **Copy khối `if` bốn lần là sai.** Sót một điểm = lọt một đường nộp bài, và đó chính là đường QA ít đi nhất. Viết **một** hàm/hook kiểm tra, mọi điểm gọi nó.
 
 **AC:**
-- [ ] Cả 4+ điểm mở form đều đi qua cùng một hàm kiểm tra
+- [ ] Cả 3 điểm mở form đều đi qua cùng một hàm kiểm tra
+- [ ] Bấm nộp bài ở `/trang-ca-nhan` cũng bị chặn đúng (điểm 3 dùng lại ở đó)
+- [ ] Đóng modal con Threads/Facebook rồi quay lại form **không** bị hỏi gate lần hai
 - [ ] Chiến dịch không bật điều kiện nào → hành vi không đổi, không thêm request nào
 - [ ] Không popup nào tự bật lúc tải trang chi tiết chiến dịch
 - [ ] Người chưa đăng nhập → hành vi như cũ (backend trả `staffGateReason` rỗng khi chưa đăng nhập)
@@ -433,7 +441,7 @@ Mọi màn mới phải xem tận mắt trên desktop và mobile trước khi b�
 |---|---|---|
 | E1 | FE-001 — `resolveCurrentPartner` cho site đa đối tác + test | — |
 | E2 | Hạ tầng: endpoint, interface, state, effect (`configs/api.ts`, `services/user.ts`, `interfaces/`, `models/main.ts`) | — |
-| E3 | FE-002 — hàm kiểm tra dùng chung + cắm vào 4+ điểm mở form | E2 |
+| E3 | FE-002 — hàm kiểm tra dùng chung + cắm vào 3 điểm mở form | E2 |
 | E4 | FE-003 + FE-004 — hai modal chặn | E3 |
 | E5 | FE-005 — mục Hồ sơ dạng danh sách | E1, E2 |
 | E7 | FE-007 — hồi quy: kiểm đối tác chưa bật cờ không đổi gì | E3, E4, E5 |
@@ -487,7 +495,7 @@ Ba endpoint dùng, đều đã có: `POST /users/confirm-is-staff`, `GET /partne
 | Trang | `src/pages/account/index.tsx` | Gắn mục "Thông tin nhân viên" |
 | Layout | `src/components/layout/main/header/index.tsx` | Mount modal + cắm hàm kiểm tra |
 | Trang | `src/pages/home/_desktop.tsx` | Nối modal nhập mã |
-| Điểm nộp bài | `not-logged-in/index.tsx`, `logged-in-view/index.tsx`, `post-modal/index.tsx` | Cắm hàm kiểm tra dùng chung |
+| Điểm nộp bài | `not-logged-in/index.tsx`, `logged-in-view/index.tsx` | Cắm hàm kiểm tra dùng chung. **Không** cắm ở `post-modal/index.tsx` — đó là mở lại form, không phải điểm vào |
 
 ### KHÔNG làm
 
@@ -574,6 +582,7 @@ Ba endpoint dùng, đều đã có: `POST /users/confirm-is-staff`, `GET /partne
 |---|---|---|
 | 1.0 | 2026-09-03 | Bản đầu. Tách khỏi PRD employee-code v5.1 thành task riêng. Chốt phạm vi: FE-002 → FE-005 + FE-007. FE-006 để treo |
 | 1.1 | 2026-09-03 | Sửa nguồn dữ liệu của FE-005: `partnerApproval` là sai nguồn (nằm trên `user-socials`), đổi sang `mainState.partners`. Gỡ Assumption tương ứng |
+| 1.5 | 2026-09-04 | Nối techspec. Đính chính số điểm mở form: **3**, không phải "4+" — `post-modal` là mở lại form sau modal con, không phải điểm vào. Bổ sung cái bẫy thật: điểm thứ ba dùng lại ở `/trang-ca-nhan` |
 | 1.4 | 2026-09-03 | **Chốt FE-006: không port modal xác nhận chủ động.** Ghi rõ hai app white-label vẫn còn modal đó (đã đọc code, không suy đoán) nên đây là khác biệt có chủ ý chứ không phải parity. Gỡ epic E6, gỡ 2 field state và bộ icon khỏi scope. FE-005 nâng thành đường khai duy nhất |
 | 1.3 | 2026-09-03 | Phân tích sâu FE-006: cơ chế bật/tắt modal đọc từ backend, ba hệ quả thật của phương án A (backfill không phủ người chưa tham gia, link chiến dịch cũng bị chặn, upsert tạo bản ghi), biến thể A′ bất khả thi với API hiện tại, A″ khả thi. Đổi khuyến nghị từ A sang **B trước** |
 | 1.2 | 2026-09-03 | Xác nhận bằng API công khai: FE CREDIT có trên site ACCESSTRADE và đang có chiến dịch `applyForStaff` → nâng lên **P1**. Chốt hướng giao diện (bám style sẵn có, NFR-006), tên đối tác động, bộ test case ngoài phạm vi. Đo được 17 đối tác trên site |
