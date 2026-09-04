@@ -1,8 +1,8 @@
-# Product Requirements Document: Kho Tư Liệu Event (Resource Library Field)
+# Product Requirements Document: Kho Tu Lieu Event (Resource Library Field)
 
 **Date:** 2026-04-02
 **Author:** Vinh Nguyen
-**Version:** 2.0
+**Version:** 3.0
 **Project Level:** Level 1
 **Status:** Draft
 
@@ -10,23 +10,30 @@
 
 ## Document Overview
 
-PRD cho tính năng thêm field **Kho Tư Liệu** (`resourceLibrary`) vào Event. Admin setup action (URL hoặc file upload) ngay trong form Event trên Admin dashboard — theo pattern `ActionType` giống News.
+PRD cho tinh nang them field **Kho Tu Lieu** (`resourceLibrary`) vao Event. Admin setup action (URL hoac file upload) ngay trong form Event tren Admin dashboard — theo pattern `ActionType` giong News.
 
 **Related Documents:**
-- Event model: `backend/internal/model/mg/event.go`
-- ActionType: `backend/internal/model/mg/common.go` (line 63)
+- Event model: `backend/internal/model/mg/event.go` — struct `EventRaw`
+- ActionType: `backend/internal/model/mg/common.go` — struct `ActionType`
+- News model (reference pattern): `backend/internal/model/mg/news.go` — field `Action ActionType`
+- Admin Event request: `backend/pkg/admin/model/request/event.go` — struct `EventUpsertBody`
+- Admin Event response: `backend/pkg/admin/model/response/event.go` — struct `EventDetail`
+- Public Event response: `backend/pkg/public/model/response/event.go` — struct `EventDetailResponse`, `EventBriefResponse`
 - Admin Event page: `admin/src/pages/event/`
+- Admin Event modal: `admin/src/pages/event/components/modal.tsx`
 - News modal (reference pattern): `admin/src/pages/news/components/modal.tsx`
+
+**Source repo:** `viewboost/ambassabor` (branch: `master`)
 
 ---
 
 ## Executive Summary
 
-Hiện tại, link kho tư liệu cho event đang hardcode trong frontend code. Mỗi lần thay đổi link phải release code mới.
+Hien tai, link kho tu lieu cho event dang hardcode trong frontend code. Moi lan thay doi link phai release code moi.
 
-**Giải pháp:** Thêm field `resourceLibrary` (type `ActionType`) vào `EventRaw` model. Admin setup URL hoặc upload file ngay trong form chỉnh sửa Event — giống cách News dùng `RcActionTypeFormNew`. Frontend đọc field này từ API event detail và hiển thị.
+**Giai phap:** Them field `resourceLibrary` (type `ActionType`) vao `EventRaw` model. Admin setup URL hoac upload file ngay trong form chinh sua Event — giong cach News dung `ActionType` cho field `action`. Frontend doc field nay tu API event detail va hien thi.
 
-**Scope nhỏ gọn:** Không tạo collection mới, không tạo CRUD riêng, không tạo trang admin riêng. Chỉ thêm 1 field vào Event.
+**Scope nho gon:** Khong tao collection moi, khong tao CRUD rieng, khong tao trang admin rieng. Chi them 1 field vao Event.
 
 ---
 
@@ -34,81 +41,142 @@ Hiện tại, link kho tư liệu cho event đang hardcode trong frontend code. 
 
 ### Business Objectives
 
-1. **Giảm thời gian cập nhật tư liệu** — Admin setup trong form Event, không cần deploy
-2. **Tăng tính linh hoạt** — Admin tự thay đổi link/file bất kỳ lúc nào
+1. **Giam thoi gian cap nhat tu lieu** — Admin setup trong form Event, khong can deploy
+2. **Tang tinh linh hoat** — Admin tu thay doi link/file bat ky luc nao
 
 ### Success Metrics
 
 | Metric | Target |
 |--------|--------|
-| Thời gian cập nhật tư liệu | < 2 phút (setup trong form Event) |
-| Số lần deploy để thay đổi tư liệu | 0 |
+| Thoi gian cap nhat tu lieu | < 2 phut (setup trong form Event) |
+| So lan deploy de thay doi tu lieu | 0 |
 
 ---
 
 ## Functional Requirements
 
-### FR-001: Thêm field `resourceLibrary` vào Event Model
+### FR-001: Them field `resourceLibrary` vao Event Model
 
 **Priority:** Must Have
 
 **Description:**
-Thêm field `resourceLibrary` (type `*ActionType`) vào `EventRaw` struct. Field này lưu action cho kho tư liệu của event — có thể là URL hoặc file upload.
+Them field `resourceLibrary` (type `ActionType`) vao `EventRaw` struct. Field nay luu action cho kho tu lieu cua event — co the la URL hoac file upload.
 
-**Thay đổi cụ thể:**
+**Thay doi cu the:**
+
+File: `backend/internal/model/mg/event.go`
 ```go
-// EventRaw — thêm field:
+// EventRaw — them field:
 ResourceLibrary *ActionType `bson:"resourceLibrary,omitempty" json:"resourceLibrary,omitempty"`
 ```
 
-**ActionType struct (đã có sẵn):**
+**ActionType struct (da co san tai `backend/internal/model/mg/common.go`):**
 ```go
 type ActionType struct {
-    Value string `json:"value" bson:"value"`   // URL hoặc file URL
-    Type  string `json:"type" bson:"type"`     // "url" hoặc "file"
-    Text  string `json:"text" bson:"text"`     // Label hiển thị, vd: "Xem kho tư liệu"
+    Value string `json:"value" bson:"value"`   // URL hoac file URL
+    Type  string `json:"type" bson:"type"`     // "url" hoac "file"
+    Text  string `json:"text" bson:"text"`     // Label hien thi, vd: "Xem kho tu lieu"
+}
+```
+
+**Reference:** News model (`backend/internal/model/mg/news.go`) da dung `ActionType` cho field `Action`:
+```go
+type NewsRaw struct {
+    // ...
+    Action ActionType `bson:"action" json:"action"`
+    // ...
 }
 ```
 
 **Acceptance Criteria:**
-- [ ] Field `resourceLibrary` được thêm vào `EventRaw` struct
-- [ ] Field optional (omitempty) — event cũ không bị ảnh hưởng
-- [ ] Request/Response model của Event được cập nhật tương ứng
+- [ ] Field `resourceLibrary` duoc them vao `EventRaw` struct
+- [ ] Field optional (omitempty) — event cu khong bi anh huong
+- [ ] Request/Response model cua Event duoc cap nhat tuong ung
 
 ---
 
-### FR-002: Admin Setup Kho Tư Liệu trong Form Event
+### FR-002: Cap nhat Admin Request/Response Models
 
 **Priority:** Must Have
 
 **Description:**
-Thêm component `RcActionTypeFormNew` vào form tạo/sửa Event trên Admin dashboard. Admin có thể:
-- Chọn type: URL hoặc File
-- Nhập URL trực tiếp hoặc upload file
-- Nhập text label hiển thị
+Them field `ResourceLibrary` vao cac struct request va response cua Event trong admin va public packages.
+
+**Thay doi cu the:**
+
+File: `backend/pkg/admin/model/request/event.go`
+```go
+// EventUpsertBody — them field:
+ResourceLibrary *modelmg.ActionType `json:"resourceLibrary,omitempty"`
+```
+
+File: `backend/pkg/admin/model/response/event.go`
+```go
+// EventDetail — them field:
+ResourceLibrary *modelmg.ActionType `json:"resourceLibrary,omitempty"`
+```
+
+File: `backend/pkg/public/model/response/event.go`
+```go
+// EventBriefResponse — them field:
+ResourceLibrary *modelmg.ActionType `json:"resourceLibrary,omitempty"`
+
+// EventDetailResponse — them field:
+ResourceLibrary *modelmg.ActionType `json:"resourceLibrary,omitempty"`
+```
 
 **Acceptance Criteria:**
-- [ ] Form Event (modal hoặc page) có thêm field "Kho tư liệu" dùng `RcActionTypeFormNew`
-- [ ] Khi chọn type `url`: hiển thị input nhập URL
-- [ ] Khi chọn type `file`: hiển thị upload, file được upload lên MinIO
-- [ ] Có thể để trống (event không bắt buộc có kho tư liệu)
-- [ ] Giá trị được lưu khi submit form Event
+- [ ] Field `resourceLibrary` co trong admin request struct `EventUpsertBody`
+- [ ] Field `resourceLibrary` co trong admin response struct `EventDetail`
+- [ ] Field `resourceLibrary` co trong public response structs `EventBriefResponse` va `EventDetailResponse`
+- [ ] Cac service handler (create/update) truyen field nay vao EventRaw khi luu
 
 ---
 
-### FR-003: Frontend Hiển Thị Kho Tư Liệu từ Event Data
+### FR-003: Admin Setup Kho Tu Lieu trong Form Event
 
 **Priority:** Must Have
 
 **Description:**
-Frontend đọc field `resourceLibrary` từ response API event detail. Nếu có → hiển thị button/link. Nếu không có → ẩn.
+Admin Event modal dang dung StepsForm (ant-design pro-form) voi 4 steps: Overview, Photo, Option, Condition. Them field "Kho tu lieu" vao step Overview hoac tao them 1 input don gian.
+
+Vi `ActionType` trong ambassador project chi co 3 fields don gian (value, type, text), co the dung:
+- Select cho `type` (url/file)
+- Input cho `value` (URL hoac upload)
+- Input cho `text` (label hien thi)
+
+**Admin Event modal hien tai:** `admin/src/pages/event/components/modal.tsx`
+- Dung `StepsForm` tu `@ant-design/pro-form`
+- Step 1 (Overview): `admin/src/pages/event/components/overview.tsx`
 
 **Acceptance Criteria:**
-- [ ] Frontend đọc `event.resourceLibrary` từ API response hiện tại
-- [ ] Nếu `resourceLibrary` có giá trị → hiển thị button với text label
-- [ ] Click button → mở `resourceLibrary.value` (URL) trong tab mới
-- [ ] Nếu `resourceLibrary` null/undefined → không hiển thị gì
-- [ ] Xóa hardcoded resource links trong frontend code (nếu có)
+- [ ] Form Event co them section "Kho tu lieu" trong step Overview
+- [ ] Khi chon type `url`: hien thi input nhap URL
+- [ ] Khi chon type `file`: hien thi upload, file duoc upload len storage
+- [ ] Co the de trong (event khong bat buoc co kho tu lieu)
+- [ ] Gia tri duoc gui kem trong payload khi submit form Event
+
+---
+
+### FR-004: Frontend Hien Thi Kho Tu Lieu tu Event Data
+
+**Priority:** Must Have
+
+**Description:**
+Frontend doc field `resourceLibrary` tu response API event detail. Neu co -> hien thi button/link. Neu khong co -> an.
+
+**Public API response da tra cac structs:**
+- `EventBriefResponse` (list events)
+- `EventDetailResponse` (event detail)
+
+Chi can them field `resourceLibrary` vao 2 structs nay la frontend co data.
+
+**Acceptance Criteria:**
+- [ ] Frontend doc `event.resourceLibrary` tu API response
+- [ ] Neu `resourceLibrary` co gia tri -> hien thi button voi text label
+- [ ] Click button -> mo `resourceLibrary.value` (URL) trong tab moi
+- [ ] Neu `resourceLibrary` null/undefined -> khong hien thi gi
+- [ ] Xoa hardcoded resource links trong frontend code (neu co)
 
 ---
 
@@ -119,46 +187,35 @@ Frontend đọc field `resourceLibrary` từ response API event detail. Nếu c�
 **Priority:** Must Have
 
 **Description:**
-Field mới phải không ảnh hưởng event cũ. MongoDB schemaless nên event cũ tự động có `resourceLibrary = null`.
+Field moi phai khong anh huong event cu. MongoDB schemaless nen event cu tu dong co `resourceLibrary = null`.
 
 **Acceptance Criteria:**
-- [ ] Event cũ không bị lỗi khi thiếu field
-- [ ] API response event cũ: `resourceLibrary` không xuất hiện hoặc null
-- [ ] Không cần migration data
-
----
-
-### NFR-002: Cache Invalidation
-
-**Priority:** Should Have
-
-**Description:**
-Khi admin update event (bao gồm field `resourceLibrary`), cache event detail trên Redis phải được invalidate.
-
-**Acceptance Criteria:**
-- [ ] Update event → invalidate Redis cache (đã có sẵn trong flow update event hiện tại)
+- [ ] Event cu khong bi loi khi thieu field
+- [ ] API response event cu: `resourceLibrary` khong xuat hien hoac null
+- [ ] Khong can migration data
 
 ---
 
 ## Implementation Scope
 
-### Thay đổi cần làm:
+### Thay doi can lam:
 
-| Layer | File | Thay đổi |
+| Layer | File | Thay doi |
 |-------|------|----------|
-| **Model** | `backend/internal/model/mg/event.go` | Thêm field `ResourceLibrary *ActionType` vào `EventRaw` |
-| **Admin Request** | `backend/pkg/admin/model/request/event.go` | Thêm field `ResourceLibrary` vào request struct |
-| **Admin Response** | `backend/pkg/admin/model/response/event.go` | Thêm field `ResourceLibrary` vào response struct |
-| **Public Response** | `backend/pkg/public/model/response/event.go` | Thêm field `ResourceLibrary` vào public response |
-| **Admin UI** | `admin/src/pages/event/components/...` | Thêm `RcActionTypeFormNew` vào form Event |
-| **Frontend** | Client apps (lusso, etc.) | Đọc `resourceLibrary` từ event data, hiển thị button |
+| **Model** | `backend/internal/model/mg/event.go` | Them field `ResourceLibrary *ActionType` vao `EventRaw` |
+| **Admin Request** | `backend/pkg/admin/model/request/event.go` | Them field `ResourceLibrary` vao `EventUpsertBody` |
+| **Admin Response** | `backend/pkg/admin/model/response/event.go` | Them field `ResourceLibrary` vao `EventDetail` |
+| **Public Response** | `backend/pkg/public/model/response/event.go` | Them field `ResourceLibrary` vao `EventBriefResponse` va `EventDetailResponse` |
+| **Admin Service** | `backend/pkg/admin/service/event.go` (can verify) | Truyen `resourceLibrary` khi create/update Event |
+| **Admin UI** | `admin/src/pages/event/components/overview.tsx` | Them input cho resourceLibrary (type selector + value input + text input) |
+| **Frontend** | Client apps (lusso, etc.) | Doc `resourceLibrary` tu event data, hien thi button |
 
-### KHÔNG làm:
-- Không tạo MongoDB collection mới
-- Không tạo API endpoint mới
-- Không tạo admin page/router mới
-- Không tạo service/handler mới
-- Không thêm status, order, thumbnail riêng cho tư liệu
+### KHONG lam:
+- Khong tao MongoDB collection moi
+- Khong tao API endpoint moi
+- Khong tao admin page/router moi
+- Khong tao service/handler moi
+- Khong them status, order, thumbnail rieng cho tu lieu
 
 ---
 
@@ -167,46 +224,48 @@ Khi admin update event (bao gồm field `resourceLibrary`), cache event detail t
 ### Admin Setup
 
 ```
-Admin mở Event detail trên Admin Dashboard
-→ Tìm field "Kho tư liệu" (RcActionTypeFormNew)
-→ Chọn type: URL → nhập link  |  File → upload file
-→ Nhập text label (vd: "Xem kho tư liệu")
-→ Save Event
-→ Done — frontend hiển thị ngay
+Admin mo Event detail tren Admin Dashboard
+-> Click Edit -> Step 1 (Overview)
+-> Tim field "Kho tu lieu"
+-> Chon type: URL -> nhap link  |  File -> upload file
+-> Nhap text label (vd: "Xem kho tu lieu")
+-> Next steps -> Submit
+-> Done — frontend hien thi ngay
 ```
 
 ### KOC Xem
 
 ```
-KOC mở trang Event
-→ Thấy button "Xem kho tư liệu" (hoặc label admin đặt)
-→ Click → mở link trong tab mới
+KOC mo trang Event
+-> Thay button "Xem kho tu lieu" (hoac label admin dat)
+-> Click -> mo link trong tab moi
 ```
 
 ---
 
 ## Assumptions
 
-1. `ActionType` struct và component `RcActionTypeFormNew` đã stable, reuse trực tiếp
-2. Flow update event hiện tại đã handle cache invalidation
-3. Public API event detail đã trả đủ fields — chỉ cần thêm field mới vào response
+1. `ActionType` struct da stable, reuse truc tiep tu `backend/internal/model/mg/common.go`
+2. News model (`NewsRaw.Action`) la reference pattern da hoat dong tot
+3. Public API event detail da tra du fields — chi can them field moi vao response structs
+4. Admin Event modal dung StepsForm — them field vao step Overview la hop ly nhat
 
 ---
 
 ## Out of Scope
 
-- Nhiều tư liệu per event (chỉ 1 action)
-- Trang quản lý tư liệu riêng
-- Status active/inactive cho tư liệu (muốn ẩn thì xóa field)
-- Order/sorting tư liệu
-- Thumbnail riêng cho tư liệu
+- Nhieu tu lieu per event (chi 1 action)
+- Trang quan ly tu lieu rieng
+- Status active/inactive cho tu lieu (muon an thi xoa field)
+- Order/sorting tu lieu
+- Thumbnail rieng cho tu lieu
 
 ---
 
 ## Open Questions
 
-1. **Nhiều link?** — Nếu sau này cần nhiều tư liệu per event, có thể đổi sang `[]*ActionType`. Hiện tại 1 link đủ chưa?
-2. **Vị trí trên frontend?** — Button kho tư liệu hiển thị ở đâu trên trang event? (cạnh Guide? Header? Footer?)
+1. **Nhieu link?** — Neu sau nay can nhieu tu lieu per event, co the doi sang `[]*ActionType`. Hien tai 1 link du chua?
+2. **Vi tri tren frontend?** — Button kho tu lieu hien thi o dau tren trang event? (canh Guide? Header? Footer?)
 
 ---
 
@@ -215,4 +274,5 @@ KOC mở trang Event
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-04-02 | Vinh Nguyen | Initial PRD (over-scoped) |
-| 2.0 | 2026-04-02 | Vinh Nguyen | Simplified — chỉ thêm field ActionType vào Event |
+| 2.0 | 2026-04-02 | Vinh Nguyen | Simplified — chi them field ActionType vao Event |
+| 3.0 | 2026-04-03 | Claude | Verified & updated against remote source code (`viewboost/ambassabor@master`). Fixed: file paths, struct names (`EventRaw` not `EventBSON`), request/response model paths, admin UI component details (StepsForm pattern), added FR-002 for request/response models, added reference to News ActionType pattern |
