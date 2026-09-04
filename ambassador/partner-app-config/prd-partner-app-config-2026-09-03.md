@@ -40,6 +40,7 @@ Năm đối tác này tình cờ là cụm đồng nhất nhất trong repositor
 **Related Documents:**
 - Báo cáo khảo sát: `ambassador/plans/reports/research-260903-1718-partner-config-admin-tham-khao-creator-os.md`
 - Kế hoạch triển khai: `ambassador/plans/260904-1522-partner-app/plan.md`
+- **Quy trình onboard đang dùng thật:** `ambassador/fecredit/setup.md` (149 dòng) và `ambassador/parasola/setup.md` — checklist do người thực hiện viết, nguồn từ Google Sheet *"Onboard FEC checklist - Golive"*. Mục 2.7 và PC-014 dựng trên khung này
 - Thiết kế tham khảo: `pmax/creator-os` — `docs/architecture/05-theme-and-portals.md`, `packages/theme/src/tokens.ts`, `packages/ui/src/button.tsx`
 
 ---
@@ -209,8 +210,10 @@ fecredit     131     126     118      154        ·
 
 Phát hiện trong quá trình khảo sát. Không do việc hợp nhất tạo ra; cần xử lý như task độc lập, là tiền đề của E2.
 
-**PRE-1 — Điều hướng mở làm rò mã uỷ quyền OAuth.**
-`login-tiktok/index.tsx:14` và `connect-tiktok/index.tsx:12` dùng tham số `state` do bên gọi cung cấp làm đích điều hướng, không kiểm danh sách cho phép. Backend cũng không giới hạn `redirectURI` (`internal/module/social/tiktok/tiktok.go:113`); tìm kiếm `allowlist|whitelist|validateRedirect` trên `backend/internal` và `backend/pkg` không có kết quả. `client_key` và `redirect_uri` dùng chung đều công khai trong bundle. Chuỗi khai thác dẫn tới chiếm đoạt tài khoản. Hiện diện ở **cả 5 ứng dụng, mỗi ứng dụng 2 trang**. Kết luận dựa trên đọc mã nguồn; cần xác nhận trên production trước khi xếp mức độ chính thức.
+**PRE-1 — Điều hướng mở ở luồng uỷ quyền TikTok. Quyết định: GIỮ NGUYÊN (04/09).**
+`login-tiktok/index.tsx:14` và `connect-tiktok/index.tsx:12` dùng tham số `state` do bên gọi cung cấp làm đích điều hướng, không kiểm danh sách cho phép. Backend cũng không giới hạn `redirectURI` (`internal/module/social/tiktok/tiktok.go:113`); tìm `allowlist|whitelist|validateRedirect` trên `backend/internal` và `backend/pkg` không có kết quả. Quét toàn bộ nhánh remote 04/09: không nhánh nào có bản vá.
+
+**Quyết định 04/09: `partner-app` port nguyên luồng hiện tại, không thay đổi.** Ghi nhận đây là **quyết định giữ nguyên hiện trạng**, không phải kết luận đã kiểm tra và thấy an toàn — hai câu đó khác nhau và tài liệu này không có căn cứ cho câu thứ hai.
 
 **PRE-2 — Giá trị dự phòng cứng trỏ tới bài viết pháp lý của đối tác khác.**
 ```js
@@ -242,7 +245,7 @@ Trace luồng khởi động thật của ứng dụng cho thấy onboard một 
 
 | Tầng | Nội dung | Cấu hình hoá được? |
 |---|---|---|
-| **0. Ngoài hệ thống** | DNS · TLS · Google Cloud Console (JS origin) · Meta (App Domain) · ACCESSTRADE SSO (redirect URI) | **Không**, trừ khi làm PC-011. TikTok đã giải xong bằng callback dùng chung |
+| **0. Ngoài hệ thống** | DNS · TLS · **Google Cloud Console** (JS origin) · **ACCESSTRADE SSO** (redirect URI) | **Không**, trừ khi làm PC-011. **TikTok không cần gì** — đã giải xong bằng callback dùng chung. Facebook đã tắt |
 | **1. Bản ghi nền** | `admin/partner`: name, slug, logo, website, `allowDomains`, status, bpp | Đã có form; **thiếu chẩn đoán** — xem PC-014 |
 | **2. Bốn bài viết** | Điều khoản · Điều kiện · Câu hỏi thường gặp · Bài hỗ trợ | **Không.** Phải có người soạn. Đây là đường găng dài nhất theo thời gian thực tế |
 | **3. Cấu hình ứng dụng** | theme, assets, contact, social, seo, modules, sections | **Có** — phạm vi chính của tài liệu này |
@@ -501,7 +504,13 @@ Cả 5 ứng dụng hiện đang khai sai. `wrappers/home.tsx` gán `url: proces
 <meta property="og:url"  content="https://ambassador.koc.com.vn/">
 ```
 
-Nguyên nhân là nhầm hai biến: `ORIGIN` là tên miền callback dùng chung, `NEXT_PUBLIC_ORIGIN` mới là tên miền đối tác. Port nguyên tệp này sang `partner-app/` là nhân rộng lỗi. **`canonical` không lưu trong lược đồ** — sinh từ `Host` của request.
+Nguyên nhân: **`ORIGIN` gánh hai vai.** Comment ngay trong `fecredit/config/config.prod.ts` nói rõ: *"Domain API, không phải domain FE (dùng cho canonical/og:url + redirect TikTok)"*. Một biến vừa là tên miền callback dùng chung — **đúng cho TikTok** — vừa là tên miền chuẩn hoá SEO — **sai cho canonical**.
+
+#### ⚠️ KHÔNG sửa canonical bằng cách đổi giá trị `ORIGIN`
+
+Đổi `ORIGIN` sẽ **phá luồng đăng nhập TikTok của cả 5 ứng dụng**, vì `redirect_uri` gửi TikTok dựng từ chính biến đó và đã đăng ký một lần dùng chung.
+
+Cách đúng là **tách hai vai**: `canonical` và `og:url` sinh từ `Host` của request; `ORIGIN` giữ nguyên giá trị, chỉ còn phục vụ callback TikTok. **`canonical` không lưu trong lược đồ.**
 
 **`robots.txt` và `sitemap.xml` sinh theo tên miền.** Hiện không ứng dụng nào có hai tệp này; đây là năng lực mới, không phải hạng mục chuyển đổi.
 
@@ -532,7 +541,7 @@ Người vận hành phải lưu được bản dở dang. Nhưng xuất bản t
 |---|---|
 | Token giao diện | thiếu `primary` hoặc `primaryForeground`, hoặc không phải mã hex |
 | Section | thiếu `hero`/`events`, loại ngoài danh mục, `key` trùng hoặc rỗng |
-| **Trường bắt buộc** | thiếu bất kỳ trong 8: `website`, `footerBrandLink`, `contact.hotline`, `contact.email`, 4 article ID |
+| **Trường bắt buộc** | thiếu bất kỳ trong 7: `website`, `footerBrandLink`, `contact.hotline`, `contact.email`, 3 article ID |
 | **Dữ liệu đối tác khác** | cấu hình chứa tên miền, hotline, email hoặc article ID đã đăng ký cho đối tác khác |
 
 Hai cửa cuối là hàng rào cho lỗi **đang chạy trên production**: `lusso` dùng Facebook, TikTok, YouTube, link tải app và email của HDBank; `parasola` dùng hotline của HDBank; ba ứng dụng có giá trị dự phòng cứng trỏ tới bài viết pháp lý của HDBank (mục 2.6).
@@ -617,26 +626,31 @@ Thay đổi backend giữ tương thích ngược suốt giai đoạn chạy son
 
 **Priority:** Should Have
 
-**Vì sao cần.** Lời hứa "onboard không cần dev" chỉ đúng với một trong bốn nhà cung cấp danh tính:
+**Vì sao cần.** Lời hứa "onboard không cần dev" đúng với TikTok, không đúng với hai nhà cung cấp còn lại:
 
 | Nhà cung cấp | Cơ chế hiện tại | Thêm tên miền cần gì |
 |---|---|---|
 | **TikTok** | Một `redirect_uri` dùng chung + chuyển tiếp theo `state` | **Không gì cả** |
-| Google | `@react-oauth/google`, `<GoogleLogin>` | Đăng ký Authorized JavaScript origin |
-| Facebook | `react-facebook-login` ở `account/management/facebook-section` | Đăng ký App Domain + Valid OAuth Redirect URI |
+| Google | `@react-oauth/google`, `<GoogleLogin>` — render sống ở cả 5 app | Đăng ký Authorized JavaScript origin |
 | ACCESSTRADE SSO | `redirectUri = ${NEXT_PUBLIC_ORIGIN}lien-ket-tai-khoan` | Đăng ký redirect URI |
+| ~~Facebook~~ | import bị comment ở 4/5 app | **đã tắt, ngoài phạm vi** |
 
-Đội cũ **đã tự nghĩ ra** mô hình callback dùng chung cho TikTok. Áp đúng mô hình đó cho ba nhà cung cấp còn lại — **kèm kiểm tra đích chuyển tiếp tại tầng máy chủ theo `allowDomains`**.
+#### ⚠️ TikTok NGOÀI phạm vi yêu cầu này
 
-Với nhà cung cấp không áp được, tài liệu vận hành phải liệt kê thao tác thủ công **tường minh**, và quy trình onboard phải phản ánh điều đó. Không hứa "0 thao tác" rồi để người làm tự phát hiện.
+Bằng chứng thực nghiệm: `fecredit` là app thêm gần nhất (24/08/2026), và `fecredit/setup.md` — checklist onboard **149 dòng**, chi tiết đến kích thước banner và mã màu viền thẻ KPI — **không nhắc TikTok một chữ**. Hai giá trị `ORIGIN` và `TIKTOK_CLIENT_ID` chép nguyên từ app trước.
 
-Yêu cầu này khắc phục PRE-1 trong phạm vi `partner-app/`.
+Trong khi SSO thì được ghi chú thẳng trong `config.prod.ts:44`: *"Domain FE, sinh redirect_uri SSO — phải trùng giá trị đăng ký bên AccessTrade"*.
+
+Cơ chế TikTok **giữ nguyên, không đụng** (PRE-1, quyết định 04/09). Yêu cầu này chỉ nói về Google và SSO.
+
+**Hai đường xử lý, chọn một:**
+- Áp mô hình callback dùng chung của TikTok cho Google và SSO — **kèm kiểm tra đích chuyển tiếp tại tầng máy chủ theo `allowDomains`**. Áp mà quên vế kiểm là nhân lỗ hổng ra ba chỗ thay vì một
+- Hoặc giữ nguyên, và ghi hai thao tác thủ công **tường minh** vào quy trình onboard. Không hứa "0 thao tác" rồi để người làm tự phát hiện
 
 **AC:**
-- [ ] Thêm tên miền mới trong admin: đăng nhập TikTok chạy, không thao tác bên ngoài
-- [ ] Đích chuyển tiếp kiểm tại **máy chủ** theo `allowDomains`; giá trị ngoài danh sách bị từ chối
-- [ ] Tham số chống CSRF tách khỏi tham số định tuyến
-- [ ] Nhà cung cấp còn cần thao tác thủ công được ghi trong tài liệu vận hành
+- [ ] Quy trình onboard nêu rõ hai thao tác thủ công còn lại, hoặc chứng minh đã bỏ được
+- [ ] Nếu áp mô hình callback dùng chung: đích chuyển tiếp kiểm tại **máy chủ** theo `allowDomains`; giá trị ngoài danh sách bị từ chối
+- [ ] Luồng TikTok không thay đổi hành vi — đối chiếu trước/sau trên một tên miền thật
 
 ---
 
@@ -691,7 +705,14 @@ Script trích được cấu hình từ ứng dụng cũ, nên ai cũng muốn n
 
 **Priority:** Must Have — yêu cầu mới tại v1.2
 
-**Vì sao cần.** Trace luồng khởi động thật cho thấy onboard đi qua **8 màn admin và 5 hệ thống bên ngoài** (mục 2.7), và lộ trình đó chỉ nằm trong đầu người làm. Thất bại đầu tiên là vòng lặp chuyển hướng câm ở PC-014.
+**Vì sao cần — và vì sao KHÔNG phát minh lại.** Quy trình này **đã tồn tại**: `fecredit/setup.md` (149 dòng) và `parasola/setup.md`, nguồn từ Google Sheet *"Onboard FEC checklist - Golive"*, bám sát `new-client-config.csv` ở gốc repository. PC-014 là **điện tử hoá cái đang có**, không phải thiết kế mới.
+
+Hai thứ `setup.md` đã có mà thiết kế phải giữ:
+
+- **Cột trạng thái ba mức** — `✅ đã vào config` · `⏳ chờ đối tác gửi` · `⚠️ sheet ghi hai giá trị khác nhau, chờ chốt`. Không phải xong/chưa xong, vì phần lớn thời gian nằm ở mức thứ ba
+- **Mục "Còn lại — yêu cầu design/ADV"** — việc đang chờ bên ngoài, không phải việc của dev. Bản `fecredit` có 6 mục ở đây tại thời điểm lên release
+
+Cái `setup.md` **chưa** giải quyết: nó là tệp markdown trong repo, mỗi đối tác một bản chép tay, và không có gì đối chiếu nó với trạng thái thật trong cơ sở dữ liệu. Thất bại đầu tiên khi làm thiếu vẫn là vòng lặp chuyển hướng câm (mục 2.7).
 
 **Ba thứ phải có:**
 
@@ -760,10 +781,11 @@ Không có cổng này thì `lusso/pages/home/components/not-logged-in/index.tsx
 
 | # | Nội dung |
 |---|---|
-| E0-A | PRE-1 — điều hướng mở OAuth. **Gấp nhất** |
-| E0-B | PRE-2, PRE-3 — gỡ giá trị dự phòng cứng; sửa dữ liệu HDBank trên site `lusso` và `parasola` |
-| E0-C | PRE-4 — canonical theo tên miền |
-| E0-D | PRE-5 — gỡ `global._cookies`; thêm `skipLibCheck` cho cả 5 ứng dụng (NFR-011) |
+| E0-A | PRE-2, PRE-3 — gỡ giá trị dự phòng cứng ở `hdbank`, `lusso`, `parasola` (`fecredit` đã sửa, `vpbank` đã gỡ); sửa dữ liệu HDBank trên `lusso` (4 chỗ) và `parasola` (hotline) |
+| E0-B | PRE-4 — `canonical` sinh từ `Host`. **Không đổi giá trị `ORIGIN`** — đổi sẽ phá đăng nhập TikTok cả 5 app |
+| E0-C | PRE-5 — gỡ `global._cookies`; thêm `skipLibCheck` cho cả 5 ứng dụng (NFR-011) |
+
+**PRE-1 không còn trong danh sách này** — quyết định 04/09 giữ nguyên luồng TikTok, xem mục 2.6.
 
 ### 6.2 Xây dựng
 
@@ -836,10 +858,10 @@ identity     { slug, brandName, domain }
 theme        { primary, primaryForeground, fontFamily, fontFiles[], colorsExtra{} }
 assets       { core{logo, logoMobile, logoFooter, favicon, ogImage, decorLeft, decorRight},
                named{} }
-content      { articleIds{support, qa, term, condition},
+content      { articleIds{qa, term, condition},     ← 3, KHÔNG phải 4: xem PC-007
                contact{hotline, email},
                social[{platform, url}],
-               footerBrandLink, documentShareLink, accesstradePartnerId }
+               footerBrandLink }
 seo          { title, description, keywords, ogImage, gtmId }
 modules      { contract, affiliate }
 sections     [{key, type, props}]
@@ -900,6 +922,8 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 5. Đội vận hành tiếp nhận công việc onboard tầng 3
 6. Các đối tác chấp nhận chuẩn hoá một số hành vi riêng trong phạm vi PC-012
 7. Mười thư mục của đối tác đã ngừng không phát sinh yêu cầu bảo trì trong thời gian dự án
+8. **Luồng uỷ quyền TikTok giữ nguyên hiện trạng** theo quyết định 04/09; `partner-app` port nguyên. Đây là quyết định giữ nguyên, không phải kết luận đã kiểm tra và thấy an toàn (PRE-1)
+9. Đăng ký Authorized JavaScript origin bên Google Console là **một bước có trong quy trình onboard hiện tại** — xác nhận 04/09
 
 ---
 
@@ -959,12 +983,20 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 ## 13. Open Questions
 
 1. **`vpbank` không có phân hệ `contract`** — chủ đích (chưa ký hợp đồng điện tử) hay thiếu sót? Quyết định `contract` là cờ phân hệ hay màn lõi. Cần trước M3.
-2. **Liên kết Zalo `zalo.me/1148028551726591727` giống hệt ở 4 đối tác** — Zalo hỗ trợ dùng chung của nền tảng (là hằng số hệ thống) hay Zalo của HDBank bị sao chép (là lỗi thuộc PRE-3)? Cần trước M1.
-3. **`fecredit` thiếu `APP_NAME`** trong `config.prod.ts` — cần xác nhận giá trị đúng trước M4.
-4. **Ngưỡng bán kính ảnh hưởng** — số đối tác tối đa trên một triển khai trước khi cần tách. Cần trước khi lên production.
-5. **Chủ sở hữu quy trình NFR-009** — ai quyết định phân loại một yêu cầu riêng của đối tác. Cần trước M2.
-6. **Vị trí `partner-app/`** — cùng repository `ambassador` hay tách repository riêng. Đề xuất cùng repository, ranh giới thư mục tường minh. Cần devops xác nhận.
-7. **Thứ tự ưu tiên E0-A** — PRE-1 có mức nghiêm trọng cao hơn phạm vi tài liệu này. Cần xác nhận tách thành task độc lập, xử lý ngay.
+2. **Ngưỡng bán kính ảnh hưởng** — số đối tác tối đa trên một triển khai trước khi cần tách. Cần trước khi lên production.
+3. **Chủ sở hữu quy trình NFR-009** — ai quyết định phân loại một yêu cầu riêng của đối tác. Cần trước M2.
+4. **PC-012 nhóm khác biệt hành vi** — 4 tệp (`not-logged-in` Δ914, `header` Δ659, `models/main` Δ288, `interfaces/event` Δ251) cần **đối tác chấp thuận** trước cutover. Chưa xác định đầu mối phía 5 đối tác. Cần trước M1.
+5. **`vpbank` còn import `FacebookSection` sống** trong khi 4 app kia đã comment — sót lại hay đang dùng thật? Cần trước M3.
+
+### Đã đóng
+
+| Câu hỏi | Kết luận | Ngày |
+|---|---|---|
+| Link Zalo giống hệt ở 4 đối tác — hằng số nền tảng hay lỗi sao chép? | **Lỗi sao chép, đã biết.** `fecredit/setup.md`: *"Zalo OA + nhóm Zalo cộng đồng + group Facebook vẫn là link của Parasola — chờ ADV cấp link FE Credit"* | 04/09 |
+| `fecredit` thiếu `APP_NAME` — giá trị đúng là gì? | **Câu hỏi sai.** `APP_NAME` là env chết, gỡ có chủ đích: tên app lấy từ `wrappers/home.tsx` + `document.ejs` | 04/09 |
+| `partner-app/` cùng repository hay tách? | **Cùng repository `ambassador`** | 04/09 |
+| PRE-1 có tách thành task độc lập xử lý ngay? | **Không.** Giữ nguyên luồng TikTok, port sang `partner-app` | 04/09 |
+| Mười thư mục đối tác đã ngừng xử lý thế nào? | **Không thuộc phạm vi, không đụng tới** | 04/09 |
 
 ---
 
@@ -974,4 +1006,5 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 |---|---|---|
 | 1.0 | 2026-09-03 | Bản đầu. Chốt phương án ứng dụng mới trên nền tảng hiện đại, backend giữ nguyên, `creator-os` là tài liệu tham khảo. Phạm vi khi đó: 15 ứng dụng, giữ nguyên không di cư |
 | 1.1 | 2026-09-04 | Đổi phạm vi sang di cư toàn bộ 15 ứng dụng theo 6 đợt. Bổ sung PC-011 → PC-013, NFR-007 → NFR-009. Sửa PC-001 theo mô hình tên miền → tập đối tác |
+| 1.3 | 2026-09-04 | Đính chính theo `fecredit/setup.md` — checklist onboard thật do người thực hiện viết. Gỡ ba env chết khỏi lược đồ (`APP_NAME`, `documentShareLink`, `accesstradePartnerId` — không component nào đọc); article ID từ **4 xuống 3** (`SUPPORT_ARTICLE_ID` code không đọc; Thể lệ và Hướng dẫn lấy từ `eventHome.ruleContent`/`guideContent`, dán vào event trên admin). PC-014 viết lại thành **điện tử hoá `setup.md` sẵn có**. **PRE-1: quyết định giữ nguyên luồng TikTok** (04/09), gỡ khỏi tiền đề chặn E2; PC-011 thu về Google và SSO. PC-006 thêm cảnh báo `ORIGIN` gánh hai vai. Đóng 5 câu hỏi mở |
 | 1.2 | 2026-09-04 | Viết lại mục 4 theo văn phong của [prd-staff-code-frontend](../employee-code/prd-staff-code-frontend-2026-09-03.md): mỗi FR mở bằng **Vì sao cần**, bẫy đã kiểm chứng nâng thành tiêu đề con `#### ⚠️`, bằng chứng `file:line` đặt ngay trong FR thay vì dồn về mục 2. **Thu hẹp phạm vi còn 5 đối tác đang hoạt động** (`hdbank`, `lusso`, `parasola`, `vpbank`, `fecredit`); 10 thư mục còn lại thuộc đối tác đã ngừng, không thuộc phạm vi. Màn hình 33 → 21, đợt di cư 6 → 4, tệp phân kỳ 33 → 22. **Gỡ PC-009** (slot override) — không còn consumer. **Đổi PC-002**: loại bỏ toàn bộ phép tính màu, hover và active dùng độ mờ theo mô hình `packages/ui/src/button.tsx` của `creator-os`; token cấu hình rút còn `primary` + `primaryForeground` do đo được 152/157 biến SCSS là đồng nhất. Bổ sung **PC-014** (chẩn đoán tên miền, danh sách kiểm onboard, trạng thái "đang dựng") suy từ phân tích bảy tầng onboard. Bổ sung **NFR-010** (cổng CI chặn giá trị gán cứng) và **NFR-011** (cổng kiểm tra kiểu). Bổ sung mục 2.4 (quyết định về phép tính màu), 2.6 (năm lỗi production), 2.7 (bảy tầng onboard), 2.8 (trạng thái chất lượng mã nguồn) |
