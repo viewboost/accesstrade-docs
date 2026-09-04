@@ -831,26 +831,59 @@ Cơ chế TikTok **giữ nguyên, không đụng** (PRE-1, quyết định 04/09
 
 ---
 
-### PC-012: Gộp 5 bản về một
+### PC-012: Gộp 5 bản về một — lấy bản đầy đủ nhất
 
 **Priority:** Must Have
 
-22 file có đủ 5 phiên bản. Chia ba nhóm, và **chỉ nhóm ba mới đắt**:
+**Chốt 04/09: gộp về bản đầy đủ nhất.** Không chuẩn hoá xuống mẫu số chung, không hỏi từng ADV.
 
-| Nhóm | File | Ai quyết |
+**Vì sao không cần ADV chấp thuận.** Tôi từng ghi rằng bốn file phân kỳ nặng chứa "khác biệt hành vi không có đáp án kỹ thuật, phải hỏi từng ADV". Đo lại trên 5 ADV thật thì không đúng — chỉ có một ADV đi sau, không có xung đột.
+
+`not-logged-in/index.tsx` (file khác nhau nặng nhất, Δ914):
+
+| Tính năng | hdbank | lusso | parasola | vpbank | fecredit |
+|---|:--:|:--:|:--:|:--:|:--:|
+| `ShareSocialDropdown` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `isMustInputProfile` | ✓ | ✓ | ✓ | **·** | ✓ |
+| `Tooltip` | ✓ | ✓ | ✓ | **·** | ✓ |
+| `useResponsive` | ✓ | ✓ | ✓ | **·** | ✓ |
+| `FAQCollapse` | · | · | · | **✓** | · |
+
+`components/layout/main/header/index.tsx` (Δ659):
+
+| | hdbank | lusso | parasola | vpbank | fecredit |
+|---|:--:|:--:|:--:|:--:|:--:|
+| `isOwnerPartner` · `notificationList` · `menuVisible` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `qaArticleId` | ✓ | ✓ | ✓ | **·** | ✓ |
+
+**`vpbank` chỉ đơn giản đi sau.** Thiếu bốn thứ bốn ADV kia có, và có đúng một thứ họ chưa có.
+
+Gộp về bản đầy đủ nhất nghĩa là:
+
+```
+vpbank ĐƯỢC THÊM   isMustInputProfile · Tooltip · useResponsive · link Q&A ở header
+                   → không ADV nào mất gì
+FAQCollapse        → đã là section `faq` trong catalogue PC-005
+                   → bật bằng cấu hình
+```
+
+**Số cờ mới cần thêm: 0.**
+
+Một chi tiết: `isMustInputProfile` đến từ `eventHome` — dữ liệu backend theo từng chiến dịch. `vpbank` thiếu không phải do chủ đích mà do chưa hiện thực. Thêm vào là kích hoạt đúng khi chiến dịch bật cờ, không đổi hành vi hiện tại của ai.
+
+**Ba nhóm file, xử lý khác nhau:**
+
+| Nhóm | File | Cách làm |
 |---|---|---|
-| Chuyển thành cấu hình | `wrappers/home.tsx`, `configs/app.ts`, `configs/image.ts`, `bootstrap-custom.scss`, footer | Kỹ sư, ghi lý do trong commit |
-| Trôi do copy | `configs/api.ts` (khác **thứ tự khai báo**, nội dung y hệt), `utils/helper.ts`, `app.tsx` | Kỹ sư, chọn bản đầy đủ nhất |
-| **Khác biệt hành vi** | `not-logged-in`, `header`, `models/main.ts`, `interfaces/event.ts` | **Không có đáp án kỹ thuật** |
-
-Nhóm ba: mỗi trường hợp phải có quyết định ghi nhận, nêu rõ **đối tác nào thay đổi hành vi** và hình thức xử lý. Đối tác bị ảnh hưởng phải được thông báo **trước** cutover, không phải sau.
-
-Duy trì bảng theo dõi quyết định, cập nhật **cùng commit** với thay đổi mã nguồn — không cập nhật sau.
+| Chuyển thành cấu hình | `wrappers/home.tsx`, `configs/app.ts`, `configs/image.ts`, `bootstrap-custom.scss`, footer | Trích bằng PC-016 |
+| Trôi do copy | `configs/api.ts` (khác **thứ tự khai báo**, nội dung y hệt), `utils/helper.ts`, `app.tsx` | Chọn bản đầy đủ nhất |
+| Khác nhau về tính năng | `not-logged-in`, `header`, `models/main.ts`, `interfaces/event.ts` | **Lấy hợp của mọi tính năng** |
 
 **AC:**
-- [ ] Toàn bộ 22 file được phân loại và có quyết định ghi nhận
-- [ ] Mọi trường hợp nhóm ba có xác nhận từ đối tác trước cutover
-- [ ] Bảng theo dõi cập nhật cùng commit
+- [ ] Toàn bộ 22 file khác nhau được phân loại và có quyết định ghi trong commit
+- [ ] Bốn tính năng `vpbank` đang thiếu có mặt sau khi gộp
+- [ ] Không ADV nào mất tính năng đang có — đối chiếu bằng ma trận trước/sau
+- [ ] Không thêm cờ phân hệ nào ngoài `contract` và `affiliate`
 
 ---
 
@@ -862,14 +895,16 @@ Duy trì bảng theo dõi quyết định, cập nhật **cùng commit** với t
 - Cấu hình của đối tác đã khởi tạo và xuất bản ở staging
 - Bộ ảnh đối chiếu trước/sau hoàn tất cho từng màn × từng đối tác (NFR-007)
 - PC-012 xong cho phạm vi file đợt chạm tới
-- **Mọi giá trị "trích rồi xác minh" có xác nhận từ đối tác** — liên hệ, mạng xã hội, article ID
+- Cấu hình điền đủ trường bắt buộc và qua được kiểm tra chéo của PC-007
 - Diễn tập khôi phục thành công
 
 **Điều kiện nghiệm thu:** hai tuần vận hành không sự cố P1/P2 liên quan tới migrate.
 
-#### ⚠️ Trích tự động rồi nhập thẳng là sai
+#### Giá trị sai là lỗi nhập liệu, không phải rủi ro thiết kế
 
-Script trích được cấu hình từ ứng dụng cũ, nên ai cũng muốn nhập thẳng. Nhưng `lusso` và `parasola` đang mang dữ liệu của HDBank. Nhập thẳng nghĩa là **hợp thức hoá lỗi**, và lúc đó nó nằm trong cơ sở dữ liệu chứ không nằm trong mã nguồn — khó thấy hơn hôm nay.
+Liên hệ, mạng xã hội, article ID đều là trường cấu hình. Người setup điền đúng thì đúng. `lusso` và `parasola` đang mang dữ liệu của HDBank trong mã nguồn — sang hệ mới thì đó là hai ô cần điền đúng, không phải hạng mục phải xử lý riêng.
+
+Lưới an toàn đã có sẵn ở PC-007: kiểm tra chéo chặn xuất bản nếu cấu hình chứa dữ liệu đã đăng ký cho ADV khác. Không cần thêm điều kiện nào.
 
 **AC:**
 - [ ] Mỗi đợt có biên bản điều kiện vào và nghiệm thu
@@ -972,7 +1007,7 @@ Hai cột phải là task riêng có kế hoạch di dữ liệu. Gộp vào d�
 
 `lusso` đang mang Facebook, TikTok, YouTube, liên kết tải ứng dụng và email của HDBank; `parasola` mang hotline của HDBank (mục 2.6, PRE-3). Script trích được thì ai cũng muốn nhập thẳng — nhưng làm vậy là **hợp thức hoá lỗi**, và lúc đó nó nằm trong cơ sở dữ liệu chứ không nằm trong mã nguồn, khó thấy hơn hôm nay.
 
-Nên đầu ra của công cụ là **bản nháp chờ xác minh**, không phải bản xuất bản. Kiểm tra chéo của PC-007 là chốt chặn cuối; công cụ này phải đánh dấu sẵn những giá trị trùng với ADV khác để người xác minh biết chỗ cần hỏi.
+Nên đầu ra của công cụ là **bản nháp**, không phải bản xuất bản, và phải **đánh dấu những giá trị trùng với ADV khác** để người điền biết chỗ cần sửa. Kiểm tra chéo của PC-007 là chốt chặn cuối.
 
 **AC:**
 - [ ] Chạy trên `hdbank` sinh ra JSON hợp lệ theo lược đồ, nạp được vào bản nháp
@@ -1024,7 +1059,7 @@ Một ADV mới chạy hai chiến dịch phải soạn **7 bài**, không phả
 2 bài × 2 chiến dịch   Thể lệ · Hướng dẫn
 ```
 
-Đây là việc của pháp chế và marketing, không cấu hình nào rút ngắn được — và là đường găng dài nhất của tầng 2 trong bảy tầng onboard (mục 2.7).
+Đội soạn nội dung tạo bài trong admin; frontend chỉ đọc mã bài từ cấu hình và hiển thị.
 
 **AC:**
 - [ ] `EventRaw.Guide` và `EventRaw.Privacy` giữ nguyên; form chiến dịch trong admin không đổi
@@ -1066,10 +1101,14 @@ Sau hợp nhất, một sự cố tác động 5 đối tác thay vì 1. Yêu c�
 - Phân biệt hai lớp khôi phục: **mã nguồn** tác động toàn bộ; **cấu hình** tác động một đối tác. Quyền thực hiện mỗi lớp quy định tường minh
 - Triển khai mã nguồn áp dụng phát hành từng phần
 
-### NFR-009: Quản trị thay đổi theo yêu cầu đối tác
-Sau hợp nhất, yêu cầu riêng của một đối tác tác động toàn hệ thống. Cần quy trình phân loại yêu cầu thành cấu hình hoặc từ chối, kèm người chịu trách nhiệm. Thiếu quy trình này, áp lực vận hành sẽ dẫn tới tách nhánh mã nguồn trở lại.
+### NFR-009: Theme chung — ADV không có quyền chỉnh riêng
+**Chốt 04/09.** Giao diện và hành vi là **một bản dùng chung**. ADV không được yêu cầu thay đổi ngoài các trường cấu hình đã định trong lược đồ.
 
-Chỉ số theo dõi: **số khoá trong `slots`** — bắt đầu ở 0. Khác 0 nghĩa là lược đồ cấu hình chưa đủ.
+Ba đường xử lý một yêu cầu riêng rút còn hai: **biến thành cấu hình** nếu nằm trong lược đồ sẵn có, hoặc **từ chối**. Không có đường fork riêng.
+
+Đây là câu trả lời bằng **chính sách**, mạnh hơn mọi cổng gác kỹ thuật — không ai phải đứng gác vì cổng đóng sẵn. Cần một dòng tương ứng trong hợp đồng vận hành, không chỉ trong tài liệu này.
+
+Chỉ số theo dõi: **số commit chỉ phục vụ một ADV — mục tiêu 0**. Khác 0 nghĩa là chính sách đang bị lách.
 
 ### NFR-010: Cổng gác chống quay lại giá trị gán cứng
 Kiểm tra trong CI: `partner-app/src/**` không được chứa URL bên ngoài, số điện thoại, địa chỉ email, mã màu hex, hoặc slug chiến dịch nằm ngoài module cấu hình. Vi phạm là build đỏ.
@@ -1357,6 +1396,7 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 |---|---|---|
 | 1.0 | 2026-09-03 | Bản đầu. Chốt phương án ứng dụng mới trên nền tảng hiện đại, backend giữ nguyên, `creator-os` là tài liệu tham khảo. Phạm vi khi đó: 15 ứng dụng, giữ nguyên không migrate |
 | 1.1 | 2026-09-04 | Đổi phạm vi sang migrate toàn bộ 15 ứng dụng theo 6 đợt. Bổ sung PC-011 → PC-013, NFR-007 → NFR-009. Sửa PC-001 theo mô hình domain → tập đối tác |
+| 1.7 | 2026-09-04 | Đóng ba câu hỏi về người. **NFR-009 viết lại thành chính sách**: theme chung, ADV không có quyền chỉnh riêng — không cần người đứng cổng. **PC-012 viết lại thành gộp về bản đầy đủ nhất**, kèm ma trận tính năng 5 ADV: `vpbank` chỉ đi sau (thiếu `isMustInputProfile`, `Tooltip`, `useResponsive`, link Q&A), `FAQCollapse` đã là section `faq` — **không ADV nào mất gì, 0 cờ mới, không cần ADV chấp thuận**. **PC-013 bỏ điều kiện xác nhận từ ADV** — giá trị cấu hình sai là lỗi nhập liệu, đã có kiểm tra chéo của PC-007 làm lưới an toàn |
 | 1.6 | 2026-09-04 | Bổ sung **PC-017 — nội dung tĩnh, hai phạm vi**: Thể lệ và Hướng dẫn là per-chiến-dịch (`EventRaw.Guide`/`Privacy`, form admin đã có) và **không kéo lên per-ADV**; chỉ Q&A, Điều khoản, Chính sách là per-ADV. Đây là mục thứ năm của mô hình cấu hình theo brief, trước đó chỉ nằm ở Revision History. Ghi hệ quả lịch: ADV chạy 2 chiến dịch cần soạn **7 bài**, không phải 3. Bổ sung **phân tích và ước lượng trình sửa section** vào PC-008 — antd 4.20 có sẵn `Form.List.move()`, khuôn mẫu `covers` 75 dòng, 4 thư viện kéo thả đã cài chưa dùng; ước ~960 dòng, 6–8 ngày; **xếp sau bước 3**, không nằm trên đường găng |
 | 1.5 | 2026-09-04 | Bổ sung **mục 2.9 — bản đồ chuyển umi → Next**: bảy hệ con phải viết lại, đối chiếu với lời giải của `creator-os`; bốn bài học họ đã trả giá (`rewrites()` nướng env lúc build · proxy phải `force-dynamic` · refresh single-flight · 403 pwreset tách khỏi 401); **chốt giữ `localStorage`** cho auth, nhưng **lấy BFF proxy**. Sửa lại đánh giá chi phí chuyển nền tảng — trước đó đo `getInitialProps` là đo sai đối tượng. Bổ sung **PRE-6** (mỗi trang nạp hai container GTM, ba ADV bắn vào container của ADV khác) và **PRE-7** (hai bản Bootstrap trên cùng trang). Bổ sung mẫu xem trước không open-redirect vào PC-007 và BFF proxy vào mục 7 |
 | 1.4 | 2026-09-04 | Cấu trúc lại mục 6 theo **ba bước của brief dự án**; ADV mẫu bước 3 = **`hdbank`** (branding đơn giản nhất: 5 màu riêng, không gradient). Bổ sung mốc *chạy được với một ADV mẫu nội bộ* làm điều kiện nghiệm thu bước 2. **PC-002**: token từ 2 màu lên **18 màu + 4 bo góc**, mặc định bằng giá trị đang chạy — sửa lỗi rút gọn dựa trên 5 ADV vốn dùng chung một bản thiết kế. **PC-005**: chốt **một landing mặc định bám layout và tính năng của FE hiện tại**, không dựng theme thứ hai; thêm ràng buộc renderer nhận `sections[]` làm dữ liệu, không nhánh theo ADV. Bổ sung **PC-015** (phân quyền — ghi rõ hệ scope 20 mã không chặn ở server ở đâu) và **PC-016** (công cụ trích cấu hình). Bổ sung **chỉ số thành công** vào mục 1, **bốn đường cấu hình xuống component** và **thay đổi hạ tầng chạy** vào mục 7, quy tắc **xem trước đi vòng qua cache** vào PC-007, ánh xạ **ADV ↔ partner** vào mục 0. Xoá mục E0 — các phần việc đó hệ mới không mang theo. Đổi thuật ngữ tự dịch sang từ dev dùng thật |
