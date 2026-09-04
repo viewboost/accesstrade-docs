@@ -265,6 +265,32 @@ Có ở `hdbank`, `lusso`, `parasola`. Đối tác quên khai một biến sẽ 
 **PRE-5 — Trạng thái toàn cục theo request tại tầng SSR.**
 `server.js:25-26` gán `global._cookies` và `global._navigatorLang` trên tiến trình dùng chung. Hiện không nơi nào đọc, nên chưa gây hậu quả. Cần loại bỏ trước khi hợp nhất.
 
+**PRE-6 — Mỗi trang nạp HAI container GTM, và ba ADV bắn dữ liệu vào container của ADV khác.**
+
+`pages/document.ejs` là template HTML per-ADV, chứa một mã GTM gán cứng. `config.prod.ts` lại chèn một mã GTM nữa qua `headScripts`. Cả hai cùng chạy:
+
+| ADV | GTM trong `document.ejs` | GTM trong `config.prod.ts` |
+|---|---|---|
+| `hdbank` | `GTM-MP23BMKX` | `GTM-PBXTJ86T` |
+| `lusso` | `GTM-MP23BMKX` — **của HDBank** | `GTM-N7C2MVPM` |
+| `parasola` | `GTM-TN9CMZ6X` | `GTM-TN9CMZ6X` |
+| `vpbank` | *(trống)* | `GTM-PBXTJ86T` — **của HDBank** |
+| `fecredit` | `GTM-TN9CMZ6X` — **của Parasola** | `GTM-NLRX5THC` |
+
+GTM hỏng thì im lặng, nên không ai phát hiện. `partner-app` sinh thẻ head từ config nên lỗi này biến mất theo thiết kế — nhưng dữ liệu đã bắn sai suốt thời gian qua, và người làm báo cáo cần biết.
+
+`document.ejs` còn chứa các giá trị per-ADV khác chưa từng được đếm: thẻ `og:title`/`og:description`/`keywords` (**trùng với `wrappers/home.tsx`** — hai nguồn cùng đặt meta), và `campaign_id: 3481` của ACCESSTRADE **giống hệt ở cả 5 ADV** — cần xác nhận đây là mã dùng chung của nền tảng hay là giá trị bị copy.
+
+**PRE-7 — Hai bản Bootstrap trên cùng một trang.**
+
+```
+build SCSS   bootstrap 5.2.3   ← chứa $primary của ADV
+CDN CSS      bootstrap 5.3.2   ← màu mặc định của Bootstrap
+CDN JS       bootstrap 5.2.3
+```
+
+`document.ejs` nạp CSS 5.3.2 từ cdnjs trong khi bản build biên dịch SCSS từ 5.2.3. Cái nào thắng phụ thuộc thứ tự chèn — cần kiểm trên trang thật. `partner-app` chỉ có một nguồn CSS nên hết.
+
 ### 2.7 Bảy tầng của một lần onboard — bối cảnh cho phạm vi thực tế
 
 Trace luồng khởi động thật của ứng dụng cho thấy onboard một đối tác không phải một biểu mẫu, mà là chuỗi việc qua 8 màn admin và 5 hệ thống bên ngoài:
@@ -306,7 +332,66 @@ getDetailPartner lỗi → navigator.replacePath('/')          models/main.ts:23
 
 Backend: **149 phát hiện `go vet`** (phần lớn là `bson.E` không đặt tên trường và khoảng trắng trong struct tag), **9 gói test PASS, 0 FAIL**.
 
-### 2.9 Ngoài phạm vi bổ sung
+### 2.9 Bản đồ chuyển umi → Next
+
+Đây **không phải chuyển từng phần**. Bảy hệ con phải viết lại, và mỗi cái đều có lời giải sẵn ở `creator-os` — một app Next đang chạy production.
+
+| Hệ con | umi (Ambassador hôm nay) | Next (`creator-os` đã làm) |
+|---|---|---|
+| Route + guard | `wrappers: ['@/wrappers/home', '@/wrappers/auth']` khai theo từng route | **Route group** `(app)` `(public)` `(auth)`, mỗi group một `layout.tsx`; guard thật ở `middleware.ts` |
+| Cây route lồng | `routes: [...]` — 27 route, layout ở 2 tầng (`layouts/home`, `layouts/event-detail`) | Thư mục lồng, `layout.tsx` mỗi tầng. Bên họ: 25 page, 4 layout |
+| Redirect | `redirect:` khai trong cây route, `path: '**'` catch-all | `redirect()` trong page, hoặc `redirects()` ở config, `not-found.tsx` |
+| Request | `export const request: RequestConfig` — plugin riêng của umi | `HttpClient` tự viết trong `packages/api-client` |
+| State | dva + redux-saga: `models/main.ts` 411 LOC, 27 effect, 41 file tiêu thụ | React Query + provider. **Không map cơ học được** |
+| HTML template | `pages/document.ejs` | `app/layout.tsx` + `metadata` + `<Script>` |
+| Gọi API | Browser gọi thẳng backend | **BFF proxy** `app/api/[...path]/route.ts` |
+
+**Một chỗ nối phải gỡ trước:** response interceptor gọi thẳng vào store —
+
+```js
+// app.tsx — tầng HTTP biết về tầng state
+const dispatch = getDvaApp()._store.dispatch;
+dispatch({ type: 'mainState/updateState', payload: { isLoggedIn: false } });
+```
+
+Đổi cả hai tầng cùng lúc mà chỗ nối này còn thì gỡ rất khó.
+
+#### Bốn bài học `creator-os` đã trả giá — Ambassador sẽ vấp y hệt
+
+**1. KHÔNG dùng `rewrites()` để trỏ backend.** Nguyên văn: *"`rewrites()` nội suy `process.env.API_ORIGIN` lúc `next build` và **nướng cứng destination vào `.next/routes-manifest.json`**. Đặt env lúc `docker run` KHÔNG có tác dụng ⇒ mỗi môi trường phải build một image riêng."*
+
+Triệu chứng đánh lừa: *"login chạy được (BFF handler tường minh đọc env runtime) nhưng mọi màn hình sau đó 500 `ECONNREFUSED`."*
+
+Đây đúng cùng họ với `NEXT_PUBLIC_*` — giá trị bị nướng vào lúc build. Ambassador một image chạy mọi domain thì tuyệt đối không được dính. **Dùng BFF proxy route handler, đọc env mỗi request.**
+
+**2. Proxy phải `force-dynamic`.** *"Proxy mà bị cache thì user A đọc được dữ liệu user B — đây là ranh giới tenant, không phải chỗ để tiết kiệm."*
+
+**3. Refresh token phải single-flight.** *"khi NHIỀU request cùng 401, CHỈ 1 refresh chạy… Refresh token là one-time-use (rotate + revoke ở BE) → gọi 2 lần song song = 1 cái 200, 1 cái 401."*
+
+**4. `403 password_reset_required` là nhánh RIÊNG, không gộp vào 401.** *"401 → refresh mint lại pwreset → 401 → loop."*
+
+#### Quyết định auth — giữ `localStorage`
+
+`wrappers/auth.tsx` hiện:
+
+```tsx
+if (!isBrowser()) return <></>;                       // SSR trả RỖNG
+if (!storage.getTokenStorage()) return <Redirect to="/" />;
+```
+
+Token ở `localStorage`, SSR không đọc được, nên **9/27 route thực chất chỉ render ở client** — đã vậy từ trước.
+
+| | Giữ `localStorage` | Theo `creator-os`: cookie + BFF |
+|---|---|---|
+| Route cần đăng nhập | Client Component — **không thua hiện tại** | Server Component + middleware chặn |
+| Phải làm thêm | không | BFF proxy · endpoint refresh · rotate token ở BE · đổi cả 5 app · đụng luồng bounce TikTok |
+| SSR phục vụ | trang công khai — landing, chi tiết event, bài viết | mọi trang |
+
+**Chốt: giữ `localStorage`.** SSR vẫn phục vụ đúng chỗ cần SEO, và cookie kéo theo backend cùng luồng TikTok mà mục 2.6 đã chốt giữ nguyên.
+
+**Nhưng vẫn lấy BFF proxy**, dù chọn đường nào — vì nó là chỗ đọc `API_ENDPOINT` lúc chạy. Không có nó thì URL backend bị nướng vào bundle, và một image không chạy được nhiều môi trường.
+
+### 2.10 Ngoài phạm vi bổ sung
 
 - Không trình dựng trang tự do; section là danh mục đóng có schema
 - Không cho nhập CSS hoặc JavaScript thô
@@ -597,6 +682,14 @@ Khi migrate, cấu hình được **trích tự động từ chính các ứng d
 **Trường bắt buộc không có giá trị mặc định và không kế thừa.** Nguyên nhân gốc của cả hai lỗi trên là các giá trị này được **thừa hưởng** chứ không được **hỏi**.
 
 **Khoá cache khớp tuyệt đối** giữa frontend và backend. Lệch một ký tự thì purge không trúng gì cả — xuất bản xong trang vẫn cũ và **không ai thấy lỗi**. Bắt buộc có test đối chiếu hai phía.
+
+#### Mẫu xem trước — lấy từ `creator-os`, đã tránh sẵn open redirect
+
+`app/api/draft/route.ts` của họ ghi rõ cái bẫy: *"Mẫu preview của nhiều CMS nhận `?slug=` rồi redirect thẳng tới đó — thành cần câu open-redirect (`?slug=//evil.com`)."*
+
+Hai luật áp thẳng:
+- **Không nhận đích đến từ URL.** Landing chỉ có một trang nên đích luôn là `/`, hằng số trong mã. Không có tham số đích thì không có gì để bẻ
+- **Không tự kiểm chữ ký token.** Frontend đổi token lấy dữ liệu ở API; API trả cờ `preview: true` mới là token thật, đúng ADV, còn hạn. Sai → 401, **không** bật chế độ xem trước
 
 #### ⚠️ Xem trước phải đi VÒNG QUA cache
 
@@ -1001,6 +1094,14 @@ Không có một "config object" duy nhất. Bốn thứ này có ràng buộc k
 
 Backend đã kiểm lúc ghi. Frontend kiểm lại lúc đọc, vì dữ liệu có thể đã nằm trong DB từ trước khi có luật, hoặc ai đó sửa tay. Hỏng thì rơi về mặc định — **không trắng trang**.
 
+### BFF proxy — bắt buộc
+
+Browser **không** gọi thẳng backend. Mọi request đi qua `app/api/[...path]/route.ts` của `partner-app`.
+
+Lý do không phải kiến trúc cho đẹp, mà là một cái bẫy `creator-os` đã vấp: dùng `rewrites()` trong `next.config` thì `process.env.API_ORIGIN` bị nội suy **lúc build** và nướng cứng vào `.next/routes-manifest.json` — đặt env lúc `docker run` không có tác dụng, mỗi môi trường phải build một image riêng. Route handler đọc env **mỗi request** nên một image chạy được mọi môi trường.
+
+Bắt buộc `export const dynamic = 'force-dynamic'` — proxy bị cache thì người dùng này đọc được dữ liệu của người dùng khác.
+
 ### Thay đổi hạ tầng chạy
 
 Mỗi ứng dụng hiện chạy `server.js` (Koa) để SSR, `Dockerfile` build `node:14.17.3` rồi `node server.js`. `partner-app` là Next.js — **Koa và `server.js` biến mất**, cách build và chạy container đổi hoàn toàn. Đây là phần việc devops phải biết trước khi tới E2.
@@ -1172,6 +1273,7 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 |---|---|---|
 | 1.0 | 2026-09-03 | Bản đầu. Chốt phương án ứng dụng mới trên nền tảng hiện đại, backend giữ nguyên, `creator-os` là tài liệu tham khảo. Phạm vi khi đó: 15 ứng dụng, giữ nguyên không migrate |
 | 1.1 | 2026-09-04 | Đổi phạm vi sang migrate toàn bộ 15 ứng dụng theo 6 đợt. Bổ sung PC-011 → PC-013, NFR-007 → NFR-009. Sửa PC-001 theo mô hình domain → tập đối tác |
+| 1.5 | 2026-09-04 | Bổ sung **mục 2.9 — bản đồ chuyển umi → Next**: bảy hệ con phải viết lại, đối chiếu với lời giải của `creator-os`; bốn bài học họ đã trả giá (`rewrites()` nướng env lúc build · proxy phải `force-dynamic` · refresh single-flight · 403 pwreset tách khỏi 401); **chốt giữ `localStorage`** cho auth, nhưng **lấy BFF proxy**. Sửa lại đánh giá chi phí chuyển nền tảng — trước đó đo `getInitialProps` là đo sai đối tượng. Bổ sung **PRE-6** (mỗi trang nạp hai container GTM, ba ADV bắn vào container của ADV khác) và **PRE-7** (hai bản Bootstrap trên cùng trang). Bổ sung mẫu xem trước không open-redirect vào PC-007 và BFF proxy vào mục 7 |
 | 1.4 | 2026-09-04 | Cấu trúc lại mục 6 theo **ba bước của brief dự án**; ADV mẫu bước 3 = **`hdbank`** (branding đơn giản nhất: 5 màu riêng, không gradient). Bổ sung mốc *chạy được với một ADV mẫu nội bộ* làm điều kiện nghiệm thu bước 2. **PC-002**: token từ 2 màu lên **18 màu + 4 bo góc**, mặc định bằng giá trị đang chạy — sửa lỗi rút gọn dựa trên 5 ADV vốn dùng chung một bản thiết kế. **PC-005**: chốt **một landing mặc định bám layout và tính năng của FE hiện tại**, không dựng theme thứ hai; thêm ràng buộc renderer nhận `sections[]` làm dữ liệu, không nhánh theo ADV. Bổ sung **PC-015** (phân quyền — ghi rõ hệ scope 20 mã không chặn ở server ở đâu) và **PC-016** (công cụ trích cấu hình). Bổ sung **chỉ số thành công** vào mục 1, **bốn đường cấu hình xuống component** và **thay đổi hạ tầng chạy** vào mục 7, quy tắc **xem trước đi vòng qua cache** vào PC-007, ánh xạ **ADV ↔ partner** vào mục 0. Xoá mục E0 — các phần việc đó hệ mới không mang theo. Đổi thuật ngữ tự dịch sang từ dev dùng thật |
 | 1.3 | 2026-09-04 | Đính chính theo `fecredit/setup.md` — checklist onboard thật do người thực hiện viết. Gỡ ba env chết khỏi lược đồ (`APP_NAME`, `documentShareLink`, `accesstradePartnerId` — không component nào đọc); article ID từ **4 xuống 3** (`SUPPORT_ARTICLE_ID` code không đọc; Thể lệ và Hướng dẫn lấy từ `eventHome.ruleContent`/`guideContent`, dán vào event trên admin). PC-014 viết lại thành **điện tử hoá `setup.md` sẵn có**. **PRE-1: quyết định giữ nguyên luồng TikTok** (04/09), gỡ khỏi tiền đề chặn E2; PC-011 thu về Google và SSO. PC-006 thêm cảnh báo `ORIGIN` gánh hai vai. Đóng 5 câu hỏi mở |
 | 1.2 | 2026-09-04 | Viết lại mục 4 theo văn phong của [prd-staff-code-frontend](../employee-code/prd-staff-code-frontend-2026-09-03.md): mỗi FR mở bằng **Vì sao cần**, bẫy đã kiểm chứng nâng thành tiêu đề con `#### ⚠️`, bằng chứng `file:line` đặt ngay trong FR thay vì dồn về mục 2. **Thu hẹp phạm vi còn 5 đối tác đang hoạt động** (`hdbank`, `lusso`, `parasola`, `vpbank`, `fecredit`); 10 thư mục còn lại thuộc đối tác đã ngừng, không thuộc phạm vi. Màn hình 33 → 21, đợt migrate 6 → 4, file khác nhau 33 → 22. **Gỡ PC-009** (slot override) — không còn consumer. **Đổi PC-002**: loại bỏ toàn bộ phép tính màu, hover và active dùng độ mờ theo mô hình `packages/ui/src/button.tsx` của `creator-os`; token cấu hình rút còn `primary` + `primaryForeground` do đo được 152/157 biến SCSS là đồng nhất. Bổ sung **PC-014** (chẩn đoán domain, danh sách kiểm onboard, trạng thái "đang dựng") suy từ phân tích bảy tầng onboard. Bổ sung **NFR-010** (cổng CI chặn giá trị gán cứng) và **NFR-011** (cổng kiểm tra kiểu). Bổ sung mục 2.4 (quyết định về phép tính màu), 2.6 (năm lỗi production), 2.7 (bảy tầng onboard), 2.8 (trạng thái chất lượng mã nguồn) |
