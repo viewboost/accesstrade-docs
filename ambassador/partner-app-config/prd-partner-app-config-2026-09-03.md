@@ -29,7 +29,7 @@ Năm đối tác này tình cờ là cụm đồng nhất nhất trong repositor
 
 **`creator-os` là tài liệu tham khảo thiết kế, không phải nguồn mã.** Kế thừa mô hình và bài học vận hành (mục 2.3), không nhập mã nguồn, không tạo phụ thuộc chéo repository.
 
-**Một triển khai duy nhất, phân giải người thuê theo `Host`.** Năm tên miền hiện hành đều kết thúc trên hạ tầng nội bộ (`SSH_HOST_{env}` — một máy chủ mỗi môi trường; `Dockerfile.release` và `nginx/` đồng nhất).
+**Một triển khai duy nhất, resolve partner theo domain theo `Host`.** Năm tên miền hiện hành đều kết thúc trên hạ tầng nội bộ (`SSH_HOST_{env}` — một máy chủ mỗi môi trường; `Dockerfile.release` và `nginx/` đồng nhất).
 
 **Không có phép tính màu trong đường chạy.** Kế thừa trực tiếp từ `creator-os`: trạng thái hover và active dùng **độ mờ của cùng một token**, không dùng màu dẫn xuất. Chi tiết mục 2.4.
 
@@ -49,10 +49,11 @@ Năm đối tác này tình cờ là cụm đồng nhất nhất trong repositor
 
 | Thuật ngữ | Định nghĩa |
 |---|---|
+| **ADV** | Cách gọi trong tài liệu dự án. Trong mã nguồn là **`partner`** (`PartnerRaw`, `allowDomains`, `COMMON_PARTNER`) — cùng một thứ. Tài liệu này dùng `partner` khi nói về mã, `ADV` khi nói về phạm vi dự án |
 | **Đối tác đang hoạt động** | `hdbank`, `lusso`, `parasola`, `vpbank`, `fecredit`. Phạm vi duy nhất của tài liệu này |
 | **`partner-app/`** | Ứng dụng hợp nhất được đặc tả tại đây. Một codebase, một triển khai |
 | **Cấu hình ứng dụng** (`PartnerAppConfig`) | Bản ghi chứa toàn bộ khác biệt giữa các đối tác |
-| **Design token** | Giá trị cấu hình giao diện, ánh xạ thành CSS custom property khi kết xuất phía máy chủ |
+| **Design token** | Giá trị cấu hình giao diện, ánh xạ thành CSS custom property khi SSR |
 | **Section** | Khối nội dung trên trang chủ. Trang chủ là mảng có thứ tự các section |
 | **Section catalogue** | Danh mục loại section hợp lệ. Định nghĩa nằm trong mã nguồn, không nằm trong cơ sở dữ liệu |
 | **Đợt di cư** | Nhóm đối tác chuyển sang `partner-app/` cùng lúc. Bốn đợt (mục 6) |
@@ -90,6 +91,18 @@ Băm nội dung đường dẫn `.ts`/`.tsx`/`.scss` trên **5 đối tác đang
 **18/21 màn hình có ở cả 5 đối tác.** Chỉ 3 màn lệch: `contract` (4/5, `vpbank` không có), `affiliate-campaign-detail` và `affiliate-commission` (chỉ `fecredit`).
 
 Và trong 157 biến SCSS của hệ thiết kế, **152 giống hệt nhau ở cả 5 đối tác**. Khác biệt giao diện thực chất gói trong **một biến `$primary`**, cộng ba biến gradient riêng của `fecredit`.
+
+### Chỉ số thành công
+
+Ba số đã đo được hôm nay, dùng làm mốc so sánh:
+
+| Chỉ số | Hôm nay | Mục tiêu |
+|---|---|---|
+| Thời gian onboard tầng cấu hình | một đợt việc của dev + một lần triển khai | **dưới 1 giờ**, đội vận hành tự làm |
+| Commit chạm nhiều ứng dụng cùng lúc | **37 commit / 6 tháng** (11 commit chạm 12–14 thư mục) | **0** sau khi di cư xong |
+| Commit chỉ phục vụ một ADV | **158 commit / 6 tháng** | **0** — đây là phiên bản đo được của "quay lại fork" |
+
+Số thứ ba là chỉ số quan trọng nhất và cũng dễ bị bỏ qua nhất: nó không đo dự án làm xong hay chưa, mà đo dự án **có giữ được kết quả hay không**.
 
 ---
 
@@ -215,7 +228,7 @@ Phát hiện trong quá trình khảo sát. Không do việc hợp nhất tạo 
 
 **Quyết định 04/09: `partner-app` port nguyên luồng hiện tại, không thay đổi.** Ghi nhận đây là **quyết định giữ nguyên hiện trạng**, không phải kết luận đã kiểm tra và thấy an toàn — hai câu đó khác nhau và tài liệu này không có căn cứ cho câu thứ hai.
 
-**PRE-2 — Giá trị dự phòng cứng trỏ tới bài viết pháp lý của đối tác khác.**
+**PRE-2 — Giá trị fallback cứng trỏ tới bài viết pháp lý của đối tác khác.**
 ```js
 termId      = process.env.TERM_ID       || '68254accdc42a0356265318c'   // bài viết của HDBank
 conditionId = process.env.CONDITION_ID  || '68254a8ddc42a0356265318a'   // bài viết của HDBank
@@ -284,7 +297,7 @@ Backend: **149 phát hiện `go vet`** (phần lớn là `bson.E` không đặt 
 
 - Không trình dựng trang tự do; section là danh mục đóng có schema
 - Không cho nhập CSS hoặc JavaScript thô
-- Không đa ngôn ngữ (`src/locales` đã đồng nhất 167 dòng ở cả 5 — không cần hoà giải)
+- Không đa ngôn ngữ (`src/locales` đã đồng nhất 167 dòng ở cả 5 — không cần gộp bản)
 - Không thay đổi mô hình `PartnerRaw`; chỉ bổ sung collection mới
 - **Không có cơ chế slot override.** Năm đối tác hiện tại không có màn hình hình dạng riêng; `affiliate` của `fecredit` là phân hệ bật/tắt. Xây registry cho zero consumer là vi phạm YAGNI. Trường `slots` giữ chỗ trong lược đồ, chưa hiện thực
 
@@ -348,23 +361,31 @@ Người onboard không biết mình sai ở đâu. `partner-app/` **cấm chuy�
 
 **Priority:** Must Have
 
-**Vì sao chỉ hai màu.** Đo 157 biến SCSS của hệ thiết kế trên 5 đối tác: **152 biến giống hệt nhau**. Năm biến khác gồm `$modal-inner-padding` (chỉ khác khoảng trắng) và ba biến gradient riêng của `fecredit`. Khác biệt giao diện thật gói trong **một biến `$primary`**.
+**Vì sao đưa cả bảng màu vào cấu hình, không chỉ một màu.** Đo 157 biến SCSS trên 5 ADV: 152 biến giống hệt nhau, khác biệt thật gói trong `$primary`. Nhưng con số đó chỉ chứng minh **5 ADV hiện tại dùng chung một bản thiết kế** — không chứng minh ADV thứ sáu sẽ vậy. ADV muốn nền kem thay vì trắng, hoặc chữ ấm thay vì xám lạnh, thì `$primary` không nói được gì.
+
+Nên lược đồ mở đủ, **mặc định đúng hiện trạng**: 18 màu và 4 giá trị bo góc, giá trị mặc định bằng đúng giá trị đang chạy. Không tốn thêm gì lúc làm — backend lưu map, frontend đổ ra CSS variable — mà không phải sửa lược đồ khi có ADV cần khác.
 
 **Token cấu hình được:**
 
 ```
-primary             mã hex
-primaryForeground   mã hex — màu chữ trên nền primary
-fontFamily          tên họ phông
-fontFiles[]         { family, weight, style, url }
-colorsExtra{}       map mở — hiện chỉ fecredit dùng
+colors{}      18 khoá, lấy từ khối //Color của bootstrap-custom.scss
+              primary · secondary · success · warning · danger · muted · light · lighter
+              dark · green · red · sky · quaternary · tertiary · border-secondary
+              button-border-secondary · violet · blue
+
+radius{}      4 khoá     base 8px · sm 4px · lg 24px · modal 12px
+
+fontFamily    tên họ phông
+fontFiles[]   { family, weight, style, url }
 ```
 
-**152 biến còn lại giữ compile-time** trong `partner-app`. Đưa lên admin chỉ tạo 152 ô để gõ sai mà chưa ai từng cần đổi.
+`fecredit` có 3 token gradient riêng — thêm thẳng vào `colors{}` như ba khoá nữa, không cần ngăn riêng.
+
+**Admin hiện `primary` ở trên cùng, 21 khoá còn lại gấp trong mục Nâng cao.** Đủ trường trong lược đồ không có nghĩa là đổ hết 22 ô lên màn hình.
 
 #### ⚠️ KHÔNG có phép tính màu ở bất kỳ đâu
 
-Bootstrap 5.2.3 tính hover và active **lúc biên dịch** bằng hàm SCSS, không thể chạy trong trình duyệt:
+Bootstrap 5.2.3 tính hover và active **lúc biên dịch** bằng hàm SCSS, không chạy được trong trình duyệt:
 
 ```scss
 // mixins/_buttons.scss:22-25 — phát ra HẰNG SỐ hex
@@ -372,7 +393,7 @@ Bootstrap 5.2.3 tính hover và active **lúc biên dịch** bằng hàm SCSS, k
 --#{$prefix}btn-color:    #{$color};             // = color-contrast($bg)
 ```
 
-Đo được 90 lượt dùng `btn-primary` và `btn-outline-primary` trên 5 đối tác — nếu giữ Bootstrap thì phải viết lại ba hàm này bằng Go hoặc TypeScript, và bản viết lại sẽ lệch so với bản đang chạy.
+Đo được 90 lượt dùng `btn-primary` và `btn-outline-primary` trên 5 ADV. Nếu giữ cách này thì phải viết lại ba hàm SCSS bằng Go hoặc TypeScript, và bản viết lại sẽ lệch so với bản đang chạy.
 
 **Không làm vậy.** Kế thừa `packages/ui/src/button.tsx` của `creator-os`:
 
@@ -380,21 +401,18 @@ Bootstrap 5.2.3 tính hover và active **lúc biên dịch** bằng hàm SCSS, k
 primary: 'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80'
 ```
 
-Hover và active **không phải màu mới** — là chính token đó ở độ mờ giảm, trình duyệt hợp thành lúc chạy. Chỉ `primaryForeground` khai tường minh, vì độ mờ không giải được bài toán tương phản chữ.
+Hover và active **không phải màu mới** — là chính token đó ở độ mờ giảm, trình duyệt hợp thành lúc chạy. 18 màu trong cấu hình đều là **giá trị nhập vào**, không có màu nào được tính ra.
 
-Hệ quả: không có `shade-color`, `tint-color`, `color-contrast` ở đâu cả. Không có phép toán nào để nhân đôi giữa backend và frontend, nên **không cần thư viện dùng chung** cho việc này.
-
-**Không nhấp nháy.** CSS variable ghi vào thuộc tính `style` của `<html>` khi kết xuất phía máy chủ.
+**Không nhấp nháy.** CSS variable ghi vào thuộc tính `style` của `<html>` khi SSR.
 
 **AC:**
 - [ ] Đổi `primary`, xuất bản, tải lại: giao diện đổi, không build lại
+- [ ] Đổi `radius.base` từ 8 sang 0: nút và thẻ ra góc vuông, không cần sửa mã
 - [ ] `grep -rE "#[0-9a-fA-F]{6}" partner-app/src` (trừ tệp token) trả về **0**
 - [ ] `grep -rE "shade-color|tint-color|color-contrast"` trên toàn repo trả về **0**
 - [ ] Tải trang throttle 3G không thấy nhấp nháy màu mặc định
 - [ ] Nút hover có màu là `primary` ở độ mờ giảm — xác nhận bằng DevTools
-
----
-
+- [ ] 5 ADV sau di cư render **giống hệt** bản cũ khi dùng giá trị mặc định — đối chiếu bằng ảnh
 ### PC-003: Tài nguyên theo đối tác, gồm phông chữ
 
 **Priority:** Must Have
@@ -453,9 +471,11 @@ Tắt cờ phải **ẩn khỏi điều hướng VÀ chặn tại tuyến**, kh�
 
 **Priority:** Must Have
 
-**Vì sao là mảng chứ không phải template.** `creator-os` đã trả giá cho bài này: *"template cố định ⇒ section không có dữ liệu VẪN phải render ⇒ đẻ ra dữ liệu GIẢ để lấp chỗ trống"*. Bằng chứng bên họ là hằng `MOCK_QUOTES` — lời chứng thực bịa gán vào tên và ảnh đại diện của người dùng **có thật**. Ở mô hình mảng, đối tác không thêm block thì block đó không tồn tại; hết ô trống để bịa.
+**Một landing mặc định, bám layout và tính năng của FE hiện tại** — chốt 04/09. Không dựng theme thứ hai, không chờ thiết kế mới. Bố cục và thành phần lấy từ `pages/partner-home` đang chạy, vì cả 5 ADV đã dùng chung đúng bộ component đó (`Ratio`, `AppCarousel`, `Statistics`, `AppItemsCarousel`, `EventActive`, `ContentHighlight`).
 
-**Danh mục** — suy từ tập component mà cả 5 đối tác dùng chung ở `pages/partner-home`:
+**Vì sao là mảng section chứ không phải bố cục cứng.** `creator-os` đã trả giá cho bài này: *"template cố định ⇒ section không có dữ liệu VẪN phải render ⇒ đẻ ra dữ liệu GIẢ để lấp chỗ trống"*. Bằng chứng bên họ là hằng `MOCK_QUOTES` — lời chứng thực bịa gán vào tên và ảnh đại diện của người dùng **có thật**. Ở mô hình mảng, ADV không thêm block thì block đó không tồn tại; hết ô trống để bịa.
+
+**Danh mục:**
 
 | Loại | Phân loại | Bắt buộc | Lặp | Lên nav |
 |---|---|:--:|:--:|:--:|
@@ -469,7 +489,13 @@ Tắt cờ phải **ẩn khỏi điều hướng VÀ chặn tại tuyến**, kh�
 | `faq` | biên tập | | | ● |
 | `steps` | biên tập | | | |
 
-**Section `dữ liệu` chỉ lưu tham số truy vấn.** `events` lưu `limit`, **không** lưu danh sách chiến dịch. Sao chép dữ liệu vào cấu hình là tự tạo bản cũ không ai cập nhật.
+`hero` lấy ảnh từ `PartnerRaw.Covers` — đã có sẵn, upload trong admin.
+
+**Section `dữ liệu` chỉ lưu tham số truy vấn.** `events` lưu `limit`, **không** lưu danh sách chiến dịch. Sao chép dữ liệu vào cấu hình là tự tạo một bản cũ không ai cập nhật.
+
+**Mọi section biên tập bắt `items.min(1)`.** Kế thừa trực tiếp từ `creator-os`: *"đây là thứ GIẾT `MOCK_QUOTES`"*. Không có nội dung thật thì không thêm block, chứ không render khối trống rồi chờ ai đó nhét dữ liệu giả vào.
+
+**Mọi schema `.strict()`** — trường lạ bị từ chối, không âm thầm bỏ qua.
 
 **Điều hướng sinh từ `sections[]`.** Không có bảng nav riêng, nên xoá section là mục nav tự mất — không bao giờ có anchor chết.
 
@@ -477,17 +503,24 @@ Tắt cờ phải **ẩn khỏi điều hướng VÀ chặn tại tuyến**, kh�
 
 #### ⚠️ Danh mục nằm trong mã nguồn, KHÔNG nằm trong DB
 
-Để trong DB là **hai nguồn sự thật**, và mất hàng rào whitelist — đối tác tự chế được loại block mới. MongoDB chỉ lưu mảng `sections`; luật kiểm nằm ở tầng ứng dụng và **cưỡng chế ở server**, không chỉ ẩn nút xoá trên giao diện.
+Để trong DB là **hai nguồn sự thật**, và mất hàng rào whitelist — ADV tự chế được loại block mới. MongoDB chỉ lưu mảng `sections`; luật kiểm nằm ở tầng ứng dụng và **cưỡng chế ở server**, không chỉ ẩn nút xoá trên giao diện.
+
+#### ⚠️ Renderer nhận `sections[]` làm dữ liệu, KHÔNG hỏi ADV nào
+
+Dựng đúng **một** renderer. Nhưng nó phải là `switch` trên `section.type`, tuyệt đối không có nhánh theo ADV. Nhờ vậy nếu về sau có ADV cần ngôn ngữ thị giác khác, thêm renderer thứ hai là **thêm một tệp**, không phải refactor — đúng cách `creator-os` làm với `aurora.tsx` và `brutalist.tsx`.
+
+Đây là ràng buộc cấu trúc, không phải hạng mục công việc: không dựng renderer thứ hai trong phạm vi này.
 
 **AC:**
 - [ ] Kéo đổi thứ tự, xuất bản: trang chủ đổi thứ tự
 - [ ] Tắt `leaderboard`: khối **và** mục nav cùng biến mất
 - [ ] Gọi thẳng API xoá section `hero`: máy chủ từ chối
 - [ ] Gửi `type` ngoài danh mục: máy chủ từ chối, không ghi vào DB
-- [ ] Sắp lại thứ tự rồi sửa một section: sửa đúng section đó
-
----
-
+- [ ] Thêm section `faq` với `items` rỗng: máy chủ từ chối
+- [ ] Gửi trường lạ trong một section: máy chủ từ chối
+- [ ] Sắp lại thứ tự rồi sửa một section: thao tác áp dụng đúng section
+- [ ] `grep -rE "partner ===|adv ===" partner-app/src/components/landing` trả về **0**
+- [ ] 5 ADV sau di cư có trang chủ **giống bản cũ** — đối chiếu bằng ảnh
 ### PC-006: SEO, OpenGraph, GTM, `robots.txt`, `sitemap.xml`
 
 **Priority:** Must Have
@@ -544,13 +577,19 @@ Người vận hành phải lưu được bản dở dang. Nhưng xuất bản t
 | **Trường bắt buộc** | thiếu bất kỳ trong 7: `website`, `footerBrandLink`, `contact.hotline`, `contact.email`, 3 article ID |
 | **Dữ liệu đối tác khác** | cấu hình chứa tên miền, hotline, email hoặc article ID đã đăng ký cho đối tác khác |
 
-Hai cửa cuối là hàng rào cho lỗi **đang chạy trên production**: `lusso` dùng Facebook, TikTok, YouTube, link tải app và email của HDBank; `parasola` dùng hotline của HDBank; ba ứng dụng có giá trị dự phòng cứng trỏ tới bài viết pháp lý của HDBank (mục 2.6).
+Hai cửa cuối là hàng rào cho lỗi **đang chạy trên production**: `lusso` dùng Facebook, TikTok, YouTube, link tải app và email của HDBank; `parasola` dùng hotline của HDBank; ba ứng dụng có giá trị fallback cứng trỏ tới bài viết pháp lý của HDBank (mục 2.6).
 
 Khi di cư, cấu hình được **trích tự động từ chính các ứng dụng đó**. Không chặn ở bước xuất bản thì các giá trị sai theo sang hệ mới và trở thành dữ liệu chính thức — khó phát hiện hơn bây giờ.
 
 **Trường bắt buộc không có giá trị mặc định và không kế thừa.** Nguyên nhân gốc của cả hai lỗi trên là các giá trị này được **thừa hưởng** chứ không được **hỏi**.
 
 **Khoá cache khớp tuyệt đối** giữa frontend và backend. Lệch một ký tự thì purge không trúng gì cả — xuất bản xong trang vẫn cũ và **không ai thấy lỗi**. Bắt buộc có test đối chiếu hai phía.
+
+#### ⚠️ Xem trước phải đi VÒNG QUA cache
+
+Cấu hình đã xuất bản được cache Redis 4 giờ theo tên miền. Nếu xem trước dùng chung đường đọc đó, người vận hành sửa nháp, bấm xem trước, và **thấy bản cũ** — không hiểu vì sao, tưởng mình lưu hỏng.
+
+Request có token xem trước phải bỏ qua cache hoàn toàn: đọc thẳng bản nháp từ cơ sở dữ liệu, và **không ghi kết quả vào cache** — ghi vào là bản nháp của một người rò sang mọi khách truy cập tên miền đó.
 
 **AC:**
 - [ ] Sửa nháp: site công khai không đổi
@@ -654,7 +693,7 @@ Cơ chế TikTok **giữ nguyên, không đụng** (PRE-1, quyết định 04/09
 
 ---
 
-### PC-012: Hoà giải 5 biến thể về một
+### PC-012: Gộp 5 bản về một
 
 **Priority:** Must Have
 
@@ -729,6 +768,83 @@ Cái `setup.md` **chưa** giải quyết: nó là tệp markdown trong repo, m�
 - [ ] Đối tác "đang dựng" không phục vụ lưu lượng công khai
 
 ---
+### PC-015: Phân quyền cho màn cấu hình
+
+**Priority:** Must Have — yêu cầu mới tại v1.4
+
+**Vì sao cần.** PC-008 giao màn cấu hình cho đội vận hành, nhưng hiện **chỉ `root` ghi được bản ghi ADV** (`pkg/admin/router/partner.go` — `Create`, `Update`, `ChangeStatus`, `GetDetail` đều nằm trong nhóm `gRoot`). Cấp `root` cho vận hành nghĩa là họ tạo, xoá và đổi trạng thái được **mọi ADV**.
+
+#### ⚠️ Hệ scope 20 mã đang KHÔNG cưỡng chế ở đâu
+
+`RoleRaw` có trường `Scopes []constants.Scope`. `constants.ListScopes` khai 4 nhóm × 5 quyền = **20 mã**. Admin có API trả danh sách (`handler/common.go:110`) và có màn gán quyền cho vai trò.
+
+Nhưng `grep -rn "\.Scopes"` trên toàn backend (bỏ test) **không có kết quả**. Kiểm quyền thật nằm ở so sánh chuỗi:
+
+```go
+// routeauth/auth.go:85
+if role.Code != constants.StaffRole.Admin { return cc.Response401(...) }
+```
+
+Nghĩa là người vận hành tick 20 ô quyền, lưu thành công, và **không ô nào có tác dụng**. Ghi ra đây để người thiết kế phân quyền không tưởng nó đang bảo vệ cái gì.
+
+Thêm nữa, mọi vai trò hiện có `Scopes` **rỗng** (`dummy_db.go:82` seed `make([]constants.Scope, 0)`). Bật cưỡng chế lên mà không backfill trước thì **mọi admin không phải root mất sạch quyền ngay lập tức** — đó là thay đổi phải đi kèm một đợt di dữ liệu, không phải một commit.
+
+**Phạm vi của yêu cầu này — hẹp có chủ đích:**
+
+| Làm | Không làm |
+|---|---|
+| Thêm vai trò `config_editor` vào `StaffRole` | Kích hoạt hệ scope 20 mã |
+| Guard mới cho 5 endpoint `app-config` | Cưỡng chế `staff.Partner` trong 12 service admin cũ |
+| Kiểm `staff.Partner` **chỉ trong** các endpoint cấu hình mới | Đổi hành vi của bất kỳ endpoint đang chạy nào |
+
+Hai cột phải là task riêng có kế hoạch di dữ liệu. Gộp vào dự án hợp nhất frontend là mở hai mặt trận cùng lúc.
+
+**Ràng buộc theo ADV hiện chắp vá.** `staff.Partner` được kiểm ở đúng hai vùng — `handler/leaderboard_view.go:123,131` và `service/event_bonus.go` (5 chỗ). Event, content, article, category, news, quick-action đều **không kiểm**. Yêu cầu này không sửa việc đó, chỉ bảo đảm endpoint mới không lặp lại.
+
+**AC:**
+- [ ] `config_editor` của ADV X đọc và ghi được `app-config` của X
+- [ ] `config_editor` của ADV X gọi `app-config` của ADV Y → **401**
+- [ ] `config_editor` **không** tạo, xoá hay đổi trạng thái được ADV nào
+- [ ] `root` giữ nguyên mọi quyền hiện có
+- [ ] Không endpoint nào đang chạy đổi hành vi — đối chiếu bằng danh sách route trước/sau
+
+---
+
+### PC-016: Công cụ trích cấu hình từ ứng dụng hiện hành
+
+**Priority:** Must Have — yêu cầu mới tại v1.4
+
+**Vì sao cần.** PC-013 đặt điều kiện *"mọi giá trị trích ra phải được ADV xác nhận"* nhưng không nói **trích bằng gì**. Mỗi ADV có ~22 giá trị màu, ~20 khoá ảnh, 3 mã bài viết, bộ liên hệ, mạng xã hội, phông chữ. Nhân 5 ADV. Gõ tay là sai số chắc chắn, và sai ở đây là dữ liệu sai đi thẳng vào production.
+
+**Công cụ đọc:**
+
+| Nguồn | Lấy ra |
+|---|---|
+| `<adv>/src/bootstrap-custom.scss` | 18 màu + 4 bo góc |
+| `<adv>/config/config.prod.ts` | slug, tên miền, 3 mã bài viết |
+| `<adv>/src/configs/image.ts` | danh sách khoá ảnh |
+| `<adv>/src/font.scss` + `assets/fonts/` | tên họ phông + danh sách tệp |
+| `<adv>/src/components/app/image/constants.ts` | liên kết mạng xã hội |
+| `<adv>/src/pages/contact/index.tsx` | hotline, email |
+| cấu trúc `<adv>/src/pages/` | cờ phân hệ |
+
+**Xuất ra:** một tệp JSON đúng lược đồ `PartnerAppConfigBody`, kèm **cột nguồn** cho từng giá trị — trích từ tệp nào, dòng nào.
+
+#### ⚠️ Trích xong KHÔNG được nhập thẳng
+
+`lusso` đang mang Facebook, TikTok, YouTube, liên kết tải ứng dụng và email của HDBank; `parasola` mang hotline của HDBank (mục 2.6, PRE-3). Script trích được thì ai cũng muốn nhập thẳng — nhưng làm vậy là **hợp thức hoá lỗi**, và lúc đó nó nằm trong cơ sở dữ liệu chứ không nằm trong mã nguồn, khó thấy hơn hôm nay.
+
+Nên đầu ra của công cụ là **bản nháp chờ xác minh**, không phải bản xuất bản. Kiểm tra chéo của PC-007 là hàng rào cuối; công cụ này phải đánh dấu sẵn những giá trị trùng với ADV khác để người xác minh biết chỗ cần hỏi.
+
+**AC:**
+- [ ] Chạy trên `hdbank` sinh ra JSON hợp lệ theo lược đồ, nạp được vào bản nháp
+- [ ] Mỗi giá trị có cột nguồn `tệp:dòng`
+- [ ] Giá trị trùng với ADV khác bị đánh dấu, kèm tên ADV bị trùng
+- [ ] Chạy trên cả 5 ADV không lỗi
+- [ ] Đầu ra **không** tự động xuất bản
+
+---
+
 ## 5. Non-Functional Requirements
 
 ### NFR-001: Tương thích ngược trong giai đoạn chạy song song
@@ -741,7 +857,7 @@ Hình dạng response của endpoint public giữ nguyên cho tới khi đợt c
 API cấu hình lỗi hoặc chậm → dùng bản cache gần nhất; không trả trang trắng.
 
 ### NFR-004: Hiệu năng và kích thước gói
-SSR phát sinh tối đa một request cấu hình mỗi request trang, tỷ lệ trúng cache cao. Yêu cầu **tách gói theo tuyến và tải theo cờ phân hệ** — hiện không ứng dụng nào bật `dynamicImport`. Ngưỡng xác lập sau lần build đầu tiên.
+SSR phát sinh tối đa một request cấu hình mỗi request trang, tỷ lệ trúng cache cao. Yêu cầu **code splitting theo route và tải theo cờ phân hệ** — hiện không ứng dụng nào bật `dynamicImport`. Ngưỡng xác lập sau lần build đầu tiên.
 
 ### NFR-005: Ngôn ngữ
 Toàn bộ tiếng Việt.
@@ -752,9 +868,9 @@ Vỡ bố cục, tràn văn bản, chồng lớp, sai lệch trên di động l�
 ### NFR-007: Đường cơ sở hồi quy
 Repository hiện không có đường cơ sở (`hdbank`, `parasola` mỗi ứng dụng một tệp kiểm thử). Trước mỗi đợt di cư, thiết lập bộ ảnh đối chiếu cho từng màn × từng đối tác, chụp từ ứng dụng cũ đang chạy.
 
-Kiểm thử tự động bắt buộc cho: kiểm tra schema section, kiểm tra chéo dữ liệu đối tác, phân giải người thuê theo `Host`, đối chiếu khoá cache hai phía.
+Kiểm thử tự động bắt buộc cho: kiểm tra schema section, kiểm tra chéo dữ liệu đối tác, resolve partner theo domain theo `Host`, đối chiếu khoá cache hai phía.
 
-### NFR-008: Bán kính ảnh hưởng và khả năng quan sát
+### NFR-008: Bán kính ảnh hưởng và observability
 Sau hợp nhất, một sự cố tác động 5 đối tác thay vì 1. Yêu cầu:
 - Mọi bản ghi nhật ký gắn định danh tên miền và đối tác, từ ngày đầu
 - Phân biệt hai lớp khôi phục: **mã nguồn** tác động toàn bộ; **cấu hình** tác động một đối tác. Quyền thực hiện mỗi lớp quy định tường minh
@@ -775,45 +891,57 @@ Không có cổng này thì `lusso/pages/home/components/not-logged-in/index.tsx
 
 ---
 
-## 6. Epics và thứ tự
+## 6. Ba bước và lộ trình
 
-### 6.1 Tiền đề — task độc lập, hoàn tất trước E2
+Cấu trúc theo brief dự án (3 bước), không theo epic rời.
 
-| # | Nội dung |
+### Bước 1 — Phân tích và thiết kế
+
+| Đầu ra | Trạng thái |
 |---|---|
-| E0-A | PRE-2, PRE-3 — gỡ giá trị dự phòng cứng ở `hdbank`, `lusso`, `parasola` (`fecredit` đã sửa, `vpbank` đã gỡ); sửa dữ liệu HDBank trên `lusso` (4 chỗ) và `parasola` (hotline) |
-| E0-B | PRE-4 — `canonical` sinh từ `Host`. **Không đổi giá trị `ORIGIN`** — đổi sẽ phá đăng nhập TikTok cả 5 app |
-| E0-C | PRE-5 — gỡ `global._cookies`; thêm `skipLibCheck` cho cả 5 ứng dụng (NFR-011) |
+| PRD + sơ đồ kiến trúc | Tài liệu này |
+| Mô hình cấu hình: branding, domain & routing, nội dung tĩnh, feature flag, phân quyền | PC-002 → PC-008, PC-015 |
+| Danh sách ADV sẽ migrate | 5 ADV, mục 2.5 |
+| Thiết kế landing | **Bám layout và tính năng của FE hiện tại** — chốt 04/09, không chờ Figma mới (PC-005) |
 
-**PRE-1 không còn trong danh sách này** — quyết định 04/09 giữ nguyên luồng TikTok, xem mục 2.6.
+### Bước 2 — Dựng khung và lớp cấu hình
 
-### 6.2 Xây dựng
-
-| # | Epic | Phụ thuộc |
+| # | Nội dung | Phụ thuộc |
 |---|---|---|
 | E1 | Backend: collection `PartnerAppConfig`, phiên bản, endpoint đọc theo tên miền, xoá cache | — |
-| E2 | `partner-app/` khởi tạo + PC-001 + PC-002 + PC-003 | E0, E1 |
-| E3 | Admin: cấu hình + PC-007 + PC-014 | E1 |
-| E4 | 18 màn lõi + hạ tầng dùng chung. **Ưu tiên `home`, `ekyc`, `account` ở đầu epic** | E2 |
-| E5 | PC-005 + màn Trang chủ trong admin | E3, E4 |
+| E2 | `partner-app` khởi tạo + PC-001 + PC-002 + PC-003 | E1 |
+| E3 | Admin: cấu hình + PC-007 + PC-014 + PC-015 | E1 |
+| E4 | 18 màn lõi + hạ tầng dùng chung. **Ưu tiên `home`, `ekyc`, `account` ở đầu epic** (28% khối lượng) | E2 |
+| E5 | PC-005 section catalogue + màn Trang chủ trong admin | E3, E4 |
 | E6 | PC-004 + màn `contract` | E4 |
 | E7 | 2 màn affiliate của `fecredit` | E6 |
-| E8 | PC-011 uỷ quyền OAuth đa tên miền | E2 |
-| E9 | PC-012 hoà giải biến thể | E4 |
+| E8 | PC-016 công cụ trích cấu hình | E1 |
 
-### 6.3 Di cư
+**Mốc nghiệm thu bước 2: chạy được với một ADV mẫu nội bộ.** Không ADV thật nào được migrate. Mốc này tách bạch *"khung chạy được"* khỏi *"ADV thật chạy được"* — thiếu nó thì không có điểm dừng để đánh giá trước khi đụng production.
 
-| Đợt | Đối tác | Khoảng cách | Căn cứ |
-|---|---|---|---|
-| M1 | `hdbank` · `lusso` | **45** | Cặp gần nhau nhất. Đợt này gánh toàn bộ hạ tầng dùng chung |
-| M2 | `parasola` | 57–69 | Cùng hồ sơ phân hệ |
-| M3 | `vpbank` | 99–112 | Không có `contract` — kiểm chứng cờ phân hệ |
-| M4 | `fecredit` | 118–154 | Xa nhất, có 2 màn affiliate và 3 token gradient riêng |
+### Bước 3 — Migrate 01 ADV mẫu
 
-`lusso` nằm ở đợt đầu và là đối tác có nhiều dữ liệu HDBank nhất — E0-B **phải** hoàn tất trước M1.
+**Chọn `hdbank`** — branding đơn giản nhất trong 5:
 
----
+```
+hdbank    5 màu riêng · BeVietnamPro · không gradient
+lusso     6 màu riêng · BeVietnamPro
+vpbank    6 màu riêng · SVN-Gilroy
+parasola  12 màu riêng · Rosellinda
+fecredit  63 màu riêng · FE Font · 3 gradient
+```
 
+Thêm một lý do: `hdbank` là bản gốc mà `lusso` và `parasola` được sao chép ra, nên cấu hình của nó **sạch nhất** — không mang dữ liệu của ADV nào khác. `lusso` để sau `hdbank` để có bản đúng làm chuẩn đối chiếu.
+
+Mục tiêu của bước này là **xác thực mô hình cấu hình đủ dùng**, không phải hoàn thành di cư.
+
+### Sau bước 3 — các đợt còn lại
+
+```
+lusso  →  parasola  →  vpbank  →  fecredit
+```
+
+Mỗi đợt tuân thủ PC-013. `fecredit` để cuối: xa nhất về khoảng cách (118–154), có 2 màn affiliate và 3 token gradient riêng.
 ## 7. Kiến trúc
 
 ```
@@ -838,6 +966,31 @@ admin (umi 3 + antd 4)
    ├─ chẩn đoán tên miền + danh sách kiểm 7 tầng (PC-014)
    └─ Khôi phục phiên bản trước
 ```
+
+### Bốn đường cấu hình xuống component
+
+Không có một "config object" duy nhất. Bốn thứ này có ràng buộc khác nhau nên đi bốn đường — kế thừa cách `creator-os` tổ chức:
+
+| Đường | Chở gì | Cơ chế |
+|---|---|---|
+| **CSS variable** | 18 màu, 4 bo góc, font | Ghi thẳng vào `style` của `<html>` trong `layout.tsx`, **không qua provider** |
+| **ThemeProvider** | logo, tên thương hiệu — dùng làm **dữ liệu**, không phải kiểu dáng | `useTheme()` trong component |
+| **Props từ Server Component** | cờ bật/tắt nút social | Đọc env lúc chạy ở layout, truyền xuống |
+| **Dữ liệu SSR** | `sections[]`, campaigns | Fetch một lần, truyền vào renderer |
+
+**Vì sao tách CSS variable khỏi provider** — comment trong `creator-os/providers.tsx` nói thẳng: *"CSS-var thật đã ghi thẳng lên `<html>` ở layout (không phụ thuộc provider để tránh FOUC)"*. Màu đi qua React context thì trang render một nhịp bằng màu mặc định rồi mới đổi.
+
+#### ⚠️ KHÔNG dùng `NEXT_PUBLIC_*`
+
+`NEXT_PUBLIC_*` bị nướng vào bundle lúc build — đổi giá trị phải build lại, đúng cái bệnh đang chữa. Đọc env trong Server Component thì mỗi lần chạy đọc lại. `creator-os` ghi rõ lý do này trong `providers.tsx`.
+
+#### Validate lại ở frontend, không tin backend
+
+Backend đã kiểm lúc ghi. Frontend kiểm lại lúc đọc, vì dữ liệu có thể đã nằm trong DB từ trước khi có luật, hoặc ai đó sửa tay. Hỏng thì rơi về mặc định — **không trắng trang**.
+
+### Thay đổi hạ tầng chạy
+
+Mỗi ứng dụng hiện chạy `server.js` (Koa) để SSR, `Dockerfile` build `node:14.17.3` rồi `node server.js`. `partner-app` là Next.js — **Koa và `server.js` biến mất**, cách build và chạy container đổi hoàn toàn. Đây là hạng mục devops phải biết trước khi tới E2.
 
 **Endpoint bổ sung — toàn bộ là thêm mới:**
 - `GET /api/public/partners/app-config` — cấu hình `published` theo tên miền, hoặc `draft` khi có token xem trước
@@ -947,7 +1100,7 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 |---|---|---|
 | `packages/ui/src/button.tsx` — hover bằng độ mờ | **PC-002** | **Kế thừa trực tiếp.** Loại bỏ toàn bộ phép tính màu khỏi hệ thống |
 | `packages/theme/src/tokens.ts` | **PC-002** | Kế thừa mô hình token; rút gọn còn 2 màu vì 152/157 biến đo được là đồng nhất |
-| `portal-creator/app/layout.tsx` | **PC-002** | Áp dụng cách chèn CSS variable khi kết xuất phía máy chủ |
+| `portal-creator/app/layout.tsx` | **PC-002** | Áp dụng cách chèn CSS variable khi SSR |
 | `packages/feature-flags` | **PC-004** | Kế thừa mô hình, giữ xử lý lỗi mềm |
 | `packages/contracts/src/landing-sections.ts` | **PC-005** | Kế thừa mô hình danh mục; danh mục riêng theo component thực tế |
 | `CmsDocument` + `CmsDocumentVersion` | **PC-007** | Kế thừa mô hình bản nháp và phiên bản; hiện thực trên MongoDB |
@@ -982,7 +1135,7 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 
 ## 13. Open Questions
 
-1. **Ngưỡng bán kính ảnh hưởng** — số đối tác tối đa trên một triển khai trước khi cần tách. Cần trước khi lên production.
+1. **Ngưỡng blast radius** — số đối tác tối đa trên một triển khai trước khi cần tách. Cần trước khi lên production.
 3. **Chủ sở hữu quy trình NFR-009** — ai quyết định phân loại một yêu cầu riêng của đối tác. Cần trước M2.
 3. **PC-012 nhóm khác biệt hành vi** — 4 tệp (`not-logged-in` Δ914, `header` Δ659, `models/main` Δ288, `interfaces/event` Δ251) cần **đối tác chấp thuận** trước cutover. Chưa xác định đầu mối phía 5 đối tác. Cần trước M1.
 
@@ -1006,5 +1159,6 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 |---|---|---|
 | 1.0 | 2026-09-03 | Bản đầu. Chốt phương án ứng dụng mới trên nền tảng hiện đại, backend giữ nguyên, `creator-os` là tài liệu tham khảo. Phạm vi khi đó: 15 ứng dụng, giữ nguyên không di cư |
 | 1.1 | 2026-09-04 | Đổi phạm vi sang di cư toàn bộ 15 ứng dụng theo 6 đợt. Bổ sung PC-011 → PC-013, NFR-007 → NFR-009. Sửa PC-001 theo mô hình tên miền → tập đối tác |
+| 1.4 | 2026-09-04 | Cấu trúc lại mục 6 theo **ba bước của brief dự án**; ADV mẫu bước 3 = **`hdbank`** (branding đơn giản nhất: 5 màu riêng, không gradient). Bổ sung mốc *chạy được với một ADV mẫu nội bộ* làm điều kiện nghiệm thu bước 2. **PC-002**: token từ 2 màu lên **18 màu + 4 bo góc**, mặc định bằng giá trị đang chạy — sửa lỗi rút gọn dựa trên 5 ADV vốn dùng chung một bản thiết kế. **PC-005**: chốt **một landing mặc định bám layout và tính năng của FE hiện tại**, không dựng theme thứ hai; thêm ràng buộc renderer nhận `sections[]` làm dữ liệu, không nhánh theo ADV. Bổ sung **PC-015** (phân quyền — ghi rõ hệ scope 20 mã không cưỡng chế ở đâu) và **PC-016** (công cụ trích cấu hình). Bổ sung **chỉ số thành công** vào mục 1, **bốn đường cấu hình xuống component** và **thay đổi hạ tầng chạy** vào mục 7, quy tắc **xem trước đi vòng qua cache** vào PC-007, ánh xạ **ADV ↔ partner** vào mục 0. Xoá mục E0 — các hạng mục đó hệ mới không mang theo. Đổi thuật ngữ tự dịch sang từ dev dùng thật |
 | 1.3 | 2026-09-04 | Đính chính theo `fecredit/setup.md` — checklist onboard thật do người thực hiện viết. Gỡ ba env chết khỏi lược đồ (`APP_NAME`, `documentShareLink`, `accesstradePartnerId` — không component nào đọc); article ID từ **4 xuống 3** (`SUPPORT_ARTICLE_ID` code không đọc; Thể lệ và Hướng dẫn lấy từ `eventHome.ruleContent`/`guideContent`, dán vào event trên admin). PC-014 viết lại thành **điện tử hoá `setup.md` sẵn có**. **PRE-1: quyết định giữ nguyên luồng TikTok** (04/09), gỡ khỏi tiền đề chặn E2; PC-011 thu về Google và SSO. PC-006 thêm cảnh báo `ORIGIN` gánh hai vai. Đóng 5 câu hỏi mở |
 | 1.2 | 2026-09-04 | Viết lại mục 4 theo văn phong của [prd-staff-code-frontend](../employee-code/prd-staff-code-frontend-2026-09-03.md): mỗi FR mở bằng **Vì sao cần**, bẫy đã kiểm chứng nâng thành tiêu đề con `#### ⚠️`, bằng chứng `file:line` đặt ngay trong FR thay vì dồn về mục 2. **Thu hẹp phạm vi còn 5 đối tác đang hoạt động** (`hdbank`, `lusso`, `parasola`, `vpbank`, `fecredit`); 10 thư mục còn lại thuộc đối tác đã ngừng, không thuộc phạm vi. Màn hình 33 → 21, đợt di cư 6 → 4, tệp phân kỳ 33 → 22. **Gỡ PC-009** (slot override) — không còn consumer. **Đổi PC-002**: loại bỏ toàn bộ phép tính màu, hover và active dùng độ mờ theo mô hình `packages/ui/src/button.tsx` của `creator-os`; token cấu hình rút còn `primary` + `primaryForeground` do đo được 152/157 biến SCSS là đồng nhất. Bổ sung **PC-014** (chẩn đoán tên miền, danh sách kiểm onboard, trạng thái "đang dựng") suy từ phân tích bảy tầng onboard. Bổ sung **NFR-010** (cổng CI chặn giá trị gán cứng) và **NFR-011** (cổng kiểm tra kiểu). Bổ sung mục 2.4 (quyết định về phép tính màu), 2.6 (năm lỗi production), 2.7 (bảy tầng onboard), 2.8 (trạng thái chất lượng mã nguồn) |
