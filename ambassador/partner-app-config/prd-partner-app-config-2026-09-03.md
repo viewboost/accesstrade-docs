@@ -721,10 +721,42 @@ Xây trong `admin/` hiện hành (umi 3 + antd 4), đặt cạnh biểu mẫu đ
 | Nội dung | 4 article ID, liên hệ, mạng xã hội, liên kết footer, liên kết tài liệu |
 | SEO | title, description, keywords, GTM |
 | Phân hệ | công tắc `contract`, `affiliate` |
-| Trang chủ | danh sách section: thêm, xoá, sắp xếp, sửa nội dung |
+| Trang chủ | danh sách section: thêm, xoá, kéo sắp xếp, sửa nội dung theo từng loại — **xem phân tích bên dưới** |
 | Xuất bản | xem trước, xuất bản kèm changelog, lịch sử phiên bản kèm khôi phục |
 | Chẩn đoán domain | xem PC-014 |
 | Danh sách kiểm onboard | xem PC-014 |
+
+#### Trình sửa section — phân tích và ước lượng
+
+Đây là màn khó nhất của yêu cầu này. Điều kiện sẵn có thuận hơn dự kiến:
+
+| | |
+|---|---|
+| antd `^4.20.0` | `Form.List` cấp sẵn `{ add, remove, **move** }` từ 4.7 — **đổi thứ tự là API có sẵn**, kéo thả chỉ là cách kích hoạt |
+| Khuôn mẫu đã chạy | `partner/components/modal.tsx:244-315` — `Form.List` cho `covers`: map từng item, thêm/xoá, trường lồng `name={[field.name, 'default']}`. **~75 dòng** |
+| Thư viện kéo thả | `@dnd-kit/core`, `@dnd-kit/sortable`, `react-dnd`, `react-sortable-hoc` **đã cài, chưa dùng dòng nào** |
+| Component form dùng lại | 15 cái: `form-input` · `form-select` · `form-editor` · `form-upload-one-file` · `form-input-number` … |
+
+**Phần thật sự mới: item không đồng nhất.** `covers` dễ vì mọi item cùng hai trường. Section thì mỗi `type` một form khác — cần `switch` theo `type` bên trong `fields.map`.
+
+| Nhóm | Loại | Dựng bằng |
+|---|---|---|
+| Tầm thường | `statistic` · `creator-newest` · `steps` | `form-input` |
+| Dễ | `events` · `content-highlight` · `leaderboard` | `form-input` + `form-input-number` |
+| Dễ | `hero` | `form-input` ×3 |
+| Trung bình | `banner` | `form-upload-one-file` — đã có |
+| **Khó nhất** | `faq` | `Form.List` **lồng trong** `Form.List`, đường dẫn `['sections', i, 'items', j, 'question']` |
+
+**Bốn chỗ dễ vấp:**
+
+1. **Sắp xếp bằng `move()`, không tự sửa mảng.** `Form.List` giữ trạng thái nội bộ; sửa mảng bên ngoài là form mất đồng bộ
+2. **`key` bền vững KHÁC `field.key` của antd.** `field.key` là chỉ số nội bộ, đổi khi sắp xếp. `key` trong lược đồ phải sinh lúc thêm và giữ nguyên suốt đời — lẫn hai cái là sửa nhầm section
+3. **Thêm phải chọn `type` trước** rồi mới `add({ key: sinhMới(), type })`, vì form con phụ thuộc `type`
+4. **Ẩn nút xoá `hero`/`events` là UX, không phải guard.** Server vẫn phải từ chối (PC-005). Hai nơi cùng đọc một danh mục, nếu không thì admin cho xoá rồi server chặn
+
+**Ước lượng ~960 dòng, 6–8 ngày** kể cả kiểm thử — khoảng gấp đôi `partner/modal.tsx` (454 dòng).
+
+**Xếp sau bước 3, không nằm trên đường găng.** Không ADV nào trong 5 cần màn này để migrate — landing của cả 5 giữ nguyên, `sections[]` do PC-016 trích và seed. Làm sau khi `hdbank` migrate xong: nếu bước 3 lộ ra lược đồ section cần đổi, sửa lược đồ trước khi có UI bám vào thì rẻ hơn nhiều.
 
 **Người dùng là P1, không phải kỹ sư.** Nhãn tiếng Việt rõ nghĩa; ô màu có bảng chọn chứ không bắt gõ hex trần; thông báo lỗi nói **sai gì và sửa thế nào**, không phải tên trường kỹ thuật.
 
@@ -948,6 +980,58 @@ Nên đầu ra của công cụ là **bản nháp chờ xác minh**, không ph�
 - [ ] Giá trị trùng với ADV khác bị đánh dấu, kèm tên ADV bị trùng
 - [ ] Chạy trên cả 5 ADV không lỗi
 - [ ] Đầu ra **không** tự động xuất bản
+
+---
+
+### PC-017: Nội dung tĩnh — hai phạm vi, không gộp
+
+**Priority:** Must Have
+
+**Vì sao phải nói rõ.** Brief dự án ghi *"nội dung tĩnh (thể lệ, hướng dẫn) quản lý per-ADV trong admin"*. Đọc mã thì thấy **gộp nhầm hai phạm vi**, và làm theo nguyên văn sẽ phá mô hình nhiều chiến dịch.
+
+#### Thể lệ và Hướng dẫn là per-CHIẾN DỊCH — giữ nguyên, không đụng
+
+```go
+// internal/model/mg/event.go:31-32
+Guide   AppID   // → GuideContent
+Privacy AppID   // → PrivacyContent
+```
+
+Backend nạp hai bài này khi trả chi tiết chiến dịch (`pkg/public/service/event.go:1374-1390`, hai goroutine song song). Frontend đọc `eventHome?.guideContent?.title` (`not-logged-in/index.tsx:275`).
+
+Form admin **đã có sẵn** ô chọn: `admin/src/pages/event/components/overview.tsx:190` (`guide`) và `:198` (`privacy`).
+
+Một ADV chạy nhiều chiến dịch với thể lệ khác nhau — đó là lý do hai bài này gắn với chiến dịch. **Kéo lên per-ADV là làm hỏng.** Yêu cầu này: không thay đổi gì.
+
+#### Q&A, Điều khoản, Chính sách là per-ADV — vào cấu hình
+
+Ba bài này không đổi theo chiến dịch, hiện là biến build-time dùng làm link `/bai-viet/<id>` ở header và footer.
+
+```
+content.articleIds { qa, term, condition }
+```
+
+`SUPPORT_ARTICLE_ID` **không nằm trong danh sách** — `fecredit/setup.md` xác nhận *"env này code không đọc"*, bị comment ở `src/configs/app.ts:60` và header, cả ba app. Thể lệ và Hướng dẫn trên frontend lấy từ chiến dịch, không phải từ env này.
+
+Trong `partner-app` là ba ô chọn bài viết trong màn cấu hình, dropdown lấy từ danh sách bài đã có (`admin/src/pages/article/`). Bắt buộc, chặn xuất bản nếu trống (PC-007).
+
+#### Hệ quả cho lịch onboard
+
+Một ADV mới chạy hai chiến dịch phải soạn **7 bài**, không phải 3:
+
+```
+3 bài per-ADV          Q&A · Điều khoản · Chính sách
+2 bài × 2 chiến dịch   Thể lệ · Hướng dẫn
+```
+
+Đây là việc của pháp chế và marketing, không cấu hình nào rút ngắn được — và là đường găng dài nhất của tầng 2 trong bảy tầng onboard (mục 2.7).
+
+**AC:**
+- [ ] `EventRaw.Guide` và `EventRaw.Privacy` giữ nguyên; form chiến dịch trong admin không đổi
+- [ ] Ba ô chọn bài viết per-ADV trong màn cấu hình, dropdown từ danh sách bài đã có
+- [ ] Thiếu bất kỳ trong ba: chặn xuất bản
+- [ ] Không có `SUPPORT_ARTICLE_ID` trong lược đồ
+- [ ] Danh sách kiểm onboard (PC-014) đếm đúng số bài cần soạn theo số chiến dịch
 
 ---
 
@@ -1273,6 +1357,7 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 |---|---|---|
 | 1.0 | 2026-09-03 | Bản đầu. Chốt phương án ứng dụng mới trên nền tảng hiện đại, backend giữ nguyên, `creator-os` là tài liệu tham khảo. Phạm vi khi đó: 15 ứng dụng, giữ nguyên không migrate |
 | 1.1 | 2026-09-04 | Đổi phạm vi sang migrate toàn bộ 15 ứng dụng theo 6 đợt. Bổ sung PC-011 → PC-013, NFR-007 → NFR-009. Sửa PC-001 theo mô hình domain → tập đối tác |
+| 1.6 | 2026-09-04 | Bổ sung **PC-017 — nội dung tĩnh, hai phạm vi**: Thể lệ và Hướng dẫn là per-chiến-dịch (`EventRaw.Guide`/`Privacy`, form admin đã có) và **không kéo lên per-ADV**; chỉ Q&A, Điều khoản, Chính sách là per-ADV. Đây là mục thứ năm của mô hình cấu hình theo brief, trước đó chỉ nằm ở Revision History. Ghi hệ quả lịch: ADV chạy 2 chiến dịch cần soạn **7 bài**, không phải 3. Bổ sung **phân tích và ước lượng trình sửa section** vào PC-008 — antd 4.20 có sẵn `Form.List.move()`, khuôn mẫu `covers` 75 dòng, 4 thư viện kéo thả đã cài chưa dùng; ước ~960 dòng, 6–8 ngày; **xếp sau bước 3**, không nằm trên đường găng |
 | 1.5 | 2026-09-04 | Bổ sung **mục 2.9 — bản đồ chuyển umi → Next**: bảy hệ con phải viết lại, đối chiếu với lời giải của `creator-os`; bốn bài học họ đã trả giá (`rewrites()` nướng env lúc build · proxy phải `force-dynamic` · refresh single-flight · 403 pwreset tách khỏi 401); **chốt giữ `localStorage`** cho auth, nhưng **lấy BFF proxy**. Sửa lại đánh giá chi phí chuyển nền tảng — trước đó đo `getInitialProps` là đo sai đối tượng. Bổ sung **PRE-6** (mỗi trang nạp hai container GTM, ba ADV bắn vào container của ADV khác) và **PRE-7** (hai bản Bootstrap trên cùng trang). Bổ sung mẫu xem trước không open-redirect vào PC-007 và BFF proxy vào mục 7 |
 | 1.4 | 2026-09-04 | Cấu trúc lại mục 6 theo **ba bước của brief dự án**; ADV mẫu bước 3 = **`hdbank`** (branding đơn giản nhất: 5 màu riêng, không gradient). Bổ sung mốc *chạy được với một ADV mẫu nội bộ* làm điều kiện nghiệm thu bước 2. **PC-002**: token từ 2 màu lên **18 màu + 4 bo góc**, mặc định bằng giá trị đang chạy — sửa lỗi rút gọn dựa trên 5 ADV vốn dùng chung một bản thiết kế. **PC-005**: chốt **một landing mặc định bám layout và tính năng của FE hiện tại**, không dựng theme thứ hai; thêm ràng buộc renderer nhận `sections[]` làm dữ liệu, không nhánh theo ADV. Bổ sung **PC-015** (phân quyền — ghi rõ hệ scope 20 mã không chặn ở server ở đâu) và **PC-016** (công cụ trích cấu hình). Bổ sung **chỉ số thành công** vào mục 1, **bốn đường cấu hình xuống component** và **thay đổi hạ tầng chạy** vào mục 7, quy tắc **xem trước đi vòng qua cache** vào PC-007, ánh xạ **ADV ↔ partner** vào mục 0. Xoá mục E0 — các phần việc đó hệ mới không mang theo. Đổi thuật ngữ tự dịch sang từ dev dùng thật |
 | 1.3 | 2026-09-04 | Đính chính theo `fecredit/setup.md` — checklist onboard thật do người thực hiện viết. Gỡ ba env chết khỏi lược đồ (`APP_NAME`, `documentShareLink`, `accesstradePartnerId` — không component nào đọc); article ID từ **4 xuống 3** (`SUPPORT_ARTICLE_ID` code không đọc; Thể lệ và Hướng dẫn lấy từ `eventHome.ruleContent`/`guideContent`, dán vào event trên admin). PC-014 viết lại thành **điện tử hoá `setup.md` sẵn có**. **PRE-1: quyết định giữ nguyên luồng TikTok** (04/09), gỡ khỏi tiền đề chặn E2; PC-011 thu về Google và SSO. PC-006 thêm cảnh báo `ORIGIN` gánh hai vai. Đóng 5 câu hỏi mở |
