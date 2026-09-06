@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>DISO - Kế hoạch Tháng 9/2026</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #202124; line-height: 1.6; max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+  h1 { font-size: 18px; margin-top: 28px; border-bottom: 2px solid #1a73e8; padding-bottom: 6px; }
+  h2 { font-size: 16px; margin-top: 24px; color: #1a73e8; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+  th, td { border: 1px solid #dadce0; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f1f3f4; font-weight: 600; }
+  td.num, th.num { text-align: right; }
+  .status-done { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-testing { background: #cce5ff; color: #004085; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-progress { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-notstarted { background: #e2e3e5; color: #383d41; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-pending { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .group-row { background: #fef7e0; font-weight: 600; }
+  .group-total { background: #e8f0fe; font-weight: 700; }
+  .grand-total { background: #d2e3fc; font-weight: 700; }
+  .total-summary { background: #e8f0fe; padding: 12px 16px; border-left: 4px solid #1a73e8; margin: 16px 0; font-weight: 600; }
+  .strategy { background: #e8f0fe; padding: 16px; border-left: 4px solid #1a73e8; margin: 16px 0; }
+  .strategy ul { margin: 6px 0 0 18px; padding: 0; }
+  .strategy li { margin-bottom: 6px; }
+  .altbox { background: #f7fcf8; padding: 16px; border-left: 4px solid #34a853; margin: 20px 0; }
+  .altbox h2 { margin-top: 0; color: #188038; }
+  .note { background: #f1f3f4; padding: 14px 16px; border-left: 4px solid #5f6368; margin: 16px 0; }
+  .note ul { margin: 6px 0 0 18px; padding: 0; }
+  .plan-link { background: #e6f4ea; padding: 12px 16px; border-left: 4px solid #34a853; margin: 16px 0; text-align: center; font-size: 15px; }
+  .confirm { background: #fef7e0; padding: 16px; border-left: 4px solid #f9ab00; margin: 16px 0; }
+  a { color: #1a73e8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .signature { margin-top: 24px; }
+  .subject-hint { background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: #856404; }
+</style>
+</head>
+<body>
+
+<div class="subject-hint"><strong>Gợi ý Subject:</strong> [DISO] Kế hoạch triển khai Tháng 9/2026 (Dự kiến)</div>
+
+<p>Dear team,</p>
+
+<p>DISO gửi team bản <strong>kế hoạch triển khai Tháng 9/2026 (dự kiến)</strong>, gồm danh sách hạng mục, mô tả, impact, deadline, workload ước tính (BE / FE / QC / PM) và trạng thái hiện tại. Đây là bản kế hoạch lần 1 của tháng 9, sẽ chốt lại sau khi hai bên xác nhận scope.</p>
+
+<div class="strategy">
+  <strong>🎯 Định hướng triển khai Tháng 9/2026</strong>
+  <ul>
+    <li><strong>Trọng tâm: Creator Portal dùng chung cho các ADV</strong> (92h). Phần <em>Phân tích &amp; thiết kế</em> đã hoàn thành trong tháng — đã có PRD, sơ đồ kiến trúc và thiết kế theme landing page. Tháng 9 triển khai tiếp phần <em>Build khung + lớp cấu hình</em>. Mục tiêu: ADV mới onboard chỉ cần cấu hình trên console là có trang riêng, không phải chờ develop / design / review Figma.</li>
+    <li><strong>Xử lý dứt điểm lỗ hổng bảo mật API</strong> (10h) — Gen-Green đã chỉ ra và DISO đã hotfix bên Gen-Green, cần clone sang Ambassador và T-Fluencers. Chi phí thấp nhưng là rủi ro đang mở, DISO đề nghị giữ trong kế hoạch dù scope còn lại có điều chỉnh thế nào.</li>
+    <li><strong>Dành workload cho onboard 1 ADV mới</strong> (45h) theo nhịp định kỳ hàng tháng.</li>
+    <li><strong>Phương án thay thế:</strong> nếu AT chưa muốn triển khai Creator Portal dùng chung trong tháng 9, phần 92h này sẽ được thay bằng nhóm hạng mục nêu ở cuối thư (đối soát T-Fluencers, vòng đời mật khẩu staff, phân nhóm nhân viên, editor Markdown, cache ảnh).</li>
+  </ul>
+</div>
+
+<h1>Tổng quan kế hoạch Tháng 9/2026 (dự kiến)</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 190px;">Hạng mục</th>
+      <th>Mô tả</th>
+      <th>Impact</th>
+      <th style="width: 70px;">Deadline</th>
+      <th class="num" style="width: 40px;">BE</th>
+      <th class="num" style="width: 40px;">FE</th>
+      <th class="num" style="width: 40px;">QC</th>
+      <th class="num" style="width: 40px;">PM</th>
+      <th class="num" style="width: 56px;">Total</th>
+      <th style="width: 90px;">Trạng thái</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- Nhóm 1 -->
+    <tr class="group-row"><td colspan="10">1. Đã hoàn thành trong tháng</td></tr>
+    <tr>
+      <td><strong>Xử lý lỗi liên kết TikTok khi hết hạn</strong></td>
+      <td>Khi TikTok hết hạn, không thực hiện liên kết lại được.<br>Clone sang các FE đang hoạt động: Ambassador KOC, FEC, Parasola, HDBank, Lusso, VPBank.</td>
+      <td>Người dùng có thể liên kết lại tài khoản TikTok để tiếp tục gửi bài. Trước đó đã có một số user báo lại không gửi được bài do lỗi này.</td>
+      <td>03/09</td>
+      <td class="num">1</td>
+      <td class="num">4</td>
+      <td class="num">3</td>
+      <td class="num">0</td>
+      <td class="num"><strong>8</strong></td>
+      <td><span class="status-done">Done</span></td>
+    </tr>
+    <tr>
+      <td><strong>Creator Portal dùng chung — Phân tích &amp; thiết kế</strong></td>
+      <td>Khảo sát các trang creator đang chạy, tách phần chung khỏi phần riêng theo ADV. Chốt mô hình cấu hình: branding (logo/màu/font), domain &amp; routing, nội dung tĩnh (thể lệ, hướng dẫn), feature flag theo ADV, cấu trúc phân quyền. Bao gồm thiết kế 1–2 theme landing page (LDP) dùng chung.<br>Output: PRD + sơ đồ kiến trúc + danh sách ADV sẽ migrate + thiết kế theme LDP.</td>
+      <td>Chi phí onboard ADV mới thôi tăng tuyến tính theo số ADV; sửa lỗi 1 chỗ thay vì nhiều bản clone.</td>
+      <td>12/09</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">4</td>
+      <td class="num"><strong>4</strong></td>
+      <td><span class="status-done">Done</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="4" style="text-align: right;">Tổng nhóm 1 (2 hoạt động)</td>
+      <td class="num">1</td>
+      <td class="num">4</td>
+      <td class="num">3</td>
+      <td class="num">4</td>
+      <td class="num">12</td>
+      <td>(8% / 149h)</td>
+    </tr>
+
+    <!-- Nhóm 2 -->
+    <tr class="group-row"><td colspan="10">2. Feature chính – Creator Portal dùng chung</td></tr>
+    <tr>
+      <td><strong>Creator Portal dùng chung — Build khung + lớp cấu hình</strong></td>
+      <td>Dựng portal shell dùng chung: theming theo cấu hình, resolve ADV theo domain/subdomain, quản lý nội dung tĩnh per-ADV trong admin, feature flag per-ADV. Bao gồm dựng 1–2 theme landing page (LDP) và customize theo branding từng ADV.<br><em>Chưa migrate ADV nào — chỉ chạy được với 1 ADV mẫu nội bộ.</em></td>
+      <td>Khi một ADV mới onboard, chỉ cần cấu hình thông tin trên console là đối tác nhận được trang website riêng ngay, không phải chờ develop, design, review Figma.</td>
+      <td>30/09</td>
+      <td class="num">24</td>
+      <td class="num">40</td>
+      <td class="num">24</td>
+      <td class="num">4</td>
+      <td class="num"><strong>92</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="4" style="text-align: right;">Tổng nhóm 2 (1 hoạt động)</td>
+      <td class="num">24</td>
+      <td class="num">40</td>
+      <td class="num">24</td>
+      <td class="num">4</td>
+      <td class="num">92</td>
+      <td>(62% / 149h)</td>
+    </tr>
+
+    <!-- Nhóm 3 -->
+    <tr class="group-row"><td colspan="10">3. Bảo mật</td></tr>
+    <tr>
+      <td><strong>Clone fix vấn đề bảo mật API từ Gen-Green sang Ambassador và T-Fluencers</strong></td>
+      <td>Gen-Green tháng 8 gửi cho DISO các lỗ hổng bảo mật thông qua việc gọi được các endpoint public. Đã hotfix trên Gen-Green và cần move sang Ambassador, T-Fluencers.</td>
+      <td>Đảm bảo các đối tác khác không thấy được các lỗ hổng bảo mật mà Gen-Green đã thấy.</td>
+      <td>19/09</td>
+      <td class="num">8</td>
+      <td class="num">0</td>
+      <td class="num">2</td>
+      <td class="num">0</td>
+      <td class="num"><strong>10</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="4" style="text-align: right;">Tổng nhóm 3 (1 hoạt động)</td>
+      <td class="num">8</td>
+      <td class="num">0</td>
+      <td class="num">2</td>
+      <td class="num">0</td>
+      <td class="num">10</td>
+      <td>(7% / 149h)</td>
+    </tr>
+
+    <!-- Nhóm 4 -->
+    <tr class="group-row"><td colspan="10">4. Onboard ADV mới</td></tr>
+    <tr>
+      <td><strong>Onboard 01 ADV mới</strong></td>
+      <td>Tiếp nhận và onboard 1 ADV mới trong tháng 9 theo nhịp định kỳ. Workload đặt theo mức thực tế của đợt onboard FE Credit tháng 8.<br><em>Chưa có ADV cụ thể — nhờ AT xác nhận sớm để DISO xếp lịch.</em></td>
+      <td>Duy trì nhịp onboard ADV định kỳ hàng tháng trên Ambassador.</td>
+      <td>TBD</td>
+      <td class="num">4</td>
+      <td class="num">26</td>
+      <td class="num">12</td>
+      <td class="num">3</td>
+      <td class="num"><strong>45</strong></td>
+      <td><span class="status-pending">Dự kiến</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="4" style="text-align: right;">Tổng nhóm 4 (1 hoạt động)</td>
+      <td class="num">4</td>
+      <td class="num">26</td>
+      <td class="num">12</td>
+      <td class="num">3</td>
+      <td class="num">45</td>
+      <td>(30% / 149h)</td>
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Tổng hợp workload Tháng 9/2026</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nhóm chức năng</th>
+      <th class="num" style="width: 70px;">Số hoạt động</th>
+      <th class="num" style="width: 56px;">BE</th>
+      <th class="num" style="width: 56px;">FE</th>
+      <th class="num" style="width: 56px;">QC</th>
+      <th class="num" style="width: 56px;">PM</th>
+      <th class="num" style="width: 70px;">Total (h)</th>
+      <th class="num" style="width: 110px;">% so với chuẩn 149h</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1. Đã hoàn thành trong tháng</td>
+      <td class="num">2</td><td class="num">1</td><td class="num">4</td><td class="num">3</td><td class="num">4</td><td class="num">12</td><td class="num">8.1%</td>
+    </tr>
+    <tr>
+      <td>2. Feature chính – Creator Portal dùng chung</td>
+      <td class="num">1</td><td class="num">24</td><td class="num">40</td><td class="num">24</td><td class="num">4</td><td class="num">92</td><td class="num">61.7%</td>
+    </tr>
+    <tr>
+      <td>3. Bảo mật</td>
+      <td class="num">1</td><td class="num">8</td><td class="num">0</td><td class="num">2</td><td class="num">0</td><td class="num">10</td><td class="num">6.7%</td>
+    </tr>
+    <tr>
+      <td>4. Onboard ADV mới</td>
+      <td class="num">1</td><td class="num">4</td><td class="num">26</td><td class="num">12</td><td class="num">3</td><td class="num">45</td><td class="num">30.2%</td>
+    </tr>
+    <tr class="grand-total">
+      <td><strong>TỔNG THÁNG 9/2026</strong></td>
+      <td class="num"><strong>5</strong></td>
+      <td class="num"><strong>37</strong></td>
+      <td class="num"><strong>70</strong></td>
+      <td class="num"><strong>41</strong></td>
+      <td class="num"><strong>11</strong></td>
+      <td class="num"><strong>159</strong></td>
+      <td class="num"><strong>106.7%</strong></td>
+    </tr>
+    <tr>
+      <td style="color: #5f6368;">Tiêu chuẩn hợp đồng tháng</td>
+      <td class="num" style="color: #5f6368;">–</td>
+      <td class="num" style="color: #5f6368;">53</td>
+      <td class="num" style="color: #5f6368;">38</td>
+      <td class="num" style="color: #5f6368;">38</td>
+      <td class="num" style="color: #5f6368;">20</td>
+      <td class="num" style="color: #5f6368;">149</td>
+      <td class="num" style="color: #5f6368;">100%</td>
+    </tr>
+    <tr>
+      <td>Chênh lệch</td>
+      <td class="num">–</td>
+      <td class="num">−16</td>
+      <td class="num">+32</td>
+      <td class="num">+3</td>
+      <td class="num">−9</td>
+      <td class="num">+10</td>
+      <td class="num">+6.7%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="total-summary">
+  🔢 Tổng workload Tháng 9/2026 (dự kiến): <strong>~159 giờ ≈ 106.7% / chuẩn 149h</strong> — <strong>5 hoạt động</strong> trên 4 nhóm chức năng.<br>
+  <span style="font-weight: 400; font-size: 13px;">Phần vượt tập trung ở <strong>FE (+32h)</strong>, chủ yếu do Creator Portal (40h FE) và onboard ADV mới (26h FE) rơi vào cùng một tháng, trong khi BE còn dư 16h và PM còn dư 9h. Nếu tháng 9 không phát sinh onboard ADV thì tổng còn <strong>114h ≈ 76%</strong> và nằm gọn trong tiêu chuẩn.</span>
+</div>
+
+<div class="altbox">
+
+<h2>🔄 Phương án thay thế — nếu chưa triển khai Creator Portal dùng chung</h2>
+
+<p>Nếu AT muốn lùi Creator Portal sang tháng 10, phần <strong>92h</strong> của hạng mục này sẽ được thay bằng nhóm hạng mục dưới đây. Nhóm 1, 3 và 4 ở trên giữ nguyên.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 190px;">Hạng mục</th>
+      <th>Mô tả</th>
+      <th>Impact</th>
+      <th style="width: 70px;">Deadline</th>
+      <th class="num" style="width: 40px;">BE</th>
+      <th class="num" style="width: 40px;">FE</th>
+      <th class="num" style="width: 40px;">QC</th>
+      <th class="num" style="width: 40px;">PM</th>
+      <th class="num" style="width: 56px;">Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Vòng đời mật khẩu tài khoản staff</strong></td>
+      <td>Hiện admin tạo mật khẩu thủ công rồi gửi cho staff qua chat.<br>Port từ T-Fluencers: InviteStaff, ResendInvite, BulkInvite, VerifyInviteToken, AcceptInvite, ForgotPassword, ResetPassword, UpdateMyPassword + field InviteToken/ResetToken + mẫu email.</td>
+      <td>Chấm dứt truyền mật khẩu qua chat — là vấn đề bảo mật thật, đồng thời giảm thao tác tay khi onboard staff.</td>
+      <td>26/09</td>
+      <td class="num">16</td><td class="num">16</td><td class="num">12</td><td class="num">2</td>
+      <td class="num"><strong>46</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Xử lý lệch view cho T-Fluencers</strong></td>
+      <td>1. Xây dựng cơ chế tính toán sao cho tường minh view content, view tính thưởng, tiền thưởng tương ứng.<br>2. Thêm Email Alert (cho Ambassador và T-Fluencers).</td>
+      <td>Bên T-Fluencers sẽ không còn mắc lại vấn đề về đối soát.</td>
+      <td>19/09</td>
+      <td class="num">16</td><td class="num">4</td><td class="num">16</td><td class="num">2</td>
+      <td class="num"><strong>38</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Cải tiến luồng phân nhóm nhân viên trên Ambassador</strong></td>
+      <td>Đợt vừa rồi hệ thống chỉ làm riêng cho các FE.</td>
+      <td>Khi một đối tác dùng trang chung Ambassador mà muốn dùng chức năng nhập mã nhân viên thì có thể dùng được.</td>
+      <td>30/09</td>
+      <td class="num">6</td><td class="num">10</td><td class="num">8</td><td class="num">2</td>
+      <td class="num"><strong>26</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Editor article/news: chuyển HTML sang Markdown</strong></td>
+      <td>Thay braft-editor (xuất HTML) bằng @uiw/react-md-editor, bổ sung upload ảnh trong editor. Package đã cài sẵn ở vCreator, chỉ chưa wire.<br>Kèm script migrate nội dung HTML cũ sang Markdown.</td>
+      <td>Soạn bài không mất format khi copy giữa các bài, dùng được AI hỗ trợ soạn thảo, preview tốt hơn.</td>
+      <td>19/09</td>
+      <td class="num">2</td><td class="num">8</td><td class="num">4</td><td class="num">1</td>
+      <td class="num"><strong>15</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Cache ảnh cover content về MinIO</strong></td>
+      <td>Ảnh cover của content đang trỏ thẳng vào CDN của social, signature hết hạn thì ảnh vỡ. Port pattern từ T-Fluencers — hạ tầng MinIO của Ambassador đã có sẵn, chỉ thiếu service layer.</td>
+      <td>Bảng xếp hạng (BXH) không còn bị mất ảnh.</td>
+      <td>12/09</td>
+      <td class="num">4</td><td class="num">2</td><td class="num">2</td><td class="num">1</td>
+      <td class="num"><strong>9</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Cache avatar creator về MinIO + resize 3 size</strong></td>
+      <td>Avatar creator đang dùng URL social trực tiếp (TikTok/Google/Facebook) → hết hạn thì vỡ ảnh, đồng thời lộ đường dẫn gốc sang bên thứ ba. Port từ T-Fluencers, dùng chung module resize đã có.<br><em>Cùng pattern MinIO với hạng mục trên — đề xuất gộp chung 1 PR.</em></td>
+      <td>Xử lý vấn đề bảo mật mà phía Gen-Green đã nêu.</td>
+      <td>19/09</td>
+      <td class="num">4</td><td class="num">2</td><td class="num">2</td><td class="num">1</td>
+      <td class="num"><strong>9</strong></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="4" style="text-align: right;">Tổng nhóm thay thế (6 hoạt động)</td>
+      <td class="num">48</td><td class="num">42</td><td class="num">44</td><td class="num">9</td>
+      <td class="num">143</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th>Kịch bản</th>
+      <th class="num" style="width: 56px;">BE</th>
+      <th class="num" style="width: 56px;">FE</th>
+      <th class="num" style="width: 56px;">QC</th>
+      <th class="num" style="width: 56px;">PM</th>
+      <th class="num" style="width: 70px;">Total (h)</th>
+      <th class="num" style="width: 110px;">% / 149h</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Kế hoạch chính</strong> — có Creator Portal</td>
+      <td class="num">37</td><td class="num">70</td><td class="num">41</td><td class="num">11</td>
+      <td class="num"><strong>159</strong></td><td class="num"><strong>106.7%</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Phương án thay thế</strong> — bỏ Creator Portal, thêm 6 hạng mục</td>
+      <td class="num">61</td><td class="num">72</td><td class="num">61</td><td class="num">16</td>
+      <td class="num"><strong>210</strong></td><td class="num"><strong>140.9%</strong></td>
+    </tr>
+    <tr>
+      <td style="color: #5f6368;">Tiêu chuẩn hợp đồng tháng</td>
+      <td class="num" style="color: #5f6368;">53</td><td class="num" style="color: #5f6368;">38</td>
+      <td class="num" style="color: #5f6368;">38</td><td class="num" style="color: #5f6368;">20</td>
+      <td class="num" style="color: #5f6368;">149</td><td class="num" style="color: #5f6368;">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size: 13px; margin-bottom: 0;">Phương án thay thế có khối lượng lớn hơn kế hoạch chính khoảng <strong>51h</strong> (210h so với 159h) và vượt trần ở ba vai (BE +8h, FE +34h, QC +23h). Nếu AT chọn hướng này, DISO đề nghị chọn tiếp <strong>một nhóm nhỏ trong 6 hạng mục</strong> để vừa tiêu chuẩn tháng, phần còn lại chuyển sang tháng 10.</p>
+
+</div>
+
+<div class="note">
+  <strong>📌 Một số lưu ý khi review</strong>
+  <ul>
+    <li><strong>Hạng mục bảo mật API (10h) nên giữ trong mọi phương án.</strong> Đây là lỗ hổng đã được Gen-Green chỉ ra và đã vá bên Gen-Green, nhưng Ambassador và T-Fluencers vẫn còn hở. Chi phí rất thấp so với rủi ro.</li>
+    <li><strong>Creator Portal tháng 9 chưa bao gồm migrate ADV thật.</strong> Kết quả bàn giao cuối tháng là khung portal chạy với 1 ADV mẫu nội bộ; việc migrate ADV đang chạy sẽ xếp vào tháng 10.</li>
+    <li><strong>Onboard ADV mới hiện chưa có ADV cụ thể</strong> — workload 45h đặt trước theo nhịp định kỳ. Nhờ AT xác nhận sớm, vì hạng mục này chiếm 26h FE, đúng vai đang căng nhất trong tháng.</li>
+    <li><strong>PM hours đã được dàn trải vào từng hạng mục</strong> (planning, họp triển khai), không tách thành task riêng cho công việc quản lý chung.</li>
+    <li><strong>Các hoạt động phát sinh</strong> trong tháng sẽ được cập nhật trong kế hoạch tuần (gửi đầu mỗi tuần).</li>
+  </ul>
+</div>
+
+<div class="plan-link">
+  📄 <strong>Chi tiết Kế hoạch Tháng 9/2026 (full):</strong> <a href="https://docs.google.com/spreadsheets/d/1llWv7MwEkyceEH5f16zujxS_R_t-ZaX7kAVKh2R0Yzg/edit?gid=2146402733#gid=2146402733">XEM TẠI ĐÂY</a>
+</div>
+
+<div class="confirm">
+  <strong>✅ Đề nghị xác nhận kế hoạch</strong>
+  <p style="margin: 8px 0 0 0;">Nhờ team review và <strong>xác nhận lại bản kế hoạch Tháng 9/2026 (dự kiến)</strong> ở trên để DISO làm cơ sở nghiệm thu cuối tháng. Ba nội dung mong AT phản hồi sớm:</p>
+  <ul style="margin: 8px 0 0 18px; padding: 0;">
+    <li><strong>Xác nhận triển khai Creator Portal dùng chung trong tháng 9</strong>, hay chuyển sang phương án thay thế ở cuối thư.</li>
+    <li><strong>Có onboard ADV mới trong tháng 9 hay không</strong>, và là ADV nào — ảnh hưởng trực tiếp tới 45h đã đặt trước.</li>
+    <li><strong>Phương án xử lý phần vượt tiêu chuẩn</strong> (+10h ở kế hoạch chính) — giãn sang tháng 10 hoặc điều chỉnh khối lượng hợp đồng tháng 9.</li>
+  </ul>
+</div>
+
+<p>Báo cáo tiến độ tuần sẽ gửi riêng vào đầu mỗi tuần. Trong quá trình triển khai, nếu có vướng mắc, thay đổi scope hoặc cần điều chỉnh deadline, DISO sẽ chủ động cập nhật và trao đổi với các bên liên quan kịp thời.</p>
+
+<p>Cảm ơn team đã phối hợp.</p>
+
+<div class="signature">
+  <p>Thanks &amp; Regards,<br>
+  <strong>DISO Team</strong></p>
+</div>
+
+</body>
+</html>
