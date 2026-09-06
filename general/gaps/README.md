@@ -22,7 +22,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 
 | # | Gap | File |
 |---|---|---|
-| 2 | InfluencerProfile concept — Ambassador mandatory + vCreator recommended (creator pool) | [p0/02-influencer-profile-concept.md](./p0/02-influencer-profile-concept.md) |
+| 2 ✅ | ~~InfluencerProfile concept — Ambassador mandatory~~ **ĐÃ XONG cho Ambassador (2026-09-04)**; vCreator recommended (creator pool) vẫn còn | [p0/02-influencer-profile-concept.md](./p0/02-influencer-profile-concept.md) |
 | 8 | vCreator thiếu hệ thống kiểm soát ngân sách campaign + tính thưởng có cap | [p0/08-budget-alert-system.md](./p0/08-budget-alert-system.md) |
 | **35** 🚨 | **TCB urgent** — Hỗ trợ crawl Facebook Post + camp đếm số bài post (Amb đã có, TCB/vCr chưa) | [p0/35-facebook-post-crawl-and-count-campaign.md](./p0/35-facebook-post-crawl-and-count-campaign.md) |
 
@@ -35,7 +35,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | **15** ⭐ | **🔝 TOP P1** — vCreator/Ambassador thiếu hệ thống đối chiếu (reconciliation) + audit trail crawl chống fraud (combined #6 + #15) | [p1/15-reconciliation-engine-and-snapshot.md](./p1/15-reconciliation-engine-and-snapshot.md) |
 | 16 | vCreator/Ambassador thiếu hệ thống đánh giá creator (review + rating) — phần tiếp nối của gap #2 | [p1/16-profile-review-rating.md](./p1/16-profile-review-rating.md) |
 | 31 | TCB cho phép admin tạo creator + import content giúp họ; vCr/Amb không có | [p1/31-admin-proxy-creator-flow.md](./p1/31-admin-proxy-creator-flow.md) |
-| 32 | Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn | [p1/32-staff-code-employee-binding.md](./p1/32-staff-code-employee-binding.md) |
+| 32 ✅ | ~~Concept "mã nhân viên + binding partner"~~ **ĐÃ XONG cho Ambassador (2026-09-04)**; phần extend cho TCB vẫn còn | [p1/32-staff-code-employee-binding.md](./p1/32-staff-code-employee-binding.md) |
 | 7 | TCB Next.js Analytics Dashboard executive — TCB-only, vCr/Amb chỉ có dashboard cũ admin Umi | [p1/07-analytics-dashboard-port.md](./p1/07-analytics-dashboard-port.md) |
 | 20 | Affiliate suite — Amb mature, vCr đang làm (Scalef), TCB chờ chốt sale | [p1/20-ambassador-affiliate-suite.md](./p1/20-ambassador-affiliate-suite.md) |
 | 24 | TCB Campaign matching engine — đang dang dở, làm xong cần port ngay vCr/Amb | [p1/24-tcb-campaign-matching-engine.md](./p1/24-tcb-campaign-matching-engine.md) |

@@ -4,6 +4,7 @@
 > **Source**: Tách từ gap #13 (2026-05-07)
 > **Direction port**: vCreator → TCB (extend) + vCreator → Ambassador (port full)
 > **Last verified**: 2026-05-07
+> **Trạng thái**: ✅ **ĐÃ XONG cho Ambassador** (cập nhật 2026-09-04). Phần extend cho TCB vẫn để ngỏ.
 
 ---
 

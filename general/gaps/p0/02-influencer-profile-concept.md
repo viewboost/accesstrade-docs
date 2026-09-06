@@ -6,6 +6,7 @@
 > - **Ambassador**: 🔴 BẮT BUỘC port InfluencerProfile từ TCB (Option B confirmed)
 > - **vCreator**: 🟡 ĐỀ XUẤT port (long-term: chia sẻ creator pool giữa 3 sản phẩm)
 > **Last verified**: 2026-05-07 (3-product code reading + business intent clarify)
+> **Trạng thái**: ✅ **ĐÃ XONG cho Ambassador** (cập nhật 2026-09-04). Phần port sang vCreator (creator pool dùng chung) vẫn để ngỏ.
 
 ---
 
