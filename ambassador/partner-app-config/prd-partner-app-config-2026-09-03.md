@@ -1282,7 +1282,7 @@ Bộ này chưa ghi xuống cơ sở dữ liệu — chỉ trả về khi ADV ch
 - [ ] `grep` trong `admin/src` không thấy danh sách khoá màu, danh mục section hay danh sách trường bắt buộc nào được khai lại
 - [ ] Thêm một loại section ở backend: admin hiện nó ra **mà không cần sửa mã admin**
 
-### PC-019: Cạm bẫy nền tảng khi dựng lại giao diện — năm thứ hỏng lặng
+### PC-019: Bẫy nền tảng khi dựng lại giao diện — năm thứ hỏng im lặng
 
 **Priority:** Must Have — yêu cầu mới tại v2.0, phát sinh khi dựng lại 21 màn hình
 
@@ -1309,7 +1309,7 @@ mặt cho hộp thoại, popover và nút viền. Hộp thoại `bg-background` 
 **như lớp phủ không hiện** — người dùng không phân biệt được đâu là hộp thoại. Những bề mặt
 đó phải dùng `popover`/`card`.
 
-**4. SVGO đổi TÊN mọi id thành `a`.** 51/193 icon có `clipPath`, `mask` hoặc gradient tham chiếu bằng `url(#…)`. Bộ tối ưu rút gọn mọi id thành `a`, mà id là **toàn cục trong một document** khi icon được nhúng thẳng vào DOM — nên mười icon trên một trang đều trỏ về `#a` ĐẦU TIÊN, và chín cái còn lại bị cắt theo vùng clip của một glyph khác. Icon "sao chép" ra một góc vụn. Phải bật `prefixIds` để mỗi tập tin có tiền tố riêng.
+**4. SVGO đổi TÊN mọi id thành `a`.** 51/193 icon có `clipPath`, `mask` hoặc gradient tham chiếu bằng `url(#…)`. Bộ tối ưu rút gọn mọi id thành `a`, mà id là **toàn cục trong một document** khi icon được nhúng thẳng vào DOM — nên mười icon trên một trang đều trỏ về `#a` ĐẦU TIÊN, và chín cái còn lại bị cắt theo vùng clip của một glyph khác. Icon "sao chép" ra một góc vụn. Phải bật `prefixIds` để mỗi tập tin có prefix riêng.
 
 **5. Tailwind v4 đổi mặc định `border-color` sang `currentColor`.** v3 mặc định là xám nhạt. Component shadcn viết `border` trần và trông đợi một lớp base cấp màu; thiếu lớp đó thì **mọi** thẻ, dropdown và ô đều viền màu CHỮ, tức gần đen. Không có cảnh báo nào.
 
@@ -1329,21 +1329,20 @@ theo hướng **hỏng im lặng** chứ không báo lỗi.
 
 ---
 
-### PC-020: Dải màu là một loại token, không gộp được vào bảng màu phẳng
+### PC-020: Gradient là một loại token, không gộp được vào bảng màu đơn
 
 **Priority:** Must Have — yêu cầu mới tại v2.2, phát sinh khi đối chiếu trang chủ với trang đang chạy
 
-**Vì sao cần.** Bộ 18 màu **phẳng** không tả được `fecredit`. Tiêu đề khối, nút chính và nền
-trang của họ đều là **dải màu ba chặng** (`#2ECEFF → #0DD09F → #00A078`). Ép về một màu
-phẳng là chỗ sai lệch dễ thấy nhất giữa hệ mới và trang đang chạy: tiêu đề xanh lá thay vì
-xanh ngọc, nút phẳng thay vì chuyển sắc, nền một màu thay vì gradient.
+**Vì sao cần.** Bộ 18 màu **đơn** không mô tả được `fecredit`. Tiêu đề khối, nút chính và nền
+trang của họ đều là **gradient ba stop** (`#2ECEFF → #0DD09F → #00A078`). Ép về một màu đơn là chỗ sai lệch dễ thấy nhất giữa hệ mới và trang đang chạy: tiêu đề xanh lá thay vì
+xanh ngọc, nút màu đơn thay vì chuyển sắc, nền một màu thay vì gradient.
 
-Không gộp được vào `colors`: một dải màu là **nhiều chặng màu cộng một góc**, còn `colors`
-là map chuỗi-một-màu.
+Không gộp được vào `colors`: một gradient là **nhiều stop màu cộng một góc**, còn `colors`
+là map khoá → một mã màu.
 
 **Lưu thành DỮ LIỆU, không phải chuỗi CSS.** Chuỗi `linear-gradient(...)` từ cấu hình sẽ đi
 thẳng vào thuộc tính `style` của thẻ gốc, tức **tiêm CSS tuỳ ý** — đúng thứ mà bộ kiểm màu
-sinh ra để chặn. Góc và các chặng được kiểm riêng rồi hệ thống tự ghép chuỗi.
+sinh ra để chặn. Góc và các stop được kiểm riêng rồi hệ thống tự ghép chuỗi.
 
 ```
 theme.gradients { <tên>: { angle?: number, stops: [{ color: "#hex", at?: 0-100 }] } }
@@ -1351,18 +1350,17 @@ theme.gradients { <tên>: { angle?: number, stops: [{ color: "#hex", at?: 0-100 
 
 Ba tên đang dùng: `heading`, `cta`, `page`.
 
-**Đòi tối thiểu HAI chặng.** Một chặng là màu phẳng viết dài dòng; nhận vào thì một lần
-nhập sai ở admin sẽ **âm thầm làm phẳng cả nhận diện thương hiệu** thay vì báo lỗi.
+**Đòi tối thiểu HAI stop.** Gradient một stop chính là màu đơn viết dài dòng; nhận vào thì một lần nhập sai ở admin sẽ **âm thầm làm mất gradient của cả nhận diện thương hiệu** thay vì báo lỗi.
 
-**Mọi chỗ dùng phải rơi về màu phẳng.** `var(--gradient-x, var(--color-y))` — ADV không khai
-dải màu nào thì nhận đúng thứ họ vẫn có. Đây cũng là lý do dùng được `background-clip: text`
-cho cả hai: tô chữ bằng một màu đặc cũng chạy y như tô bằng dải màu.
+**Mọi chỗ dùng phải rơi về màu đơn.** `var(--gradient-x, var(--color-y))` — ADV không khai
+gradient nào thì nhận đúng thứ họ vẫn có. Đây cũng là lý do dùng được `background-clip: text`
+cho cả hai: tô chữ bằng màu đơn cho kết quả y như tô bằng gradient.
 
 **AC:**
-- [ ] `ResolveTheme` GIỮ `gradients`; ADV không khai thì **không** có dải màu mặc định nào
-- [ ] Mỗi chặng qua đúng bộ kiểm hex như một màu phẳng; chặng sai làm hỏng **cả** dải màu, không phải nửa dải
-- [ ] Vị trí chặng ngoài 0-100 bị từ chối lúc xuất bản
-- [ ] Gỡ hết `gradients` khỏi cấu hình: trang vẫn đúng, chỉ phẳng màu — không chỗ nào trống
+- [ ] `ResolveTheme` GIỮ `gradients`; ADV không khai thì **không** có gradient mặc định nào
+- [ ] Mỗi stop qua đúng bộ kiểm hex như một màu đơn; stop sai làm hỏng **cả** gradient, không phải một nửa
+- [ ] Vị trí stop ngoài 0-100 bị từ chối lúc xuất bản
+- [ ] Gỡ hết `gradients` khỏi cấu hình: trang vẫn đúng, chỉ còn màu đơn — không chỗ nào trống
 
 ---
 
@@ -1378,15 +1376,14 @@ cho cả hai: tô chữ bằng một màu đặc cũng chạy y như tô bằng 
 | Cỡ tiêu đề khối | Trang chủ **36px**, màn chi tiết **20px** | Dùng 36px cho cả hai; màn chi tiết to gấp rưỡi |
 | Tuổi bài đăng | Tương đối trong **8 ngày**, sau đó ngày giờ tuyệt đối | Luôn tương đối; "47 ngày trước" bắt người đọc tự tính |
 | Định dạng ngày giờ | `DD/MM/YYYY - HH:mm` | `Intl` với `dateStyle`/`timeStyle` cho `18:28 26/8/26` — giờ trước, năm hai chữ số |
-| Thẻ chiến dịch | Khung **tỉ lệ cố định**, panel `position: absolute` đè lên cover | Xếp nối tiếp; bấm mở một thẻ là cả hàng nhảy |
-| Lớp phủ khi mở panel | Trắng **10%** | Đen 40% — làm poster bạc trắng. Stylesheet của FE cũ ghi rõ họ đã thử 0.55 đen và bỏ |
+| Thẻ chiến dịch | Khung **`aspect-ratio` cố định**, panel `position: absolute` đè lên cover | Xếp nối tiếp; bấm mở một thẻ là cả hàng nhảy |
+| Lớp phủ (overlay) khi mở panel | Trắng **10%** | Đen 40% — làm poster bạc trắng. Stylesheet của FE cũ ghi rõ họ đã thử 0.55 đen và bỏ |
 | Thẻ mốc thưởng | Chỉ tiêu đề + huy chương + tiền | Thêm `desc`; `desc` là một câu điều kiện đầy đủ, biến 5 thẻ gọn thành 5 đoạn văn |
 | Chip trên poster | view / bài đăng / **tiền thưởng**, số rút gọn, không chú thích | Chỉ số thứ ba là số creator; viết đủ số + chú thích làm chip rộng gấp đôi poster |
-| Trang văn bản dài | Breadcrumb **trong** thẻ, bề ngang **1040px**, khoảng cách đoạn sát | Breadcrumb ngoài, rail 1216px, lề đoạn rộng — trình soạn thảo xuất một `<p>` mỗi DÒNG nên danh sách năm ý thành năm câu rời rạc |
+| Trang văn bản dài | Breadcrumb **trong** thẻ, bề ngang **1040px**, khoảng cách đoạn sát | Breadcrumb ngoài, khung nội dung 1216px, lề đoạn rộng — trình soạn thảo xuất một `<p>` mỗi DÒNG nên danh sách năm ý thành năm câu rời rạc |
 
 **Quy tắc:** trước khi dựng một màn, **đo trên trang đang chạy** — cỡ chữ, khoảng cách,
-ngưỡng định dạng — thay vì suy từ màn đã dựng. Bộ token cho biết *màu gì*, không cho biết
-*to bao nhiêu ở màn nào*.
+ngưỡng định dạng — thay vì suy từ màn đã dựng. Bộ token cho biết *màu gì*, không cho biết *cỡ bao nhiêu ở màn nào*.
 
 **AC:**
 - [ ] Mỗi màn có một lần đối chiếu trực tiếp với trang đang chạy trước khi nghiệm thu
@@ -1394,19 +1391,19 @@ ngưỡng định dạng — thay vì suy từ màn đã dựng. Bộ token cho 
 
 ---
 
-### PC-022: `loading.tsx` ở gốc nuốt cả header và footer
+### PC-022: `loading.tsx` ở gốc thay luôn cả header và footer
 
 **Priority:** Must Have — yêu cầu mới tại v2.2
 
 **Vì sao cần.** Header và footer hiện nằm trong `PageFrame`, mà `PageFrame` do **từng trang**
-render. Nên một `app/loading.tsx` ở gốc thay **toàn bộ** đầu ra của route — kể cả chrome — và
-mỗi cú bấm làm cả màn hình nháy trắng rồi dựng lại. Người dùng đọc đó là trang bị tải lại.
+render. Nên một `app/loading.tsx` ở gốc thay **toàn bộ** đầu ra của route — kể cả header và footer — và
+mỗi lần điều hướng làm cả màn hình trắng rồi dựng lại. Người dùng hiểu đó là trang bị tải lại.
 
 **Hai đường, phải chọn một:**
 
 1. **Không có `loading.tsx` ở gốc.** Next giữ trang hiện tại cho tới khi trang mới sẵn sàng.
    Các khối vẫn chảy vào dần nhờ `Suspense` bọc từng section. Đây là trạng thái hiện tại.
-2. **Đưa chrome lên `app/layout.tsx`.** Lúc đó `loading.tsx` chỉ thay phần thân. Vướng một
+2. **Đưa header và footer lên `app/layout.tsx`.** Lúc đó `loading.tsx` chỉ thay phần thân. Vướng một
    điểm cần quyết: trên tên miền nhiều ADV, header hiện ADV nào là do **đường dẫn** quyết,
    mà layout chỉ biết tên miền — nên hoặc chấp nhận header lấy ADV đầu tiên, hoặc đẩy phần
    chọn ADV xuống một client component đọc `usePathname`.
@@ -1576,7 +1573,7 @@ Bắt buộc `export const dynamic = 'force-dynamic'` — proxy bị cache thì 
 
 ### Hợp đồng backend — tám điều chỉ lộ ra khi chạy với dữ liệu thật
 
-Tám điều dưới đây không nằm trong tài liệu API nào; tất cả tìm ra khi dựng màn hình chiến dịch, màn tài khoản và khi chạy thử với backend dev thật, và tất cả đều **hỏng lặng**: request trả `code: 1`, không có lỗi ở đâu, chỉ là màn hình thiếu dữ liệu.
+Tám điều dưới đây không nằm trong tài liệu API nào; tất cả tìm ra khi dựng màn hình chiến dịch, màn tài khoản và khi chạy thử với backend dev thật, và tất cả đều **hỏng im lặng**: request trả `code: 1`, không có lỗi ở đâu, chỉ là màn hình thiếu dữ liệu.
 
 **1. `Origin` quyết định ADV nào được trả về — kể cả cổng.** `GET /events` và `GET /events/statistic` gọi `GetListPartnersByDomain(cc.GetAppOrigin())`, tức lọc `partners.allowDomains` theo header `Origin` (rơi về `Referer` nếu thiếu). Không có header thì tập đối tác rỗng và **danh sách chiến dịch rỗng ở mọi ADV** — vẫn `code: 1`, vẫn `"Thành công!"`. Các ứng dụng đang chạy không bao giờ gặp vì trình duyệt tự gắn `Origin`; `partner-app` render ở server nên **phải chuyển tiếp `Host` của request thành `Origin`**.
 
@@ -1595,7 +1592,7 @@ Kèm theo: `pstring.GetHostNameByURL` trả `uri.Host`, tức **giữ nguyên c�
 **6. Hai endpoint bài đăng dùng hai bộ tên cho cùng ba thứ.** `/partners/content-features` trả `cover` + `statistic.view.total` + `author`; `/events/:id/content` trả `thumbnail` + `view`. Ảnh đại diện có thể nằm ở `user.socialInfo.photo` khi `user.avatar` rỗng — tài khoản đăng nhập bằng mạng xã hội và chưa tải ảnh lên.
 ---
 
-**7. Affiliate nằm ở tiền tố RIÊNG, và trả mảng trần.** `GET /affiliate/events/:id/campaigns`, không phải `/events/:id/campaigns` — đường dẫn thứ hai trả **404**, mà lớp gọi API biến 404 thành kết quả rỗng, nên cả khối Affiliate biến mất khỏi màn chi tiết **không một dấu vết**. Payload là **mảng trần** dưới `data`, không phải `{ list }`. Affiliate dùng chung một backend cho mọi app white-label và **không có tham số partner**: token của người dùng quyết định họ thuộc đối tác nào.
+**7. Affiliate nằm ở prefix RIÊNG, và trả thẳng một mảng.** `GET /affiliate/events/:id/campaigns`, không phải `/events/:id/campaigns` — đường dẫn thứ hai trả **404**, mà lớp gọi API biến 404 thành kết quả rỗng, nên cả khối Affiliate biến mất khỏi màn chi tiết **không một dấu vết**. Payload trả thẳng **một mảng** dưới `data`, không phải object bọc `{ list }`. Affiliate dùng chung một backend cho mọi app white-label và **không có tham số partner**: token của người dùng quyết định họ thuộc đối tác nào.
 
 **8. Response bảng xếp hạng mang sẵn siêu dữ liệu mà không màn nào đọc.** `period`, `periodStartAt`/`periodEndAt`, `rankBy`, `metrics`, `valueBasis`, `graceDays`, `isSettling` — tất cả đã về cùng danh sách dòng. Bỏ qua chúng thì bảng vô nghĩa: "hạng 1 với 500 view" không cho biết là tháng này hay luỹ kế, và người mới đăng bài không biết bảng tuần sẽ reset.
 
@@ -1783,7 +1780,7 @@ dụng.
 1. **Ngưỡng blast radius** — số đối tác tối đa trên một triển khai trước khi cần tách. Cần trước khi lên production.
 2. **Chủ sở hữu quy trình NFR-009** — ai quyết định phân loại một yêu cầu riêng của đối tác. Cần trước M2.
 3. **Tài khoản thật trên dev để nghiệm thu nhóm màn đăng nhập** — chín màn tài khoản chưa từng được đối chiếu với trang đang chạy. Cần trước M1.
-4. **Chọn đường cho PC-022** — bỏ hẳn `loading.tsx` ở gốc (hiện tại) hay đưa chrome lên layout. Ảnh hưởng tới việc header hiển thị ADV nào trên tên miền nhiều ADV.
+4. **Chọn đường cho PC-022** — bỏ hẳn `loading.tsx` ở gốc (hiện tại) hay đưa header và footer lên layout. Ảnh hưởng tới việc header hiển thị ADV nào trên tên miền nhiều ADV.
 5. **PC-012 nhóm khác biệt hành vi** — 4 file (`not-logged-in` Δ914, `header` Δ659, `models/main` Δ288, `interfaces/event` Δ251) cần **đối tác chấp thuận** trước cutover. Chưa xác định đầu mối phía 5 đối tác. Cần trước M1.
 
 ### Đã đóng
@@ -1806,9 +1803,9 @@ dụng.
 |---|---|---|
 | 1.0 | 2026-09-03 | Bản đầu. Chốt phương án ứng dụng mới trên nền tảng hiện đại, backend giữ nguyên, `creator-os` là tài liệu tham khảo. Phạm vi khi đó: 15 ứng dụng, giữ nguyên không migrate |
 | 1.1 | 2026-09-04 | Đổi phạm vi sang migrate toàn bộ 15 ứng dụng theo 6 đợt. Bổ sung PC-011 → PC-013, NFR-007 → NFR-009. Sửa PC-001 theo mô hình domain → tập đối tác |
-| 2.2 | 2026-09-07 | **Đính chính sau khi soi từng trang song song với trang đang chạy.** Mục 7 lên **tám** điều: **affiliate nằm ở tiền tố riêng** `/affiliate/events/:id/campaigns` và trả **mảng trần** (đường cũ trả 404, mà lớp gọi API biến 404 thành rỗng nên cả khối Affiliate biến mất không dấu vết), và **response bảng xếp hạng mang sẵn siêu dữ liệu chưa ai đọc** (`period`, biên kỳ, `rankBy`, `metrics`, `graceDays`, `isSettling` — nguy nhất là `isSettling`: trong ngày ân hạn bảng hiện kỳ TRƯỚC nên người đăng bài hôm qua tưởng bảng hỏng). **PC-019 lên năm thứ**: SVGO đổi mọi id thành `a` nên 51/193 icon dùng `clipPath` tranh nhau một id và chín trên mười cái bị cắt theo vùng clip của glyph khác; Tailwind v4 đổi mặc định `border-color` sang `currentColor` nên mọi component shadcn viền màu chữ. Bổ sung **PC-020 — dải màu là một loại token riêng** (18 màu phẳng không tả được `fecredit`; lưu thành dữ liệu chứ không phải chuỗi CSS; tối thiểu hai chặng; mọi chỗ dùng rơi về màu phẳng), **PC-021 — quy ước hiển thị đo TỪNG MÀN** (tiêu đề trang chủ 36px nhưng màn chi tiết 20px; tuổi bài tương đối trong 8 ngày; thẻ chiến dịch khung tỉ lệ cố định + panel đè lên; lớp phủ trắng 10% chứ không phải đen 40% — FE cũ đã thử và bỏ), **PC-022 — `loading.tsx` ở gốc nuốt cả header/footer**. Bổ sung **mục 12b** liệt kê phần còn nợ: hai màn affiliate, nút nổi, popup, và **cả chín màn tài khoản chưa soi được** vì đứng sau cổng đăng nhập Google thật |
+| 2.2 | 2026-09-07 | **Đính chính sau khi soi từng trang song song với trang đang chạy.** Mục 7 lên **tám** điều: **affiliate nằm ở prefix riêng** `/affiliate/events/:id/campaigns` và **trả thẳng một mảng** (đường cũ trả 404, mà lớp gọi API biến 404 thành rỗng nên cả khối Affiliate biến mất không dấu vết), và **response bảng xếp hạng mang sẵn siêu dữ liệu chưa ai đọc** (`period`, biên kỳ, `rankBy`, `metrics`, `graceDays`, `isSettling` — nguy nhất là `isSettling`: trong ngày ân hạn bảng hiện kỳ TRƯỚC nên người đăng bài hôm qua tưởng bảng hỏng). **PC-019 lên năm thứ**: SVGO đổi mọi id thành `a` nên 51/193 icon dùng `clipPath` tranh nhau một id và chín trên mười cái bị cắt theo vùng clip của glyph khác; Tailwind v4 đổi mặc định `border-color` sang `currentColor` nên mọi component shadcn viền màu chữ. Bổ sung **PC-020 — gradient là một loại token riêng** (18 màu đơn không mô tả được `fecredit`; lưu thành dữ liệu chứ không phải chuỗi CSS; tối thiểu hai stop; mọi chỗ dùng rơi về màu đơn), **PC-021 — quy ước hiển thị đo TỪNG MÀN** (tiêu đề trang chủ 36px nhưng màn chi tiết 20px; tuổi bài tương đối trong 8 ngày; thẻ chiến dịch khung tỉ lệ cố định + panel đè lên; lớp phủ trắng 10% chứ không phải đen 40% — FE cũ đã thử và bỏ), **PC-022 — `loading.tsx` ở gốc thay luôn cả header/footer**. Bổ sung **mục 12b** liệt kê phần còn nợ: hai màn affiliate, nút nổi, popup, và **cả chín màn tài khoản chưa soi được** vì đứng sau cổng đăng nhập Google thật |
 | 2.1 | 2026-09-07 | **Đính chính sau khi chạy `partner-app` với backend dev thật** — mục 7 lên **sáu** điều: bổ sung **ảnh có BỐN hình dạng tuỳ endpoint** (chuỗi URL thuần · `{url}` · `{dimensions:{sm|md|lg:{url}}}` · `{default|medium|high:{url}}`; ảnh bìa chiến dịch ở `covers[0].default`, **không có khoá `photo`**) và **hai endpoint bài đăng dùng hai bộ tên cho cùng ba thứ** (`cover`/`statistic.view.total`/`author` so với `thumbnail`/`view`; ảnh đại diện rơi về `user.socialInfo.photo`). Cả hai chỉ lộ ra với dữ liệu thật — dữ liệu seed không có ảnh nên màn hình trông vẫn đúng. Ghi nhận cấu hình chạy song song trong giai đoạn quá độ: `/partners/app-config` chưa deploy lên dev nên tách `PARTNER_CONFIG_API_BASE_URL` (cấu hình lấy ở local, dữ liệu lấy ở dev) và `DEV_FORCE_ORIGIN` (ghim Origin về host mà môi trường dich biết, vì `allowDomains` của nó không có `localhost`) |
-| 2.0 | 2026-09-06 | **Đính chính từ khi dựng `partner-app`** — bổ sung mục 7 "Hợp đồng backend — bốn điều chỉ lộ ra khi render ở server": `Origin` quyết định tập ADV **và giữ nguyên cổng** (không có header thì danh sách chiến dịch rỗng ở mọi ADV mà vẫn `code: 1`; **hệ quả trực tiếp cho BFF proxy**: proxy phải chuyển tiếp `Origin` gốc, không thì bật proxy là mất chiến dịch); thời gian là **chuỗi ISO** qua `ptime.TimeResponse`, không phải `{ unix }`; dòng bảng xếp hạng là `statistic.pointTotal`/`cashTotal` tách `completed` + `pending` và phải **cộng cả hai**; `code: 1` + `data: null` là không-tìm-thấy. Cả bốn đều hỏng lặng. Bổ sung **PC-019 — cạm bẫy nền tảng khi dựng lại giao diện**: SVGR xoá `viewBox` nên **cả 161 icon** vẽ lệch trong khung nhỏ; token `muted` của partner là màu **chữ** còn shadcn coi là màu **nền**; `background` của partner là **nền trang có sắc** nên hộp thoại `bg-background` trông như mất lớp phủ |
+| 2.0 | 2026-09-06 | **Đính chính từ khi dựng `partner-app`** — bổ sung mục 7 "Hợp đồng backend — bốn điều chỉ lộ ra khi render ở server": `Origin` quyết định tập ADV **và giữ nguyên cổng** (không có header thì danh sách chiến dịch rỗng ở mọi ADV mà vẫn `code: 1`; **hệ quả trực tiếp cho BFF proxy**: proxy phải chuyển tiếp `Origin` gốc, không thì bật proxy là mất chiến dịch); thời gian là **chuỗi ISO** qua `ptime.TimeResponse`, không phải `{ unix }`; dòng bảng xếp hạng là `statistic.pointTotal`/`cashTotal` tách `completed` + `pending` và phải **cộng cả hai**; `code: 1` + `data: null` là không-tìm-thấy. Cả bốn đều hỏng im lặng. Bổ sung **PC-019 — bẫy nền tảng khi dựng lại giao diện**: SVGR xoá `viewBox` nên **cả 161 icon** render sai trong khung nhỏ; token `muted` của partner là màu **chữ** còn shadcn coi là màu **nền**; `background` của partner là **nền trang có sắc** nên hộp thoại `bg-background` trông như mất lớp phủ |
 | 1.9 | 2026-09-04 | **Viết lại mục 2.6 thành DANH SÁCH PHÁT HIỆN, không phải danh sách đã sửa** — dự án làm trên thư mục mới, không sửa mã của 5 ứng dụng đang chạy; việc xử lý chúng là quyết định của chủ sở hữu và là task độc lập. Bổ sung cột **"hệ mới có mang theo không"**: PRE-2/3/4/5 thì không (lược đồ mới đã chặn sẵn), nhưng **PRE-1 và PRE-8 thì CÓ** nếu port nguyên luồng uỷ quyền theo quyết định 04/09 — nên hai mục này thành ràng buộc thiết kế cho `partner-app`. Bổ sung **PRE-8** (`state` của SSO AccessTrade sinh ra nhưng không bao giờ được kiểm, cộng hai lỗi phụ: băm mốc thời gian nên đoán được, và tính một lần lúc nạp module). Xác minh cụ thể đường khai thác **PRE-1** (`query.state` làm gốc URL chuyển hướng → giao mã uỷ quyền TikTok của nạn nhân cho tên miền kẻ tấn công, 5 app × 2 trang) — làm rõ câu "giữ nguyên 04/09" nói về việc `partner-app` port nguyên luồng, không phải kết luận an toàn. **PRE-4 rộng hơn khảo sát đầu**: 20 chỗ, cả `event-detail` và `partner-home`. **PRE-5 kèm lỗi mới**: `console.log` in nguyên `ctx.request`, tức ghi cookie phiên và `Authorization` vào log. **PRE-3 cần người quyết**: không ai biết hotline/email/mạng xã hội đúng của `lusso` và `parasola` |
 | 1.8 | 2026-09-04 | **Đính chính từ khi triển khai** — bước nền backend và màn hình admin đã dựng xong và chạy thử đầu-cuối với MongoDB, Redis và trình duyệt thật. Bổ sung **PC-018 — lược đồ cấu hình do server phát ra**: danh mục section, 18 khoá màu, giá trị mặc định và 7 trường bắt buộc đều lấy từ một endpoint, admin không khai lại; kèm `defaultSections` để ADV mới mở màn hình đã có sẵn trang giống các FE đang chạy. **PC-002**: gỡ ràng buộc "phải khai `primary`" — mặc định là để KHÔNG khai, hợp nhất chạy ở server; ghi rõ `primaryForeground` **không tồn tại** (nhắc nhầm ở v1.2); bo góc `0` là giá trị hợp lệ. **PC-007**: dấu hiệu ADV khác lấy **host** thay vì URL đầy đủ — test đầu-cuối bắt được ca `lusso` mang link CDN của HDBank mà bản cũ bỏ lọt; dò đệ quy qua cả `assets` và mảng object. **PC-015**: ghi hai bẫy sẵn có làm vai trò mới vô hiệu — `constants.Roles` là **danh sách vai trò thứ ba** tách rời `StaffRole`/`StaffRoleName`, và `GenerateRole` bỏ qua mọi môi trường đã có sẵn vai trò; cả hai đã sửa, có test canh. Bổ sung AC cho hai lỗi UI tìm ra trên trình duyệt (hex sai không báo tại chỗ; hộp thoại xuất bản che mất ô cần sửa khi lỗi) |
 | 1.7 | 2026-09-04 | Đóng ba câu hỏi về người. **NFR-009 viết lại thành chính sách**: theme chung, ADV không có quyền chỉnh riêng — không cần người đứng cổng. **PC-012 viết lại thành gộp về bản đầy đủ nhất**, kèm ma trận tính năng 5 ADV: `vpbank` chỉ đi sau (thiếu `isMustInputProfile`, `Tooltip`, `useResponsive`, link Q&A), `FAQCollapse` đã là section `faq` — **không ADV nào mất gì, 0 cờ mới, không cần ADV chấp thuận**. **PC-013 bỏ điều kiện xác nhận từ ADV** — giá trị cấu hình sai là lỗi nhập liệu, đã có kiểm tra chéo của PC-007 làm lưới an toàn |
