@@ -24,7 +24,8 @@ Sự cố chi trùng vừa rồi là triệu chứng. Nguyên nhân là cả m�
 | [`phan-tich-va-giai-phap.md`](./phan-tich-va-giai-phap.md) | Founder · lãnh đạo | Bối cảnh · 10 vấn đề · sổ rủi ro · 7 mức ưu tiên · quyết định **D1–D7** |
 | [`mo-hinh-payout-va-tieu-chi-nghiem-thu.md`](./mo-hinh-payout-va-tieu-chi-nghiem-thu.md) | Kỹ thuật · QA | Mô hình khái niệm · 10 bất biến **BB-1…BB-10** · tiêu chí nghiệm thu từng mốc |
 | [`cong-cu-cho-van-hanh-chi-tra.md`](./cong-cu-cho-van-hanh-chi-tra.md) | Vận hành · sản phẩm | Nhịp làm việc hằng ngày · thao tác loại A/B · xử lý ca kẹt · 12 cảnh báo |
-| [`van-de-can-at-core-ho-tro.md`](./van-de-can-at-core-ho-tro.md) | Đối tác · sản phẩm | Bảng hợp đồng tích hợp · 4 việc cần AT-Core |
+| [`at-core-partner-bank-gateway-api.md`](./at-core-partner-bank-gateway-api.md) | Kỹ thuật | **Tài liệu API AT-Core** — 16 endpoint, chuyển từ PDF |
+| [`van-de-can-at-core-ho-tro.md`](./van-de-can-at-core-ho-tro.md) | Đối tác · sản phẩm | Bảng hợp đồng tích hợp · 4 việc cần AT-Core *(việc 1 đã có đáp án)* |
 | [`checklist-dev-truoc-khi-lam-viec-at-core.md`](./checklist-dev-truoc-khi-lam-viec-at-core.md) | Kỹ thuật | Kiểm lại trước khi gửi gì cho đối tác — phần lớn là việc của mình |
 
 ---
@@ -137,6 +138,7 @@ có quy trình tay tạm ở làn vận hành ngay từ tuần đầu.
 | **D7** — chung adapter AT-Core với `creator-os` không | **Founder** | Trước UT1 |
 | Bộ số ở mục "Tuần đầu" | Vận hành + dữ liệu | Tuần này |
 | **Thu hồi khoản chi sai có được không** | AT-Core trả lời | Hỏi sớm |
+| Truy vấn giao dịch theo khoảng thời gian | AT-Core | **Yêu cầu DUY NHẤT còn lại** |
 
 ### D1 là câu gốc
 

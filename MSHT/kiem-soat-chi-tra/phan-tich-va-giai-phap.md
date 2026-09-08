@@ -128,14 +128,27 @@ với lệnh chưa gửi đi đâu cả.
 
 ### 1.6 Cửa sổ nhìn sang AT-Core
 
-Client có **7 endpoint**, luồng chi trả dùng **3**:
+> **Đính chính 2026-09-08.** Bản trước viết dựa trên client Go. Sau khi đọc tài liệu API chính thức
+> *([bản `.md`](./at-core-partner-bank-gateway-api.md))*, bảng này phải sửa — **AT-Core có nhiều
+> năng lực hơn hẳn những gì MSHT đang dùng.**
 
-| Có | Không có |
+AT-Core có **16 endpoint**. Client Go bọc **7**. Luồng chi trả dùng **3**.
+
+| Đã có bên AT-Core, MSHT **chưa dùng** | Thật sự **không có** |
 | --- | --- |
-| Gửi lệnh chi (`fund-transfer`) | **Truy vấn theo khoảng thời gian** |
-| Tra **một** lệnh đã biết mã (`txn-inquiry`) | Số dư tài khoản chi hộ |
-| Kiểm tra tài khoản nhận | Số tiền trên callback |
-| Callback báo kết quả (3 trường, không số tiền) | Cam kết chống trùng theo mã của mình |
+| **Chống trùng theo `txn_id`** — trùng trả `400` | **Truy vấn giao dịch theo khoảng thời gian** |
+| **Chuyển tiền hàng loạt** `POST /fund-transfers` | Mô tả callback/webhook *(không có trong tài liệu)* |
+| **Kiểm tra số dư** `GET /balance` | |
+| **Kiểm tra điều khoản TOS** `GET .../legal/check` | |
+| Kiểm tra tài khoản nhận `.../account/info/check` | |
+| Tính phí `calculate-fee` · thông báo cashback | |
+
+🔴 **Điểm nặng nhất:** *"`txn_id` phải duy nhất theo partner"* — hàng rào chống trùng **đã tồn tại**.
+MSHT sinh `txn_id` mới mỗi lần thử lại *(`TxnID = t.ID.Hex()`)* nên chưa bao giờ chạm tới nó.
+**Sự cố chi trùng lẽ ra đã bị đối tác chặn.**
+
+Ngoài ra có sẵn **rate limit 5 giây** cho cùng số tài khoản nhận — bắt được lần gửi liên tiếp,
+không bắt được lần thử lại sau vài giờ.
 
 `txn-inquiry` **có** trả `transfer_amount` — code MSHT chỉ đọc `TransferStatus` và `RefTxnID`,
 bỏ qua trường số tiền. Việc đối chiếu số tiền là **sửa code, không phải đàm phán**.

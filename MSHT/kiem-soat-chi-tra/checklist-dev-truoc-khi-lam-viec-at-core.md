@@ -15,9 +15,17 @@
 
 Làm trước tất cả. Có thể một nửa câu hỏi đã có sẵn đáp án.
 
-- [ ] **Tìm bản `api_gateway.md` của AT-Core.** Chính chú thích trong `cb-b2b/external/partnerapi/accesstrade/const.go` trích dẫn tài liệu này, nhưng **không có bản nào trong workspace**. Ai đang giữ? Bản mới nhất ngày nào?
-- [ ] **Đọc mục idempotency trong tài liệu đó.** Rất có thể nó trả lời thẳng câu hỏi 1 (chống trùng theo `request_id`) và mình không cần hỏi ai.
-- [ ] **Có endpoint nào trả danh sách giao dịch mà client chưa bọc không?** Client mình chỉ bọc 7 đường; tài liệu có thể có nhiều hơn.
+- [x] ~~**Tìm tài liệu API của AT-Core.**~~ ✅ **XONG 08/09/2026** — founder cung cấp bản PDF
+      *"[Tech] Partner Bank Gateway API Documentation and Functionality Overview"* (Confluence, 20/08/2026).
+      Bản `.md`: [`at-core-partner-bank-gateway-api.md`](./at-core-partner-bank-gateway-api.md).
+- [x] ~~**Đọc mục idempotency.**~~ ✅ **CÓ ĐÁP ÁN** — *"`txn_id` phải duy nhất theo partner"*, trùng
+      trả `400`. Khoá là **`txn_id`**, không phải `request_id`. **Không cần hỏi đối tác nữa.**
+- [x] ~~**Có endpoint nào client chưa bọc không?**~~ ✅ **CÓ — 16 endpoint, client bọc 7, luồng chi
+      trả dùng 3.** Ba cái đáng chú ý: chuyển tiền hàng loạt *(B.2)* · kiểm tra số dư *(B.7)* ·
+      kiểm tra TOS *(A.8)*. Xem bảng "MSHT dùng?" trong bản `.md`.
+- [ ] **Vẫn thiếu: tài liệu xác thực đi kèm.** Bản này ghi *"Xác thực qua API Gateway (xem tài liệu
+      xác thực đi kèm)"* — chưa có bản đó. Cần cho câu hỏi chữ ký callback.
+- [ ] **Vẫn thiếu: mô tả callback/webhook.** Tài liệu này thuần API kéo, không nói gì về callback.
 - [ ] **Lấy hợp đồng / phụ lục kỹ thuật đã ký.** Kiểm: có điều khoản nào về chống trùng, SLA phản hồi, hay thủ tục tra soát – thu hồi chưa?
 - [ ] **Chốt mô hình thanh toán giữa hai bên: nạp tiền trước hay AT-Core ứng rồi quyết toán cuối kỳ?**
       Câu này quyết định "số dư tài khoản chi hộ" có phải khái niệm đúng không. Hỏi kế toán và hợp đồng, **không hỏi mã nguồn**.

@@ -15,9 +15,40 @@
 
 ---
 
+> # 🔴 ĐÍNH CHÍNH LỚN — 2026-09-08
+>
+> Đã tìm được tài liệu API của AT-Core *(bản `.md`:
+> [`at-core-partner-bank-gateway-api.md`](./at-core-partner-bank-gateway-api.md))*. Nó **lật ngược
+> phần lớn tài liệu này.**
+>
+> | Việc | Trạng thái mới |
+> | --- | --- |
+> | **1 · Chống trùng** | ✅ **ĐÃ CÓ ĐÁP ÁN — không cần hỏi.** Tài liệu ghi rõ *"`txn_id` phải duy nhất theo partner"*, trùng thì trả `400`. Khoá là **`txn_id`**, không phải `request_id`. |
+> | **2 · Truy vấn theo khoảng thời gian** | ❗ **Vẫn cần — và giờ là yêu cầu DUY NHẤT thật sự cần đối tác làm thêm.** 16 endpoint, không cái nào trả danh sách theo kỳ. |
+> | **Số dư tài khoản chi hộ** | ✅ **ĐÃ CÓ:** `GET /v1.0/partner/balance` *(B.7)*. Mình chưa gọi. |
+> | **Chuyển tiền hàng loạt** | ✅ **ĐÃ CÓ:** `POST /v1.0/partner/fund-transfers` *(B.2)*. Mình chưa gọi. |
+> | **Kiểm tra điều khoản (TOS)** | ✅ **ĐÃ CÓ:** `GET .../bank/account/legal/check` *(A.8)*. Mình chưa gọi. |
+> | **3 · Callback** | ❗ Vẫn cần hỏi — tài liệu này **không mô tả callback/webhook**, toàn bộ là API kéo. |
+> | **4 · Sự cố / thu hồi** | ❗ Vẫn cần — không có trong tài liệu kỹ thuật. |
+>
+> **Điều quan trọng nhất:** hàng rào chống trùng **đã tồn tại** ở phía AT-Core. MSHT sinh `txn_id`
+> mới mỗi lần thử lại *(`TxnID = t.ID.Hex()`)* nên chưa bao giờ chạm tới nó.
+> **Sự cố chi trùng vừa rồi lẽ ra đã bị đối tác chặn.**
+>
+> Và chống trùng ở đây là **TỪ CHỐI** *(`400`)*, không phải **trả lại kết quả cũ**. Nên luồng gửi lại
+> đúng là: gặp `400 txn_id trùng` ⇒ gọi `txn-inquiry` để biết giao dịch gốc ra sao. Coi `400` là
+> "thất bại" rồi hoàn tiền là lặp lại đúng con lỗi cũ ở tầng khác.
+>
+> ⇒ Checklist [`checklist-dev-truoc-khi-lam-viec-at-core.md`](./checklist-dev-truoc-khi-lam-viec-at-core.md)
+> đã làm đúng việc của nó: mục 1 dặn *"tìm tài liệu trước, có thể một nửa câu hỏi đã có đáp án"* —
+> và đúng là thế.
+
+---
+
 ## Tóm tắt
 
 Bốn việc cần AT-Core Chi hộ. Xếp theo thứ tự nên làm, không theo độ khó.
+**Đọc kèm phần đính chính ở trên — việc 1 đã có đáp án.**
 
 | # | Việc | Loại | Chặn cái gì |
 | --- | --- | --- | --- |

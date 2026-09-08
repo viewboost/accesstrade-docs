@@ -17,11 +17,16 @@
 > **Đợt là đơn vị THỰC THI. Khoản chi là đơn vị TIỀN.**
 > Trộn hai thứ là dựng lại đúng con lỗi đang chữa, chỉ khác là bằng một mô hình đẹp hơn.
 
+> **Đính chính 2026-09-08 (đọc tài liệu API của AT-Core).** Khoá chống trùng phía đối tác là
+> **`txn_id`**, không phải `request_id`. Tài liệu ghi rõ *"`txn_id` phải duy nhất theo partner"* và
+> trả `400` khi trùng. `request_id` chỉ là mã lần gọi của gateway. Xem
+> [`at-core-partner-bank-gateway-api.md`](./at-core-partner-bank-gateway-api.md) mục B.1.
+
 ```
 Nghĩa vụ với khách
         │  (một nghĩa vụ → tối đa MỘT khoản chi đang hoạt động)
         ▼
-   Khoản chi ◄──────────── request_id gửi AT-Core nằm ở ĐÂY
+   Khoản chi ◄──────────── txn_id gửi AT-Core nằm ở ĐÂY
         │                   ổn định suốt đời, không đổi khi dời đợt,
         │                   không đổi khi gửi lại
         ├── Lần gửi #1 ──► Giao dịch AT-Core ──► Giao dịch ngân hàng
@@ -74,7 +79,7 @@ Khác nhau duy nhất là **đối soát ở lớp nào**:
 | # | Bất biến |
 | --- | --- |
 | **BB-1** | Một nghĩa vụ có **tối đa một** khoản chi đang hoạt động |
-| **BB-2** | `request_id` gửi AT-Core = mã khoản chi. **Không** sinh từ lần gửi, **không** sinh từ đợt |
+| **BB-2** | **`txn_id`** gửi AT-Core = mã khoản chi. **Không** sinh từ lần gửi, **không** sinh từ đợt |
 | **BB-3** | Một khoản chi có **đúng một** kết cục tài chính cuối cùng — không bao giờ vừa thành công vừa bị hoàn |
 | **BB-4** | Dời khoản chi sang đợt khác **không đổi** danh tính và không đổi `request_id` |
 | **BB-5** | Khoản chi ở trạng thái **chưa rõ kết quả** không gửi lại được, không hoàn tiền được, không dời đợt được |
@@ -155,8 +160,11 @@ Mỗi dòng phải **kiểm được bằng một phép thử**, không phải b
 ### Ưu tiên 1 — Danh tính và đợt
 
 - [ ] Một nghĩa vụ **không tạo được** hai khoản chi đang hoạt động *(BB-1)*.
-- [ ] Gửi lại một khoản chi **không sinh** `request_id` mới *(BB-2)*.
-- [ ] Dời khoản chi sang đợt khác → `request_id` **không đổi** *(BB-4)*.
+- [ ] Gửi lại một khoản chi **không sinh** `txn_id` mới *(BB-2)*.
+- [ ] Dời khoản chi sang đợt khác → `txn_id` **không đổi** *(BB-4)*.
+- [ ] 🔴 **Gửi lại đúng `txn_id` cũ → AT-Core trả `400 txn_id trùng` → hệ thống gọi `txn-inquiry`
+      để lấy kết quả giao dịch gốc**, KHÔNG coi `400` là thất bại rồi hoàn tiền.
+      *(AT-Core từ chối trùng chứ không trả lại kết quả cũ — xem tài liệu API mục B.1.)*
 - [ ] Mọi khoản chi thuộc đúng một đợt; truy được "đợt N gồm những khoản nào".
 - [ ] Truy được "khoản X thuộc đợt nào, đã gửi mấy lần, mỗi lần nhận gì".
 - [ ] Đợt có: mã, loại *(tự động / bù tay / theo danh sách)*, phạm vi, người tạo, thời điểm, trạng thái vòng đời.
