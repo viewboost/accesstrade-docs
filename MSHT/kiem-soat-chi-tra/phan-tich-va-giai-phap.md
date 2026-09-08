@@ -128,11 +128,7 @@ với lệnh chưa gửi đi đâu cả.
 
 ### 1.6 Cửa sổ nhìn sang AT-Core
 
-> **Đính chính 2026-09-08.** Bản trước viết dựa trên client Go. Sau khi đọc tài liệu API chính thức
-> *([bản `.md`](./at-core-partner-bank-gateway-api.md))*, bảng này phải sửa — **AT-Core có nhiều
-> năng lực hơn hẳn những gì MSHT đang dùng.**
-
-AT-Core có **16 endpoint**. Client Go bọc **7**. Luồng chi trả dùng **3**.
+Theo đặc tả API của đối tác *([bản `.md`](./at-core-partner-bank-gateway-api.md))*, AT-Core có **16 endpoint**. Client Go bọc **7**. Luồng chi trả dùng **3**.
 
 | Đã có bên AT-Core, MSHT **chưa dùng** | Thật sự **không có** |
 | --- | --- |
@@ -316,10 +312,6 @@ Cả ba đều là **xoá đi**, rủi ro gần bằng không:
 ### Ưu tiên 1 — Khai sinh danh tính khoản chi, rồi mới tới đợt
 
 Đây là **hòn đá góc**. Bốn thứ ở dưới đều treo vào nó.
-
-> **Đính chính 2026-09-08.** Bản trước viết `request_id` sinh từ `(mã đợt, user)`. Sai — và mâu thuẫn
-> với chính yêu cầu "dời lệnh sang đợt khác" trong tài liệu công cụ vận hành. Dời đợt ⇒ đổi mã ⇒
-> AT-Core thấy lệnh mới ⇒ đúng cái chi trùng đang chữa.
 
 **Đợt là đơn vị THỰC THI. Khoản chi là đơn vị TIỀN.** Không được trộn hai thứ.
 

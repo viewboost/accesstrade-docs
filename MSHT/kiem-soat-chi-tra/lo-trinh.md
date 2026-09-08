@@ -23,10 +23,10 @@ Sự cố chi trùng vừa rồi là triệu chứng. Nguyên nhân là cả m�
 | [`phuong-an-nang-cap-chi-tra.md`](./phuong-an-nang-cap-chi-tra.md) | **AccessTrade** · lãnh đạo | **Bản trình bày phương án** — nhóm chức năng, thứ tự, điểm cần AT-Core |
 | **`lo-trinh.md`** *(đang đọc)* | Tất cả | Toàn cảnh, thứ tự làm, cái gì đang chặn |
 | [`phan-tich-va-giai-phap.md`](./phan-tich-va-giai-phap.md) | Founder · lãnh đạo | Bối cảnh · 10 vấn đề · sổ rủi ro · 7 mức ưu tiên · quyết định **D1–D7** |
-| [`mo-hinh-payout-va-tieu-chi-nghiem-thu.md`](./mo-hinh-payout-va-tieu-chi-nghiem-thu.md) | Kỹ thuật · QA | Mô hình khái niệm · 10 bất biến **BB-1…BB-10** · tiêu chí nghiệm thu từng mốc |
+| [`mo-hinh-payout-va-tieu-chi-nghiem-thu.md`](./mo-hinh-payout-va-tieu-chi-nghiem-thu.md) | Kỹ thuật · QA | Mô hình khái niệm · 12 bất biến **BB-1…BB-12** · tiêu chí nghiệm thu từng mốc |
 | [`cong-cu-cho-van-hanh-chi-tra.md`](./cong-cu-cho-van-hanh-chi-tra.md) | Vận hành · sản phẩm | Nhịp làm việc hằng ngày · thao tác loại A/B · xử lý ca kẹt · 12 cảnh báo |
-| [`at-core-partner-bank-gateway-api.md`](./at-core-partner-bank-gateway-api.md) | Kỹ thuật | **Tài liệu API AT-Core** — 16 endpoint, chuyển từ PDF |
-| [`van-de-can-at-core-ho-tro.md`](./van-de-can-at-core-ho-tro.md) | Đối tác · sản phẩm | Bảng hợp đồng tích hợp · 4 việc cần AT-Core *(việc 1 đã có đáp án)* |
+| [`at-core-partner-bank-gateway-api.md`](./at-core-partner-bank-gateway-api.md) | Kỹ thuật | **Đặc tả API AT-Core** — 16 endpoint |
+| [`van-de-can-at-core-ho-tro.md`](./van-de-can-at-core-ho-tro.md) | Đối tác · sản phẩm | Ba điểm cần AT-Core phối hợp · bảng hợp đồng tích hợp |
 | [`checklist-dev-truoc-khi-lam-viec-at-core.md`](./checklist-dev-truoc-khi-lam-viec-at-core.md) | Kỹ thuật | Kiểm lại trước khi gửi gì cho đối tác — phần lớn là việc của mình |
 
 ---
@@ -118,10 +118,8 @@ có quy trình tay tạm ở làn vận hành ngay từ tuần đầu.
 
 ### Làn đối tác — hai việc nền, làm trước khi gửi bất cứ gì
 
-7. ~~Tìm tài liệu API của AT-Core~~ ✅ **XONG 08/09** — và nó trả lời luôn câu chống trùng.
-   Xem [`at-core-partner-bank-gateway-api.md`](./at-core-partner-bank-gateway-api.md).
-8. Chốt mô hình thanh toán: nạp tiền trước, hay AT-Core ứng rồi quyết toán cuối kỳ
-9. Xin tài liệu xác thực đi kèm và mô tả kênh callback — hai thứ bản API hiện có chưa nói tới
+7. Chốt mô hình thanh toán: nạp tiền trước, hay AT-Core ứng rồi quyết toán cuối kỳ
+8. Xin tài liệu xác thực đi kèm và mô tả kênh callback — hai thứ đặc tả API hiện có chưa nói tới
 
 ### Số liệu — lấy được ngay từ dữ liệu đang có
 

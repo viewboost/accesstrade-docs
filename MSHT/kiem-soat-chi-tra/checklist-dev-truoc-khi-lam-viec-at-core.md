@@ -11,27 +11,26 @@
 
 ---
 
-## Mục 1 — Tìm lại tài liệu và hợp đồng
+## Mục 1 — Nền tài liệu
 
-Làm trước tất cả. Có thể một nửa câu hỏi đã có sẵn đáp án.
+### Đã có
 
-- [x] ~~**Tìm tài liệu API của AT-Core.**~~ ✅ **XONG 08/09/2026** — founder cung cấp bản PDF
-      *"[Tech] Partner Bank Gateway API Documentation and Functionality Overview"* (Confluence, 20/08/2026).
-      Bản `.md`: [`at-core-partner-bank-gateway-api.md`](./at-core-partner-bank-gateway-api.md).
-- [x] ~~**Đọc mục idempotency.**~~ ✅ **CÓ ĐÁP ÁN** — *"`txn_id` phải duy nhất theo partner"*, trùng
-      trả `400`. Khoá là **`txn_id`**, không phải `request_id`. **Không cần hỏi đối tác nữa.**
-- [x] ~~**Có endpoint nào client chưa bọc không?**~~ ✅ **CÓ — 16 endpoint, client bọc 7, luồng chi
-      trả dùng 3.** Ba cái đáng chú ý: chuyển tiền hàng loạt *(B.2)* · kiểm tra số dư *(B.7)* ·
-      kiểm tra TOS *(A.8)*. Xem bảng "MSHT dùng?" trong bản `.md`.
-- [ ] **Vẫn thiếu: tài liệu xác thực đi kèm.** Bản này ghi *"Xác thực qua API Gateway (xem tài liệu
-      xác thực đi kèm)"* — chưa có bản đó. Cần cho câu hỏi chữ ký callback.
-- [ ] **Vẫn thiếu: mô tả callback/webhook.** Tài liệu này thuần API kéo, không nói gì về callback.
-- [ ] **Lấy hợp đồng / phụ lục kỹ thuật đã ký.** Kiểm: có điều khoản nào về chống trùng, SLA phản hồi, hay thủ tục tra soát – thu hồi chưa?
-- [ ] **Chốt mô hình thanh toán giữa hai bên: nạp tiền trước hay AT-Core ứng rồi quyết toán cuối kỳ?**
-      Câu này quyết định "số dư tài khoản chi hộ" có phải khái niệm đúng không. Hỏi kế toán và hợp đồng, **không hỏi mã nguồn**.
+Đặc tả API của AT-Core: [`at-core-partner-bank-gateway-api.md`](./at-core-partner-bank-gateway-api.md).
+Đặc tả trả lời hai câu vốn định hỏi đối tác:
 
-> ⚠️ Nếu mô hình là quyết toán sau kỳ thì thứ cần xin là **bảng kê quyết toán**, không phải "số dư" —
-> và yêu cầu số 2 phải viết lại theo đó.
+- **Chống trùng:** `txn_id` phải duy nhất theo partner, trùng trả `400`. Khoá là `txn_id`, không phải
+  `request_id`.
+- **Bề mặt API:** 16 endpoint. Client Go bọc 7. Luồng chi trả dùng 3.
+
+### Còn thiếu
+
+- [ ] **Tài liệu xác thực đi kèm.** Đặc tả ghi *"xác thực qua API Gateway (xem tài liệu xác thực đi
+      kèm)"* — chưa có bản đó. Cần cho câu hỏi chữ ký callback.
+- [ ] **Mô tả kênh callback.** Đặc tả hiện có thuần API gọi chủ động.
+- [ ] **Hợp đồng và phụ lục kỹ thuật đã ký.** Kiểm: có điều khoản nào về SLA phản hồi hay thủ tục
+      tra soát – thu hồi chưa?
+- [ ] **Mô hình thanh toán: nạp tiền trước hay quyết toán sau kỳ?**
+      Quyết định nên đề nghị "số dư" hay "bảng kê quyết toán". Hỏi kế toán và hợp đồng.
 
 ---
 
@@ -45,7 +44,8 @@ Những dòng dưới đây **không phải yêu cầu gửi đối tác**. Chú
       → Sửa `WithdrawUpdateStatusFromWebhook`, đừng đưa vào danh sách đòi đối tác.
 - [ ] **`txn-inquiry` có trả `transfer_amount`, code đang bỏ qua.** Đọc và so với số đã yêu cầu.
       → Việc đối chiếu số tiền **không cần đối tác làm gì cả**.
-- [ ] **`txn-inquiry` nhận cả `request_id`.** Dùng nó khi chưa có mã tham chiếu, thay vì bỏ qua lệnh.
+- [ ] **`txn-inquiry` tra được bằng `txn_id`.** Dùng nó khi chưa có mã tham chiếu, thay vì bỏ qua
+      lệnh. *(Đặc tả nhận `txn_id` hoặc `ref_txn_id`, không liệt kê `request_id`.)*
 - [ ] **Hai API kiểm tra tài khoản chưa từng gọi** (`bank/account/info/check`, `bank/account/legal/check`).
       Xác định có nên bật không.
 - [ ] **Xác minh đầu nhận callback có kiểm chữ ký không.** Chưa tìm thấy bước xác thực nào trong phần
@@ -68,16 +68,19 @@ Những dòng dưới đây **không phải yêu cầu gửi đối tác**. Chú
 
 ---
 
-## Mục 4 — Chốt cách sinh mã lệnh trước khi xin chống trùng
+## Mục 4 — Chốt cách sinh `txn_id`
 
-Nếu xin đối tác chống trùng theo mã của mình thì mã đó phải chịu được yêu cầu của họ.
+Chống trùng của đối tác khoá theo `txn_id`. Cách sinh mã quyết định hàng rào đó có hoạt động không.
 
+- [ ] **Mã sinh từ khoản chi**, không từ lần gửi và không từ đợt — để gửi lại và dời đợt đều không đổi mã.
 - [ ] **Mã có tiền tố định danh sản phẩm chưa?** Nếu `creator-os` cũng dùng chi hộ của AT-Core
       (quyết định **D7** trong tài liệu phân tích) thì hai sản phẩm có thể sinh ra cùng một chuỗi.
 - [ ] **Cam kết không tái sử dụng mã** — kể cả khi chạy lại đợt, kể cả sau khi khôi phục dữ liệu.
-- [ ] **Độ dài tối đa AT-Core chấp nhận cho `request_id` là bao nhiêu?** Kiểm tài liệu, đừng đoán.
+- [ ] **Độ dài tối đa AT-Core chấp nhận cho `txn_id` là bao nhiêu?** Kiểm đặc tả, đừng đoán.
 - [ ] **Đổi cách sinh mã có phá tra cứu lệnh cũ không?** Lệnh cũ mang ObjectID; cần giữ tra được cả hai dạng.
-- [ ] **Mã có suy ngược ra thông tin khách không?** Nếu băm từ `(mã đợt, user)` thì cần chắc không lộ gì.
+- [ ] **Mã có suy ngược ra thông tin khách không?**
+- [ ] **Xử lý `400 txn_id trùng` đã đúng chưa?** Phải gọi `txn-inquiry` lấy kết quả gốc, không coi
+      là thất bại rồi hoàn tiền.
 
 ---
 
@@ -85,9 +88,8 @@ Nếu xin đối tác chống trùng theo mã của mình thì mã đó phải c
 
 Sau khi làm xong mục 1–4, danh sách còn lại thường ngắn hơn nhiều.
 
-- [ ] Nhận `fund-transfer` với `request_id` đã dùng → trả kết quả cũ hay tạo giao dịch mới?
-- [ ] Nếu có chống trùng: theo `request_id` hay `txn_id`? Cửa sổ thời gian bao lâu?
-- [ ] Có môi trường test để mình **tự chứng minh** điều đó không?
+- [ ] **Cửa sổ chống trùng của `txn_id` kéo dài bao lâu** — vĩnh viễn hay có hạn?
+- [ ] Có môi trường test để **tự chứng minh** hành vi chống trùng không?
 - [ ] Có truy vấn kết quả theo khoảng thời gian không? Nếu chưa, chi phí và thời gian làm là bao nhiêu?
 - [ ] **Có cổng tra cứu cho người vận hành không** (không phải API)? Xem
       [`cong-cu-cho-van-hanh-chi-tra.md`](./cong-cu-cho-van-hanh-chi-tra.md) mục 7.
@@ -103,8 +105,6 @@ Sau khi làm xong mục 1–4, danh sách còn lại thường ngắn hơn nhi�
 ---
 
 ## Mục 6 — Ranh giới: những thứ KHÔNG hỏi
-
-Ghi ra để khỏi đưa vào và bị bật lại.
 
 | Đừng hỏi | Vì sao |
 | --- | --- |

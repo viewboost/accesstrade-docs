@@ -17,9 +17,8 @@
 > **Đợt là đơn vị THỰC THI. Khoản chi là đơn vị TIỀN.**
 > Trộn hai thứ là dựng lại đúng con lỗi đang chữa, chỉ khác là bằng một mô hình đẹp hơn.
 
-> **Đính chính 2026-09-08 (đọc tài liệu API của AT-Core).** Khoá chống trùng phía đối tác là
-> **`txn_id`**, không phải `request_id`. Tài liệu ghi rõ *"`txn_id` phải duy nhất theo partner"* và
-> trả `400` khi trùng. `request_id` chỉ là mã lần gọi của gateway. Xem
+> Khoá chống trùng phía đối tác là **`txn_id`** — đặc tả quy định *"`txn_id` phải duy nhất theo
+> partner"* và trả `400` khi trùng. `request_id` chỉ là mã lần gọi của gateway. Xem
 > [`at-core-partner-bank-gateway-api.md`](./at-core-partner-bank-gateway-api.md) mục B.1.
 
 ```
@@ -81,7 +80,7 @@ Khác nhau duy nhất là **đối soát ở lớp nào**:
 | **BB-1** | Một nghĩa vụ có **tối đa một** khoản chi đang hoạt động |
 | **BB-2** | **`txn_id`** gửi AT-Core = mã khoản chi. **Không** sinh từ lần gửi, **không** sinh từ đợt |
 | **BB-3** | Một khoản chi có **đúng một** kết cục tài chính cuối cùng — không bao giờ vừa thành công vừa bị hoàn |
-| **BB-4** | Dời khoản chi sang đợt khác **không đổi** danh tính và không đổi `request_id` |
+| **BB-4** | Dời khoản chi sang đợt khác **không đổi** danh tính và không đổi `txn_id` |
 | **BB-5** | Khoản chi ở trạng thái **chưa rõ kết quả** không gửi lại được, không hoàn tiền được, không dời đợt được |
 | **BB-6** | Trạng thái chỉ đi tới, không lùi. Mọi cập nhật đều kèm **điều kiện trạng thái hiện tại** |
 | **BB-7** | Mọi thao tác **loại A** (khẳng định về tiền) đều có bằng chứng và bản ghi audit |

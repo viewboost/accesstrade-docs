@@ -11,43 +11,33 @@
 
 ---
 
-> ## ⚠️ Ghi chú của người chuyển đổi — đọc trước
->
-> Phần này **không thuộc tài liệu gốc**. Là đối chiếu với hiện trạng MSHT.
->
-> **1. Chống trùng ĐÃ CÓ, và mình đang tự vô hiệu hoá nó.**
-> Mục B.1: *"`txn_id` phải duy nhất theo partner"*, và HTTP `400` trả về khi **`txn_id` trùng**.
-> Nghĩa là AT-Core **từ chối** giao dịch trùng mã. Nhưng MSHT sinh `txn_id` mới mỗi lần thử lại,
-> nên hàng rào này chưa bao giờ chạm tới.
-> ⇒ Câu hỏi số 1 trong [`van-de-can-at-core-ho-tro.md`](./van-de-can-at-core-ho-tro.md)
-> **đã có đáp án, không cần hỏi đối tác.**
->
-> **2. Khoá chống trùng là `txn_id`, KHÔNG phải `request_id`.**
-> `request_id` trong tài liệu là *"Request ID từ gateway"* — mã lần gọi, không phải khoá nghiệp vụ.
-> Bất biến **BB-2** phải sửa theo: mã khoản chi gắn vào **`txn_id`**.
->
-> **3. Chống trùng là TỪ CHỐI, không phải TRẢ LẠI KẾT QUẢ CŨ.**
-> Gửi lại cùng `txn_id` ⇒ nhận `400`, **không** nhận lại kết quả giao dịch gốc. Nên luồng gửi lại
-> đúng phải là: gặp `400 txn_id trùng` ⇒ **gọi `txn-inquiry`** để biết giao dịch gốc ra sao.
-> Coi `400` là "thất bại" là lặp lại đúng con lỗi cũ ở một tầng khác.
->
-> **4. Ba năng lực mình ghi là "không có" — thực ra CÓ SẴN:**
-> - `POST /v1.0/partner/fund-transfers` — **chuyển tiền hàng loạt** *(B.2)*
-> - `GET /v1.0/partner/balance` — **kiểm tra số dư tài khoản nguồn** *(B.7)*
-> - `GET /v1.0/partner/bank/account/legal/check` — **kiểm tra khách đã đồng ý điều khoản** *(A.8)*
->
-> **5. Thứ vẫn KHÔNG có: truy vấn giao dịch theo khoảng thời gian.**
-> 16 endpoint, không cái nào trả danh sách giao dịch theo kỳ. `txn-inquiry` chỉ tra **một** giao dịch
-> theo mã đã biết. ⇒ **Yêu cầu số 2 vẫn đứng vững, và giờ là yêu cầu DUY NHẤT thật sự cần đối tác.**
->
-> **6. `txn-inquiry` chỉ nhận `txn_id` hoặc `ref_txn_id`** — tài liệu **không** liệt kê `request_id`.
-> Client Go có gửi trường đó nhưng có thể bị bỏ qua. Cần kiểm bằng thực nghiệm.
->
-> **7. Có rate limit 5 giây** cho cùng `credit_account_number` trên mỗi partner *(B.1)* — một lớp
-> chặn trùng thô đã tồn tại, nhưng chỉ bắt được lần gửi liên tiếp, không bắt được lần thử lại sau vài giờ.
->
-> **8. Tài liệu này KHÔNG mô tả callback/webhook.** Toàn bộ là API kéo. Hợp đồng callback
-> *(chính sách gửi lại, chữ ký, mã xác nhận)* vẫn phải hỏi riêng.
+## Đối chiếu với hiện trạng MSHT
+
+Phần này là phân tích của MSHT, không thuộc đặc tả của AT-Core. Nội dung đặc tả bắt đầu từ mục 1.
+
+**Chống trùng đã có sẵn ở phía AT-Core.** Mục B.1 quy định *"`txn_id` phải duy nhất theo partner"*,
+và trả `400` khi trùng. Luồng chi trả MSHT sinh `txn_id` mới ở mỗi lần gửi nên chưa kích hoạt hàng
+rào này.
+
+**Khoá chống trùng là `txn_id`.** `request_id` trong đặc tả là mã lần gọi của gateway, không phải
+khoá nghiệp vụ.
+
+**Chống trùng là từ chối, không phải trả lại kết quả cũ.** Gửi lại cùng `txn_id` nhận `400`, không
+nhận lại kết quả giao dịch gốc. Luồng gửi lại đúng: gặp `400 txn_id trùng` thì gọi `txn-inquiry` để
+lấy kết quả giao dịch gốc.
+
+**Ba năng lực có sẵn mà luồng chi trả chưa dùng:** chuyển tiền hàng loạt *(B.2)* · kiểm tra số dư
+*(B.7)* · kiểm tra điều khoản khách hàng *(A.8)*.
+
+**Không có truy vấn giao dịch theo khoảng thời gian.** 16 endpoint, không endpoint nào trả danh sách
+theo kỳ. `txn-inquiry` chỉ tra một giao dịch theo mã đã biết.
+
+**`txn-inquiry` nhận `txn_id` hoặc `ref_txn_id`**, đặc tả không liệt kê `request_id`.
+
+**Có rate limit 5 giây** cho cùng `credit_account_number` trên mỗi partner *(B.1)*.
+
+**Đặc tả này không mô tả callback.** Toàn bộ là API gọi chủ động. Hợp đồng callback — chính sách gửi
+lại, chữ ký, mã xác nhận — nằm ngoài phạm vi tài liệu.
 
 ---
 
