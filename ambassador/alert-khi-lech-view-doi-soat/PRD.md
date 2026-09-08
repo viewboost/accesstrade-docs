@@ -36,7 +36,7 @@ Bảy loại bất thường được phát hiện:
 | `milestone_missing` | E4 | Vượt ngưỡng mốc, đủ điều kiện, đã qua chu kỳ, nhưng không nhảy mốc |
 | `vendor_outage` | A6 | Nhiều content thuộc nhiều user khác nhau, cùng nền tảng, cùng đứng view trong cùng khoảng |
 | `reward_lag` | C4, E3 | Chênh lệch giữa view đã ghi nhận và view đã tính thưởng tồn tại quá một chu kỳ |
-| `view_duplicated` | B2 | View một ngày nhảy vọt bất thường so với chính content đó |
+| `view_duplicated` | B2 | Một content có nhiều hơn một bản ghi `content-analytic-daily` cho cùng một ngày |
 | `callback_empty` | A2 | Vendor đã trả về nhiều lần liên tiếp nhưng payload không mang dữ liệu view |
 | `crawl_no_response` | A3 | Có phiếu crawl được tạo cho content trong ngày nhưng không phiếu nào nhận được hồi âm từ vendor — xem "Đính chính 14/08 (tiếp)" |
 
@@ -82,9 +82,9 @@ Nguyên tắc thứ ba, thừa hưởng từ cơ chế cảnh báo đối soát:
 19. Là admin vận hành, tôi muốn cảnh báo này phân biệt được với trường hợp chưa tới kỳ, để không bị đánh thức bởi độ trễ bình thường.
 20. Là admin vận hành, tôi muốn cảnh báo gộp theo nhiệm vụ chứ không theo từng content, vì job hỏng thì ảnh hưởng cả nhiệm vụ chứ không riêng lẻ.
 
-### Phát hiện đếm trùng view
+### Phát hiện trùng bản ghi analytic
 
-21. Là admin vận hành, tôi muốn được báo khi view của một ngày nhảy vọt bất thường so với chính content đó, để phát hiện đếm trùng trước khi kỳ đối soát chốt vào đúng ngày đó.
+21. Là admin vận hành, tôi muốn được báo khi một content có hai bản ghi analytic cho cùng một ngày, để chặn việc trả thưởng hai lần cho cùng một ngày trước khi kỳ đối soát chốt.
 22. Là admin vận hành, tôi muốn ngưỡng bất thường được tính theo mức bình thường của **chính content đó** chứ không theo một con số cố định toàn hệ thống, vì content lớn và content nhỏ có biên độ view khác nhau hoàn toàn.
 23. Là admin vận hành, tôi muốn cảnh báo bỏ qua các content có lượng view quá thấp, để biến động vài chục view không bị hiểu thành nhảy vọt.
 24. Là admin vận hành, tôi muốn cảnh báo nêu rõ số view của ngày nghi vấn và mức bình thường đem so, để tự đánh giá.
@@ -284,12 +284,12 @@ Lý do trả về **kèm lý do loại trừ** chứ không chỉ một giá tr�
 
 ### Ngưỡng: cấu hình được, không viết cứng
 
-Bốn alert cần ngưỡng, và **không alert nào trong số đó có ngưỡng đúng suy ra được từ tài liệu.** Chúng phải hiệu chỉnh theo dữ liệu thật:
+Ba alert cần ngưỡng, và **không alert nào trong số đó có ngưỡng đúng suy ra được từ tài liệu.** Chúng phải hiệu chỉnh theo dữ liệu thật:
 
 | Alert | Ngưỡng cần | Giá trị khởi đầu đề xuất |
 |---|---|---|
 | `vendor_outage` | Số content tối thiểu, số user tối thiểu, cửa sổ thời gian | 50 content / 10 user / 24 giờ |
-| `view_duplicated` | Bội số so với mức bình thường, sàn view tối thiểu | 1.8 lần / 1.000 view |
+| `view_duplicated` | Không có ngưỡng — trùng bản ghi là sai tuyệt đối, không phụ thuộc con số | không áp dụng |
 | `reward_lag` | Số chu kỳ chờ trước khi báo | 1 chu kỳ (24 giờ) |
 | `callback_empty` | Số lần callback **vendor đã trả về** rỗng liên tiếp (phiếu còn chờ không tính) | 3 lần |
 | `crawl_no_response` | Không còn dùng ngưỡng số ngày — chỉ cần 1 phiếu crawl trong ngày xét mà không có phiếu nào trong cùng content được vendor trả lời là bắn. `CrawlSilentDays` giờ là config chết, không detector nào đọc — cần dọn ở lần sau | không áp dụng |
@@ -298,7 +298,7 @@ Bốn alert cần ngưỡng, và **không alert nào trong số đó có ngưỡ
 
 Quyết định kèm theo: mỗi alert **bật tắt được độc lập**. Khi một alert nhiễu quá trong lúc chờ hiệu chỉnh, tắt riêng nó thay vì tắt cả job — nếu không, thực tế sẽ là cả job bị tắt.
 
-Ngưỡng của `view_duplicated` tính theo **mức bình thường của chính content đó** chứ không theo hằng số toàn hệ thống. Một content triệu view và một content nghìn view có biên độ dao động khác nhau hoàn toàn; một ngưỡng tuyệt đối sẽ vừa bỏ sót cái lớn vừa báo động giả cái nhỏ. Kèm một **sàn view tối thiểu** để loại content quá nhỏ, nơi biến động vài chục view dễ vượt mọi bội số.
+`view_duplicated` **không có ngưỡng nào cả**, và đó là thay đổi so với thiết kế ban đầu. Bản đầu tiên so view của một ngày với trung vị tuần trước đó và bắn khi vượt 1.8 lần — nhưng một content lên xu hướng tạo ra đúng hình dạng dữ liệu như đếm trùng, nên gần như mọi thứ nó báo đều là content hoạt động bình thường. Đồng thời lỗi thật sự tốn tiền lại lọt qua: khi crawler ghi bản ghi thứ hai cho một ngày đã có, mỗi bản ghi mang một con số bình thường, chuỗi vẫn phẳng và bội số không nhúc nhích — trong khi luồng thưởng và `reward_lag` đều cộng dồn cả hai. Bản hiện tại hỏi dữ liệu có **đúng hình dạng** không thay vì con số có **to bất thường** không: một content, một ngày, một bản ghi. Hai bản ghi là sai bất kể giá trị, và content viral vẫn chỉ có một bản ghi mỗi ngày — nên không có ngưỡng để hiệu chỉnh và không có báo động giả để giải thích.
 
 ### Chống bắn lặp: collection trạng thái riêng, có khoảng lặng
 
@@ -410,7 +410,7 @@ Bám theo phong cách test đã có trong cùng khu vực: thư viện chuẩn, 
 
 **Đây là rủi ro lớn nhất của toàn bộ tính năng.** Năm ngưỡng trong bảng trên được suy ra từ tài liệu case, **chưa đối chiếu với phân bố dữ liệu thật một lần nào**.
 
-Nguy cơ cụ thể: `view_duplicated` với bội số 1.8 có thể bắn vào mọi content vừa lên xu hướng — tăng gấp đôi view trong một ngày là chuyện bình thường với content đang viral, không phải đếm trùng. Tương tự, `vendor_outage` với ngưỡng 50 content / 10 user có thể bắn vào những khoảng thấp điểm bình thường của nền tảng.
+Nguy cơ cụ thể: `vendor_outage` với ngưỡng 50 content / 10 user có thể bắn vào những khoảng thấp điểm bình thường của nền tảng. (`view_duplicated` từng là nguy cơ lớn nhất ở mục này khi còn dùng bội số 1.8 — nó bắn vào mọi content vừa lên xu hướng. Sau khi đổi sang đếm bản ghi trùng, nó không còn ngưỡng nào để bắn oan.)
 
 Bắt buộc: lần quét đầu tiên chạy ở **chế độ chỉ ghi log**, không gửi email. Đối chiếu số lượng phát hiện của từng alert với thực tế, hiệu chỉnh ngưỡng, rồi mới bật gửi. Bỏ qua bước này gần như chắc chắn dẫn tới việc Ops tắt cả job trong tuần đầu.
 
