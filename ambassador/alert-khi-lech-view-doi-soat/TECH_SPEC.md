@@ -101,7 +101,7 @@ const (
     AlertMilestoneMissing = "milestone_missing"  // E4
     AlertVendorOutage     = "vendor_outage"      // A6
     AlertRewardLag        = "reward_lag"         // C4, E3
-    AlertViewDuplicated   = "view_duplicated"    // B2
+    AlertViewDuplicated   = "view_duplicated"    // B2 - trung ban ghi analytic
     AlertCallbackEmpty    = "callback_empty"     // A2
     AlertCrawlNoResponse  = "crawl_no_response"  // A3 — đổi tên từ crawl_not_queued 14/08, xem mục 4.7
 )
