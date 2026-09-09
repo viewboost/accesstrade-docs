@@ -175,18 +175,21 @@ phục vụ nhiều domain thì các thẻ đó không gán cứng được nữ
 
 ---
 
-### CA-006 — Bật tắt phân hệ
+### CA-006 — Bật tắt tính năng theo ADV
 
-**Vì sao cần.** Không phải ADV nào cũng dùng đủ mọi phân hệ.
+**Vì sao cần.** Hôm nay một ADV có tính năng nào là do fork của ADV đó được dựng kèm màn hình đó hay không.
+Hai tính năng đang lệch giữa các ADV: **Hợp đồng điện tử** — 14/15 website có, `vpbank` không — và
+**Quản lý hoa hồng affiliate**, chỉ `fecredit` có.
 
 **Yêu cầu**
 
-- Ops bật tắt từng phân hệ tuỳ chọn cho mỗi ADV
-- Tắt một phân hệ thì mục đó biến khỏi thanh điều hướng **và** người dùng gõ thẳng địa chỉ cũng không vào được
+- Ops bật tắt từng tính năng cho mỗi ADV
+- Tắt một tính năng thì mục đó biến khỏi thanh điều hướng **và** người dùng gõ thẳng địa chỉ cũng không vào được
 
 **Nghiệm thu**
 
-- [ ] Tắt một phân hệ: mục biến khỏi điều hướng và gõ thẳng địa chỉ bị chặn
+- [ ] Tắt Hợp đồng điện tử: mục biến khỏi điều hướng và gõ thẳng địa chỉ bị chặn
+- [ ] Hai ADV trên cùng bản chạy, một bật một tắt, hoạt động độc lập
 
 ---
 

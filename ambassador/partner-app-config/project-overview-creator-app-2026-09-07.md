@@ -226,7 +226,7 @@ không đụng vào lưu lượng production của các đối tác đang chạy
 - Mỗi domain phân giải ra một `partner_id` lúc chạy, render giao diện biệt lập của ADV đó — thay
   `COMMON_PARTNER` gán cứng lúc build bằng phân giải theo `Host`
 - Bóc lớp thương hiệu ra cấu hình đọc lúc chạy: màu, font, logo, asset, SEO, liên hệ, mạng xã hội, ID bài viết
-- Cờ bật/tắt phân hệ
+- Cờ bật tắt tính năng theo ADV
 - Một image, một triển khai, nhiều domain
 
 **`backend/` — mở rộng, không viết lại**
@@ -248,7 +248,7 @@ không đụng vào lưu lượng production của các đối tác đang chạy
 | Màu thương hiệu, font | mã nguồn → **phải deploy** | **ops trên admin** |
 | Copy tĩnh, tên hiển thị | mã nguồn, 8 file → **phải deploy** | **ops trên admin** |
 | ID bài viết, liên hệ, mạng xã hội | ENV → **phải deploy** | **ops trên admin** |
-| Bật/tắt phân hệ | có/không có màn trong fork | **ops bật cờ** |
+| Bật tắt tính năng theo ADV | có/không có màn trong fork | **ops bật cờ** |
 | Cover/banner, slug, allow domain | ops trên admin | ops trên admin |
 | Campaign, bài CMS | ops trên admin | ops trên admin |
 | **Thư mục app mới** | **dev, bắt buộc** | **không còn** |
