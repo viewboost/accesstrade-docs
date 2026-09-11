@@ -30,7 +30,7 @@ Tài liệu này mô tả yêu cầu cho việc **tự lưu trữ mọi ảnh l�
 |---|---|
 | **cover** | Ảnh đại diện của một bài đăng (`ContentRaw.cover`). Nguồn gốc là URL trên CDN của nền tảng. |
 | **thumbnail** | Ảnh thu nhỏ do crawler lấy về (`ContentRaw.thumbnail`) — **cũng là URL CDN thô**, không phải file của ta. |
-| **images** | Mảng URL ảnh của bài đăng dạng ảnh (`ContentRaw.images`) — cũng là URL CDN thô. |
+| **images** | Mảng URL ảnh của bài đăng dạng ảnh (`ContentRaw.images`). Với nguồn Threads và Facebook Post, ảnh đầu đã được upload về MinIO ngay lúc tạo bài; các nguồn khác vẫn là URL CDN thô. |
 | **avatar** | Ảnh đại diện người dùng đã cache về MinIO (`UserRaw.avatar`, kiểu `FilePhoto`). |
 | **URL ký hạn** | URL CDN có kèm chữ ký và thời điểm hết hạn (`x-expires`, `oe=`). Hết hạn là ảnh vỡ. |
 | **host về MinIO** | Tải ảnh từ CDN bên thứ ba về rồi upload lên bucket public của ta, sau đó ghi đè URL trong DB. |
@@ -89,7 +89,10 @@ Bốn điểm này là **toàn bộ** các hàm trả `ContentAllResponse` của
 
 Hai điểm đã được bịt ở commit `8282e42c7`: `event.go:86-93` (`GetListUserNewest`) và `event.go:1146` (`buildUserShortInfo`, dùng bởi cả hai đường bảng xếp hạng).
 
-**Một chi tiết quan trọng về nấc dự phòng:** khi `cover` rỗng, Ambassador rơi về `Thumbnail.Medium.URL`, rồi rơi tiếp về `Images[0]` (`partner.go:248-251`, `event.go:589-594`, `event.go:681-684`, `mission.go:591`). **Cả hai nấc này đều là URL CDN thô** — `ContentRaw.Thumbnail` là `contentcatcher.Thumbnail`, một struct chỉ chứa URL từ crawler, không phải `FilePhoto` trên MinIO; không có chỗ nào trong repo host thumbnail lên MinIO. Nghĩa là ảnh vẫn vỡ sau vài ngày, chỉ là vỡ ở đường khác.
+**Một chi tiết quan trọng về nấc dự phòng:** khi `cover` rỗng, Ambassador rơi về `Thumbnail.Medium.URL`, rồi rơi tiếp về `Images[0]` (`partner.go:248-251`, `event.go:589-594`, `event.go:681-684`, `mission.go:591`). Hai nấc này không giống nhau về mức độ an toàn:
+
+- **`Thumbnail` là URL CDN thô, và hở ở cả hai repo.** `ContentRaw.Thumbnail` là `contentcatcher.Thumbnail` — struct chỉ chứa URL từ crawler, không phải `FilePhoto` trên MinIO. Không có chỗ nào trong repo host thumbnail lên MinIO, kể cả bên T-Fluencers. Content có `cover` rỗng vẫn vỡ ảnh sau vài ngày, chỉ là vỡ ở đường khác.
+- **`Images[0]` phần lớn đã an toàn sẵn.** `content.go:383` đã upload ảnh đầu về MinIO ngay lúc tạo bài, cho nguồn Threads và Facebook Post. Chỉ còn hở ba trường hợp: nguồn ảnh khác hai nguồn đó; upload lúc tạo bài thất bại nên rơi về `b.Images = contentInfo.Images`; và content cũ tạo trước khi có cơ chế này. Đây là chỗ Ambassador **làm tốt hơn** bản gốc — T-Fluencers lưu thẳng URL thô ở `content.go:378`.
 
 ### 2.2 Nguyên nhân gốc
 
@@ -118,8 +121,9 @@ Hệ thống không có job re-crawl. Campaign đóng → không crawl mới →
 ### 2.4 Lỗi của T-Fluencers — sửa, không port
 
 1. **Overview TF hứa "retry 1 lần" nhưng code TF không hề retry.** Không port lời hứa đó. Cơ chế thật là: lỗi thì bỏ qua, lượt gọi sau thử lại — và phải ghi vào tài liệu đúng như vậy (FR-09).
-2. **TF coi `Thumbnail.Medium.URL` là "nấc dự phòng an toàn".** Không đúng — thumbnail cũng hết hạn. Ambassador xử lý ở FR-07 thay vì bê nguyên giả định sai.
-3. **TF giải bài toán lộ URL bằng cách tắt hẳn route công khai** (commit `d07bf984`, cùng hướng với Gen-Green PR 792). Ambassador không tắt được vì partner-app gọi thật, nên phải thôi lộ URL — cùng mục tiêu bảo mật, không vỡ giao diện (FR-16).
+2. **TF coi `Thumbnail.Medium.URL` là "nấc dự phòng an toàn".** Không đúng — thumbnail cũng là URL ký hạn, và không repo nào host nó lên MinIO. Đây là giả định sai của bản gốc chứ không phải điểm mạnh; PRD TF không lộ ra lỗi này chỉ vì phạm vi của nó tự cắt hẹp ở 8 video trang chủ, nơi `cover` luôn có nên nấc dự phòng không bao giờ chạy tới. Ambassador chạy ở 4 luồng, chạm ngay vào vùng đó, nên phải xử lý ở FR-07 thay vì bê nguyên giả định.
+3. **TF lưu thẳng URL CDN thô cho bài đăng dạng ảnh** (`content.go:378`). Ambassador đã đi trước một bước ở `content.go:383` — upload ảnh về MinIO ngay lúc tạo bài. Giữ nguyên hướng của Ambassador, không port cách của TF.
+4. **TF giải bài toán lộ URL bằng cách tắt hẳn route công khai** (commit `d07bf984`, cùng hướng với Gen-Green PR 792). Ambassador không tắt được vì partner-app gọi thật, nên phải thôi lộ URL — cùng mục tiêu bảo mật, không vỡ giao diện (FR-16).
 
 ### 2.5 Những gì KHÔNG thêm vào
 
@@ -225,13 +229,18 @@ Kể từ lượt gọi ngay sau khi việc host hoàn tất, API phải trả U
 Chạy lại trên cùng tập content không được sinh thêm file, không được tăng dung lượng bucket, không được tải lại ảnh từ CDN nguồn. Cùng một content luôn ghi vào cùng một object.
 
 ### FR-07: Nấc dự phòng cũng phải bền — **chưa làm**
-Khi `cover` rỗng, hệ thống đang rơi về `thumbnail` rồi `images[0]`; cả hai đều là URL CDN thô nên vẫn hết hạn (mục 2.1). Yêu cầu: ảnh dùng ở nấc dự phòng cũng phải là ảnh của ta.
+Khi `cover` rỗng, hệ thống rơi về `thumbnail` rồi `images[0]` (mục 2.1). Yêu cầu: ảnh dùng ở nấc dự phòng cũng phải là ảnh của ta.
+
+Mức độ hở của hai nấc khác nhau, nên xử lý khác nhau:
+
+- **`thumbnail` — hở toàn phần.** Chưa bao giờ được host, ở cả Ambassador lẫn T-Fluencers. Đây là phần chính của yêu cầu này.
+- **`images[0]` — hở phần dư.** Đã có cơ chế upload lúc tạo bài cho Threads và Facebook Post. Chỉ cần bù ba trường hợp còn lại: nguồn ảnh khác, upload lúc tạo bài thất bại, và content cũ.
 
 Hai cách đáp ứng, chọn một ở mục 12 (Q1/Q2):
-- (a) Host luôn `thumbnail` và `images[0]` theo đúng cơ chế của FR-02, hoặc
+- (a) Host `thumbnail`, và bù nốt phần dư của `images[0]`, theo đúng cơ chế của FR-02, hoặc
 - (b) Bỏ hẳn hai nấc dự phòng này và dùng ảnh mặc định của hệ thống.
 
-Chừng nào chưa chọn, content dạng ảnh của Threads/Instagram vẫn vỡ ảnh sau vài ngày — phải ghi nhận là lỗi đã biết, không phải lỗi mới.
+Chừng nào chưa chọn, content có `cover` rỗng vẫn vỡ ảnh sau vài ngày — phải ghi nhận là lỗi đã biết, không phải lỗi mới.
 
 ### FR-08: Giới hạn tài nguyên mỗi lượt tải
 Mỗi ảnh có trần dung lượng và trần thời gian tải. Quá trần thì bỏ ảnh đó, không được để một ảnh xấu làm cạn tài nguyên tiến trình. Định dạng file lưu phải khớp loại ảnh thật do CDN trả về.
@@ -289,8 +298,16 @@ TF phải xoá cache sau khi host vì `content-features` của họ cache 4 gi�
 ### 8.2 Một lượt host, bốn luồng cùng hưởng
 Vì URL mới được ghi thẳng vào DB nên chỉ cần một luồng bất kỳ chạm tới content là cả bốn luồng đều thấy URL mới. Không cần kích hoạt riêng từng luồng.
 
-### 8.3 Content dạng ảnh (Threads / Instagram)
-Với bài đăng dạng ảnh, ảnh hiển thị có thể lấy từ `images[]` chứ không phải `cover`. Nhánh này chưa được host — xem FR-07 và Q2. Đây là nhánh **chỉ Ambassador có**, TF không có.
+### 8.3 Content dạng ảnh và nấc dự phòng
+Với bài đăng dạng ảnh, ảnh hiển thị có thể lấy từ `images[]` chứ không phải `cover`. Hai hệ xử lý nhánh này khác hẳn nhau, và ở đây **Ambassador làm tốt hơn bản gốc**:
+
+| | T-Fluencers | Ambassador |
+|---|---|---|
+| Lúc tạo bài, nguồn dạng ảnh | `content.go:378` — lưu thẳng URL CDN thô | `content.go:383` — upload ảnh về MinIO trước, rồi mới lưu (nguồn Threads, Facebook Post) |
+
+Vì vậy phần lớn content dạng ảnh của Ambassador đã an toàn sẵn từ lúc tạo. Phần còn hở chỉ là dư: nguồn ảnh ngoài hai nguồn trên, ca upload lúc tạo bài thất bại, và content cũ — xem FR-07 và Q2.
+
+Ngược lại, nấc `thumbnail` thì **cả hai hệ cùng hở** và bản gốc chưa nhận ra: tech spec TF mô tả nó như đường dự phòng an toàn, trong khi thực tế nó cũng là URL ký hạn. Xem mục 2.4.
 
 ### 8.4 Ảnh đại diện có hai kích thước
 Khác cover (một file một content), avatar sinh hai file sm/md. Mọi kiểm thử và mọi đường phát URL phải dùng bản md.
@@ -354,7 +371,7 @@ Việc quyết FR-07 (Q1/Q2) có thể làm song song, không chặn các bướ
 ## 12. Câu hỏi còn treo
 
 - **Q1 — Có host `thumbnail` không?** Nếu không, content có `cover` rỗng vẫn vỡ ảnh. Ảnh hưởng FR-07.
-- **Q2 — Có mở cho `images[]` không?** Quyết định này chốt việc content dạng ảnh của Threads/Instagram có được cứu hay không. Nếu chọn "không làm", phải ghi nhận là lỗi đã biết và QA không tính fail.
+- **Q2 — Có bù nốt phần dư của `images[]` không?** Threads và Facebook Post đã an toàn sẵn nhờ cơ chế upload lúc tạo bài; câu hỏi chỉ còn cho nguồn ảnh khác, ca upload lúc tạo bài thất bại, và content cũ. Nếu chọn "không làm", phải ghi nhận là lỗi đã biết và QA không tính fail.
 - **Q3 — Backfill chạy lô bao nhiêu và trong khung giờ nào?** Cần Ops chốt để ước lượng thời gian chạy.
 - **Q4 — Có cần cảnh báo khi tỉ lệ host thất bại vượt ngưỡng không**, hay chỉ đọc log thủ công trong giai đoạn đầu?
 
