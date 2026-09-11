@@ -324,6 +324,26 @@ thống nhất: khôi phục hạn mức, hay điều chỉnh nội dung công b
 
 ---
 
+**6.5 - Đánh giá mức độ khả thi hiện tại**
+### Nhóm A — Định danh và quản lý khoản chi (có thể thực hiện được)
+### Nhóm B — Theo dõi và tra cứu (có 1 phần hiện tại cần kiểm tra lại)
+- Phần điều tra và theo dõi: Bên MSHT đang đối chiếu với SERVICE-AT qua 1 field của bên AT trả về, trong trường hợp api bên SERVICE-AT bị timeout thì bên MSHT sẽ không có nhận được field đó, nên dẫn đến có khả năng bên SERVICE-AT đã đi tiền nhưng bên MSHT hoàn toàn biết gì? Giải pháp: Cần bàn lại 1 logic hệ thống giữa SERVICE-AT và MSHT chỗ này
+- Phần khó là hiện tại hệ thống chưa có cơ chế quản lý dòng tiền người dùng, nên không thể đối chiếu được khoản chi xuất phát từ nguồn tiền nào để report khách hàng
+
+### Nhóm C — Xử lý tình huống cho vận hành (có thể thực hiện được, có rủi ro)
+- Nhưng có 1 điểm cần lưu ý: Nếu "chuyển khoản chi sang đợt sau" với hệ thống hiện tại sẽ có nghĩa là "REJECTED" lệnh chuyển tiền đó để refund tiền về ví người dùng -> Đợt sau mới có tiền để đi tiếp. Mà rejected thì cần phải xác định chính xác được tiền đã được đi thành công hay thất bại? (Liên quan tới case Nhóm B)
+
+### Nhóm D — Kiểm soát rủi ro (có thể làm được)
+
+### Nhóm E — Đối soát (có thể làm được)
+- Nhưng cần SERVICE-AT hỗ trợ thêm, vì giới hạn của MSHT là chi giao tiếp với SERVICE-AT. Nên phần thông tin chuyển khoản bên PARTNER bên MSHT sẽ không nắm được
+
+### Nhóm F — Phân quyền và truy vết (có thể làm nhưng sẽ ảnh hưởng khá nhiều đến hệ thống API)
+
+
+Cập nhật hệ thống thêm quản lý dòng tiền (bao gồm cả dòng tiền được chi vào lúc nào) - CẦN 1 PHRASE đánh giá cái này
+
+
 ## Phụ lục — Bộ tài liệu chi tiết
 
 | Tài liệu | Nội dung |
