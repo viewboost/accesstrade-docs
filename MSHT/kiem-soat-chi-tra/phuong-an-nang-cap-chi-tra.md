@@ -323,8 +323,8 @@ thống nhất: khôi phục hạn mức, hay điều chỉnh nội dung công b
 **6.4 — Mức độ ưu tiên và nguồn lực** cho từng giai đoạn.
 
 ---
+# PHẦN VII — ĐÁNH GIÁ MỰC ĐỘ THỰC HIỆN
 
-**6.5 - Đánh giá mức độ khả thi hiện tại**
 ### Nhóm A — Định danh và quản lý khoản chi (có thể thực hiện được)
 ### Nhóm B — Theo dõi và tra cứu (có 1 phần hiện tại cần kiểm tra lại)
 - Phần điều tra và theo dõi: Bên MSHT đang đối chiếu với SERVICE-AT qua 1 field của bên AT trả về, trong trường hợp api bên SERVICE-AT bị timeout thì bên MSHT sẽ không có nhận được field đó, nên dẫn đến có khả năng bên SERVICE-AT đã đi tiền nhưng bên MSHT hoàn toàn biết gì? Giải pháp: Cần bàn lại 1 logic hệ thống giữa SERVICE-AT và MSHT chỗ này
