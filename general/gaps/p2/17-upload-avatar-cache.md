@@ -18,7 +18,7 @@ Khi creator login bằng Google/TikTok/Facebook, hệ thống lấy URL avatar t
 | Khía cạnh | TCB | vCreator | Ambassador |
 |---|:---:|:---:|:---:|
 | **Cache avatar về MinIO permanent?** | ✅ Có | ❌ Không | ❌ Không |
-| **Resize 3 sizes (small/medium/large)?** | ✅ Có | ❌ | ❌ |
+| **Resize + cache 2 sizes (small/medium)?** | ✅ Có (TCB gốc 3 size) | ❌ | ❌ |
 | **Field `User.Avatar` lưu URL gì?** | URL MinIO permanent | URL social (expire) | URL social (expire) |
 | **Module MinIO + resizeimage có sẵn?** | ✅ | ✅ | ✅ |
 
@@ -33,7 +33,7 @@ Khi creator login bằng Google/TikTok/Facebook, hệ thống lấy URL avatar t
 ## Giải pháp
 
 Port `upload_avatar_social.go` từ TCB → vCr/Amb (~1 tuần mỗi sản phẩm):
-- Copy service ~250 LOC
+- Copy service ~250 LOC, **rút resize 3 size → 2 size** (small 150x150, medium 300x300)
 - Thêm vào 3 social login flows (Google, TikTok, Facebook)
 - Migration: chỉ apply cho creator mới, không backfill (tránh load MinIO + content catcher)
 - Async/non-blocking → fail vẫn fallback URL social
@@ -46,7 +46,9 @@ Port `upload_avatar_social.go` từ TCB → vCr/Amb (~1 tuần mỗi sản phẩ
 
 ## TL;DR
 
-TCB có service `upload_avatar_social.go` (~250 LOC) download URL social → resize 3 sizes → upload MinIO → update `User.Avatar`. vCr/Amb không có service này nhưng đã có sẵn `module/minio` + `module/resizeimage`.
+TCB có service `upload_avatar_social.go` (~250 LOC) download URL social → resize 3 size → upload MinIO → update `User.Avatar`. vCr/Amb không có service này nhưng đã có sẵn `module/minio` + `module/resizeimage`.
+
+→ **Khi port sang vCr/Amb: rút còn 2 size** (small 150x150, medium 300x300), bỏ nhánh large 600x600 — lý do ở mục *Vì sao rút còn 2 size*.
 
 ## Verify code
 
@@ -57,8 +59,8 @@ func (s *UploadAvatarSocialService) UploadAvatarSocial(ctx, userId AppID, linkAv
     // 1. Check User.Avatar đã có → skip
     // 2. Download file từ URL social (parse URL bỏ query params)
     // 3. Validate photo format + size
-    // 4. Get dimensions + resize 3 sizes (150x150, 300x300, 600x600)
-    // 5. Upload 3 sizes lên MinIO
+    // 4. Get dimensions + resize 3 sizes (150x150, 300x300, 600x600)  // ← port: rút còn 2 (150x150, 300x300)
+    // 5. Upload 3 sizes lên MinIO                                      // ← port: upload 2 size
     // 6. Update User.Avatar = MinIO URL
     // 7. Cleanup local file
 }
@@ -99,11 +101,31 @@ if user.Avatar != nil {
 }
 ```
 
+### Vì sao rút còn 2 size
+
+Model `FilePhoto` của vCr/Amb (`internal/model/mg/file.go:99-109`) chỉ định nghĩa 2 dimension:
+
+```go
+type FileDimensions struct {
+    Small  *FileSize `bson:"sm"`
+    Medium *FileSize `bson:"md"`
+}
+```
+
+→ Port service phải **rút còn 2 size**, không thêm field `Large` vào model (tránh phát sinh migration). Các luồng đọc hiện tại chỉ dùng `Dimensions.Medium.URL` nên 2 size là đủ.
+
+| | TCB (source) | vCr/Amb (target) |
+|---|---|---|
+| Small | 150x150 | 150x150 |
+| Medium | 300x300 | 300x300 |
+| Large | 600x600 | — (bỏ) |
+
 ## Đề xuất implementation
 
 ### Phase 1: Service port (~3 ngày mỗi sản phẩm)
 - Copy `upload_avatar_social.go` từ TCB (~250 LOC)
 - Adapt với constants/util của target
+- **Rút resize 3 size → 2 size**: bỏ nhánh large 600x600, chỉ upload `sm` (150x150) + `md` (300x300)
 
 ### Phase 2: Caller integration (~2 ngày)
 - Thêm vào 3 social login flows: Google, TikTok, Facebook
@@ -121,6 +143,8 @@ if user.Avatar != nil {
    - **Mitigation**: dùng config sẵn của target sản phẩm
 2. **Existing users với URL social**: không backfill — chỉ apply khi user re-login
    - **Mitigation**: document trong release notes
+3. **Có luồng nào cần size large (600x600)?**: hiện các luồng đọc của vCr/Amb chỉ dùng `Dimensions.Medium.URL`
+   - **Mitigation**: giữ 2 size; nếu sau này phát sinh nhu cầu thì thêm field `Large` + migration riêng
 
 ## Files referenced
 
@@ -133,6 +157,7 @@ if user.Avatar != nil {
 **vCr/Amb (target — cần port)**:
 - KHÔNG có `internal/service/upload_avatar_social.go`
 - Đã có `module/minio` + `module/resizeimage` ✅
+- `internal/model/mg/file.go:99-109` — `FileDimensions` chỉ có `Small` + `Medium` → chốt 2 size
 
 ## Lịch sử phân loại
 
