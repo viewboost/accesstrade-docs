@@ -11,7 +11,7 @@
 
 ## Vấn đề là gì?
 
-Tháng 8/2026 đối tác **Gen-Green** gọi thẳng các endpoint public của platform (không cần login) và đọc được dữ liệu không thuộc về họ: **thu nhập từng creator**, **ngân sách hoa hồng theo từng nhãn**, và **danh sách user id** để enumerate. Đã hotfix xong trên Gen-Green.
+Tháng 8/2026 đối tác **Gen-Green** gọi thẳng các endpoint public của platform (không cần login) và đọc được dữ liệu không thuộc về họ: **thu nhập từng creator** và **ngân sách hoa hồng theo từng nhãn**. Đã hotfix xong trên Gen-Green.
 
 Ambassador và T-Fluencer chạy cùng codebase gốc → còn nguyên hầu hết các lỗ hổng đó.
 
@@ -47,7 +47,6 @@ Khác biệt giữa hai target: **Ambassador đã có sẵn chỗ phân giải c
 |---|---|---|:---:|:---:|:---:|
 | 1 | BXH trả tiền của creator khác, cờ ẩn tiền chỉ chặn ở FE | `/events/{id}/leaderboards` | ✅ cắt sạch | ❌ **ép cờ server-side** (hook có sẵn) | ❌ **ép cờ server-side** (phải dựng hook) |
 | 2 | Content công khai trả tiền từng bài | `/events/{id}/content` | ✅ | ❌ port thẳng | ❌ port thẳng |
-| 3 | Enumerate user id qua phân trang vô hạn | leaderboards + content | ✅ | ❌ port thẳng | ❌ port thẳng |
 | 4 | **BOLA** `?user=<id>`, không cần token | `/user-statistic*` | ✅ tắt group | ❌ **fix authz** (2 FE đang dùng) | ❌ tắt group như GG |
 | 5 | Lộ ngân sách qua `?partner=` | `/events/statistic` | ✅ bỏ `totalCommission` | ✅ **đã an toàn sẵn** — giữ nguyên | ❌ bỏ `totalCommission` |
 | 6 | Endpoint chết, lộ URL ảnh social thô | `/events/user-newest` | ✅ | ❌ port thẳng | ❌ port thẳng |
@@ -57,14 +56,14 @@ Khác biệt giữa hai target: **Ambassador đã có sẵn chỗ phân giải c
 
 - **Cả hai**: nhãn đã tắt cột tiền (`showLeaderboardAmount = false`) vẫn bị đọc thu nhập từng creator qua API → cam kết với nhãn đó đang không được giữ. `cashReward`/`cashBonus`/cash từng nền tảng lộ chi tiết hơn hẳn mức nhãn muốn công khai.
 - `cashback` = số lượt view đã được tính tiền, nhân đơn giá công khai là **suy ra thu nhập** dù không trả field tiền trực tiếp.
-- Cả hai: enumerate user id qua phân trang; `/user-statistic?user=<id>` đọc thu nhập + danh sách invitee của user bất kỳ **không cần đăng nhập**.
+- Cả hai: `/user-statistic?user=<id>` đọc thu nhập + danh sách invitee của user bất kỳ **không cần đăng nhập**.
 
 ## Giải pháp
 
 | Sản phẩm | Cách làm | Effort |
 |---|---|---|
-| **Ambassador** | #2,3,6 port thẳng · #1 áp `EffectiveMetrics()` có sẵn vào payload · #4 fix authz · #5 giữ nguyên | ~2.5 ngày |
-| **TCB** | #2,3,6 port thẳng · #1 dựng chỗ phân giải `ShowLeaderboardAmount` rồi gate payload · #4 tắt group · #5 bỏ `totalCommission` | ~3 ngày |
+| **Ambassador** | #2,6 port thẳng · #1 áp `EffectiveMetrics()` có sẵn vào payload · #4 fix authz · #5 giữ nguyên | ~2 ngày |
+| **TCB** | #2,6 port thẳng · #1 dựng chỗ phân giải `ShowLeaderboardAmount` rồi gate payload · #4 tắt group · #5 bỏ `totalCommission` | ~2.5 ngày |
 
 ---
 
@@ -82,7 +81,6 @@ Commit nguồn (repo `Vin-VCreator/vcreator`, đã merge `develop`):
 |---|---|
 | `c57e7fe2` | `fix(security)`: không trả thu nhập của creator khác ở leaderboard và content công khai |
 | `1ceae870` | `fix(security)`: tắt route `user-newest` + bỏ field `totalCommission` công khai |
-| `cec8c898` | `feat(public)`: giới hạn leaderboard tối đa 100 item (5 trang) |
 | `cc9919b8` | `chore(router)`: comment out `userStatistic(r)` trong `Init` |
 | `9389a9d3` | `chore(frontend-green)`: tắt route `/statistics` |
 | `c4f3b47d`, `3aa6a59f`, `e492c094` | trim field tiền thừa ở `GetMe` / event response / cash-flow |
@@ -180,29 +178,6 @@ func NewContentStatisticPublic(s modelmg.UserContentStatistic) ContentStatisticP
 
 Sửa ở: `service/event.go` — `GetListContentByEvent`, `GetListContentByMe`, `GetLeaderBoard`; `service/partner.go` — `GetContentFeature`. **TCB thêm `GetListContentLeaderboard`** (`router/event.go:27` — route riêng TCB có, hai sản phẩm kia không).
 
-## Fix 3 — Cap phân trang chặn enumerate user id *(port thẳng cả 2)*
-
-```go
-// internal/constants/event.go
-EventLeaderBoardMaxItems = 100   // limit 20/trang → page 0..4
-EventContentLimit        = 20
-EventContentMaxItems     = 100   // chỉ áp cho danh sách CÔNG KHAI
-```
-
-```go
-// handler/event.go
-if query.Page*query.Limit >= constants.EventContentMaxItems {
-    return cc.Response200(&response.ContentAllResponse{Data: ..., NextPageToken: ""}, "")
-}
-if len(data.Data) == int(query.Limit) && (query.Page+1)*query.Limit < constants.EventContentMaxItems {
-    data.NextPageToken = cc.PageTokenUsingPage(query.Page + 1)
-}
-```
-
-**Không cap `/events/{id}/content/me`** (nội dung chính chủ). Amb: `handler/event.go:265,304,346`. TCB: `:276,:315,:353`.
-
-⚠️ Ambassador có `options.leaderboard.size` (tổng dòng tối đa của bảng) — cap 100 là **trần cứng chống enumerate**, không thay thế `size`. Lấy `min(size, 100)`. TCB chưa có `size` nên áp thẳng 100.
-
 ## Fix 4 — BOLA `/user-statistic`
 
 ```go
@@ -281,11 +256,11 @@ Gen-Green cũng ghi đúng cảnh báo này trong comment `PublicMetric`. Áp nh
 - Curl `/events/{id}/leaderboards` của TCB trên dev, xem payload có `cashTotal` không
 - Kết quả quyết định TCB đi nhánh 🅰️ hay 🅱️ của Fix 1
 
-### Phase 1 — Ambassador backend (~2 ngày)
+### Phase 1 — Ambassador backend (~1.5 ngày)
 - Fix 1: `LeaderBoardStatistic` + `CashTotal *PublicMetric`, nối `plan.Metrics` xuống hàm map dòng, **đổi cache key** (Risks #2)
-- Fix 2, 3, 6 port thẳng từ Gen-Green
+- Fix 2, 6 port thẳng từ Gen-Green
 - Fix 4 theo hướng authz (thêm `RequiredLogin`, bỏ `param.User`)
-- Port + sửa test: `leaderboard_pagination_test.go`, `statistic_shape_test.go`; thêm case **"partner tắt cột tiền → payload không có `cashTotal`"**
+- Port + sửa test: `statistic_shape_test.go`; thêm case **"partner tắt cột tiền → payload không có `cashTotal`"**
 - Regenerate swagger
 
 ### Phase 2 — Ambassador frontend (~0.25 ngày)
@@ -293,19 +268,19 @@ Gen-Green cũng ghi đúng cảnh báo này trong comment `PublicMetric`. Áp nh
 - Confirm `frontend` + `anker` trang `/statistics` vẫn chạy sau khi bỏ `?user=`
 - FE đọc `cashTotal` qua optional chaining sẵn → dòng thiếu field hiện 0, không crash. Vẫn smoke test 1 nhãn bật tiền + 1 nhãn tắt tiền
 
-### Phase 3 — TCB (~2 ngày)
+### Phase 3 — TCB (~1.5 ngày)
 - Fix 1: thêm bước load partner trong `GetLeaderBoard` → `showCash`; gate `cashTotal`; cắt field thừa khỏi `UserEventStatisticResponse`
-- Fix 2, 3, 6 port thẳng + `GetListContentLeaderboard`
+- Fix 2, 6 port thẳng + `GetListContentLeaderboard`
 - Fix 4: tắt `userStatistic(r)`
 - Fix 5: bỏ `totalCommission`
 - Port test tương ứng
 
 ### Phase 4 — Verify + rollout (~0.5 ngày)
-- Curl 5 endpoint công khai trong scope (leaderboards, content, `/user-statistic`, `/events/statistic`, `/events/user-newest`) không kèm token, assert không còn field tiền ngoài danh sách cho phép
+- Curl 4 endpoint công khai trong scope (leaderboards, content, `/events/statistic`, `/events/user-newest`) không kèm token, assert không còn field tiền ngoài danh sách cho phép
 - **Cả hai**: curl BXH của 1 nhãn có `showLeaderboardAmount = false` → assert **không có** `cashTotal`
 - Regression: trang cá nhân/thống kê chính chủ vẫn đủ số liệu (nhất là bảng `cashback` theo nguồn)
 
-**Total**: ~5.5 ngày cho cả 2 sản phẩm.
+**Total**: ~4.5 ngày cho cả 2 sản phẩm.
 
 ## Risks + mitigations
 
@@ -317,11 +292,9 @@ Gen-Green cũng ghi đúng cảnh báo này trong comment `PublicMetric`. Áp nh
    - *Mitigation*: xem mục 🚫 ở trên; giới hạn phạm vi đúng 4 hàm map (5 với TCB).
 4. **Ambassador không tắt được `/user-statistic` như Gen-Green** — `frontend` + `anker` đang dùng.
    - *Mitigation*: fix authz thay vì tắt route; test kỹ 2 app này sau khi bỏ `?user=`.
-5. **Cap 100 item đá nhau với `options.leaderboard.size`** (Amb) ở campaign lớn.
-   - *Mitigation*: lấy `min(size, 100)`; nhãn cần sâu hơn thì làm endpoint có auth, không nới cap public.
-6. **Sót surface riêng của từng sản phẩm**.
+5. **Sót surface riêng của từng sản phẩm**.
    - *Đã rà xong*: Amb `missions/leaderboard-by-point` (`LeaderBoardItemResponse` chỉ `name/avatar/follower/point` → sạch); `affiliate` — `Commission`/`SaleAmount` nằm ở `AffiliateOrderItem`, endpoint `my-links`/`campaigns` đều có `RequiredLogin` → sạch; `event_schema.CashReward` + `mission.Reward` là cấu hình mốc thưởng của event, marketing công khai → giữ. TCB: chỉ còn `event_schema.CashReward` cùng loại → giữ.
-7. **Người sau nhúng lại model mg vào response công khai**.
+6. **Người sau nhúng lại model mg vào response công khai**.
    - *Mitigation*: copy nguyên comment `SECURITY` + giữ `statistic_shape_test.go` (fail ngay khi field tiền quay lại).
 
 ## Files referenced
@@ -329,17 +302,14 @@ Gen-Green cũng ghi đúng cảnh báo này trong comment `PublicMetric`. Áp nh
 **Gen-Green / vCreator (source)** — repo `Vin-VCreator/vcreator`, nhánh `fix/security-hide-commission-and-disable-usernewest`:
 - `backend/pkg/public/model/response/event.go` — `LeaderBoardStatistic`, `PublicMetric`
 - `backend/pkg/public/model/response/content.go` — `ContentStatisticPublic`
-- `backend/internal/constants/event.go` — `EventLeaderBoardMaxItems`, `EventContentMaxItems`
-- `backend/pkg/public/handler/event.go` — cap phân trang
 - `backend/pkg/public/router/event.go`, `router/router.go`
-- `backend/pkg/public/handler/leaderboard_pagination_test.go`, `model/response/statistic_shape_test.go` — **port kèm**
+- `backend/pkg/public/model/response/statistic_shape_test.go` — **port kèm**
 
 **Ambassador (target)** — repo `AT-Core/ambassador`:
 - `backend/internal/service/leaderboard_config.go` — `LeaderBoardConfig`, `EffectiveMetrics()` — **hook Fix 1, có sẵn**
 - `backend/internal/model/mg/leaderboard_opts.go` · `internal/model/mg/partner.go:55` — `ShowLeaderboardAmount`
 - `backend/pkg/public/service/event.go:750,759` (`EffectiveMetrics`), `:788` (`buildLeaderBoard`), `:117-127` (**guard domain, Fix 5**)
 - `backend/pkg/public/model/response/event.go:190`, `content.go:24` — nhúng thẳng model mg
-- `backend/pkg/public/handler/event.go:265,304,346` — phân trang không cap
 - `backend/pkg/public/handler/user_statistic.go:54` — BOLA `param.User`
 - `backend/pkg/public/router/event.go:21`, `router/user_statistic.go`, `router/router.go:34`
 - FE tiền BXH: `frontend/src/pages/home/components/content-rank-item/{metric-value.ts,total-metrics.ts}`, `<app>/src/pages/home/components/logged-in-view/table.tsx`, `not-logged-in/index.tsx:201`
@@ -351,7 +321,6 @@ Gen-Green cũng ghi đúng cảnh báo này trong comment `PublicMetric`. Áp nh
 - `backend/pkg/public/model/response/event.go:156-169` — `UserEventStatisticResponse` còn cash từng nguồn
 - `backend/pkg/public/model/response/event.go:37` — `TotalCommission`
 - `backend/pkg/public/model/response/content.go:24`
-- `backend/pkg/public/handler/event.go:276,315,353` — phân trang không cap
 - `backend/pkg/public/service/event.go:335` — `TotalCommission`, **không có guard domain**
 - `backend/pkg/public/router/event.go:21,27` · `router/router.go:30`
 - FE tiền BXH: `frontend/src/pages/home/components/logged-in-view/table.tsx:98-106` (cột "Kiếm được", gated), `content-rank-item/index.tsx:26-32` (đã comment out), `not-logged-in/index.tsx:831`
@@ -364,4 +333,7 @@ Gen-Green cũng ghi đúng cảnh báo này trong comment `PublicMetric`. Áp nh
 - **2026-09-14**: verify Ambassador + TCB → mở gap #43, phân loại **P0**.
   - Chốt **cả hai** đi hướng "ép cờ `showLeaderboardAmount` server-side" thay vì cắt mù — đọc code FE thấy cả hai đều hiển thị cột "Kiếm được" công khai, cờ ẩn tiền hiện chỉ chặn ở client.
   - Ambassador giữ `totalCommission` (đã có guard domain); TCB bỏ (không có guard, FE không dùng).
-  - **Tách khỏi PRD này (2026-09-14)**: eKYC `postMessage` (FE) và `statisticBudget` của TCB — khác tầng/khác owner, không nằm trong thứ Gen-Green báo. ⚠️ Hai việc này hiện **chưa có gap nào theo dõi**.
+  - **Tách khỏi PRD này (2026-09-14)**, theo hai lý do khác nhau:
+    - eKYC `postMessage` (FE) và `statisticBudget` của TCB — khác tầng/khác owner, không nằm trong thứ Gen-Green báo.
+    - Cap phân trang chống enumerate user id (Gen-Green làm ở `cec8c898`) — gỡ khỏi scope theo quyết định của PM. Lưu ý đây là thứ Gen-Green CÓ báo và CÓ fix, cùng tầng backend; gỡ ra là bỏ lớp chặn quét user id diện rộng.
+  - ⚠️ Cả ba việc trên hiện **chưa có gap nào theo dõi**.
