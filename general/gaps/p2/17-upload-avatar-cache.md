@@ -11,7 +11,7 @@
 
 ## Vấn đề là gì?
 
-Khi creator login bằng Google/TikTok/Facebook, hệ thống lấy URL avatar từ social platform. Các URL này thường có **expire time** (vài giờ → vài ngày → vài tháng) → avatar bị **broken** sau một thời gian.
+Khi creator login bằng Google/TikTok, hệ thống lấy URL avatar từ social platform. Các URL này thường có **expire time** (vài giờ → vài ngày → vài tháng) → avatar bị **broken** sau một thời gian.
 
 ## Bảng so sánh 3 sản phẩm
 
@@ -34,9 +34,11 @@ Khi creator login bằng Google/TikTok/Facebook, hệ thống lấy URL avatar t
 
 Port `upload_avatar_social.go` từ TCB → vCr/Amb (~1 tuần mỗi sản phẩm):
 - Copy service ~250 LOC, **rút resize 3 size → 2 size** (small 150x150, medium 300x300)
-- Thêm vào 3 social login flows (Google, TikTok, Facebook)
+- Thêm vào 2 social login flows (Google, TikTok)
 - Migration: chỉ apply cho creator mới, không backfill (tránh load MinIO + content catcher)
 - Async/non-blocking → fail vẫn fallback URL social
+
+> **Scope note**: không cover login Facebook — nút "Đăng nhập bằng Facebook" đã comment out ở toàn bộ frontend Ambassador (15 site) lẫn vCreator; backend còn route `/users/login-with-facebook` nhưng không FE nào gọi. (Riêng vCreator `frontend-green` vẫn cho *liên kết* tài khoản Facebook qua `LinkUserSocial` — luồng khác, xét riêng nếu cần.)
 
 **Reclassified P1→P2**: không phải bug active, chỉ là risk theory. Defer đến khi có incident hoặc gap #2 phase 3 (creator pool unification cần avatar consistent across products).
 
@@ -68,7 +70,7 @@ func (s *UploadAvatarSocialService) UploadAvatarSocial(ctx, userId AppID, linkAv
 
 **Caller** (`pkg/public/service/user.go`):
 ```go
-// LoginWithTikTok / LoginWithGoogle / LoginWithFacebook
+// LoginWithTikTok / LoginWithGoogle
 if ttData.Photo != "" {
     _, err := internalservice.NewUploadAvatarSocialService().UploadAvatarSocial(ctx, user.ID, ttData.Photo)
     if err != nil {
@@ -128,7 +130,7 @@ type FileDimensions struct {
 - **Rút resize 3 size → 2 size**: bỏ nhánh large 600x600, chỉ upload `sm` (150x150) + `md` (300x300)
 
 ### Phase 2: Caller integration (~2 ngày)
-- Thêm vào 3 social login flows: Google, TikTok, Facebook
+- Thêm vào 2 social login flows: Google, TikTok
 - Pattern: async non-blocking, fail không break login flow
 
 ### Phase 3: Test + rollout (~2 ngày)
@@ -152,7 +154,7 @@ type FileDimensions struct {
 - `internal/service/upload_avatar_social.go` (~250 LOC)
 - `internal/module/minio/minio.go`
 - `internal/module/resizeimage/resize_image.go`
-- `pkg/public/service/user.go` — caller (LoginWithTiktok, LoginWithGoogle, LoginWithFacebook)
+- `pkg/public/service/user.go` — caller (LoginWithTiktok, LoginWithGoogle)
 
 **vCr/Amb (target — cần port)**:
 - KHÔNG có `internal/service/upload_avatar_social.go`
