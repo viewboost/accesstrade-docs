@@ -24,7 +24,6 @@ Gen-Green **không hiển thị tiền ở chỗ công khai**, nên fix của n�
 | Cột **"Kiếm được"** trên BXH — từng creator | `statistic.cashTotal.{completed,pending}` | **Khách vãng lai** | ✅ | ✅ |
 | Cờ ẩn/hiện cột tiền | `partner.showLeaderboardAmount` | — | ✅ | ✅ |
 | Stat **"Hoa hồng được xác nhận"/"Tiền thưởng"** trên landing | `totalCommission` | Khách vãng lai | ✅ | ❌ không dùng |
-| Thanh **% ngân sách campaign** | `statisticBudget.percent` | Khách vãng lai | ❌ không có | ✅ |
 | Mốc thưởng, tiền tạm tính, `cashback` theo nguồn | `userEventStatistic.*` | Chính chủ sau login | ✅ | ✅ |
 
 → Áp nguyên fix Gen-Green sẽ **làm vỡ tính năng cốt lõi của cả hai**.
@@ -51,15 +50,12 @@ Khác biệt giữa hai target: **Ambassador đã có sẵn chỗ phân giải c
 | 3 | Enumerate user id qua phân trang vô hạn | leaderboards + content | ✅ | ❌ port thẳng | ❌ port thẳng |
 | 4 | **BOLA** `?user=<id>`, không cần token | `/user-statistic*` | ✅ tắt group | ❌ **fix authz** (2 FE đang dùng) | ❌ tắt group như GG |
 | 5 | Lộ ngân sách qua `?partner=` | `/events/statistic` | ✅ bỏ `totalCommission` | ✅ **đã an toàn sẵn** — giữ nguyên | ❌ bỏ `totalCommission` |
-| 5b | Lộ số tiền ngân sách campaign | `statisticBudget` trong event response | — không có | — không có | ❌ **giữ `percent`, bỏ 5 field tiền** |
 | 6 | Endpoint chết, lộ URL ảnh social thô | `/events/user-newest` | ✅ | ❌ port thẳng | ❌ port thẳng |
-| 7 | eKYC `access_token` postMessage `'*'` | FE `step-ekyc.tsx` | ✅ | ❌ 9 FE | — không có luồng eKYC FE |
 | 8 | `GetMe.statistic` trả dư field tiền | `/users/me` | ✅ rút còn 3 field | ⏭️ **bỏ qua** — FE dùng 9 field | ⏭️ bỏ qua |
 
 ## Hệ quả
 
 - **Cả hai**: nhãn đã tắt cột tiền (`showLeaderboardAmount = false`) vẫn bị đọc thu nhập từng creator qua API → cam kết với nhãn đó đang không được giữ. `cashReward`/`cashBonus`/cash từng nền tảng lộ chi tiết hơn hẳn mức nhãn muốn công khai.
-- **TCB**: thêm số tiền ngân sách campaign (`totalCashValid/Waiting/Pending/Completed/Rejected`) đọc được ẩn danh, trong khi FE chỉ cần `percent`.
 - `cashback` = số lượt view đã được tính tiền, nhân đơn giá công khai là **suy ra thu nhập** dù không trả field tiền trực tiếp.
 - Cả hai: enumerate user id qua phân trang; `/user-statistic?user=<id>` đọc thu nhập + danh sách invitee của user bất kỳ **không cần đăng nhập**.
 
@@ -67,8 +63,8 @@ Khác biệt giữa hai target: **Ambassador đã có sẵn chỗ phân giải c
 
 | Sản phẩm | Cách làm | Effort |
 |---|---|---|
-| **Ambassador** | #2,3,6 port thẳng · #1 áp `EffectiveMetrics()` có sẵn vào payload · #4 fix authz · #5 giữ nguyên · #7 sửa 9 FE | ~3 ngày |
-| **TCB** | #2,3,6 port thẳng · #1 dựng chỗ phân giải `ShowLeaderboardAmount` rồi gate payload · #4 tắt group · #5 bỏ `totalCommission` · #5b giữ `percent` | ~3 ngày |
+| **Ambassador** | #2,3,6 port thẳng · #1 áp `EffectiveMetrics()` có sẵn vào payload · #4 fix authz · #5 giữ nguyên | ~2.5 ngày |
+| **TCB** | #2,3,6 port thẳng · #1 dựng chỗ phân giải `ShowLeaderboardAmount` rồi gate payload · #4 tắt group · #5 bỏ `totalCommission` | ~3 ngày |
 
 ---
 
@@ -90,7 +86,6 @@ Commit nguồn (repo `Vin-VCreator/vcreator`, đã merge `develop`):
 | `cc9919b8` | `chore(router)`: comment out `userStatistic(r)` trong `Init` |
 | `9389a9d3` | `chore(frontend-green)`: tắt route `/statistics` |
 | `c4f3b47d`, `3aa6a59f`, `e492c094` | trim field tiền thừa ở `GetMe` / event response / cash-flow |
-| `9c0ff3b7` | `hide token`: bỏ `access_token` khỏi `postMessage` của eKYC iframe |
 
 ---
 
@@ -247,20 +242,6 @@ if query.PartnerID != "" {
 
 TCB `GetStatistic` (`service/event.go:335`) **không có guard domain**, `?partner=` đi thẳng vào `AssignPartnerID` → pivot được y hệt vCreator. **FE TCB không đọc `totalCommission`** (0 lời gọi trong `frontend/src` lẫn `dashboard/src`) → gỡ sạch, không ảnh hưởng UI.
 
-## Fix 5b — `statisticBudget` *(chỉ TCB — giữ `percent`, bỏ tiền)*
-
-```go
-// pkg/public/model/response/event.go:122 — nằm trong EventBriefResponse + EventDetailResponse công khai
-type EventStatisticBudgetResponse struct {
-    TotalCashValid, TotalCashWaiting, TotalCashPending, TotalCashCompleted, TotalCashRejected float64
-    Percent float64
-}
-```
-
-FE **chỉ đọc `percent`** (thanh tiến độ ngân sách): `home/components/budget-banner/index.tsx:10`, `partner-home/components/event-simple-card/index.tsx:179,187,197`.
-
-→ Bỏ 5 field tiền tuyệt đối, **giữ `Percent`**. Đây là sửa đúng chỗ: `percent` là thứ nhãn muốn khoe, số tiền tuyệt đối thì không.
-
 ## Fix 6 — Tắt `/events/user-newest` *(port thẳng cả 2)*
 
 ```go
@@ -270,17 +251,6 @@ FE **chỉ đọc `percent`** (thanh tiến độ ngân sách): `home/components
 ```
 
 Verify: Amb `router/event.go:21`, TCB `router/event.go:21` vẫn bật. Endpoint **chỉ khai báo trong `configs/api.ts`, không component nào gọi** ở cả hai → tắt an toàn.
-
-## Fix 7 — eKYC token *(chỉ Ambassador)*
-
-```tsx
-iframe.contentWindow.postMessage(
-  { config: configData, /* token: ekycConfig.access_token, */ result: 'init_data_iframe' },
-  '*',   // targetOrigin '*' → iframe bất kỳ đọc được token
-);
-```
-
-9 FE: `fecredit, flamingo, frontend, hdbank, lusso, parasola, tpbank, vng, vpbank` — `src/pages/ekyc/components/step-ekyc.tsx` (~dòng 225 và 232). Bỏ luôn `console.log('Post message', {...token...})` ngay phía trên. TCB không có luồng eKYC ở FE.
 
 ## Fix 8 — Trim `GetMe.statistic` *(BỎ QUA cả 2)*
 
@@ -318,8 +288,7 @@ Gen-Green cũng ghi đúng cảnh báo này trong comment `PublicMetric`. Áp nh
 - Port + sửa test: `leaderboard_pagination_test.go`, `statistic_shape_test.go`; thêm case **"partner tắt cột tiền → payload không có `cashTotal`"**
 - Regenerate swagger
 
-### Phase 2 — Ambassador frontend (~0.5 ngày)
-- Fix 7 trên 9 FE
+### Phase 2 — Ambassador frontend (~0.25 ngày)
 - Không đụng `totalCommission` (13 FE giữ nguyên)
 - Confirm `frontend` + `anker` trang `/statistics` vẫn chạy sau khi bỏ `?user=`
 - FE đọc `cashTotal` qua optional chaining sẵn → dòng thiếu field hiện 0, không crash. Vẫn smoke test 1 nhãn bật tiền + 1 nhãn tắt tiền
@@ -328,16 +297,15 @@ Gen-Green cũng ghi đúng cảnh báo này trong comment `PublicMetric`. Áp nh
 - Fix 1: thêm bước load partner trong `GetLeaderBoard` → `showCash`; gate `cashTotal`; cắt field thừa khỏi `UserEventStatisticResponse`
 - Fix 2, 3, 6 port thẳng + `GetListContentLeaderboard`
 - Fix 4: tắt `userStatistic(r)`
-- Fix 5: bỏ `totalCommission` · Fix 5b: giữ `percent`, bỏ 5 field tiền
+- Fix 5: bỏ `totalCommission`
 - Port test tương ứng
 
 ### Phase 4 — Verify + rollout (~0.5 ngày)
-- Curl 6 endpoint không kèm token, assert không còn field tiền ngoài danh sách cho phép
+- Curl 5 endpoint công khai trong scope (leaderboards, content, `/user-statistic`, `/events/statistic`, `/events/user-newest`) không kèm token, assert không còn field tiền ngoài danh sách cho phép
 - **Cả hai**: curl BXH của 1 nhãn có `showLeaderboardAmount = false` → assert **không có** `cashTotal`
-- TCB: assert `statisticBudget` chỉ còn `percent`
 - Regression: trang cá nhân/thống kê chính chủ vẫn đủ số liệu (nhất là bảng `cashback` theo nguồn)
 
-**Total**: ~6 ngày cho cả 2 sản phẩm.
+**Total**: ~5.5 ngày cho cả 2 sản phẩm.
 
 ## Risks + mitigations
 
@@ -365,7 +333,6 @@ Gen-Green cũng ghi đúng cảnh báo này trong comment `PublicMetric`. Áp nh
 - `backend/pkg/public/handler/event.go` — cap phân trang
 - `backend/pkg/public/router/event.go`, `router/router.go`
 - `backend/pkg/public/handler/leaderboard_pagination_test.go`, `model/response/statistic_shape_test.go` — **port kèm**
-- `frontend-green/src/pages/contract/components/step-ekyc.tsx`
 
 **Ambassador (target)** — repo `AT-Core/ambassador`:
 - `backend/internal/service/leaderboard_config.go` — `LeaderBoardConfig`, `EffectiveMetrics()` — **hook Fix 1, có sẵn**
@@ -377,19 +344,17 @@ Gen-Green cũng ghi đúng cảnh báo này trong comment `PublicMetric`. Áp nh
 - `backend/pkg/public/router/event.go:21`, `router/user_statistic.go`, `router/router.go:34`
 - FE tiền BXH: `frontend/src/pages/home/components/content-rank-item/{metric-value.ts,total-metrics.ts}`, `<app>/src/pages/home/components/logged-in-view/table.tsx`, `not-logged-in/index.tsx:201`
 - FE trang statistic: `frontend/src/pages/statistic/model.ts`, `anker/src/pages/statistic/*`
-- FE eKYC: `{fecredit,flamingo,frontend,hdbank,lusso,parasola,tpbank,vng,vpbank}/src/pages/ekyc/components/step-ekyc.tsx`
 
 **T-Fluencer / TCB (target)**:
 - `backend/internal/model/mg/partner.go:26` — `ShowLeaderboardAmount` (có cờ, **chưa ai đọc ở public**)
 - `backend/pkg/public/service/event.go:353` — `GetLeaderBoard`, **không load partner** → chỗ thêm bước phân giải cờ
 - `backend/pkg/public/model/response/event.go:156-169` — `UserEventStatisticResponse` còn cash từng nguồn
-- `backend/pkg/public/model/response/event.go:37` (`TotalCommission`), `:122` (`EventStatisticBudgetResponse`)
+- `backend/pkg/public/model/response/event.go:37` — `TotalCommission`
 - `backend/pkg/public/model/response/content.go:24`
 - `backend/pkg/public/handler/event.go:276,315,353` — phân trang không cap
 - `backend/pkg/public/service/event.go:335` — `TotalCommission`, **không có guard domain**
 - `backend/pkg/public/router/event.go:21,27` · `router/router.go:30`
 - FE tiền BXH: `frontend/src/pages/home/components/logged-in-view/table.tsx:98-106` (cột "Kiếm được", gated), `content-rank-item/index.tsx:26-32` (đã comment out), `not-logged-in/index.tsx:831`
-- FE ngân sách: `frontend/src/pages/home/components/budget-banner/index.tsx:10`, `partner-home/components/event-simple-card/index.tsx:179-197`
 - FE chính chủ đọc `cashback`: `frontend/src/pages/home/components/statistic/table.tsx:77`
 
 ## Lịch sử
@@ -399,4 +364,4 @@ Gen-Green cũng ghi đúng cảnh báo này trong comment `PublicMetric`. Áp nh
 - **2026-09-14**: verify Ambassador + TCB → mở gap #43, phân loại **P0**.
   - Chốt **cả hai** đi hướng "ép cờ `showLeaderboardAmount` server-side" thay vì cắt mù — đọc code FE thấy cả hai đều hiển thị cột "Kiếm được" công khai, cờ ẩn tiền hiện chỉ chặn ở client.
   - Ambassador giữ `totalCommission` (đã có guard domain); TCB bỏ (không có guard, FE không dùng).
-  - TCB giữ `statisticBudget.percent`, bỏ 5 field tiền tuyệt đối.
+  - **Tách khỏi PRD này (2026-09-14)**: eKYC `postMessage` (FE) và `statisticBudget` của TCB — khác tầng/khác owner, không nằm trong thứ Gen-Green báo. ⚠️ Hai việc này hiện **chưa có gap nào theo dõi**.
