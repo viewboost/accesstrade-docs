@@ -5,6 +5,8 @@
 > **Phạm vi:** toàn bộ trải nghiệm MSHT — truy cập, đăng nhập, tiền hoàn, điều kiện rút —
 > trên **mọi tenant ngân hàng** mà MSHT đang phục vụ.
 >
+> **Lộ trình, mốc, việc đang chặn:** [`lo-trinh.md`](./lo-trinh.md) · **cấu phần M4:** [`webview-monitoring.md`](./webview-monitoring.md)
+>
 > **Thay đổi ở bản 2:** bổ sung chiều đa tenant (mục 1.5) · ghi nhận cấu phần **M4 đã được
 > hiện thực** và chuyển sang dạng kế thừa · thêm ràng buộc bắt buộc về dữ liệu (mục 3.4) ·
 > giao lớp ③ cho M5 · thêm điều kiện áp dụng cho thứ tự giai đoạn.
