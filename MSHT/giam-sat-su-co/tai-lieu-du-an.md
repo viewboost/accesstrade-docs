@@ -310,7 +310,7 @@ nhân ngay từ ngày đầu tiên, kể cả khi chưa viết một dòng mã n
 
 ### M4 — Lỗi phía khách hàng · **đã hiện thực, kế thừa**
 
-Đây là nhóm duy nhất đã có. Cấu phần **webview monitoring** do đội web-webview xây, **dùng chung cho
+Đây là nhóm duy nhất đã có. Cấu phần **[webview monitoring](./webview-monitoring.md)** do đội web-webview xây, **dùng chung cho
 mọi tenant ngân hàng**. Dự án này **không đặc tả lại** — chỉ trỏ sang và bổ sung phần còn thiếu.
 
 **Đã có:**
