@@ -25,6 +25,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 2 ✅ | ~~InfluencerProfile concept — Ambassador mandatory~~ **ĐÃ XONG cho Ambassador (2026-09-04)**; vCreator recommended (creator pool) vẫn còn | [p0/02-influencer-profile-concept.md](./p0/02-influencer-profile-concept.md) |
 | 8 | vCreator thiếu hệ thống kiểm soát ngân sách campaign + tính thưởng có cap | [p0/08-budget-alert-system.md](./p0/08-budget-alert-system.md) |
 | **35** 🚨 | **TCB urgent** — Hỗ trợ crawl Facebook Post + camp đếm số bài post (Amb đã có, TCB/vCr chưa) | [p0/35-facebook-post-crawl-and-count-campaign.md](./p0/35-facebook-post-crawl-and-count-campaign.md) |
+| **43** 🔴 | **SECURITY** — Amb/TCB còn nguyên các lỗ hổng public API mà Gen-Green đã hotfix (BXH lộ thu nhập creator, BOLA `/user-statistic`, enumerate user id) | [p0/43-port-security-fixes-gengreen-to-amb-tcb.md](./p0/43-port-security-fixes-gengreen-to-amb-tcb.md) |
 
 ---
 
