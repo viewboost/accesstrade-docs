@@ -168,7 +168,6 @@ phục vụ nhiều domain thì các thẻ đó không gán cứng được nữ
 
 **Nghiệm thu**
 
-- [ ] Hai domain trả hai bộ thẻ chia sẻ khác nhau
 - [ ] Địa chỉ chuẩn hoá trỏ về đúng domain đang truy cập
 
 ---
