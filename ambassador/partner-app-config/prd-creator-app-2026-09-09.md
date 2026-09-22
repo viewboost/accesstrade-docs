@@ -163,15 +163,13 @@ phục vụ nhiều domain thì các thẻ đó không gán cứng được nữ
 
 **Yêu cầu**
 
-- Tiêu đề, mô tả, từ khoá, ảnh chia sẻ và mã đo lường nhập theo từng ADV
+- Tiêu đề, mô tả, từ khoá và ảnh chia sẻ nhập theo từng ADV
 - Địa chỉ chuẩn hoá và địa chỉ chia sẻ sinh theo **chính domain người dùng đang truy cập**
-- Không khai mã đo lường thì không chèn mã đo lường nào
 
 **Nghiệm thu**
 
 - [ ] Hai domain trả hai bộ thẻ chia sẻ khác nhau
 - [ ] Địa chỉ chuẩn hoá trỏ về đúng domain đang truy cập
-- [ ] Mã đo lường trên mỗi trang là của đúng ADV đó
 
 ---
 
