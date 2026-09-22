@@ -225,7 +225,6 @@ mang thương hiệu của họ khi chào hàng, và ops đi trọn một lần 
   lưu, rồi xem website chạy thật
 - Có link chia sẻ để khách hoặc người duyệt tự mở xem, không cần tài khoản
 - Quyền vào sandbox **mở theo nhu cầu và đóng lại khi xong**, không để mở thường trực
-- Bộ nhận diện đã nhập trong sandbox **chuyển sang hồ sơ thật được, không nhập lại từ đầu**
 
 **Nghiệm thu**
 
@@ -234,7 +233,6 @@ mang thương hiệu của họ khi chào hàng, và ops đi trọn một lần 
 - [ ] Khách mở link xem được, không cần đăng nhập
 - [ ] Thao tác trong sandbox không tạo thay đổi nào trên hệ thống đang chạy
 - [ ] Đóng quyền sau khi xong: người vừa dùng không còn vào được
-- [ ] Bộ nhận diện từ sandbox chuyển sang hồ sơ thật, giữ nguyên dữ liệu đã nhập
 
 ---
 
