@@ -86,7 +86,6 @@ nhiều ADV với nhận diện khác nhau.
 
 **Nghiệm thu**
 
-- [ ] Hai domain trên cùng một bản chạy hiện hai bộ nhận diện khác nhau
 - [ ] Domain lạ hiện thông báo domain chưa đăng ký, không có chuyển hướng
 
 ---
