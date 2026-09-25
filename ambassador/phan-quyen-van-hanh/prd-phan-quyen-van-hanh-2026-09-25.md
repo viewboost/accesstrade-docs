@@ -1,7 +1,8 @@
 # PRD: Phân quyền cho biz vận hành — gỡ phụ thuộc vào Admin Root
 
-Bối cảnh: request của đầu biz vận hành. Tài khoản Admin Root đang cấp tạm cho Manager
-của biz **hết hạn 30/9**. Mọi số liệu và trích dẫn trong bản này đọc từ mã nguồn `AT-Core/ambassador` ngày 2026-09-25.
+Bối cảnh: request của đầu biz vận hành. Hiện đang phải cấp tạm cho Manager của biz một tài khoản Admin
+Root để team xử lý công việc trước. Mọi số liệu và trích dẫn trong bản này đọc từ mã nguồn
+`AT-Core/ambassador`, ngày 2026-09-25.
 
 ---
 
@@ -24,24 +25,23 @@ Năm kết quả phải đạt:
 | Tải **file đối soát** | Nút Tải trả "Không có quyền" | Tải được file của ADV mình |
 | Xem và tải **file rút tiền** | Danh sách hiện, chi tiết trả lỗi | Xem và tải được trong phạm vi ADV |
 
-Và một kết quả về rủi ro, là lý do thật sự khiến đợt này gấp:
+Và một kết quả về rủi ro, là lý do thật sự của đợt này:
 
 | | Hôm nay | Sau đợt này |
 |---|---|---|
 | Quyền của người làm vận hành | 1 tài khoản root dùng chung, chạm được **14 ADV**, tạo/xoá nhân sự, đổi cấu hình site đang chạy | Tài khoản riêng từng người, giới hạn trong ADV được giao |
 | Truy trách nhiệm | Nhật ký ghi "tài khoản root", không phân biệt người thật | Nhật ký ghi đúng người, đúng ADV, đúng hành động |
-| Thu hồi quyền | Lời hứa "đến hết 30/9"; hệ thống **không có trường hạn dùng** | Tài khoản tự hết hiệu lực đúng ngày |
+| Thu hồi quyền | Hẹn miệng khi cấp tạm; hệ thống **không có trường hạn dùng** | Tài khoản tự hết hiệu lực đúng ngày đã hẹn |
 
-### 1.1 Vì sao mốc 30/9 là mốc cứng
+### 1.1 Quy mô rủi ro của tài khoản root
 
-Sau 30/9 chỉ có hai đường: **thu hồi root** và biz mất năm việc trên, hoặc **gia hạn root** và chấp nhận
-một tài khoản toàn quyền 14 ADV nằm ngoài đội kỹ thuật thêm một chu kỳ nữa. Đợt này tồn tại để không phải
-chọn giữa hai đường đó.
+Chừng nào Admin chưa làm được năm việc trên thì biz vẫn phải mượn root. Mỗi lần mượn là mở toàn bộ hệ
+thống cho một người chỉ cần làm việc vận hành, và mở cho một tài khoản dùng chung nằm ngoài đội kỹ thuật.
 
-Quy mô rủi ro của đường thứ hai, đo trên mã nguồn: tài khoản root đi qua **toàn bộ 233 endpoint** của
-admin, trong đó 26 endpoint không vai trò nào khác chạm tới — gồm tạo/sửa/đổi mật khẩu **nhân sự**,
-tạo/sửa/ngừng hoạt động **ADV**, ban/gỡ ban **người dùng cuối**, sinh **hợp đồng điện tử**, sửa **eKYC**.
-Cấp root cho một người chỉ cần làm năm việc vận hành là cấp thừa **26 endpoint** và thừa **13 ADV**.
+Đo trên mã nguồn: tài khoản root đi qua **toàn bộ 233 endpoint** của admin, trong đó 26 endpoint không
+vai trò nào khác chạm tới — gồm tạo/sửa/đổi mật khẩu **nhân sự**, tạo/sửa/ngừng hoạt động **ADV**,
+ban/gỡ ban **người dùng cuối**, sinh **hợp đồng điện tử**, sửa **eKYC**. Cấp root cho một người chỉ cần
+làm năm việc vận hành là cấp thừa **26 endpoint** và thừa **13 ADV**.
 
 ### 1.2 Nguyên nhân gốc — một luật phạm vi, hai cách hiểu
 
@@ -324,12 +324,12 @@ giữ nguyên ranh giới hiện tại, không nới thêm.
 
 ### PQ-008 — Tài khoản có hạn dùng và thu hồi được
 
-**Vì sao cần.** Tài khoản root cấp cho Manager biz "đến hết 30/9" là một **lời hứa**, không phải một cơ
-chế. Bản ghi nhân sự không có trường hạn dùng. Ngày 1/10 tài khoản đó vẫn vào được, trừ khi có người nhớ
-ra và tắt tay.
+**Vì sao cần.** Thời hạn của một tài khoản cấp tạm hôm nay là một **lời hứa**, không phải một cơ chế.
+Bản ghi nhân sự không có trường hạn dùng. Quá ngày đã hẹn, tài khoản đó vẫn vào được, trừ khi có người
+nhớ ra và tắt tay.
 
-Đây là thứ khiến đợt này an toàn hơn cả trước khi làm xong: có nó thì mọi lần cấp quyền tạm sau này —
-kể cả lần gia hạn root nếu đợt này trễ — đều tự đóng lại.
+Đây là thứ khiến đợt này an toàn hơn ngay cả trước khi làm xong: có nó thì mọi lần cấp quyền tạm về sau
+đều tự đóng lại đúng ngày, không phụ thuộc vào trí nhớ của ai.
 
 **Yêu cầu**
 
@@ -344,7 +344,7 @@ kể cả lần gia hạn root nếu đợt này trễ — đều tự đóng l�
 - [ ] Đặt hạn vào hôm qua: tài khoản đó không đăng nhập được, phiên đang mở bị cắt
 - [ ] Tắt một tài khoản đang mở màn hình: thao tác kế tiếp bị chặn ngay
 - [ ] Màn Nhân viên liệt kê được các tài khoản sắp hết hạn
-- [ ] Tài khoản root tạm của Manager biz đặt được hạn 30/9 và tự đóng đúng ngày
+- [ ] Tài khoản root cấp tạm đặt được ngày hết hiệu lực và tự đóng đúng ngày đó
 
 ---
 
@@ -474,17 +474,15 @@ sản phẩm bàn giao, cập nhật cùng mã nguồn. Đợt này tồn tại 
 
 ## 6. Phụ thuộc và giả định
 
-1. **Mốc 30/9 là mốc cứng.** Nếu đợt này không xong trước, cần văn bản gia hạn tài khoản root kèm ngày
-   hết hạn mới. Không gia hạn ngầm.
-2. Biz xác nhận **danh sách nhân sự và ADV từng người phụ trách** trước khi thiết kế màn Nhân viên. Không
+1. Biz xác nhận **danh sách nhân sự và ADV từng người phụ trách** trước khi thiết kế màn Nhân viên. Không
    có danh sách này thì PQ-002 không nghiệm thu được.
-3. PQ-001 là **điều kiện tiên quyết**. PQ-005, PQ-006, PQ-007 phần lớn tự chạy sau khi PQ-001 xong; làm
+2. PQ-001 là **điều kiện tiên quyết**. PQ-005, PQ-006, PQ-007 phần lớn tự chạy sau khi PQ-001 xong; làm
    ngược thứ tự sẽ vá từng mục rồi vẫn sót.
-4. Thêm vai trò hoặc đổi ranh giới vai trò phải đi qua `StaffRoleList` → `StaffRoleNameList` →
+3. Thêm vai trò hoặc đổi ranh giới vai trò phải đi qua `StaffRoleList` → `StaffRoleNameList` →
    `buildRoles()` → `GenerateRole()`. Quên một bước thì vai trò không có bản ghi dưới DB và cổng kiểm
    quyền **im lặng không cho ai qua** — đã có test canh, giữ nguyên test đó.
-5. Mọi cổng kiểm quyền đọc bản ghi nhân sự và vai trò từ DB ở **mỗi** lần gọi API. Giữ nguyên cách này
+4. Mọi cổng kiểm quyền đọc bản ghi nhân sự và vai trò từ DB ở **mỗi** lần gọi API. Giữ nguyên cách này
    trong đợt này; nó chậm nhưng là thứ khiến NFR-007 khả thi.
-6. Đổi bản ghi nhân sự (danh sách ADV, hạn dùng) cần một lần chuyển dữ liệu trên production, làm ngoài
+5. Đổi bản ghi nhân sự (danh sách ADV, hạn dùng) cần một lần chuyển dữ liệu trên production, làm ngoài
    giờ vận hành, có bản lùi.
-7. Số ADV hiện tại là 14 và còn tăng. Mọi thứ trong bản này phải đúng khi thêm ADV mà không sửa mã nguồn.
+6. Số ADV hiện tại là 14 và còn tăng. Mọi thứ trong bản này phải đúng khi thêm ADV mà không sửa mã nguồn.
