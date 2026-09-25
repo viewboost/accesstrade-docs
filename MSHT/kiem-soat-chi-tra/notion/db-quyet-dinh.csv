@@ -1,0 +1,11 @@
+Mã,Nội dung cần quyết,Người quyết,Chặn việc gì,Cần trước,Trạng thái,Đề xuất của DISO
+D7,Chung adapter AT-Core với creator-os hay tách riêng,Founder,A1-S2,2026-10-02,Đang chờ,
+D1,Khi chưa rõ đã chi hay chưa thì mặc định xử lý thế nào,Founder,CT-05 A1-S5,2026-09-30,Đang chờ,Coi như đã chi vì thiệt hại hai chiều không cân nhau và khả năng thu hồi thấp
+D6,Hạn mức rút tiền theo tháng còn hiệu lực không,Founder + pháp chế,Giai đoạn 2,2026-10-16,Đang chờ,
+D2,Một khoản chi được phép chờ tối đa bao lâu trước khi cảnh báo và trước khi liên hệ khách,Founder + vận hành,Giai đoạn 2,2026-10-16,Đang chờ,
+D3,Chốt sổ đợt nghĩa là gì,Founder + vận hành + kế toán,Giai đoạn 3,2026-11-13,Đang chờ,
+D4,Ngưỡng chặn đợt sau,Founder + vận hành + kế toán,Giai đoạn 3,2026-11-13,Đang chờ,
+D5,Đợt bù tay có chịu cùng cổng kiểm soát không,Founder + vận hành,Giai đoạn 3,2026-11-13,Đang chờ,
+AT-1,Thu hồi khoản chi sai có được không,AT-Core,Trọng số phòng ngừa toàn dự án,2026-10-02,Đang chờ,
+AT-2,Truy vấn giao dịch theo khoảng thời gian,AT-Core,Giai đoạn 2 nhóm B C,2026-10-16,Đang chờ,Ưu tiên cao nhất trong các yêu cầu gửi AT-Core
+AT-3,Bản kê giao dịch phía PARTNER,AT-Core,Giai đoạn 4 đối soát lớp 2 và 3,2026-11-27,Đang chờ,
