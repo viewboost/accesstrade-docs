@@ -58,11 +58,16 @@ Mỗi ngày có **đúng một kỳ chuyển tiền** (transfer period). Luồng
   - Tạo lệnh rút gắn kỳ với status **`waiting_process`** (chờ xử lý).
   - **Trừ số dư ngay** như cũ, nhưng **chưa chuyển tiền**.
 - **Partner không bật auto** (`IS_AUTO_WITHDRAW=false`):
-  - Chỉ tạo kỳ rỗng.
-- Cuối bước này, kỳ được đánh dấu "sẵn sàng đi tiền".
+  - Chỉ tạo kỳ rỗng loại **`instant`**, có `status = done` ngay từ đầu. Loại kỳ này chỉ dùng để admin theo dõi số lệnh và thống kê trong ngày, không có bước đi tiền.
+- Với kỳ loại **`scheduled`** (partner bật auto), cuối bước này kỳ được đánh dấu "sẵn sàng đi tiền".
+
+**Loại kỳ (`type`)** được gán lúc tạo kỳ theo `IS_AUTO_WITHDRAW`:
+- `scheduled`: có lệnh chờ, có vòng đời đi tiền (mode, execute, stop).
+- `instant`: lệnh do user tự rút đã chuyển ngay; kỳ luôn `done`, không có mode, không execute/stop được.
 
 ### 2.2 Bước 2 — Đi tiền (execute)
 
+- Chỉ áp dụng cho kỳ loại `scheduled`.
 - Lấy tất cả lệnh `waiting_process` của kỳ và chạy luồng chuyển tiền hiện có.
 - Có hai cách kích hoạt:
   - **Tự động:** cron ở service `withdraw` (giờ lấy từ env), chỉ xử lý các kỳ có `mode = auto`.
@@ -102,7 +107,8 @@ App webview và CRM **không phải sửa**. Status `waiting_process` được t
 3. Là **vận hành**, tôi muốn giờ chạy job gom lệnh cấu hình được bằng env cho từng partner, để job chạy sau job thả tiền và user nhận được phần tiền vừa thả ngay trong kỳ hôm đó.
 4. Là **vận hành của partner bật auto withdraw**, tôi muốn job gom lệnh quét user đủ điều kiện và tạo lệnh `waiting_process` gắn kỳ hôm nay, để chưa có đồng nào rời tài khoản trước bước đi tiền.
 5. Là **vận hành**, tôi muốn số dư user bị trừ ngay khi lệnh `waiting_process` được tạo, để lần quét sau hoặc lệnh user tự rút không chi trùng số tiền đó.
-6. Là **vận hành của partner không bật auto**, tôi muốn job vẫn tạo kỳ rỗng cho ngày, để lệnh user tự rút có kỳ để gắn vào.
+6. Là **vận hành của partner không bật auto**, tôi muốn job vẫn tạo kỳ rỗng loại `instant` cho ngày, ở trạng thái `done` ngay từ đầu, để lệnh user tự rút có kỳ để gắn vào và admin chỉ dùng kỳ để theo dõi và thống kê.
+6a. Là **admin của partner không bật auto**, tôi muốn kỳ `instant` không có mode và không có nút đi tiền/dừng (API trả lỗi nếu gọi), để không có thao tác vô nghĩa trên kỳ chỉ dùng để thống kê.
 7. Là **vận hành**, tôi muốn scanner giữ nguyên toàn bộ điều kiện hiện có (không bị ban, có tài khoản nhận, ngưỡng rút tối thiểu gồm cả ICB event, danh sách source bị skip, giới hạn số user mỗi ngày, nhịp giãn cách), để việc thiết kế lại không làm thay đổi ai được chi tiền.
 8. Là **vận hành**, tôi muốn job đánh dấu kỳ "sẵn sàng đi tiền" khi quét xong, để không bao giờ đi tiền trên một kỳ mới gom được một nửa.
 9. Là **vận hành**, tôi muốn kỳ bị kẹt ở trạng thái "đang gom" (pod scanner chết) tự được coi là sẵn sàng sau một khoảng thời gian chờ, để một lần crash không chặn việc chi tiền mãi mãi.
@@ -112,7 +118,7 @@ App webview và CRM **không phải sửa**. Status `waiting_process` được t
 
 11. Là **người dùng cuối** của partner không bật auto, tôi muốn lệnh rút được chuyển tiền ngay như hiện tại, để trải nghiệm của tôi không thay đổi.
 12. Là **vận hành**, tôi muốn lệnh user tự rút được gắn vào kỳ hôm nay, và kỳ được tạo luôn nếu chưa có, để báo cáo theo ngày bao phủ mọi lệnh rút.
-13. Là **vận hành**, tôi muốn lệnh user tự rút không làm thay đổi trạng thái kỳ, để trạng thái kỳ chỉ phản ánh tiến trình đi tiền của các lệnh chờ.
+13. Là **vận hành**, tôi muốn lệnh user tự rút không làm thay đổi trạng thái kỳ, để trạng thái kỳ `scheduled` chỉ phản ánh tiến trình đi tiền của các lệnh chờ, còn kỳ `instant` luôn `done`.
 14. Là **vận hành**, tôi muốn công cụ sandbox "trigger auto withdraw theo danh sách user" vẫn chuyển tiền ngay và tự gắn kỳ hôm nay, để công cụ vận hành hiện có vẫn dùng được.
 15. Là **vận hành**, tôi muốn luồng batch-transfer bằng file xlsx giữ nguyên hành vi, chỉ tự gắn kỳ hôm nay.
 
@@ -152,6 +158,8 @@ App webview và CRM **không phải sửa**. Status `waiting_process` được t
 38. Là **admin**, tôi muốn stats luôn khớp với trạng thái thật của lệnh, kể cả các thay đổi từ webhook, cron sync, CRM và admin, để số liệu không bao giờ bị lệch.
 39. Là **admin**, tôi muốn xem chi tiết một kỳ kèm stats, để kiểm tra trước khi bấm đi tiền.
 40. Là **admin**, tôi muốn xem ai và khi nào đã đi tiền kỳ đó (cron hay admin nào), thời điểm bắt đầu và kết thúc, để có dấu vết kiểm toán.
+40a. Là **admin/kế toán**, tôi muốn export toàn bộ lệnh của một kỳ ra file CSV (có thể lọc theo status), để đối soát với sao kê bank và lưu hồ sơ.
+40b. Là **admin/kế toán**, tôi muốn file CSV mở được bằng Excel mà không lỗi font tiếng Việt, và có đủ thông tin khách hàng, số tiền, phí, trạng thái, mã giao dịch, mã tham chiếu bank, để đối soát không cần tra thêm hệ thống khác.
 
 ### 3.7 Tra cứu lệnh và log AT
 
@@ -209,13 +217,16 @@ Giao diện:
 - **Lấy hoặc tạo kỳ theo ngày:**
   - Upsert theo đầu ngày giờ HCM, `date` là unique.
   - Nếu gặp lỗi trùng khoá khi nhiều request cùng lúc thì đọc lại bản ghi.
-  - Kỳ mới có `status = collecting` và `mode` lấy từ env.
-- **Đánh dấu gom xong:** chỉ chuyển `collecting` → `waiting`. Các trạng thái khác thì bỏ qua (idempotent).
-- **Đổi mode:** chỉ khi kỳ đang `collecting` hoặc `waiting`.
-- **Yêu cầu dừng:** chỉ khi kỳ đang `processing`; set cờ `stopRequested`.
-- **Luật "được phép đi tiền":** theo bảng dưới.
+  - `type` gán theo `IS_AUTO_WITHDRAW` lúc tạo:
+    - `true` → `type = scheduled`, `status = collecting`, `mode` lấy từ env;
+    - `false` → `type = instant`, `status = done`, `mode` rỗng.
+  - Kỳ đã tồn tại thì giữ nguyên `type`, kể cả khi env thay đổi trong ngày.
+- **Đánh dấu gom xong:** chỉ chuyển `collecting` → `waiting` với kỳ `scheduled`. Các trường hợp khác bỏ qua (idempotent), gồm cả kỳ `instant`.
+- **Đổi mode:** chỉ với kỳ `scheduled` đang `collecting` hoặc `waiting`.
+- **Yêu cầu dừng:** chỉ với kỳ `scheduled` đang `processing`; set cờ `stopRequested`.
+- **Luật "được phép đi tiền":** chỉ với kỳ `scheduled`, theo bảng dưới. Kỳ `instant` luôn bị từ chối.
 
-State machine của kỳ:
+State machine của kỳ `scheduled`:
 
 ```
 collecting ──gom xong──▶ waiting ──đi tiền──▶ processing ──hết lệnh──▶ done
@@ -233,7 +244,9 @@ collecting ──gom xong──▶ waiting ──đi tiền──▶ processing 
 | `stopped` | Có (chỉ admin) | Cron **không** tự chạy lại |
 | `done` | Có (chỉ admin) | Xử lý nốt lệnh bị bỏ qua ở lần trước |
 
-Cron tự động chỉ lấy các kỳ `mode = auto` ở trạng thái `waiting`, `processing`, hoặc `collecting` đã quá hạn.
+Cron tự động chỉ lấy các kỳ `type = scheduled`, `mode = auto`, ở trạng thái `waiting`, `processing`, hoặc `collecting` đã quá hạn.
+
+Kỳ `instant` không có state machine: tạo ra là `done`, và giữ nguyên trạng thái đó.
 
 #### ★ M2. Bộ đi tiền (Transfer Period Executor) — `withdraw`
 
@@ -319,6 +332,41 @@ Hàm tạo và chuyển tiền hiện tại được tách làm hai:
 - Trả về: request id, url, method, query, body, response, HTTP status code, thời điểm tạo và hoàn thành. Nếu parse được response thì kèm các trường **đã parse** (mã kết quả, trạng thái chuyển, mã tham chiếu).
 - Communication vốn không trả header, nên không lộ key đối tác.
 
+#### M6b. Export CSV kỳ (Period Export) — `withdraw`
+
+- Giao diện: `export(kỳ, filter status tuỳ chọn, writer)`: ghi CSV vào writer được truyền vào (response HTTP), không tạo file tạm trên disk.
+- Đọc lệnh của kỳ bằng **cursor** (sort `_id` tăng dần), xử lý theo lô **500**:
+  - mỗi lô gọi gRPC lấy thông tin user một lần (như export CRM hiện tại);
+  - ghi từng dòng rồi flush.
+- **Không giới hạn** số dòng; bộ nhớ chỉ giữ một lô tại một thời điểm.
+- Đầu file có **UTF-8 BOM** để Excel đọc đúng tiếng Việt. Dấu phân cách là dấu phẩy, escape theo chuẩn CSV.
+- Status ghi **thô** (có `waiting_process`), giống các API admin khác.
+- Áp dụng cho cả kỳ `scheduled` và `instant`.
+- Tên file: `transfer-period_<YYYY-MM-DD>_<status|all>.csv`.
+- **Các cột** (theo thứ tự):
+
+| Cột | Nguồn |
+|---|---|
+| Mã lệnh | id lệnh rút |
+| User ID | id user |
+| Tên khách hàng | gRPC user |
+| CIF | gRPC user |
+| Tài khoản nhận | số tài khoản trên lệnh |
+| Số tiền rút | `cash` |
+| Phí | phí bank trên lệnh |
+| Thực nhận | tiền thực nhận trên lệnh |
+| Trạng thái | status thô |
+| Mode lệnh | `auto` / `manual` / `batch_transfer` |
+| Mã giao dịch | transaction id |
+| ClientMessageID | request id gửi AT |
+| Mã tham chiếu bank | reference number |
+| Người cập nhật | `updatedBy` (nếu có) |
+| Ngày tạo | giờ HCM, `YYYY-MM-DD HH:mm:ss` |
+| Ngày cập nhật | giờ HCM, `YYYY-MM-DD HH:mm:ss` |
+
+- Không lấy được thông tin user cho một lô (lỗi gRPC): vẫn ghi dòng với tên và CIF để trống, log Warn, không huỷ cả file.
+- Lỗi đọc DB khi đang stream: header HTTP đã gửi nên không đổi được mã lỗi. Hệ thống log Error, dừng ghi, file bị cụt. Chấp nhận rủi ro này; admin export lại.
+
 #### M7. Lớp HTTP admin — `withdraw`
 
 - Khu vực `admin` mới (route, controller, service, model) theo khuôn khu vực admin của service `user`, mount tại `/admin/withdraw`. **Không** đặt trong khu vực CRM.
@@ -361,8 +409,9 @@ Handler được đăng ký ở `withdraw` khi `ENABLE_WORKER`, cùng chỗ vớ
 |---|---|---|
 | `_id` | ObjectID | |
 | `date` | datetime | Đầu ngày giờ HCM, **unique** |
-| `mode` | string | `auto` \| `manual` |
-| `status` | string | `collecting` \| `waiting` \| `processing` \| `stopped` \| `done` |
+| `type` | string | `scheduled` \| `instant`, gán lúc tạo theo `IS_AUTO_WITHDRAW` |
+| `mode` | string | `auto` \| `manual` với kỳ `scheduled`; rỗng với kỳ `instant` |
+| `status` | string | `scheduled`: `collecting` \| `waiting` \| `processing` \| `stopped` \| `done`. `instant`: luôn `done` |
 | `stopRequested` | bool | |
 | `stopReason` | string | `admin` \| `circuit_breaker`, có thể rỗng |
 | `executedBy` | string | `cronjob` hoặc id admin của lần đi tiền gần nhất |
@@ -399,11 +448,12 @@ Mọi API đều dùng `RequireAdmin`. Response theo khuôn chuẩn của servic
 
 | # | Method | Path | Mô tả | Mã lỗi |
 |---|---|---|---|---|
-| 1 | GET | `/admin/withdraw/transfer-periods` | Danh sách kỳ. Query: `page`, `limit`, `fromDate`, `toDate`, `status`, `mode`. Sort `date` giảm dần. Mỗi item kèm `stats` | |
+| 1 | GET | `/admin/withdraw/transfer-periods` | Danh sách kỳ. Query: `page`, `limit`, `fromDate`, `toDate`, `type`, `status`, `mode`. Sort `date` giảm dần. Mỗi item kèm `stats` | |
 | 2 | GET | `/admin/withdraw/transfer-periods/:id` | Chi tiết kỳ kèm `stats` | 404 không có kỳ |
-| 3 | PATCH | `/admin/withdraw/transfer-periods/:id/mode` | Body `{ "mode": "auto" \| "manual" }` | 400 mode sai / kỳ không ở `collecting`/`waiting` |
-| 4 | POST | `/admin/withdraw/transfer-periods/:id/execute` | Lấy lock và kiểm tra trạng thái **đồng bộ**, rồi chạy nền. Trả **202** | 400 trạng thái không hợp lệ; 409 đang có tiến trình đi tiền |
-| 5 | POST | `/admin/withdraw/transfer-periods/:id/stop` | Yêu cầu dừng | 400 kỳ không `processing` |
+| 3 | PATCH | `/admin/withdraw/transfer-periods/:id/mode` | Body `{ "mode": "auto" \| "manual" }` | 400 mode sai / kỳ `instant` / kỳ không ở `collecting`/`waiting` |
+| 4 | POST | `/admin/withdraw/transfer-periods/:id/execute` | Lấy lock và kiểm tra trạng thái **đồng bộ**, rồi chạy nền. Trả **202** | 400 kỳ `instant` / trạng thái không hợp lệ; 409 đang có tiến trình đi tiền |
+| 5 | POST | `/admin/withdraw/transfer-periods/:id/stop` | Yêu cầu dừng | 400 kỳ `instant` / kỳ không `processing` |
+| 5b | GET | `/admin/withdraw/transfer-periods/:id/export` | Export CSV lệnh của kỳ. Query tuỳ chọn: `status`. Trả `text/csv; charset=utf-8` kèm `Content-Disposition: attachment` (M6b) | 404 không có kỳ; 400 status không hợp lệ |
 | 6 | GET | `/admin/withdraw/withdraws` | Danh sách lệnh. Query: `transferPeriodId`, `status`, `user`, `page`, `limit`. Status **thô** | |
 | 7 | GET | `/admin/withdraw/withdraws/:id/transfer-log` | Log request/response AT | 404 không có lệnh; 404 "chưa có log giao dịch"; 400 communication chưa cấu hình |
 | 8 | PATCH | `/admin/withdraw/withdraws/:id/status` | Body `{ "status": "rejected" }` | 400 status khác `rejected`; 400 lệnh không ở `pending`/`waiting_process`; 409 lệnh vừa đổi trạng thái |
@@ -414,6 +464,7 @@ Mọi API đều dùng `RequireAdmin`. Response theo khuôn chuẩn của servic
 {
   "_id": "…",
   "date": "2026-09-28T00:00:00+07:00",
+  "type": "scheduled",
   "mode": "auto",
   "status": "waiting",
   "stopReason": "",
@@ -475,7 +526,7 @@ Các env dùng chung do vận hành tự set trong `common.env`.
 | `TRANSFER_PERIOD_EXECUTE_CRON` | `0 0 10 * * *` | withdraw | Giờ tự đi tiền các kỳ `auto` |
 | `TRANSFER_PERIOD_DEFAULT_MODE` | `auto` | withdraw | Mode mặc định khi tạo kỳ |
 | `TRANSFER_PERIOD_MAX_CONSECUTIVE_FAIL` | `5` | withdraw | Ngưỡng circuit breaker |
-| `IS_AUTO_WITHDRAW` (có sẵn) | `false` | user | Bật scanner tạo lệnh chờ |
+| `IS_AUTO_WITHDRAW` (có sẵn) | `false` | user, withdraw | `user`: bật scanner tạo lệnh chờ. `withdraw`: quyết định `type` của kỳ lúc tạo |
 | `LIMIT_WITHDRAW` (có sẵn) | `500` | user | Giới hạn số lệnh mỗi lần gom |
 
 Hằng số (không phải env):
@@ -512,10 +563,12 @@ Hằng số (không phải env):
 **M1 — Vòng đời kỳ:**
 - Gọi lấy/tạo kỳ song song cho cùng ngày ra đúng một kỳ; các lần gọi sau trả cùng id.
 - Ngày được chuẩn hoá về đầu ngày HCM (các thời điểm 00:05 và 23:55 cùng ngày ra cùng kỳ).
-- "Gom xong" chuyển `collecting` → `waiting`; gọi lần hai không đổi gì; gọi trên kỳ `processing` không đổi gì.
-- Đổi mode được khi `collecting`/`waiting`, bị từ chối ở các trạng thái khác.
-- Ma trận "được đi tiền" đúng bảng ở mục 4.2, gồm `collecting` < 2h (không) và > 2h (có).
-- Yêu cầu dừng chỉ được khi `processing`.
+- `IS_AUTO_WITHDRAW = true` → kỳ mới `scheduled`/`collecting`, có mode. `false` → kỳ mới `instant`/`done`, mode rỗng.
+- Kỳ đã tồn tại giữ nguyên `type` khi env đổi trong ngày.
+- "Gom xong" chuyển `collecting` → `waiting`; gọi lần hai không đổi gì; gọi trên kỳ `processing` hoặc kỳ `instant` không đổi gì.
+- Đổi mode được khi `collecting`/`waiting`, bị từ chối ở các trạng thái khác và với kỳ `instant`.
+- Ma trận "được đi tiền" đúng bảng ở mục 4.2, gồm `collecting` < 2h (không) và > 2h (có); kỳ `instant` luôn bị từ chối.
+- Yêu cầu dừng chỉ được với kỳ `scheduled` đang `processing`.
 
 **M2 — Bộ đi tiền** (fake chuyển khoản, fake kiểm tra user, Mongo thật):
 - Kỳ có N lệnh chờ: cả N được chuyển, kỳ kết thúc `done`, kết quả `processed = N`.
@@ -549,6 +602,14 @@ Hằng số (không phải env):
 - Không có id kỳ: lệnh tự gắn kỳ hôm nay (tạo kỳ nếu chưa có).
 - Có id kỳ trong request: dùng đúng kỳ đó.
 
+**M6b — Export CSV** (fake gRPC user, Mongo thật, writer là buffer):
+- Dòng đầu là BOM + header đúng thứ tự cột.
+- Số dòng dữ liệu bằng số lệnh của kỳ (vượt nhiều lô 500); lọc `status` chỉ ra đúng lệnh có status đó.
+- Giá trị có dấu phẩy, dấu nháy, xuống dòng được escape đúng; parse lại bằng CSV reader ra đúng dữ liệu.
+- Thời gian ghi theo giờ HCM.
+- gRPC user lỗi ở một lô: file vẫn đủ dòng, cột tên và CIF để trống.
+- Kỳ không có lệnh: file chỉ có header.
+
 **M9 — Cron sync cursor:**
 - Có lệnh rời khỏi filter `pending` trong lúc chạy: mọi lệnh `pending` đều được duyệt đúng một lần.
 
@@ -564,8 +625,9 @@ Hằng số (không phải env):
 2. Admin xem stats kỳ. Reject một lệnh. Kiểm tra user được hoàn tiền và nhận thông báo.
 3. Admin bấm đi tiền. Kiểm tra lệnh chuyển `success`/`pending`, xem được log AT.
 4. Dừng giữa chừng. Kiểm tra kỳ `stopped`, lệnh còn lại vẫn chờ. Bấm đi tiền lại để xử lý nốt.
-5. Tắt `IS_AUTO_WITHDRAW`. User tự rút: chuyển ngay, có gắn kỳ. Kỳ rỗng vẫn qua `waiting` rồi `done`.
+5. Tắt `IS_AUTO_WITHDRAW`. User tự rút: chuyển ngay, có gắn kỳ. Kỳ là `instant`/`done`, stats đếm đúng các lệnh; gọi execute/stop/đổi mode trả 400.
 6. Đổi kỳ sang `manual`. Đến giờ cron đi tiền thì kỳ không bị chạy.
+7. Export CSV một kỳ (toàn bộ và lọc `success`), mở bằng Excel: tiếng Việt hiển thị đúng, số dòng khớp stats của kỳ.
 
 ---
 
