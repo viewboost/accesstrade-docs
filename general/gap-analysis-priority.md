@@ -6,6 +6,34 @@
 
 ---
 
+---
+
+## ⏸ vCreator ngưng hợp tác — cập nhật 2026-09-28
+
+vCreator đã ngưng hợp tác. **Mọi hạng mục có đích là vCreator chuyển sang trạng thái pending.** Phần có
+đích là TCB hoặc Ambassador trong cùng một hạng mục vẫn giữ nguyên độ ưu tiên.
+
+**Pending trọn hạng mục** — vCreator là đích duy nhất:
+
+| # | Hạng mục | Điểm | Ghi chú |
+|---|---|---|---|
+| 8 | Kiểm soát ngân sách chiến dịch + engine tính thưởng V2 | 16 | Đây là hạng mục **P0** duy nhất còn mở trước khi có thông tin này |
+
+**Pending một phần** — vCreator là một trong nhiều đích, phần còn lại vẫn làm:
+
+`#2` · `#7` · `#9` · `#12` · `#15` · `#16` · `#17` · `#18` · `#20` · `#21` · `#24` · `#31` · `#33` ·
+`#34` · `#35` · `#37` · `#38` · `#39` · `#40` · `#42`
+
+Riêng **#20 (bộ affiliate)** ghi *"vCr đang làm"* — phần đang triển khai dở trên vCreator dừng lại.
+
+**Không ảnh hưởng** — vCreator là nguồn cho đi, đích là TCB hoặc Ambassador nên vẫn port được:
+
+`#4` · `#5` · `#19` · `#25` · `#32` · `#36` · `#41`
+
+Riêng **#41 (trình soạn thảo bài viết)** ghi *"vCr làm trước rồi port"* — thứ tự này không còn áp dụng,
+Ambassador làm thẳng. Hạng mục này đang nằm trong kế hoạch tháng 10.
+
+
 ## Framework scoring
 
 Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
@@ -36,7 +64,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 5 | **Audit ActorType field chỉ vCreator có** — Cả 3 dự án đều có flow dùng root account để audit, nhưng TCB/Amb không có field metadata phân biệt → query log không filter được automation vs manual. Reclassified P0→P2 (2026-05-07): không cấp bách, nice-to-have. User reconfirm P2 (2026-05-10): "cần làm nhưng chưa quá gấp" (tương tự #4). [Detail](./gaps/p2/05-audit-actor-type.md) | Reconciliation & Audit | vCreator → TCB/Amb | 3 | 2 | 5 | 4 | **14** | 🟡 P2 |
 | 6 | ~~**TCB Reconciliation engine**~~ — **gộp vào gap #15** (cùng scope: snapshot + engine cần làm chung 1 task lớn). User confirm "đã eval kỹ ở TCB, ảnh hưởng nhiều lắm" → port full stack. Xem [gap #15 detail](./gaps/p1/15-reconciliation-engine-and-snapshot.md) | Reconciliation & Audit | (gộp #15) | - | - | - | - | - | (merged → #15) |
 | 7 | **TCB Next.js Analytics Dashboard executive** (standalone app + 2855 LOC backend, ~10 sections) — TCB-only. vCr/Amb chỉ có dashboard cũ admin Umi (basic, vCr có filter 3 tầng workplace cải tiến hơn). Reclassified P2→P1 (2026-05-10) — user confirm strategic value sau khi clarify scope. [Detail](./gaps/p1/07-analytics-dashboard-port.md) | Analytics & Dashboard | TCB → vCr/Amb (strategic) | 4 | 3 | 1 | 4 | **12** | 🟠 P1 |
-| 8 | **vCreator thiếu budget control system** — TCB và Ambassador GẦN NHƯ TƯƠNG ĐƯƠNG (3-level Bpe/Bpu/Bpc + block + threshold + Telegram alert), chỉ vCreator thiếu hoàn toàn → chi tiền không giới hạn. Reclassified direction port (2026-05-07) sau user catch. [Detail](./gaps/p0/08-budget-alert-system.md) | Campaign & Event | TCB hoặc Amb → vCreator | 5 | 4 | 3 | 4 | **16** | 🔴 P0 |
+| 8 | **vCreator thiếu budget control system** — TCB và Ambassador GẦN NHƯ TƯƠNG ĐƯƠNG (3-level Bpe/Bpu/Bpc + block + threshold + Telegram alert), chỉ vCreator thiếu hoàn toàn → chi tiền không giới hạn. Reclassified direction port (2026-05-07) sau user catch. [Detail](./gaps/p0/08-budget-alert-system.md) | Campaign & Event | TCB hoặc Amb → vCreator | 5 | 4 | 3 | 4 | **16** | ⏸ **PENDING** (vCreator ngưng hợp tác) |
 | 9 | **TCB và vCreator thiếu cơ chế bảo vệ khi tính lại reward cho content đã thay đổi trạng thái** — Ambassador có safety state + cron recovery. TCB partial implementation (field tồn tại, không dùng), vCreator không có gì. Reclassified P1→P2 (2026-05-07): risk thấp-trung bình, có workaround manual. [Detail](./gaps/p2/09-recheck-recovery-pattern.md) | Campaign & Event | Ambassador → TCB + vCreator | 3 | 3 | 3 | 4 | **13** | 🟡 P2 |
 | 10 | **TCB và Ambassador dùng 2 cơ chế khác nhau để dedup Telegram alert** — TCB dùng cơ chế "khóa cứng campaign" (block toàn bộ reward calc), Ambassador dùng "khóa thông minh + cờ alert" (chỉ block submit, reward vẫn chạy). Cả 2 đều dedup OK (KHÔNG phải bug). Cần unify để 3 sản phẩm consistent — direction: TCB refactor theo pattern Ambassador. Reclassified scope (2026-05-07). [Detail](./gaps/p3/10-telegram-alert-deduplication.md) | Campaign & Event | Unify (TCB refactor theo Amb) | 2 | 2 | 3 | 4 | **11** | ⚪ P3 |
 | 11 | **TCB có SendGrid legacy không dùng nữa** — initial assumption sai (nghĩ vCr/Amb thiếu email, thực ra cả 3 đều có SMTP). TCB còn SendGrid integration nhưng đã không dùng (legacy). Verified 2026-05-07: KHÔNG cần port, action đúng nếu có là xóa SendGrid khỏi TCB (cleanup). Note để dev tương lai biết, KHÔNG cần làm. | Infrastructure & Misc | (no action needed) | 1 | 1 | 5 | 1 | **8** | ⚪ P3 |
@@ -45,7 +73,7 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 14 | ~~**TCB ContentImportTracking**~~ — Trùng với gap #31 (cùng concept bulk content import + tracking). Đã rescope thành **gap #31** với business overview chi tiết hơn. | Content & Media | (merged → #31) | - | - | - | - | - | (merged → #31) |
 | 15 | **🔝 TOP P1 — vCreator/Ambassador thiếu hệ thống đối chiếu (reconciliation) tiền thưởng + audit trail crawl chống fraud** — Combined gap #6 + #15 (2026-05-07). vCr/Amb có 3 models cơ bản + admin page nhưng KHÔNG có 3 services chính + 3 models nâng cao + admin tools nâng cao. User confirm: "Cái này quan trọng, để ở P1 nhưng ở vị trí trên cùng luôn. Vì lúc làm TCB tôi đã đánh giá kỹ rồi, nó ảnh hưởng nhiều lắm." Port full stack 3 layers (snapshot + jobs + engine). [Detail](./gaps/p1/15-reconciliation-engine-and-snapshot.md) | Reconciliation & Audit | TCB → vCr/Amb (full stack) | 5 | 4 | 2 | 4 | **15** | 🟠 P1 (top) |
 | 16 | **vCreator/Ambassador thiếu hệ thống đánh giá creator (review + rating)** — TCB có ProfileReview (5 tiêu chí) + RatingCache aggregate per-creator. vCr/Amb không có gì. **Phần tiếp nối của gap #2** — phải có InfluencerProfile trước để reference profile_id. Position: sau #15, trước #31. [Detail](./gaps/p1/16-profile-review-rating.md) | Targeting & Matching | TCB → vCr/Amb (sau gap #2) | 4 | 3 | 2 | 4 | **13** | 🟠 P1 |
-| 17 | **vCreator/Ambassador có thể bị broken avatar khi URL social expire** — TCB cache về MinIO permanent + resize 3 sizes. vCr/Amb dùng URL social trực tiếp (TikTok/Google/FB có expire). Infrastructure (MinIO + resizeimage) đã có sẵn ở vCr/Amb, chỉ thiếu service layer. Reclassified P1→P2 (2026-05-07): risk theory chứ không phải bug active. [Detail](./gaps/p2/17-upload-avatar-cache.md) | Content & Media | TCB → vCr/Amb | 3 | 3 | 4 | 4 | **14** | 🟡 P2 |
+| 17 | **vCreator/Ambassador có thể bị broken avatar khi URL social expire** — TCB cache về MinIO permanent + resize 3 sizes. vCr/Amb dùng URL social trực tiếp (TikTok/Google/FB có expire). Infrastructure (MinIO + resizeimage) đã có sẵn ở vCr/Amb, chỉ thiếu service layer. Reclassified P1→P2 (2026-05-07): risk theory chứ không phải bug active. [Detail](./gaps/p2/17-upload-avatar-cache.md) | Content & Media | TCB → vCr/Amb | 3 | 3 | 4 | 4 | **14** | ✅ **ĐÃ XONG** (Amb, 2026-09-17) |
 | 18 | **TCB BudgetInfo struct (vs Ambassador) — pre-compute UsedPercent** — Ambassador có `BudgetInfo{Total,Used,Remain,UsedPercent}` pre-compute sẵn, TCB rải flat fields phải tính % mỗi request, vCr không có budget. Reclassified P2→P1 (2026-05-10): **liên quan #8** — làm chung lúc port budget control system sang vCr (cùng refactor BudgetInfo cho cả 3 sản phẩm consistent). | Campaign & Event | Ambassador → TCB + vCr (gắn theo #8) | 2 | 2 | 4 | 4 | **12** | 🟠 P1 |
 | 19 | **vCreator Extended Period mode** — cho phép content post sau event endAt được ghi nhận với ngày map về kỳ kế toán cũ. TCB/Amb không có. Reclassified P3→P2 (2026-05-10): user confirm cần giữ trong backlog, feature có business value rõ (kỳ kế toán linh hoạt). [Detail](./gaps/p2/19-vcreator-extended-period-mode.md) | Campaign & Event | vCreator → TCB/Amb (selective, cần product confirm) | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 20 | **Affiliate suite (campaign + contract + links + tracking)** — Ambassador có (~1275 LOC mature, pub2). vCreator **đang làm** (~951 LOC active dev, Scalef API — verified bằng git log). TCB chưa có, **chờ chốt sale**. Reclassified P2→P1 (2026-05-10): có active development + sales-driven blocker. [Detail](./gaps/p1/20-ambassador-affiliate-suite.md) | Infrastructure | Amb → vCr (đang làm) → TCB (sau chốt sale) | 5 | 3 | 1 | 5 | **14** | 🟠 P1 |
@@ -63,29 +91,30 @@ Mỗi gap được score 4 chiều (1-5/chiều, tổng 4-20):
 | 33 | **Ambassador có cơ chế "tạo user giả để reserve referral code", TCB và vCreator không có** — admin có thể reserve referral code cho campaign promotion. User thật register với code này → attach inviter relation. TCB/vCr cùng có `Referral.Codes` model nhưng không có flow admin tạo seed user. Phát hiện khi verify gap #31 (2026-05-07). [Detail](./gaps/p2/33-ambassador-referral-seed-user.md) | User & Auth | Ambassador → TCB/vCr | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 32 | **Concept "mã nhân viên + binding partner" — TCB đơn giản, vCreator chi tiết hơn nhiều, Ambassador chưa có** — vCreator EmployeeRegistry 18 fields + match engine 10 ChangeActions là source of truth. TCB chỉ ManageCode 9 fields. Ambassador không có. Tách từ gap #13 + revoke gap #23 P3 + reclassified P2→P1 (2026-05-07). [Detail](./gaps/p1/32-staff-code-employee-binding.md) | User & Auth | vCreator → Amb (port full) + vCreator → TCB (extend) | 4 | 3 | 3 | 5 | **15** | ✅ **ĐÃ XONG** (Amb, 2026-09-04) |
 | 34 | **Liên kết tài khoản Threads cho creator** — Ambassador đầy đủ (~263 LOC module + UserThreadsData struct + content tracking). vCreator partial (chỉ regex post URL 10 LOC, KHÔNG có user struct binding). TCB chưa có gì. Threads đang growth, cần parity 3 sản phẩm. Initial P1 (2026-05-10) — user self-listed gap. [Detail](./gaps/p1/34-threads-account-binding.md) | User & Auth | Ambassador → vCr (bổ sung) + Amb → TCB (port full) | 4 | 3 | 4 | 5 | **16** | 🟠 P1 |
-| 35 | **Hỗ trợ crawl Facebook Post + camp tính tiền theo số bài post** — Ambassador đầy đủ (RegexFacebookPost + RegexFacebookProfile + content source + tracking + analytics). TCB/vCr chỉ có Facebook video/reel, KHÔNG có post. Reward schema `EventSchemaMilestone.NumberOfContent` ĐÃ SẴN cả 3 sản phẩm (KHÔNG cần build mới). **TCB đang yêu cầu làm ngay** → P0. [Detail](./gaps/p0/35-facebook-post-crawl-and-count-campaign.md) | Content & Media | Ambassador → TCB (urgent) + Amb → vCr | 5 | 4 | 4 | 5 | **18** | 🔴 P0 |
+| 35 | **Hỗ trợ crawl Facebook Post + camp tính tiền theo số bài post** — Ambassador đầy đủ (RegexFacebookPost + RegexFacebookProfile + content source + tracking + analytics). TCB/vCr chỉ có Facebook video/reel, KHÔNG có post. Reward schema `EventSchemaMilestone.NumberOfContent` ĐÃ SẴN cả 3 sản phẩm (KHÔNG cần build mới). **TCB đang yêu cầu làm ngay** → P0. [Detail](./gaps/p0/35-facebook-post-crawl-and-count-campaign.md) | Content & Media | Ambassador → TCB (urgent) + Amb → vCr | 5 | 4 | 4 | 5 | **18** | ✅ **ĐÃ XONG** (TCB, 2026-09-24) |
 | 36 | **vCreator cho phép resubmit link đã reject ở camp khác** — feature toggle per-partner `AllowResubmitRejectedContent` (47 LOC + field PartnerOpts). vCr có anti-spam guard (chặn resubmit cùng event, cho phép cross-event). TCB/Amb không có file `content_duplicate.go`, không có flag → block luôn cross-product. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/36-vcreator-allow-resubmit-rejected-content.md) | Content & Media | vCreator → TCB + Ambassador | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 37 | **Chuẩn hóa lý do từ chối content (rejection tags)** — TCB có 14 tag chuẩn hóa i18n vi/en + field `Content.RejectionTags + RejectionComment` + analytics aggregate per-tag. vCr/Amb chỉ có `RejectedBy + RejectedAt`, không có tag/comment, không thống kê được. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/37-standardize-content-rejection-tags.md) | Content & Media | TCB → vCreator + Ambassador | 3 | 2 | 4 | 4 | **13** | 🟡 P2 |
 | 38 | **Thêm tên/mã nội bộ cho campaign (event code)** — TCB có field `Event.Code` + wire vào tất cả display layer (admin, dashboard, email, export, search). Format `[code] name`. vCr/Amb không có → BTC khó communicate, dễ nhầm campaign khi nhiều cái chạy song song. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/38-event-code-internal-name.md) | Campaign & Event | TCB → vCreator + Ambassador | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
 | 39 | **Tag phân loại cho campaign (event tags)** — TCB có `Event.EventTags []AppID` + 7 default seed tag (Nhận diện thương hiệu, Ra mắt sản phẩm, Theo mùa, ...) + admin filter/display với color. vCr/Amb có model `TagRaw` đã sẵn nhưng `EventRaw` chưa wire field `EventTags`. Initial P2 (2026-05-10) — user self-listed gap. [Detail](./gaps/p2/39-event-tags-categorization.md) | Campaign & Event | TCB → vCreator + Ambassador | 2 | 1 | 4 | 4 | **11** | 🟡 P2 |
 | 40 | **Staff account password lifecycle (invite email + forgot password + self-service)** — TCB có 18 methods (980 LOC) đầy đủ: `InviteStaff`, `ResendInvite`, `BulkInvite`, `VerifyInviteToken`, `AcceptInvite`, `ForgotPassword`, `ResetPassword`, `UpdateMyPassword`, `GenerateAuthCode/ExchangeAuthCode` + fields `InviteToken/ResetToken` + email templates SendGrid. vCr/Amb chỉ có 8 methods (453 LOC ~46%) — admin tạo password thủ công, copy gửi qua chat. **Vấn đề bảo mật + ops**. Initial P1 (2026-05-10) — user self-listed gap. [Detail](./gaps/p1/40-staff-account-password-and-invite-flow.md) | Infrastructure & Misc | TCB → vCreator + Ambassador | 4 | 4 | 3 | 4 | **15** | 🟠 P1 |
 | 41 | **Đổi article/news editor từ HTML sang Markdown + upload ảnh** — vCreator dùng `braft-editor` (HTML), package `@uiw/react-md-editor` đã cài nhưng chưa wire. Pain: HTML tệ, không copy giữa bài giữ format, khó dùng AI soạn, preview cực. Initial P1 (2026-05-10) — user self-listed gap. [Detail](./gaps/p1/41-content-editor-html-to-markdown.md) | Content & Media | vCr (làm trước) → TCB + Ambassador | 3 | 3 | 4 | 4 | **14** | 🟠 P1 |
-| 42 | **Cache cover image của top content về MinIO** — TCB vừa làm (commits `dcd358bd` + `7197a1bd`): file `cover_host.go` 159 LOC + caller wire. Lỗi ảnh hỏng do social CDN expire signature, "xuất hiện liên tục". vCr/Amb có MinIO module nhưng chưa có service. Initial P1 (2026-05-10) — user self-listed gap, bug active. [Detail](./gaps/p1/42-cache-content-cover-to-minio.md) | Content & Media | TCB → vCreator + Ambassador | 4 | 4 | 4 | 4 | **16** | 🟠 P1 |
+| 42 | **Cache cover image của top content về MinIO** — TCB vừa làm (commits `dcd358bd` + `7197a1bd`): file `cover_host.go` 159 LOC + caller wire. Lỗi ảnh hỏng do social CDN expire signature, "xuất hiện liên tục". vCr/Amb có MinIO module nhưng chưa có service. Initial P1 (2026-05-10) — user self-listed gap, bug active. [Detail](./gaps/p1/42-cache-content-cover-to-minio.md) | Content & Media | TCB → vCreator + Ambassador | 4 | 4 | 4 | 4 | **16** | ✅ **ĐÃ XONG** (Amb, 2026-09-17) |
+| 43 | **Lỗ hổng bảo mật API do Gen-Green phát hiện** — Gen-Green báo các endpoint public gọi được không kiểm quyền, đã hotfix bên Gen-Green và cần đưa sang Ambassador, T-Fluencers. [Detail](./gaps/p0/43-port-security-fixes-gengreen-to-amb-tcb.md) | Security | Gen-Green → Ambassador + TCB | 5 | 5 | 2 | 4 | **16** | ✅ **ĐÃ XONG** (Amb + TF, 2026-09-24) |
 
 ---
 
 ## Priority breakdown
 
-### 🔴 P0 — Làm ngay (3 items, sau khi reclassify 2026-05-07 + thêm #35 urgent 2026-05-10)
+### 🔴 P0 — Làm ngay (0 item còn mở — cập nhật 2026-09-28)
 Score ≥ 16. Ưu tiên cao nhất do **easy win + cross-product impact lớn** hoặc **critical risk** hoặc **business intent rõ ràng**.
 
 | # | Gap | Effort | Impact |
 |---|---|---|---|
-| 35 | **Facebook Post crawl + camp đếm số bài post** Amb → TCB (urgent) + vCr | 2-3 tuần | 🚨 TCB đang yêu cầu làm ngay — sales/delivery blocker. Schema reward đã sẵn, chỉ thiếu crawl infrastructure |
-| 8 | **Budget control + Reward V2 engine** — port từ Ambassador → vCreator (TCB và Amb đã có) | 2-3 tuần | vCreator hiện chi tiền không giới hạn + race condition khi nhiều creator submit (revenue protection) |
+| 35 ✅ | ~~**Facebook Post crawl + camp đếm số bài post** Amb → TCB~~ **ĐÃ XONG (2026-09-24)**; phần sang vCreator ⏸ pending | 2-3 tuần | Đã gỡ blocker sales/delivery của TCB |
+| 8 ⏸ | **Budget control + Reward V2 engine** — port từ Ambassador → vCreator (TCB và Amb đã có) | 2-3 tuần | ⏸ **PENDING — vCreator ngưng hợp tác.** vCreator là đích duy nhất của hạng mục này |
 | 2 ✅ | ~~**InfluencerProfile concept** — port TCB → Ambassador (mandatory)~~ **ĐÃ XONG cho Ambassador (2026-09-04)**; TCB → vCreator (recommended) vẫn còn | 6-8 tuần (2 phases) | Ambassador feature parity TCB; long-term chia sẻ creator pool 3 sản phẩm |
 
-→ **Tổng effort**: gap #35 (~2-3 tuần urgent), gap #8 nhỏ (1 sprint), gap #2 lớn (>1 quý) — chia phases triển khai.
+→ **Không còn hạng mục P0 nào đang mở.** #2 và #35 đã xong; #8 pending vì vCreator ngưng hợp tác.
 
 **Note**:
 - Gap #12 (Security cho admin login) ban đầu là P0 — sau khi verify hết picture (KHÔNG có OTP ở 3 dự án, chỉ rate limit password attempts) → reclassified P3 vì vCr/Amb không phải target tấn công lớn.

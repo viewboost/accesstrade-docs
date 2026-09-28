@@ -23,9 +23,9 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | # | Gap | File |
 |---|---|---|
 | 2 ✅ | ~~InfluencerProfile concept — Ambassador mandatory~~ **ĐÃ XONG cho Ambassador (2026-09-04)**; vCreator recommended (creator pool) vẫn còn | [p0/02-influencer-profile-concept.md](./p0/02-influencer-profile-concept.md) |
-| 8 | vCreator thiếu hệ thống kiểm soát ngân sách campaign + tính thưởng có cap | [p0/08-budget-alert-system.md](./p0/08-budget-alert-system.md) |
-| **35** 🚨 | **TCB urgent** — Hỗ trợ crawl Facebook Post + camp đếm số bài post (Amb đã có, TCB/vCr chưa) | [p0/35-facebook-post-crawl-and-count-campaign.md](./p0/35-facebook-post-crawl-and-count-campaign.md) |
-| **43** 🔴 | **SECURITY** — Amb/TCB còn nguyên các lỗ hổng public API mà Gen-Green đã hotfix (BXH lộ thu nhập creator, BOLA `/user-statistic`, enumerate user id) | [p0/43-port-security-fixes-gengreen-to-amb-tcb.md](./p0/43-port-security-fixes-gengreen-to-amb-tcb.md) |
+| 8 ⏸ | vCreator thiếu hệ thống kiểm soát ngân sách campaign + tính thưởng có cap — ⏸ **PENDING, vCreator ngưng hợp tác (2026-09-28)** | [p0/08-budget-alert-system.md](./p0/08-budget-alert-system.md) |
+| 35 ✅ | ~~Hỗ trợ crawl Facebook Post + camp đếm số bài post~~ **ĐÃ XONG cho TCB (2026-09-24)**; phần vCreator ⏸ pending | [p0/35-facebook-post-crawl-and-count-campaign.md](./p0/35-facebook-post-crawl-and-count-campaign.md) |
+| 43 ✅ | ~~**SECURITY** — Amb/TCB còn nguyên các lỗ hổng public API mà Gen-Green đã hotfix (BXH lộ thu nhập creator, BOLA `/user-statistic`, enumerate user id)~~ **ĐÃ XONG cho Ambassador + T-Fluencers (2026-09-24)** | [p0/43-port-security-fixes-gengreen-to-amb-tcb.md](./p0/43-port-security-fixes-gengreen-to-amb-tcb.md) |
 
 ---
 
@@ -43,7 +43,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 34 | Liên kết tài khoản Threads cho creator — TCB chưa có, vCr partial, Amb đầy đủ | [p1/34-threads-account-binding.md](./p1/34-threads-account-binding.md) |
 | 40 | Staff account password lifecycle (invite email + forgot + self-service) — TCB có đầy đủ, vCr/Amb chỉ admin tạo + copy password thủ công | [p1/40-staff-account-password-and-invite-flow.md](./p1/40-staff-account-password-and-invite-flow.md) |
 | 41 | Đổi article/news editor từ HTML sang Markdown + upload ảnh | [p1/41-content-editor-html-to-markdown.md](./p1/41-content-editor-html-to-markdown.md) |
-| 42 | Cache cover image của top content về MinIO — TCB vừa fix, vCr/Amb chưa có | [p1/42-cache-content-cover-to-minio.md](./p1/42-cache-content-cover-to-minio.md) |
+| 42 ✅ | ~~Cache cover image của top content về MinIO~~ **ĐÃ XONG cho Ambassador (2026-09-17)**; phần vCreator ⏸ pending | [p1/42-cache-content-cover-to-minio.md](./p1/42-cache-content-cover-to-minio.md) |
 
 
 ---
@@ -56,7 +56,7 @@ Khi reclassify priority, **move file** sang folder mới và update [../gap-anal
 | 5 | Audit ActorType field metadata | [p2/05-audit-actor-type.md](./p2/05-audit-actor-type.md) |
 | ~~6~~ | ~~Reconciliation engine port~~ — **gộp vào gap #15** (P1 top) | (merged → #15) |
 | 9 | TCB và vCreator thiếu cơ chế bảo vệ khi tính lại reward cho content đã thay đổi trạng thái | [p2/09-recheck-recovery-pattern.md](./p2/09-recheck-recovery-pattern.md) |
-| 17 | vCreator/Ambassador có thể bị broken avatar khi URL social expire | [p2/17-upload-avatar-cache.md](./p2/17-upload-avatar-cache.md) |
+| 17 ✅ | ~~Ambassador bị hỏng avatar khi URL social hết hạn~~ **ĐÃ XONG cho Ambassador (2026-09-17)**; phần vCreator ⏸ pending | [p2/17-upload-avatar-cache.md](./p2/17-upload-avatar-cache.md) |
 | 19 | vCreator Extended Period mode — ghi nhận content sau event endAt + map về kỳ kế toán cũ | [p2/19-vcreator-extended-period-mode.md](./p2/19-vcreator-extended-period-mode.md) |
 | 21 | Ambassador Mission/Gamification system — nhiệm vụ + thưởng + level (Wild Rift origin, giờ generic) | [p2/21-ambassador-mission-gamification.md](./p2/21-ambassador-mission-gamification.md) |
 | 33 | Ambassador có cơ chế "tạo user giả để reserve referral code", TCB và vCreator không có | [p2/33-ambassador-referral-seed-user.md](./p2/33-ambassador-referral-seed-user.md) |
