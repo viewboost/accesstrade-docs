@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>DISO - Kế hoạch Tháng 10/2026</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #202124; line-height: 1.6; max-width: 1280px; margin: 20px auto; padding: 0 16px; }
+  h1 { font-size: 18px; margin-top: 28px; border-bottom: 2px solid #1a73e8; padding-bottom: 6px; }
+  h2 { font-size: 16px; margin-top: 24px; color: #1a73e8; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; table-layout: fixed; }
+  th, td { border: 1px solid #dadce0; padding: 8px 10px; text-align: left; vertical-align: top; word-wrap: break-word; }
+  th { background: #f1f3f4; font-weight: 600; }
+  td.num, th.num { text-align: right; }
+  .status-done { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-testing { background: #cce5ff; color: #004085; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-progress { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-notstarted { background: #e2e3e5; color: #383d41; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-pending { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .group-row { background: #fef7e0; font-weight: 600; }
+  .group-total { background: #e8f0fe; font-weight: 700; }
+  .grand-total { background: #d2e3fc; font-weight: 700; }
+  .total-summary { background: #e8f0fe; padding: 12px 16px; border-left: 4px solid #1a73e8; margin: 16px 0; font-weight: 600; }
+  .strategy { background: #e8f0fe; padding: 16px; border-left: 4px solid #1a73e8; margin: 16px 0; }
+  .strategy ul { margin: 6px 0 0 18px; padding: 0; }
+  .strategy li { margin-bottom: 6px; }
+  .note { background: #f1f3f4; padding: 14px 16px; border-left: 4px solid #5f6368; margin: 16px 0; }
+  .note ul { margin: 6px 0 0 18px; padding: 0; }
+  .plan-link { background: #e6f4ea; padding: 12px 16px; border-left: 4px solid #34a853; margin: 16px 0; text-align: center; font-size: 15px; }
+  .confirm { background: #fef7e0; padding: 16px; border-left: 4px solid #f9ab00; margin: 16px 0; }
+  a { color: #1a73e8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .signature { margin-top: 24px; }
+  .subject-hint { background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: #856404; }
+</style>
+</head>
+<body>
+
+<div class="subject-hint"><strong>Gợi ý Subject:</strong> [DISO] Kế hoạch triển khai Tháng 10/2026 (Dự kiến)</div>
+
+<p>Dear team,</p>
+
+<p>DISO gửi team bản <strong>kế hoạch triển khai Tháng 10/2026 (dự kiến)</strong>, gồm danh sách hạng mục, mô tả, impact, deadline, workload ước tính (BE / FE / QC / PM) và trạng thái hiện tại. Đây là bản kế hoạch lần 1 của tháng 10, sẽ chốt lại sau khi hai bên xác nhận scope.</p>
+
+<div class="strategy">
+  <strong>🎯 Định hướng triển khai Tháng 10/2026</strong>
+  <ul>
+    <li><strong>Trọng tâm tháng: bảo mật và phân quyền tài khoản</strong> (112h — chiếm 60% khối lượng). Hai hạng mục này cùng một gốc vấn đề: hiện đội vận hành phải mượn tài khoản quyền cao nhất mới làm được việc, và mật khẩu tài khoản mới vẫn được admin đặt tay rồi gửi qua email hoặc Zalo.</li>
+    <li><strong>Hạng mục phân quyền có deadline sớm nhất — 06/10.</strong> Tài khoản quyền cao nhất đang cấp tạm cho Manager của đội vận hành đã hết hạn 30/9, nên cần có nhóm quyền thay thế càng sớm càng tốt.</li>
+    <li><strong>Mở rộng và gom đầu mối:</strong> đưa chức năng mã nhân viên sang dùng được trên trang chung Ambassador, và chuyển việc thu thập dữ liệu kênh Threads về dịch vụ của AT.</li>
+  </ul>
+</div>
+
+<h1>Tổng quan kế hoạch Tháng 10/2026 (dự kiến)</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 30px;">STT</th>
+      <th style="width: 150px;">Hạng mục</th>
+      <th style="width: 42%;">Mô tả</th>
+      <th style="width: 23%;">Impact</th>
+      <th style="width: 58px;">Deadline</th>
+      <th class="num" style="width: 32px;">BE</th>
+      <th class="num" style="width: 32px;">FE</th>
+      <th class="num" style="width: 32px;">QC</th>
+      <th class="num" style="width: 32px;">PM</th>
+      <th class="num" style="width: 46px;">Total</th>
+      <th style="width: 76px;">Trạng thái</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- Nhóm 1 -->
+    <tr class="group-row"><td colspan="11">1. Bảo mật và phân quyền tài khoản</td></tr>
+    <tr>
+      <td>1</td>
+      <td><strong>Update phân quyền hệ thống</strong></td>
+      <td>Rà soát lại toàn bộ danh sách quyền trong hệ thống, sau đó sắp xếp lại các nhóm quyền cho đúng với từng đội đang sử dụng.<br><br>Hiện chỉ có ba nhóm quyền: CTV, Admin và Admin Root. Đội vận hành chỉ được cấp tới Admin, nhưng nhóm này chưa làm được năm việc đang cần:<br>– Người dùng: liên hệ kịp thời creator bị sai video<br>– Cộng thưởng cho creator<br>– Thưởng thêm: cộng thưởng<br>– File đối soát: huỷ nội dung, huỷ mốc thưởng, tải file đối soát<br>– File rút tiền: xem và tải file rút tiền<br><br>Chỉ Admin Root mới làm được những việc này, nhưng cấp tài khoản Admin Root ra ngoài là rủi ro lớn vì tài khoản đó làm được mọi thứ trên hệ thống.</td>
+      <td>– Đội vận hành làm được đủ năm việc trên bằng tài khoản của chính mình, không phải mượn quyền cao nhất<br>– Chỉ còn một tài khoản quyền cao nhất duy nhất, do AT giữ. Thu lại được tài khoản tạm đang cấp cho Manager của đội vận hành (hết hạn 30/9), và đội kỹ thuật cũng không phải xin quyền cao nhất mỗi lần hỗ trợ<br>– Là bước đi trước của việc mời tài khoản qua email: có nhóm quyền rõ ràng thì người được mời mới nhận đúng quyền ngay từ đầu</td>
+      <td><strong>06/10</strong></td>
+      <td class="num">24</td>
+      <td class="num">12</td>
+      <td class="num">8</td>
+      <td class="num">4</td>
+      <td class="num"><strong>48</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Mời tài khoản và quản lý mật khẩu cho admin, vận hành</strong></td>
+      <td>Xây dựng trọn quy trình cấp và quản lý mật khẩu cho tài khoản admin và vận hành:<br>– <strong>Mời tài khoản:</strong> admin gửi lời mời, hệ thống tự gửi đường dẫn qua email. Mời được nhiều tài khoản cùng lúc khi tiếp nhận đối tác mới.<br>– <strong>Nhận lời mời:</strong> người được mời tự đặt mật khẩu của mình. Đường dẫn có hạn sử dụng và chỉ dùng được một lần.<br>– <strong>Quên mật khẩu:</strong> người dùng tự đặt lại qua email, không cần nhờ admin.<br>– <strong>Đổi mật khẩu:</strong> tự đổi trong phần tài khoản cá nhân.<br>– <strong>Quản lý lời mời:</strong> gửi lại khi đường dẫn hết hạn hoặc người nhận không thấy mail; thu hồi lời mời chưa dùng tới.</td>
+      <td>– <strong>Xử lý lỗi bảo mật loại cao: mật khẩu không còn bị lộ ra ngoài hệ thống.</strong> Hiện admin tạo mật khẩu thủ công rồi copy gửi qua email hoặc Zalo, mật khẩu nằm lại trong hộp thư và lịch sử chat, ai đọc được cũng dùng được, và bản thân admin cũng nắm mật khẩu của người khác.<br>– Mời đối tác vào hệ thống qua đúng luồng của hệ thống, thay vì nhắn tay qua email hay Zalo<br>– Biết được ai mời ai, mời lúc nào, nhận lúc nào, phục vụ rà soát khi có sự cố<br>– Giảm việc tay của admin mỗi lần tiếp nhận tài khoản mới hoặc mỗi lần có người quên mật khẩu<br>– Đáp ứng tiêu chí bảo mật cơ bản khi đối tác lớn rà soát hệ thống</td>
+      <td>13/10</td>
+      <td class="num">24</td>
+      <td class="num">24</td>
+      <td class="num">12</td>
+      <td class="num">4</td>
+      <td class="num"><strong>64</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 1 (2 hoạt động)</td>
+      <td class="num">48</td>
+      <td class="num">36</td>
+      <td class="num">20</td>
+      <td class="num">8</td>
+      <td class="num">112</td>
+      <td>(75.2% / 149h)</td>
+    </tr>
+
+    <!-- Nhóm 2 -->
+    <tr class="group-row"><td colspan="11">2. Mở rộng nghiệp vụ cho đối tác</td></tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Đưa luồng nhập mã nhân viên lên Ambassador</strong></td>
+      <td>Chức năng nhập mã nhân viên hiện chỉ dùng được trên các trang riêng của từng đối tác, chưa dùng được trên trang chung Ambassador.<br><br>Mở rộng để đối tác đang dùng trang chung cũng khai báo và phân nhóm nhân viên được.</td>
+      <td>– Đối tác dùng trang chung không phải dựng thêm trang riêng chỉ để có chức năng mã nhân viên<br>– Thống kê kết quả theo nhóm nhân viên áp dụng được cho mọi đối tác, không riêng nhóm đã có trang riêng</td>
+      <td>13/10</td>
+      <td class="num">8</td>
+      <td class="num">16</td>
+      <td class="num">8</td>
+      <td class="num">2</td>
+      <td class="num"><strong>34</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 2 (1 hoạt động)</td>
+      <td class="num">8</td>
+      <td class="num">16</td>
+      <td class="num">8</td>
+      <td class="num">2</td>
+      <td class="num">34</td>
+      <td>(22.8% / 149h)</td>
+    </tr>
+
+    <!-- Nhóm 3 -->
+    <tr class="group-row"><td colspan="11">3. Cải tiến vận hành và hạ tầng</td></tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Nâng cấp trình soạn thảo bài viết và tin tức</strong></td>
+      <td>Thay trình soạn thảo bài viết và tin tức trong trang quản trị bằng trình soạn thảo mới, có kèm chức năng tải ảnh thẳng vào bài.<br><br>Chuyển toàn bộ bài viết cũ sang định dạng mới, người dùng không phải soạn lại bằng tay.</td>
+      <td>– Sao chép nội dung giữa các bài không còn bị vỡ định dạng như hiện nay<br>– Soạn nội dung bằng AI rồi dán thẳng vào bài, không phải chỉnh lại từ đầu<br>– Xem trước được bài ngay trong lúc soạn, không phải lưu rồi tải lại trang mới thấy</td>
+      <td>13/10</td>
+      <td class="num">4</td>
+      <td class="num">16</td>
+      <td class="num">4</td>
+      <td class="num">2</td>
+      <td class="num"><strong>26</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>Chuyển bộ thu thập dữ liệu kênh Threads sang dịch vụ của AT-Core</strong></td>
+      <td>Việc thu thập dữ liệu kênh Threads hiện đang chạy qua dịch vụ của Diso. Chuyển sang dùng dịch vụ của AT-Core.</td>
+      <td>– Đưa việc thu thập dữ liệu kênh về chung một đầu mối do AT quản lý, thay vì phụ thuộc dịch vụ riêng của Diso</td>
+      <td>31/10</td>
+      <td class="num">4</td>
+      <td class="num">0</td>
+      <td class="num">4</td>
+      <td class="num">1</td>
+      <td class="num"><strong>9</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 3 (2 hoạt động)</td>
+      <td class="num">8</td>
+      <td class="num">16</td>
+      <td class="num">8</td>
+      <td class="num">3</td>
+      <td class="num">35</td>
+      <td>(23.5% / 149h)</td>
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Tổng hợp workload Tháng 10/2026</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nhóm chức năng</th>
+      <th class="num" style="width: 70px;">Số hoạt động</th>
+      <th class="num" style="width: 56px;">BE</th>
+      <th class="num" style="width: 56px;">FE</th>
+      <th class="num" style="width: 56px;">QC</th>
+      <th class="num" style="width: 56px;">PM</th>
+      <th class="num" style="width: 70px;">Total (h)</th>
+      <th class="num" style="width: 110px;">% so với chuẩn 149h</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1. Bảo mật và phân quyền tài khoản</td>
+      <td class="num">2</td><td class="num">48</td><td class="num">36</td><td class="num">20</td><td class="num">8</td><td class="num">112</td><td class="num">75.2%</td>
+    </tr>
+    <tr>
+      <td>2. Mở rộng nghiệp vụ cho đối tác</td>
+      <td class="num">1</td><td class="num">8</td><td class="num">16</td><td class="num">8</td><td class="num">2</td><td class="num">34</td><td class="num">22.8%</td>
+    </tr>
+    <tr>
+      <td>3. Cải tiến vận hành và hạ tầng</td>
+      <td class="num">2</td><td class="num">8</td><td class="num">16</td><td class="num">8</td><td class="num">3</td><td class="num">35</td><td class="num">23.5%</td>
+    </tr>
+    <tr class="grand-total">
+      <td><strong>TỔNG THÁNG 10/2026</strong></td>
+      <td class="num"><strong>5</strong></td>
+      <td class="num"><strong>64</strong></td>
+      <td class="num"><strong>68</strong></td>
+      <td class="num"><strong>36</strong></td>
+      <td class="num"><strong>13</strong></td>
+      <td class="num"><strong>181</strong></td>
+      <td class="num"><strong>121.5%</strong></td>
+    </tr>
+    <tr>
+      <td style="color: #5f6368;">Tiêu chuẩn hợp đồng tháng</td>
+      <td class="num" style="color: #5f6368;">–</td>
+      <td class="num" style="color: #5f6368;">53</td>
+      <td class="num" style="color: #5f6368;">38</td>
+      <td class="num" style="color: #5f6368;">38</td>
+      <td class="num" style="color: #5f6368;">20</td>
+      <td class="num" style="color: #5f6368;">149</td>
+      <td class="num" style="color: #5f6368;">100%</td>
+    </tr>
+    <tr>
+      <td>Chênh lệch</td>
+      <td class="num">–</td>
+      <td class="num">+11</td>
+      <td class="num">+30</td>
+      <td class="num">−2</td>
+      <td class="num">−7</td>
+      <td class="num">+32</td>
+      <td class="num">+21.5%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="plan-link">
+  📄 <strong>Chi tiết Kế hoạch Tháng 10/2026 (full):</strong> <a href="https://docs.google.com/spreadsheets/d/1llWv7MwEkyceEH5f16zujxS_R_t-ZaX7kAVKh2R0Yzg/edit?gid=1360485510#gid=1360485510">XEM TẠI ĐÂY</a>
+</div>
+
+<div class="confirm">
+  <strong>✅ Đề nghị xác nhận kế hoạch</strong>
+  <p style="margin: 8px 0 0 0;">Nhờ team review và <strong>xác nhận lại bản kế hoạch Tháng 10/2026 (dự kiến)</strong> ở trên để DISO làm cơ sở nghiệm thu cuối tháng.</p>
+</div>
+
+<p>Báo cáo tiến độ tuần sẽ gửi riêng vào đầu mỗi tuần. Trong quá trình triển khai, nếu có vướng mắc, thay đổi scope hoặc cần điều chỉnh deadline, DISO sẽ chủ động cập nhật và trao đổi với các bên liên quan kịp thời.</p>
+
+<p>Cảm ơn team đã phối hợp.</p>
+
+<div class="signature">
+  <p>Thanks &amp; Regards,<br>
+  <strong>DISO Team</strong></p>
+</div>
+
+</body>
+</html>
