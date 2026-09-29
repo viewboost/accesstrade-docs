@@ -34,6 +34,7 @@ Chỉ đi khác ở ba loại tình huống, mỗi chỗ ghi rõ lý do:
 - PRD tham chiếu (T-Fluencers): `staff-invite-auth/prd-staff-invite-auth-2026-02-24.md`
 - PRD liên quan: `ambassador/phan-quyen-van-hanh/prd-phan-quyen-van-hanh-2026-09-25.md` — viết tắt **PQ**
 - Kế hoạch tháng 10: `plan/2026-10/2026-10-monthly-plan-email.html`
+- Tech spec: [`techspec-moi-nhan-su-va-mat-khau-2026-09-29.md`](./techspec-moi-nhan-su-va-mat-khau-2026-09-29.md)
 - Mẫu email gửi AccessTrade: [`email-templates/staff_invite_email.html`](./email-templates/staff_invite_email.html), [`email-templates/staff_reset_password_email.html`](./email-templates/staff_reset_password_email.html)
 
 ---
@@ -1155,7 +1156,7 @@ Không còn câu hỏi mở.
 
 ## 17. Trạng thái triển khai
 
-Bản cài đặt tham chiếu được xây song song với PRD để kiểm chứng tính khả thi. **Đã push, chưa tạo PR, chưa merge.**
+Bản cài đặt tham chiếu được xây song song với PRD để kiểm chứng tính khả thi. **Đã push; PR #252 vào `develop` đang mở; chưa có PR vào `release`.**
 
 Một nhánh duy nhất: `feat/staff-invite-password`, cắt từ `release` mới nhất (`ccda54288`). Gồm FR-001 → FR-018 (trừ FR-013) và HF-1 → HF-3, chia 3 commit để review riêng:
 
@@ -1178,7 +1179,7 @@ Một nhánh duy nhất: `feat/staff-invite-password`, cắt từ `release` mớ
 
 **Chưa kiểm chứng:** end-to-end với cơ sở dữ liệu thật; gửi email thật (D-1).
 
-**Đồng bộ sang `develop`:** `develop` đi trước `release` 189 commit. Đã chạy thử áp toàn bộ thay đổi lên `develop` (`254dc9c30`) trong worktree riêng:
+**Đồng bộ sang `develop`:** `develop` đi trước `release` 189 commit. Nhánh `feat/staff-invite-password-develop` (cắt từ `develop` `254dc9c30`, merge nhánh nguồn) mở PR #252 vào `develop` — GitHub báo mergeable. Chi tiết: tech spec mục 12.
 
 - Xung đột đúng 2 chỗ như dự kiến: hàm `Login` (giữ ghi Lịch sử đăng nhập của `develop`, thêm chặn dò mật khẩu và tra email không phân biệt hoa thường) và phần import của form đăng nhập
 - Một lỗi ngữ nghĩa git không báo: `develop` đã bỏ prop `location` khỏi form đăng nhập, nên dòng tự điền email từ trang nhận lời mời sẽ âm thầm không chạy. Đã sửa ngay trên nhánh nguồn — đọc tham số qua `useLocation()` — để hai nhánh dùng chung một dòng
