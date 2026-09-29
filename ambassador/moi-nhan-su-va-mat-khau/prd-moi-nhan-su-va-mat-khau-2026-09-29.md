@@ -1156,7 +1156,7 @@ Không còn câu hỏi mở.
 
 ## 17. Trạng thái triển khai
 
-Bản cài đặt tham chiếu được xây song song với PRD để kiểm chứng tính khả thi. **PR #253 vào `release` và PR #252 vào `develop` đang mở, chưa merge.**
+Bản cài đặt tham chiếu được xây song song với PRD để kiểm chứng tính khả thi. **Đã merge 2026-09-29: PR #253 vào `release`, PR #252 vào `develop`.** Chưa deploy — chờ D-1 (mã template AT) và D-3.
 
 Một nhánh duy nhất: `feat/staff-invite-password`, cắt từ `release` mới nhất (`ccda54288`). Gồm FR-001 → FR-018 (trừ FR-013) và HF-1 → HF-3, chia 3 commit để review riêng:
 
@@ -1179,7 +1179,7 @@ Một nhánh duy nhất: `feat/staff-invite-password`, cắt từ `release` mớ
 
 **Chưa kiểm chứng:** end-to-end với cơ sở dữ liệu thật; gửi email thật (D-1).
 
-**Đồng bộ sang `develop`:** `develop` đi trước `release` 189 commit. Nhánh `feat/staff-invite-password-develop` (cắt từ `develop` `254dc9c30`, merge nhánh nguồn) mở PR #252 vào `develop` — GitHub báo mergeable. Chi tiết: tech spec mục 12.
+**Đồng bộ sang `develop`:** `develop` đi trước `release` 189 commit. Nhánh `feat/staff-invite-password-develop` (cắt từ `develop` `254dc9c30`, merge nhánh nguồn) đã merge vào `develop` qua PR #252. Chi tiết: tech spec mục 12.
 
 - Xung đột đúng 2 chỗ như dự kiến: hàm `Login` (giữ ghi Lịch sử đăng nhập của `develop`, thêm chặn dò mật khẩu và tra email không phân biệt hoa thường) và phần import của form đăng nhập
 - Một lỗi ngữ nghĩa git không báo: `develop` đã bỏ prop `location` khỏi form đăng nhập, nên dòng tự điền email từ trang nhận lời mời sẽ âm thầm không chạy. Đã sửa ngay trên nhánh nguồn — đọc tham số qua `useLocation()` — để hai nhánh dùng chung một dòng

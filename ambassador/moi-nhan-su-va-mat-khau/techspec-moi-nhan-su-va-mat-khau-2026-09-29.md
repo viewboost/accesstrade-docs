@@ -9,8 +9,8 @@
 
 | Nhánh | Nền | Trạng thái |
 |---|---|---|
-| `feat/staff-invite-password` | `release` (`ccda54288`) | PR #253 vào `release`, mergeable |
-| `feat/staff-invite-password-develop` | `develop` (`254dc9c30`) + merge nhánh trên | PR #252 vào `develop`, mergeable |
+| `feat/staff-invite-password` | `release` (`ccda54288`) | Đã merge vào `release` — PR #253 (2026-09-29) |
+| `feat/staff-invite-password-develop` | `develop` (`254dc9c30`) + merge nhánh trên | Đã merge vào `develop` — PR #252 (2026-09-29) |
 
 ---
 
