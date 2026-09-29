@@ -9,7 +9,7 @@
 
 | Nhánh | Nền | Trạng thái |
 |---|---|---|
-| `feat/staff-invite-password` | `release` (`ccda54288`) | Đã push, chờ PR vào `release` |
+| `feat/staff-invite-password` | `release` (`ccda54288`) | PR #253 vào `release`, mergeable |
 | `feat/staff-invite-password-develop` | `develop` (`254dc9c30`) + merge nhánh trên | PR #252 vào `develop`, mergeable |
 
 ---
@@ -696,4 +696,4 @@ cd admin
 
 | Version | Date | Author | Thay đổi |
 |---|---|---|---|
-| 1.0 | 2026-09-29 | Nguyễn Đăng Định | Bản đầu, đồng bộ với code tại `2baf13649` và PR #252 |
+| 1.0 | 2026-09-29 | Nguyễn Đăng Định | Bản đầu, đồng bộ với code tại `2baf13649`, PR #253 (`release`) và #252 (`develop`) |

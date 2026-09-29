@@ -1156,7 +1156,7 @@ Không còn câu hỏi mở.
 
 ## 17. Trạng thái triển khai
 
-Bản cài đặt tham chiếu được xây song song với PRD để kiểm chứng tính khả thi. **Đã push; PR #252 vào `develop` đang mở; chưa có PR vào `release`.**
+Bản cài đặt tham chiếu được xây song song với PRD để kiểm chứng tính khả thi. **PR #253 vào `release` và PR #252 vào `develop` đang mở, chưa merge.**
 
 Một nhánh duy nhất: `feat/staff-invite-password`, cắt từ `release` mới nhất (`ccda54288`). Gồm FR-001 → FR-018 (trừ FR-013) và HF-1 → HF-3, chia 3 commit để review riêng:
 
