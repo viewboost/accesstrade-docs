@@ -1,488 +1,577 @@
-# PRD: Phân quyền cho biz vận hành — gỡ phụ thuộc vào Admin Root
+# PRD: Phân quyền chức năng cấu hình được — gỡ phụ thuộc vào Admin Root
 
 Bối cảnh: request của đầu biz vận hành. Hiện đang phải cấp tạm cho Manager của biz một tài khoản Admin
 Root để team xử lý công việc trước. Mọi số liệu và trích dẫn trong bản này đọc từ mã nguồn
-`AT-Core/ambassador`, ngày 2026-09-25.
+`AT-Core/ambassador`: bản đầu ngày 2026-09-25, phần đo lại ngày 2026-09-30 có ghi rõ.
+
+**Cập nhật 2026-09-30 — đổi hướng.** Bản 25/9 giải bài toán bằng cách vá vai trò Admin cho đủ năm việc.
+Bản này giữ nguyên năm việc đó, nhưng giải bằng **phân quyền theo chức năng, cấu hình trên màn hình**,
+thay cho bộ Role và Permission đang viết cứng trong mã nguồn. Lý do ở mục 1.1.
 
 ---
 
 ## 1. Mục tiêu
 
-Biz vận hành làm được **năm việc họ đang phải mượn tài khoản root để làm**, bằng chính vai trò Admin mà
-họ được phép cấp, và chỉ trong phạm vi ADV họ phụ trách.
+Rà soát lại toàn bộ danh sách quyền trong hệ thống, sắp xếp lại thành các **nhóm quyền đúng với từng đội**
+đang dùng, và cho phép **cấu hình nhóm quyền trên màn hình** thay vì sửa mã nguồn mỗi lần một đội cần thêm
+việc.
 
-Đây **không phải** yêu cầu thêm năng lực mới. Bốn trong năm việc đã có sẵn màn hình, sẵn API, sẵn cổng
-kiểm quyền ghi là `IsAdmin`. Chúng không chạy được vì một lý do kỹ thuật duy nhất, lặp lại ở 25 chỗ trong
-mã nguồn — mục 1.2.
-
-Năm kết quả phải đạt:
-
-| Việc biz cần | Hôm nay | Sau đợt này |
-|---|---|---|
-| Liên hệ creator bị sai video | Mục **Người dùng** ẩn với Admin; chi tiết người dùng nằm dưới `IsRoot` | Admin xem được thông tin liên hệ và kênh mạng xã hội của creator thuộc ADV mình |
-| Cộng **Thưởng thêm** (tạo, sửa, import) | Admin không gắn ADV bấm Lưu là "Không có quyền" | Admin tạo, sửa, import thưởng trong ADV mình |
-| Huỷ mục nội dung và mốc thưởng trong **Đối soát** | Vào được danh sách, mở chi tiết là trắng; nút Huỷ trả lỗi | Huỷ được, có ghi nhật ký |
-| Tải **file đối soát** | Nút Tải trả "Không có quyền" | Tải được file của ADV mình |
-| Xem và tải **file rút tiền** | Danh sách hiện, chi tiết trả lỗi | Xem và tải được trong phạm vi ADV |
-
-Và một kết quả về rủi ro, là lý do thật sự của đợt này:
+Kết quả phải đạt:
 
 | | Hôm nay | Sau đợt này |
 |---|---|---|
-| Quyền của người làm vận hành | 1 tài khoản root dùng chung, chạm được **14 ADV**, tạo/xoá nhân sự, đổi cấu hình site đang chạy | Tài khoản riêng từng người, giới hạn trong ADV được giao |
-| Truy trách nhiệm | Nhật ký ghi "tài khoản root", không phân biệt người thật | Nhật ký ghi đúng người, đúng ADV, đúng hành động |
-| Thu hồi quyền | Hẹn miệng khi cấp tạm; hệ thống **không có trường hạn dùng** | Tài khoản tự hết hiệu lực đúng ngày đã hẹn |
+| Đội vận hành | Admin không làm được năm việc (mục 1.3), phải mượn root | Làm đủ năm việc **bằng tài khoản của chính mình**, trong ADV được giao |
+| Tài khoản root | Nhiều tài khoản root, có tài khoản cấp tạm cho Manager đội vận hành | **Chỉ còn một** tài khoản root, do AT giữ. Tài khoản root tạm được thu hồi |
+| Đội kỹ thuật | Xin root mỗi lần cần hỗ trợ tra cứu | Có nhóm quyền riêng để hỗ trợ, không cần root |
+| Mời tài khoản qua email | Đã chạy, nhưng người được mời chỉ chọn được 1 trong 3 vai trò cứng | Người được mời nhận **đúng nhóm quyền của đội mình** ngay từ đầu |
+| Thêm/đổi quyền cho một đội | Sửa mã ở 3 tầng, phát hành bản mới | Root tick quyền trên màn **Vai trò & phân quyền**, có hiệu lực ngay |
 
-### 1.1 Quy mô rủi ro của tài khoản root
+Năm việc đội vận hành đang phải mượn root:
 
-Chừng nào Admin chưa làm được năm việc trên thì biz vẫn phải mượn root. Mỗi lần mượn là mở toàn bộ hệ
-thống cho một người chỉ cần làm việc vận hành, và mở cho một tài khoản dùng chung nằm ngoài đội kỹ thuật.
+| Việc | Hôm nay | Sau đợt này |
+|---|---|---|
+| **Người dùng** — liên hệ kịp thời creator bị sai video | Mục Người dùng ẩn với Admin; chi tiết nằm dưới `IsRoot` | Xem được liên hệ và kênh MXH của creator thuộc ADV mình |
+| **Cộng thưởng** cho creator | Admin không gắn ADV bấm Lưu là "Không có quyền" | Tạo, sửa, import thưởng trong ADV mình |
+| **Thưởng thêm** — cộng thưởng | như trên | như trên |
+| **File đối soát** — huỷ nội dung, huỷ mốc thưởng, tải file | Mở chi tiết là trắng; nút Huỷ và Tải trả lỗi | Huỷ được, tải được, có nhật ký |
+| **File rút tiền** — xem và tải | Danh sách hiện, chi tiết trả lỗi | Xem và tải được trong phạm vi ADV |
 
-Đo trên mã nguồn: tài khoản root đi qua **toàn bộ 233 endpoint** của admin, trong đó 26 endpoint không
-vai trò nào khác chạm tới — gồm tạo/sửa/đổi mật khẩu **nhân sự**, tạo/sửa/ngừng hoạt động **ADV**,
-ban/gỡ ban **người dùng cuối**, sinh **hợp đồng điện tử**, sửa **eKYC**. Cấp root cho một người chỉ cần
-làm năm việc vận hành là cấp thừa **26 endpoint** và thừa **13 ADV**.
+### 1.1 Vì sao phải chuyển sang phân quyền cấu hình được
 
-### 1.2 Nguyên nhân gốc — một luật phạm vi, hai cách hiểu
+Hôm nay "ai được làm gì" được viết cứng ở **ba tầng**, và ba tầng phải sửa khớp nhau mỗi lần đổi:
 
-Hệ thống có hai cách hỏi "nhân sự này có thuộc ADV kia không", và hai cách trả lời ngược nhau cho cùng
-một tài khoản:
+| Tầng | Viết cứng ở đâu | Đo ngày 30/9 |
+|---|---|---|
+| Danh sách vai trò | `StaffRoleList` / `StaffRoleNameList` trong `internal/constants/staff.go` | 3 vai trò: `admin`, `collaborator`, `config_editor` (+ cờ `isRoot`) |
+| Cổng API | Middleware so mã vai trò: `IsRoot`, `IsAdmin`, `IsCollaborator`, `IsConfigEditor`, `IsAdminOrConfigEditor`, `HasAnyRole(...)`, `RequiredLogin` | 87 chỗ gắn cổng trong `pkg/admin/router`, trong đó **42 chỗ** chỉ là `RequiredLogin` |
+| Menu và nút | `admin/src/access.ts` so mã vai trò bằng mảng chuỗi (`['admin','config_editor']`…), `config/routes.ts` gắn từng menu vào một khoá access | ~35 menu gắn vào 8 khoá access |
+
+Hệ quả:
+
+- **Mỗi nhu cầu mới là một đợt sửa mã.** `config_editor` (10/9) là một đợt; năm việc của biz vận hành là
+  đợt thứ hai trong cùng một tháng. Đội kỹ thuật hỗ trợ sẽ là đợt thứ ba.
+- **Vai trò là gói cố định.** Muốn cho vận hành huỷ mục đối soát mà không cho duyệt nội dung thì không có
+  cách nào — chỉ chọn được giữa Admin (thiếu) và Root (thừa).
+- **Bản ghi vai trò đã có sẵn chỗ chứa quyền nhưng không ai dùng.** Collection `roles` có trường
+  `scopes`, API `GET /common/scopes` trả danh mục quyền, nhưng danh mục đó là 4 nhóm giả
+  (`User`/`File`/`Staff`/`Content` × `edit/delete/view/create/full`) không khớp màn nào, và **không cổng
+  kiểm quyền nào đọc** trường này. Đợt này biến nó thành thật.
+
+### 1.2 Quy mô rủi ro của tài khoản root
+
+Chừng nào đội vận hành chưa làm được năm việc bằng tài khoản mình thì vẫn phải mượn root. Mỗi lần mượn là
+mở toàn bộ hệ thống cho một người chỉ cần làm việc vận hành.
+
+Đo ngày 25/9: tài khoản root đi qua **toàn bộ 233 endpoint** của admin, trong đó 26 endpoint không vai trò
+nào khác chạm tới — gồm tạo/sửa/đổi mật khẩu **nhân sự**, tạo/sửa/ngừng hoạt động **ADV**, ban/gỡ ban
+**người dùng cuối**, sinh **hợp đồng điện tử**, sửa **eKYC**. Cấp root cho một người chỉ cần làm năm việc
+vận hành là cấp thừa **26 endpoint** và thừa **13 ADV**.
+
+### 1.3 Lỗi phạm vi ADV — phải sửa song song
+
+Bốn trong năm việc đã có màn hình và API nằm dưới cổng `IsAdmin`. Chúng không chạy vì hệ thống có hai
+cách hỏi "nhân sự này có thuộc ADV kia không", trả lời ngược nhau cho cùng một tài khoản:
 
 | Cách hỏi | Dùng ở | Admin **không** gắn ADV | Admin gắn ADV |
 |---|---|---|---|
-| `IsPermissionAllPartner()` — coi *chưa gắn ADV* là **toàn quyền** | 50 chỗ, hầu hết là màn danh sách | Thấy hết | Thấy phần mình |
-| `Staff.Partner != doc.Partner` — so sánh thô, *chưa gắn ADV* thành `000…000`, không khớp ADV nào | **25 chỗ**, hầu hết là màn chi tiết và nút bấm | **Chặn sạch** | Cho qua |
+| `IsPermissionAllPartner()` — coi *chưa gắn ADV* là **toàn quyền** | ~50 chỗ, hầu hết là màn danh sách | Thấy hết | Thấy phần mình |
+| `Staff.Partner != doc.Partner` — so sánh thô | ~25 chỗ, hầu hết là màn chi tiết và nút bấm | **Chặn sạch** | Cho qua |
 
-Hệ quả nhìn thấy được, đúng như biz mô tả: **màn danh sách mở, mọi thao tác bên trong đóng.** Admin của
-biz vào Đối soát thấy đủ bản ghi, bấm vào một bản ghi thì trắng, bấm Huỷ thì "Không có quyền".
+Hệ quả: **màn danh sách mở, mọi thao tác bên trong đóng**, và tất cả trả về một câu "Không có quyền" —
+nên bị hiểu nhầm thành "chưa được cấp quyền". Phân quyền chức năng trả lời câu **"được làm gì"**; lỗi này
+nằm ở câu **"trên ADV nào"**. Làm cái thứ nhất mà không sửa cái thứ hai thì tick đủ quyền vẫn bị chặn.
 
-25 chỗ đó nằm đúng ở năm mục biz kêu:
+### 1.4 Nền đã có sẵn
 
-| Tệp | Số chỗ | Mục trên admin |
+| Có sẵn | Dùng lại thế nào |
+|---|---|
+| Collection `roles` có `code`, `name`, `scopes`, `active` | Thành bản ghi nhóm quyền, `scopes` giữ danh sách mã quyền |
+| `GET /common/scopes`, `GET /roles` (root) | Mở rộng thành API danh mục quyền và CRUD vai trò |
+| `GenerateRole()` gieo vai trò còn thiếu xuống mọi môi trường | Gieo vai trò mẫu và danh mục quyền ban đầu |
+| Mời nhân sự qua email, tự đặt mật khẩu (PR #253) | Chọn nhóm quyền + ADV ngay trong lời mời |
+| `HasAnyRole(codes...)`, các guard `*InScope` | Khuôn cho cổng `RequirePermission(code)` và kiểm phạm vi `/:id` |
+| Mọi cổng đọc nhân sự + vai trò từ DB ở **mỗi** lần gọi | Đổi quyền có hiệu lực ngay, không chờ token |
+
+---
+
+## 2. Mô hình phân quyền
+
+Ba khái niệm, tách bạch:
+
+| Khái niệm | Trả lời câu | Nằm ở đâu | Ai đổi |
+|---|---|---|---|
+| **Quyền** (permission) | Làm được **việc gì** — một cặp *chức năng × hành động*, vd `reconciliation.cancel_item` | Danh mục khai trong mã nguồn | Đội kỹ thuật, khi thêm chức năng mới |
+| **Vai trò** (role / nhóm quyền) | Một đội được làm **những việc gì** — một tập quyền | DB, cấu hình trên màn **Vai trò & phân quyền** | Root |
+| **Phạm vi ADV** | Làm trên **ADV nào** | Bản ghi nhân sự, danh sách ADV | Root (và người có quyền quản lý nhân sự, xem PQ-011) |
+
+Một thao tác được phép khi và chỉ khi:
+
+```
+nhân sự đang hoạt động, chưa hết hạn
+VÀ mã quyền của thao tác ∈ quyền của vai trò nhân sự
+VÀ ADV của bản ghi ∈ danh sách ADV của nhân sự
+```
+
+**Root** đứng ngoài mô hình: qua mọi quyền, mọi ADV. Chỉ còn một tài khoản, do AT giữ.
+
+Danh mục quyền nằm trong mã (không cho tạo quyền tự do trên màn) vì mỗi quyền phải gắn với một cổng API
+thật. Vai trò thì nằm trong DB vì đó là thứ đổi theo tổ chức, không theo mã.
+
+### 2.1 Danh mục quyền — bản dự thảo
+
+Dựng theo menu admin hiện có. DISO rà lại với danh sách endpoint khi estimate; mỗi endpoint phải thuộc
+đúng một quyền.
+
+| Nhóm (menu) | Quyền | Ghi chú |
 |---|---|---|
-| `service/reconciliation.go` | 7 | Đối soát |
-| `service/transfer.go` | 6 | Xử lý rút tiền |
-| `service/event_bonus.go` | 4 | Thưởng thêm |
-| `service/export.go` | 1 | Tải file đối soát / rút tiền |
-| `service/event.go`, `content.go`, `leaderboard_*.go`, `partner_app_config.go` | 7 | các màn khác, cùng lỗi |
+| Nội dung | `content.view`, `content.moderate` | Duyệt, từ chối nội dung |
+| Người dùng | `user.view_contact` | Xem chi tiết, liên hệ, kênh MXH, nội dung đã đăng |
+| | `user.ban`, `user.contract`, `user.ekyc`, `user.create` | **Khoá root** |
+| Hồ sơ creator, Người dùng ADV | `creator.view` | |
+| Thống kê, Dashboard | `statistic.view` | |
+| Sự kiện | `event.view`, `event.edit` | |
+| Thưởng thêm | `bonus.view`, `bonus.edit`, `bonus.import`, `bonus.cancel` | Tiền — không gộp vào `event.edit` |
+| Nhiệm vụ, Quà | `mission.view`, `mission.edit`, `gift.view`, `gift.edit` | |
+| Đối soát | `reconciliation.view`, `reconciliation.cancel_item`, `reconciliation.change_status`, `reconciliation.export` | Huỷ nội dung và huỷ mốc thưởng dùng chung `cancel_item` |
+| Rút tiền | `transfer.view`, `transfer.export`, `transfer.change_status` | `change_status` gồm cả từ chối lệnh rút |
+| Dữ liệu xuất | `export.view`, `export.download` | |
+| Phân khúc, Mã, Thông báo, Danh mục | `segment.*`, `code.*`, `notification.*`, `category.*` (`view`/`edit`) | |
+| Cấu hình ứng dụng, Tin tức, Bài viết, Kênh hỗ trợ, Affiliate | `app_config.*`, `news.*`, `article.*`, `quick_action.*`, `affiliate.*` (`view`/`edit`) | |
+| Cấu hình chung | `common_config.view` | Sửa: **khoá root** |
+| Nhật ký | `audit.view`, `login_history.view` | |
+| Nhân sự | `staff.view`, `staff.invite`, `staff.edit` | Xem PQ-011 |
+| Vai trò & phân quyền, ADV, Tag, Xác thực tài khoản, `/migration/*` | — | **Khoá root**, không có mã quyền để gán |
 
-Đây là **lỗi**, không phải thiết kế. Không có tài liệu nào nói Admin không gắn ADV phải bị chặn; cổng ở
-tầng router vẫn ghi `IsAdmin` và vẫn cho qua. Chặn xảy ra sâu bên dưới, im lặng, và trả về đúng một câu
-"Không có quyền" — nên tới giờ vẫn được hiểu nhầm thành "Admin chưa được cấp quyền này".
+"Khoá root" nghĩa là không tồn tại mã quyền để tick — không vai trò nào nhận được, kể cả khi root muốn.
 
-### 1.3 Vì sao đây là việc làm được, không phải viết lại
+### 2.2 Vai trò mẫu gieo sẵn
 
-Đối tác **đã làm đúng việc này một lần rồi**, ngày 10/9/2026: thêm vai trò `config_editor`, kèm cổng kiểm
-quyền theo ADV, kèm test. Đường đi đã có sẵn và đã được chính đội kỹ thuật ghi lại trong mã nguồn: thêm
-mã vai trò vào `StaffRoleList`, nhãn vào `StaffRoleNameList`, `buildRoles()` tự sinh bản gieo xuống DB,
-`staff_roles_test.go` canh ba danh sách khớp nhau, `GenerateRole()` gieo vai trò mới xuống **mọi môi
-trường đang chạy**. Đợt này dùng lại đúng đường đó.
+Ba vai trò hiện có được gieo lại **đúng bằng hành vi hôm nay** (PQ-005). Hai vai trò mới cho hai đội đang
+phải mượn root. Tên và tập quyền cuối cùng do biz và AT chốt; bảng dưới là điểm xuất phát.
 
----
+| Nhóm quyền | Admin (giữ nguyên) | CTV (giữ nguyên) | Cấu hình ứng dụng (giữ nguyên) | **Vận hành** (mới) | **Kỹ thuật hỗ trợ** (mới) |
+|---|---|---|---|---|---|
+| Nội dung | xem, duyệt | xem, duyệt | — | xem | xem |
+| Người dùng — liên hệ | — | — | — | ✔ | ✔ |
+| Thưởng thêm | *như hôm nay* | — | — | xem, sửa, import, huỷ | xem |
+| Đối soát | *như hôm nay* | — | — | xem, huỷ mục, tải file | xem |
+| Rút tiền | *như hôm nay* | — | — | xem, tải file | xem |
+| Sự kiện, Nhiệm vụ, Quà | *như hôm nay* | — | sự kiện: *như hôm nay* | xem | xem |
+| Cấu hình ứng dụng, Tin tức, Bài viết | *như hôm nay* | — | *như hôm nay* | — | xem |
+| Nhật ký | *như hôm nay* | — | — | xem | xem |
+| Tiền: đổi trạng thái đối soát, rút tiền | *như hôm nay* | — | — | — | — |
 
-## 2. Người dùng
-
-**Nhân viên vận hành biz** — người dùng chính. Mỗi ngày: liên hệ creator bị sai video, cộng thưởng thêm,
-chốt đối soát, xử lý rút tiền. Phụ trách **một hoặc vài ADV**, không phải tất cả. Không phải kỹ sư.
-
-**Manager biz** — người đang giữ tài khoản root tạm. Sau đợt này không còn cần root. Cần nhìn được phần
-việc của cả nhóm trong các ADV nhóm phụ trách, và cần biết ai vừa làm gì.
-
-**Admin hệ thống (VFDC)** — người cấp tài khoản. Hôm nay chỉ có hai nấc để chọn: Admin (thiếu việc) hoặc
-Root (thừa quyền). Cần nấc ở giữa, và cần cấp được tài khoản **có hạn**.
-
-**Cộng tác viên (CTV)** — duyệt nội dung. Đợt này **không đổi gì** với vai trò này.
-
-**Nhân sự cấu hình ứng dụng (`config_editor`)** — vai trò mới từ 10/9. Đợt này **không đổi gì**.
-
-**Đội kỹ thuật đối tác** — bên thực hiện. Phần lớn công việc là gộp 25 chỗ kiểm quyền rời rạc về một hàm
-dùng chung, không phải dựng tính năng mới.
-
-**Người dùng cuối (creator)** — không được thấy khác biệt nào. Nhưng đây là bên hưởng lợi thật: video sai
-được liên hệ sớm hơn, thưởng và tiền rút không còn phải chờ một người duy nhất có root.
-
----
-
-## 3. Phạm vi
-
-### 3.1 Trong phạm vi
-
-- Một luật phạm vi ADV duy nhất, thay cho 25 chỗ so sánh thô hiện tại
-- Nhân sự gắn được **nhiều ADV** thay vì một
-- Năm nhóm thao tác biz đang thiếu: Người dùng (chỉ phần liên hệ), Thưởng thêm, Huỷ mục đối soát, Tải file
-  đối soát, Xem và tải file rút tiền
-- Tài khoản có hạn dùng và thu hồi được
-- Nhật ký thao tác ghi đủ hành động, ADV và người thật
-- Đóng các endpoint hiện chỉ cần đăng nhập là gọi được
-- Bộ test ma trận quyền chạy tự động
-
-### 3.2 Ngoài phạm vi
-
-- Bật trường `scopes` trong bản ghi vai trò. Trường này có trong DB, có API trả về, **không nơi nào đọc**.
-  Đợt này không dùng tới nó. Xử lý ở đợt sau: hoặc cài đặt thật, hoặc gỡ bỏ
-- Đưa vai trò vào token đăng nhập. Hôm nay mọi cổng kiểm quyền đọc DB mỗi lần gọi. Chậm, nhưng đúng, và
-  đổi cách này sẽ khiến việc thu hồi quyền trễ đúng bằng hạn token
-- Đổi thời hạn token 8 giờ
-- Màn tự quản trị vai trò cho người dùng cuối
-- Sửa quy trình nghiệp vụ của đối soát, rút tiền, thưởng thêm. Ai được bấm nút thì đổi; **bấm xong ra gì
-  thì giữ nguyên**
-- 26 endpoint chỉ root mới chạm: nhân sự, ADV, ban người dùng, hợp đồng, eKYC. Giữ nguyên là root
+Vận hành không nhận quyền đổi trạng thái chi tiền: request chỉ xin xem, tải, huỷ mục. Kỹ thuật hỗ trợ chỉ
+đọc, gán nhiều ADV để tra cứu chéo.
 
 ---
 
-## 4. Yêu cầu chức năng
+## 3. Người dùng
 
-### PQ-001 — Một luật phạm vi ADV duy nhất, fail-closed
+**Root (AT)** — người giữ tài khoản root duy nhất. Dựng và sửa nhóm quyền, mời nhân sự, gán ADV.
 
-**Vì sao cần.** Đây là điều kiện để mọi yêu cầu còn lại tồn tại. Chừng nào còn 25 chỗ tự viết luật phạm vi
-thì sửa mục này sẽ sót mục kia, và lần sau biz lại gửi một request giống hệt request lần này.
+**Nhân viên vận hành biz** — người dùng chính. Mỗi ngày: liên hệ creator bị sai video, cộng thưởng, chốt
+đối soát, xử lý rút tiền. Phụ trách **một hoặc vài ADV**. Không phải kỹ sư.
 
-Hai cách hỏi hiện tại còn sai theo chiều ngược lại: một Admin **chưa ai gán ADV** — tức là cấu hình còn
-thiếu — được `IsPermissionAllPartner()` hiểu thành **toàn quyền mọi ADV** ở 50 chỗ. Thiếu cấu hình mà
-thành mở hết là kiểu lỗi không ai phát hiện cho tới khi dữ liệu đã đi nhầm chỗ.
+**Manager biz** — đang giữ tài khoản root tạm. Sau đợt này dùng vai trò Vận hành (hoặc một biến thể có
+thêm quyền mời người trong đội, xem PQ-011), tài khoản root tạm bị thu hồi.
+
+**Đội kỹ thuật (AT và đối tác)** — hôm nay xin root mỗi lần hỗ trợ. Sau đợt này dùng vai trò Kỹ thuật hỗ
+trợ, chỉ đọc.
+
+**CTV**, **Cấu hình ứng dụng** — không đổi hành vi.
+
+**Đội kỹ thuật đối tác (DISO)** — bên thực hiện.
+
+**Creator** — không thấy khác biệt. Bên hưởng lợi: video sai được liên hệ sớm, thưởng và tiền rút không
+còn chờ một người có root.
+
+---
+
+## 4. Phạm vi
+
+### 4.1 Trong phạm vi
+
+- Danh mục quyền chức năng khai trong mã, thay danh mục `scopes` giả hiện tại
+- Cổng API kiểm theo **mã quyền**, thay các cổng so mã vai trò
+- Menu và nút trên admin hiện/ẩn theo **danh sách quyền** của người đăng nhập
+- Màn **Vai trò & phân quyền**: tạo, sửa, nhân bản, ngừng dùng vai trò; tick quyền theo nhóm
+- Chuyển ba vai trò hiện có sang mô hình mới **không đổi hành vi**; gieo hai vai trò mẫu mới
+- Một luật phạm vi ADV fail-closed; nhân sự gắn được nhiều ADV
+- Vai trò Vận hành làm đủ năm việc
+- Lời mời qua email chọn nhóm quyền, ADV, hạn dùng; tài khoản có hạn dùng
+- Nhật ký thao tác ghi đủ người, hành động, ADV; ghi cả thay đổi vai trò
+- Không endpoint nào còn ở mức "chỉ cần đăng nhập"
+- Thu hồi tài khoản root tạm, còn một root
+- Test ma trận quyền tự động trong CI
+
+### 4.2 Ngoài phạm vi
+
+- Gán quyền lẻ trực tiếp cho một người (ngoài vai trò). Mỗi nhân sự **một** vai trò; cần khác thì nhân
+  bản vai trò
+- Nhiều vai trò trên một nhân sự
+- Phân quyền theo trường dữ liệu (vd ẩn số điện thoại nhưng hiện email)
+- Tạo mã quyền mới từ màn hình — quyền mới đi cùng mã nguồn
+- Đưa quyền vào token đăng nhập; đổi thời hạn token 8 giờ
+- Đổi quy trình nghiệp vụ của đối soát, rút tiền, thưởng. Ai được bấm nút thì đổi; **bấm xong ra gì thì
+  giữ nguyên**
+- Phân quyền cho app creator và các site white-label
+
+---
+
+## 5. Yêu cầu chức năng
+
+Thứ tự: PQ-001 → PQ-005 là **nền** (không đổi hành vi ai), PQ-006 → PQ-008 **mở việc cho vận hành**,
+PQ-009 → PQ-012 **đóng rủi ro**.
+
+### PQ-001 — Danh mục quyền chức năng
+
+**Vì sao cần.** Không có danh mục thật thì màn phân quyền không có gì để tick, và cổng API không có gì để
+kiểm. Danh mục `scopes` hiện tại không khớp màn nào.
+
+**Yêu cầu**
+
+- Một danh mục duy nhất trong mã nguồn: mỗi quyền có mã, nhãn tiếng Việt, nhóm (menu), mô tả ngắn
+- Theo bản dự thảo mục 2.1; DISO rà lại với danh sách endpoint và đề xuất chỉnh
+- `GET /common/scopes` trả danh mục mới, gom theo nhóm
+- Quyền khoá root **không có trong danh mục**
+- Thêm quyền mới chỉ bằng một chỗ khai, không sửa ở nơi khác
+
+**Nghiệm thu**
+
+- [ ] Mọi menu trên admin (trừ nhóm khoá root) có ít nhất một quyền `view`
+- [ ] Danh mục không còn mã quyền kiểu `user_full`, `file_edit`
+
+---
+
+### PQ-002 — Cổng API kiểm theo mã quyền
+
+**Vì sao cần.** Đây là chỗ biến việc tick trên màn thành việc chặn thật. Hôm nay 87 chỗ gắn cổng so mã vai
+trò; đổi vai trò nào làm được gì là phải sửa từng chỗ.
+
+**Yêu cầu**
+
+- Một cổng dùng chung, dạng `RequirePermission("bonus.import")`, gắn cho **từng endpoint**
+- Cổng đọc nhân sự và vai trò từ DB ở mỗi lần gọi (như hôm nay) để đổi quyền có hiệu lực ngay
+- Root qua mọi cổng; nhóm khoá root dùng cổng `IsRoot` như cũ
+- Thay hết `IsAdmin`, `IsCollaborator`, `IsConfigEditor`, `IsAdminOrConfigEditor`, `HasAnyRole` và
+  `RequiredLogin` đơn lẻ trên endpoint nghiệp vụ. Không còn endpoint nào kiểm bằng mã vai trò
+- Vai trò ngừng dùng hoặc nhân sự không có vai trò: bị chặn mọi endpoint nghiệp vụ
+- Bảng **endpoint → mã quyền** sinh ra từ mã nguồn, là tài liệu bàn giao
+
+**Nghiệm thu**
+
+- [ ] Bỏ tick một quyền khỏi vai trò: người mang vai trò đó bị chặn endpoint tương ứng ở lần gọi kế tiếp,
+  không cần đăng nhập lại
+- [ ] `git grep` trong `pkg/admin/router` không còn `IsAdmin` / `HasAnyRole` / so mã vai trò
+- [ ] Thêm endpoint không khai quyền: CI báo đỏ (xem PQ-010)
+
+---
+
+### PQ-003 — Menu và nút theo quyền
+
+**Vì sao cần.** `access.ts` hôm nay so mã vai trò bằng mảng chuỗi. Vai trò mới tạo trên màn sẽ không thấy
+menu nào nếu tầng này vẫn viết cứng.
+
+**Yêu cầu**
+
+- API thông tin người đăng nhập trả kèm **danh sách mã quyền** và danh sách ADV
+- Mọi khoá access trong `access.ts` và `routes.ts` tính từ danh sách quyền, không so mã vai trò
+- Nút thao tác (Huỷ, Tải, Import, Đổi trạng thái…) ẩn khi thiếu quyền tương ứng
+- Trang đích sau đăng nhập là menu đầu tiên người đó có quyền xem (thay logic riêng cho `config_editor`
+  trong `landing-route.ts`)
+- Ẩn/hiện chỉ để màn hình sạch; chặn thật nằm ở PQ-002
+
+**Nghiệm thu**
+
+- [ ] Tạo một vai trò chỉ có `reconciliation.view`: đăng nhập chỉ thấy menu Đối soát, không thấy nút Huỷ
+- [ ] Không còn chuỗi `'admin'`, `'collaborator'`, `'config_editor'` trong `admin/src/access.ts`
+
+---
+
+### PQ-004 — Màn Vai trò & phân quyền
+
+**Vì sao cần.** Đây là outcome chính: đổi quyền của một đội mà không cần phát hành bản mới.
+
+**Yêu cầu**
+
+- Menu mới **Vai trò & phân quyền**, chỉ root
+- Danh sách vai trò: tên, mô tả, số quyền, số nhân sự đang dùng, trạng thái
+- Tạo, sửa tên/mô tả, **nhân bản** từ vai trò có sẵn, ngừng dùng
+- Màn sửa quyền: bảng theo nhóm menu × hành động, tick từng ô hoặc cả nhóm; `edit` tự kéo theo `view`
+  của cùng nhóm
+- Quyền liên quan tiền (thưởng, đối soát, rút tiền) được đánh dấu để người tick biết
+- Không xoá được vai trò đang có nhân sự dùng; ngừng dùng thì phải chuyển nhân sự sang vai trò khác trước
+- Lưu thay đổi hiện tóm tắt: thêm/bớt quyền nào, ảnh hưởng bao nhiêu người
+- Mọi thay đổi vai trò ghi nhật ký (ai, lúc nào, quyền nào thêm/bớt)
+
+**Nghiệm thu**
+
+- [ ] Root tạo vai trò mới, tick quyền, gán cho một nhân sự: người đó dùng được ngay, không cần kỹ thuật
+- [ ] Bỏ quyền khỏi vai trò đang dùng: có hiệu lực ở thao tác kế tiếp của mọi người mang vai trò
+- [ ] Nhân sự không phải root không vào được màn này và không gọi được API của nó
+- [ ] Nhật ký hiện đúng từng lần thêm/bớt quyền
+
+---
+
+### PQ-005 — Chuyển đổi không đổi hành vi
+
+**Vì sao cần.** Đổi mô hình phân quyền trên hệ thống đang chạy 14 ADV. Nếu bước chuyển làm ai mất hay thừa
+quyền thì mọi thứ phía sau đều mất tin cậy.
+
+**Yêu cầu**
+
+- Gieo tập quyền cho Admin, CTV, Cấu hình ứng dụng **đúng bằng** những gì cổng hiện tại cho qua
+- Giữ nguyên `_id` và `code` của ba vai trò; nhân sự không phải đổi gì
+- Làm và phát hành phần nền (PQ-001 → PQ-005) **trước** khi mở quyền mới cho ai
+- Riêng các endpoint `RequiredLogin` mà vai trò nào cũng gọi được: chuyển đổi xong mới đóng ở PQ-010,
+  không đóng lẫn trong bước này
+
+**Nghiệm thu**
+
+- [ ] Ma trận (vai trò × endpoint) trước và sau khi chuyển: **không ô nào đổi**, chạy bằng test chứ không
+  đọc tay
+- [ ] Đăng nhập bằng từng vai trò: menu thấy được trước và sau giống nhau
+
+---
+
+### PQ-006 — Một luật phạm vi ADV duy nhất, fail-closed
+
+**Vì sao cần.** Mục 1.3. Không sửa thì vai trò Vận hành tick đủ quyền vẫn bị chặn ở màn chi tiết.
 
 **Yêu cầu**
 
 - Một hàm duy nhất trả lời "nhân sự này có được chạm bản ghi của ADV kia không". Mọi service gọi nó
-- **Fail-closed**: nhân sự không phải root mà chưa gắn ADV nào thì bị từ chối, không phải được mở hết
-- Root giữ nguyên: xuyên mọi ADV
-- Màn danh sách và màn chi tiết dùng **chung một luật**. Không còn trường hợp thấy bản ghi trong danh sách
-  mà mở ra thì trắng
-- 25 chỗ so sánh thô hiện tại được thay hết, không chỗ nào còn tự viết lại
+- **Fail-closed**: nhân sự không phải root mà chưa gắn ADV thì bị từ chối, không phải được mở hết
+- Màn danh sách và màn chi tiết dùng chung một luật
+- Thay hết các chỗ so sánh thô `Staff.Partner` với `doc.Partner` và các chỗ dùng `IsPermissionAllPartner()`
 
 **Nghiệm thu**
 
-- [ ] Admin chưa gắn ADV: mọi màn liệt kê **không trả bản ghi nào**, thay vì trả hết như hôm nay
-- [ ] Admin gắn ADV: mọi bản ghi thấy trong danh sách đều mở được chi tiết và bấm được nút
+- [ ] Nhân sự chưa gắn ADV: mọi màn liệt kê không trả bản ghi nào
+- [ ] Nhân sự gắn ADV: mọi bản ghi thấy trong danh sách đều mở được chi tiết và bấm được nút (nếu có quyền)
 - [ ] Không còn chỗ nào trong `pkg/admin/service` so sánh trực tiếp `Staff.Partner` với `doc.Partner`
-- [ ] Root không đổi hành vi ở bất kỳ màn nào
+- [ ] Root không đổi hành vi
 
 ---
 
-### PQ-002 — Nhân sự phụ trách được nhiều ADV
+### PQ-007 — Nhân sự phụ trách được nhiều ADV
 
-**Vì sao cần.** Bản ghi nhân sự hôm nay có **đúng một** ô ADV. Một nhân viên vận hành phụ trách 3 ADV thì
-không có cách nào khai. Đây là lý do thứ hai — sau PQ-001 — khiến root trở thành đường duy nhất: root là
-tài khoản duy nhất chạm được quá một ADV.
-
-Nặng hơn: khi bật cờ root cho một tài khoản, hệ thống **xoá luôn** ô ADV và ô vai trò của tài khoản đó.
-Root vì vậy không thể bị giới hạn lại. Không có "root của 2 ADV".
+**Vì sao cần.** Bản ghi nhân sự có **đúng một** ô ADV. Nhân viên vận hành phụ trách 3 ADV, hay kỹ thuật
+hỗ trợ tra cả 14 ADV, không có cách nào khai — root thành đường duy nhất. Bật cờ root còn **xoá luôn** ô
+ADV và ô vai trò, nên không có "root của 2 ADV".
 
 **Yêu cầu**
 
-- Nhân sự gắn được **một danh sách ADV**, không phải một ADV
-- Danh sách rỗng = không chạm được ADV nào (nối tiếp PQ-001)
-- Màn Nhân viên cho chọn nhiều ADV, sửa lại được, và hiện rõ nhân sự đang phụ trách những ADV nào
-- Nhân sự đang gắn một ADV chuyển sang danh sách một phần tử, **không ai mất quyền, không ai được thêm
-  quyền** sau khi chuyển
-- Đổi danh sách ADV của một người có hiệu lực ngay ở lần thao tác kế tiếp, không chờ hết hạn token
+- Nhân sự gắn **một danh sách ADV**; rỗng = không chạm ADV nào
+- Màn Nhân viên và màn mời chọn nhiều ADV, hiện rõ ai phụ trách ADV nào
+- Nhân sự đang gắn một ADV chuyển sang danh sách một phần tử, không ai mất hay được thêm quyền
+- Nhân sự VFDC hôm nay không gắn ADV (đang được hiểu là toàn quyền): **chuyển sang gắn đủ danh sách ADV
+  hiện có**, để PQ-006 không cắt quyền của họ. Biz xác nhận danh sách này
+- Đổi danh sách ADV có hiệu lực ở thao tác kế tiếp
 
 **Nghiệm thu**
 
-- [ ] Một tài khoản gắn 3 ADV: thấy và thao tác được đúng 3, ADV thứ tư trả "Không có quyền"
-- [ ] Bỏ một ADV khỏi danh sách: người đó mất quyền với ADV đó ngay, không cần đăng nhập lại
-- [ ] Toàn bộ nhân sự hiện có giữ nguyên quyền sau khi chuyển dữ liệu — đối chiếu trước/sau từng tài khoản
+- [ ] Tài khoản gắn 3 ADV thao tác được đúng 3, ADV thứ tư trả "ADV ngoài phạm vi"
+- [ ] Bỏ một ADV: mất quyền với ADV đó ngay, không cần đăng nhập lại
+- [ ] Toàn bộ nhân sự hiện có giữ nguyên quyền sau khi chuyển — đối chiếu từng tài khoản
 
 ---
 
-### PQ-003 — Mục Người dùng: phần thông tin liên hệ mở cho Admin
+### PQ-008 — Vai trò Vận hành làm đủ năm việc
 
-**Vì sao cần.** Creator đăng sai video thì phải gọi được cho họ trong ngày. Hôm nay mục **Người dùng** ẩn
-hẳn với Admin, và chi tiết người dùng nằm dưới `IsRoot`. Không có đường nào khác để lấy số điện thoại.
+**Vì sao cần.** Đây là kết quả biz nhìn thấy. Sau PQ-001 → PQ-007, mỗi việc chỉ còn là gán đúng quyền và
+đảm bảo endpoint tương ứng đi qua đúng cổng và đúng luật phạm vi.
 
-Mục này có hai loại thao tác rất khác nhau đang nằm chung một cổng. Yêu cầu này **chỉ xin loại thứ nhất**:
+| Việc | Quyền | Yêu cầu riêng | Nghiệm thu |
+|---|---|---|---|
+| Người dùng — liên hệ creator | `user.view_contact` | Mở mục Người dùng và chi tiết creator thuộc ADV mình: liên hệ, kênh MXH, nội dung đã đăng. Ban, hợp đồng, eKYC, tạo người dùng **không hiện và API chặn** | Gõ thẳng id creator ADV khác: bị chặn. Gọi thẳng API ban/eKYC: bị chặn |
+| Cộng thưởng / Thưởng thêm | `bonus.edit`, `bonus.import`, `bonus.cancel` | Import Excel có dòng thuộc ADV khác: **dòng đó bị từ chối kèm lý do**, dòng hợp lệ vẫn vào. CTV và Cấu hình ứng dụng bị chặn ở cổng (hôm nay gọi được) | Tạo, sửa, import, huỷ trọn vẹn không cần root. File trộn hai ADV xử lý đúng |
+| Đối soát — huỷ nội dung, huỷ mốc thưởng | `reconciliation.cancel_item` | Mở chi tiết đủ bốn tab: Tổng quan, Nội dung, Mốc thưởng, Thưởng thêm. Huỷ kèm lý do. Đổi trạng thái cả bản đối soát **không** thuộc quyền này | Không tab nào trắng. Huỷ xong thống kê bản đối soát cập nhật |
+| Tải file đối soát | `reconciliation.export` | Yêu cầu xuất do nhân sự tạo **luôn mang ADV**; không sinh được file trộn nhiều ADV từ tài khoản không phải root (hôm nay sinh được) | Tải được file ADV mình; đưa id file ADV khác: bị chặn |
+| File rút tiền — xem và tải | `transfer.view`, `transfer.export` | Mở chi tiết đợt rút và danh sách lệnh rút bên trong. Đổi trạng thái, từ chối lệnh rút **không** thuộc vai trò này | Xem, tải được trong ADV mình. Đợt rút ADV khác: bị chặn |
 
-| Nhóm | Thao tác | Đề xuất |
-|---|---|---|
-| Đọc để liên hệ | Xem chi tiết, xem danh sách kênh mạng xã hội | **Mở cho Admin**, trong phạm vi ADV |
-| Can thiệp vào tài khoản người dùng | Ban, gỡ ban, từ chối hợp đồng, sinh hợp đồng, sửa eKYC, tạo người dùng | **Giữ nguyên root** |
-
-Ngược đời là API **danh sách** người dùng hiện chỉ cần đăng nhập là gọi được — tức là dữ liệu vốn đã với
-tới được bằng API, chỉ có màn hình là bị khoá. PQ-010 xử lý vế đó.
-
-**Yêu cầu**
-
-- Admin vào được mục Người dùng và mở được chi tiết creator **thuộc ADV mình phụ trách**
-- Thấy: thông tin liên hệ, danh sách kênh mạng xã hội, nội dung đã đăng
-- **Không** thấy và **không** bấm được: ban, gỡ ban, hợp đồng, eKYC, tạo người dùng — các nút này không
-  hiện với Admin, và gọi thẳng API cũng bị chặn
-- Creator của ADV khác không tra ra được, kể cả khi gõ thẳng đường dẫn có id
-
-**Nghiệm thu**
-
-- [ ] Admin mở được chi tiết creator trong ADV mình và đọc được thông tin liên hệ
-- [ ] Admin gõ thẳng đường dẫn chi tiết một creator ADV khác: bị chặn
-- [ ] Admin gọi thẳng API ban/eKYC/hợp đồng: bị chặn, kể cả với creator trong ADV mình
-- [ ] Root giữ nguyên toàn bộ thao tác như hôm nay
+Chung cho cả năm việc: mỗi thao tác ghi nhật ký (PQ-012).
 
 ---
 
-### PQ-004 — Thưởng thêm: tạo, sửa, import trong phạm vi ADV
+### PQ-009 — Mời nhân sự đúng nhóm quyền, có hạn dùng
 
-**Vì sao cần.** Đây là mục lệch nhiều nhất giữa "cổng ghi gì" và "thực tế chạy thế nào", theo cả hai
-hướng cùng lúc:
-
-- Cổng ở tầng router **chỉ yêu cầu đã đăng nhập**. Nghĩa là hôm nay một tài khoản CTV — vai trò chỉ để
-  duyệt nội dung — vẫn gọi được API tạo thưởng và import thưởng hàng loạt bằng Excel
-- Còn ở tầng service thì bốn chỗ kiểm phạm vi chặn sạch Admin chưa gắn ADV
-
-Kết quả: người **cần** cộng thưởng thì không cộng được, người **không cần** thì gọi được API. Sửa mục này
-vừa mở đúng việc cho biz vừa đóng một lỗ hổng chi tiền.
+**Vì sao cần.** Mời qua email đã chạy (PR #253) nhưng chỉ chọn được 1 trong 3 vai trò cứng và một ADV. Có
+nhóm quyền rõ ràng thì người được mời nhận đúng quyền ngay từ lời mời. Còn hạn dùng: thời hạn của tài
+khoản cấp tạm hôm nay là một **lời hứa** — bản ghi nhân sự không có trường hạn dùng.
 
 **Yêu cầu**
 
-- Tạo, sửa, import Excel thưởng thêm: **chỉ Admin và root**. CTV và `config_editor` bị chặn ở tầng router,
-  không phải chỉ ẩn nút
-- Admin chỉ thao tác được trên ADV mình phụ trách. Import Excel có dòng thuộc ADV khác thì **dòng đó bị
-  từ chối và báo rõ lý do**, các dòng hợp lệ vẫn chạy
-- Huỷ một khoản thưởng thêm: cùng quyền như sửa
-- Mỗi lần tạo, sửa, huỷ, import đều ghi nhật ký kèm ADV và người thao tác (xem PQ-009)
+- Lời mời chọn: **vai trò** (danh sách vai trò đang dùng, lấy từ DB), **danh sách ADV**, **ngày hết hiệu
+  lực** (để trống là không hạn)
+- Quá ngày hết hiệu lực: không đăng nhập được, **phiên đang mở bị cắt** ở thao tác kế tiếp
+- Màn Nhân viên nhập, sửa, xoá ngày này và lọc được tài khoản sắp hết hạn
+- Áp được cho mọi vai trò, gồm cả root
+- Tắt một tài khoản có hiệu lực ngay, không chờ hết token 8 giờ
 
 **Nghiệm thu**
 
-- [ ] Admin gắn ADV tạo, sửa, import, huỷ thưởng thêm trọn vẹn, không cần root
-- [ ] CTV gọi thẳng API tạo thưởng: bị chặn
-- [ ] Import file trộn hai ADV: dòng ngoài phạm vi bị từ chối kèm lý do, dòng trong phạm vi vẫn vào
-- [ ] Nhật ký ghi đủ bốn loại thao tác
+- [ ] Mời một người với vai trò Vận hành + 2 ADV: nhận lời mời xong dùng được ngay đúng 2 ADV đó
+- [ ] Đặt hạn vào hôm qua: không đăng nhập được, phiên đang mở bị cắt
+- [ ] Tắt tài khoản đang mở màn hình: thao tác kế tiếp bị chặn
 
 ---
 
-### PQ-005 — Đối soát: huỷ mục nội dung và mốc thưởng
+### PQ-010 — Không endpoint nào "chỉ cần đăng nhập"
 
-**Vì sao cần.** Cả hai thao tác "huỷ mục nội dung" và "huỷ mốc thưởng" đi qua **cùng một API**, và API đó
-**đã** nằm dưới cổng `IsAdmin`. Không cần mở thêm quyền nào. Nó không chạy chỉ vì luật phạm vi ở PQ-001.
-
-Đây là yêu cầu rẻ nhất trong bản này: sửa PQ-001 là nó tự chạy. Đưa thành mục riêng để có mốc nghiệm thu,
-vì với biz thì đây là việc chặn chốt sổ hàng tháng.
-
-**Yêu cầu**
-
-- Admin mở được chi tiết một bản đối soát thuộc ADV mình, đủ bốn tab: Tổng quan, Nội dung, Mốc thưởng,
-  Thưởng thêm
-- Huỷ được từng mục nội dung và từng mốc thưởng, kèm lý do
-- Bản đối soát của ADV khác không mở được, kể cả khi gõ thẳng đường dẫn có id
-- Đổi trạng thái cả bản đối soát: giữ nguyên quyền như hôm nay, chỉ sửa phần phạm vi
-
-**Nghiệm thu**
-
-- [ ] Admin mở chi tiết đối soát ADV mình: cả bốn tab có dữ liệu, không tab nào trắng
-- [ ] Huỷ một mục nội dung và một mốc thưởng: thành công, thống kê của bản đối soát cập nhật theo
-- [ ] Gõ thẳng id một bản đối soát ADV khác: bị chặn
-- [ ] Mỗi lần huỷ ghi một dòng nhật ký có tên người và tên ADV
-
----
-
-### PQ-006 — Tải file đối soát và file rút tiền
-
-**Vì sao cần.** Nút Tải gọi một API riêng, và API đó kiểm phạm vi bằng đúng kiểu so sánh thô ở PQ-001.
-Admin chưa gắn ADV bấm Tải là "Không có quyền" với **mọi** file có gắn ADV.
-
-Có một hệ quả ngược cần vá cùng lúc: khi Admin chưa gắn ADV **tự tạo** một yêu cầu xuất dữ liệu, bản ghi
-sinh ra không mang ADV nào — nên lúc tải lại lọt qua đúng phép so sánh đó. Tức là hôm nay Admin chưa gắn
-ADV **không tải được file của một ADV cụ thể**, nhưng **tải được file trộn dữ liệu cả 14 ADV** do chính
-mình tạo. PQ-001 đóng cả hai vế.
+**Vì sao cần.** Đo ngày 25/9: **60 endpoint không kiểm vai trò** — CTV hay Cấu hình ứng dụng cũng gọi
+được. Gồm 39 endpoint `/migration/*` (xoá luồng nội dung, từ chối hàng loạt, chạy lại tính thưởng), 5
+endpoint thưởng thêm, ghi cấu hình dùng chung, đọc nhật ký mọi ADV. Đo lại 30/9 còn 42 chỗ gắn
+`RequiredLogin` trong router — DISO đo lại số endpoint khi estimate.
 
 **Yêu cầu**
 
-- Admin tải được file đối soát và file rút tiền của ADV mình phụ trách
-- Yêu cầu xuất dữ liệu do Admin tạo **luôn** mang ADV của người tạo; không có bản ghi xuất nào không ADV
-- File của ADV ngoài phạm vi: không tải được, kể cả khi có id của file
-- Mỗi lần tải ghi một dòng nhật ký
+- Mỗi endpoint trong số đó được gán một mã quyền, hoặc khoá root
+- `/migration/*` khoá root, hoặc đưa hẳn ra khỏi API công khai
+- Một bài kiểm trong CI **liệt kê mọi endpoint và quyền của nó**. Endpoint mới không khai quyền thì CI đỏ
 
 **Nghiệm thu**
 
-- [ ] Admin tải được file đối soát và file rút tiền trong ADV mình
-- [ ] Admin không gắn ADV **không** tạo được yêu cầu xuất nào
-- [ ] Không sinh được file trộn dữ liệu nhiều ADV từ tài khoản không phải root
-- [ ] Đưa id file của ADV khác: bị chặn
-
----
-
-### PQ-007 — Rút tiền: xem chi tiết và danh sách lệnh rút
-
-**Vì sao cần.** Giống PQ-005: sáu chỗ kiểm phạm vi trong `transfer.go` khiến Admin thấy danh sách nhưng
-không mở được chi tiết, không xem được danh sách lệnh rút bên trong, không đổi được trạng thái.
-
-Request của biz chỉ xin **xem và tải**. Bản này giữ đúng vạch đó: các thao tác đổi trạng thái chi tiền
-giữ nguyên ranh giới hiện tại, không nới thêm.
-
-**Yêu cầu**
-
-- Admin mở được chi tiết một đợt rút tiền thuộc ADV mình và xem được danh sách lệnh rút bên trong
-- Tải được file rút tiền (nối với PQ-006)
-- Thao tác đổi trạng thái đợt rút và từ chối lệnh rút: **giữ nguyên quyền như hiện hành**, chỉ sửa phần
-  phạm vi ADV cho đúng
-- Đợt rút của ADV khác không mở được
-
-**Nghiệm thu**
-
-- [ ] Admin mở được chi tiết đợt rút và danh sách lệnh rút trong ADV mình
-- [ ] Đợt rút của ADV khác: bị chặn khi gõ thẳng id
-- [ ] Không vai trò nào được thêm quyền đổi trạng thái chi tiền so với hôm nay
-
----
-
-### PQ-008 — Tài khoản có hạn dùng và thu hồi được
-
-**Vì sao cần.** Thời hạn của một tài khoản cấp tạm hôm nay là một **lời hứa**, không phải một cơ chế.
-Bản ghi nhân sự không có trường hạn dùng. Quá ngày đã hẹn, tài khoản đó vẫn vào được, trừ khi có người
-nhớ ra và tắt tay.
-
-Đây là thứ khiến đợt này an toàn hơn ngay cả trước khi làm xong: có nó thì mọi lần cấp quyền tạm về sau
-đều tự đóng lại đúng ngày, không phụ thuộc vào trí nhớ của ai.
-
-**Yêu cầu**
-
-- Bản ghi nhân sự có **ngày hết hiệu lực**, để trống là không hạn
-- Quá ngày đó thì tài khoản không đăng nhập được, và **phiên đang mở bị cắt**, không chờ hết token
-- Màn Nhân viên nhập, sửa, xoá được ngày này, và hiện rõ tài khoản nào sắp hết hạn
-- Áp được cho **mọi** vai trò, gồm cả root
-- Tắt một tài khoản có hiệu lực ngay lập tức, không chờ hết token 8 giờ
-
-**Nghiệm thu**
-
-- [ ] Đặt hạn vào hôm qua: tài khoản đó không đăng nhập được, phiên đang mở bị cắt
-- [ ] Tắt một tài khoản đang mở màn hình: thao tác kế tiếp bị chặn ngay
-- [ ] Màn Nhân viên liệt kê được các tài khoản sắp hết hạn
-- [ ] Tài khoản root cấp tạm đặt được ngày hết hiệu lực và tự đóng đúng ngày đó
-
----
-
-### PQ-009 — Nhật ký thao tác đủ để truy trách nhiệm
-
-**Vì sao cần.** Lý do duy nhất khiến cấp root "rủi ro rất lớn" không phải là người dùng nó làm sai, mà là
-**không dựng lại được ai làm gì**. Bản ghi nhật ký hôm nay có id người thao tác, id bản ghi đích và một
-câu mô tả tự do. Nó **không có** trường hành động, **không có** trường ADV — dù danh mục hành động
-(tạo, sửa, xoá, tải, duyệt, đổi trạng thái, ban, gỡ ban, từ chối) đã khai sẵn trong mã nguồn và không ai
-ghi vào.
-
-Và màn Nhật ký hiện **chỉ cần đăng nhập** là xem được, không lọc theo ADV. Nhân sự của ADV này đọc được
-nhật ký thao tác của ADV khác.
-
-**Yêu cầu**
-
-- Mỗi dòng nhật ký ghi đủ: **ai**, **hành động gì**, **trên bản ghi nào**, **thuộc ADV nào**, **lúc nào**
-- Dùng đúng danh mục hành động đã khai, không ghi câu tự do thay cho trường hành động
-- Đọc nhật ký: chỉ trong phạm vi ADV của người đọc. Root xem toàn bộ
-- Năm nhóm thao tác ở PQ-003 đến PQ-007 đều ghi nhật ký
-- Không xoá, không sửa được nhật ký từ giao diện
-
-**Nghiệm thu**
-
-- [ ] Làm một thao tác ở mỗi mục PQ-003…PQ-007, nhật ký ghi đủ năm trường
-- [ ] Nhân sự ADV A không đọc được nhật ký của ADV B
-- [ ] Lọc nhật ký theo người, theo hành động, theo ADV đều ra đúng
-- [ ] Không có đường nào xoá hay sửa một dòng nhật ký từ admin
-
----
-
-### PQ-010 — Đóng các endpoint chỉ cần đăng nhập là gọi được
-
-**Vì sao cần.** Trong 233 endpoint của admin, **60 endpoint không kiểm vai trò** — cứ đăng nhập là gọi
-được, bất kể là CTV, `config_editor` hay Admin. Trong đó:
-
-| Nhóm | Số endpoint | Gọi được thì làm gì |
-|---|---|---|
-| `/migration/*` | 39 | Xoá luồng nội dung, tự động từ chối hàng loạt nội dung, chạy lại tính thưởng, ghi đè dữ liệu người dùng |
-| `/event-bonus/*` | 5 | Tạo, sửa, import thưởng tiền (xem PQ-004) |
-| `/common/configurations` | 2 | Đọc và **ghi** cấu hình dùng chung |
-| `/audits` | 1 | Đọc nhật ký mọi ADV (xem PQ-009) |
-| `/users`, `/partners`, duyệt creator | 13 | Danh sách người dùng, danh sách ADV, duyệt hồ sơ |
-
-Mục này là lý lẽ thẳng thắn nhất để đối tác nhận việc: **request của biz không làm hệ thống mở thêm ra —
-nó là dịp đóng lại 60 cánh cửa đang mở.** Tài khoản root mà biz đang được cấp tạm không hề nguy hiểm hơn
-một tài khoản CTV bất kỳ ở 60 endpoint này.
-
-**Yêu cầu**
-
-- Mỗi endpoint trong 60 endpoint đó được gán đúng một vai trò tối thiểu. Không endpoint nào còn ở mức
-  "chỉ cần đăng nhập"
-- Nhóm `/migration/*` là công cụ kỹ thuật, **đóng hoàn toàn với mọi vai trò vận hành** — chỉ root, hoặc
-  đưa hẳn ra khỏi API công khai
-- Có một bài kiểm tự động **liệt kê mọi endpoint và vai trò tối thiểu của nó**, chạy trong CI. Thêm
-  endpoint mới mà quên gán vai trò thì **không phát hành được**
-- Danh sách endpoint–vai trò là tài liệu bàn giao, không nằm trong đầu ai
-
-**Nghiệm thu**
-
-- [ ] Đăng nhập bằng CTV, gọi lần lượt 60 endpoint: tất cả bị chặn trừ những endpoint cố ý mở cho CTV
+- [ ] Đăng nhập bằng CTV, gọi lần lượt các endpoint trên: chỉ qua những endpoint cố ý mở cho CTV
 - [ ] Không endpoint `/migration/*` nào gọi được bằng tài khoản không phải root
-- [ ] Thêm một endpoint mới không khai vai trò: CI báo đỏ
-- [ ] Bảng endpoint–vai trò khớp đúng thực tế chạy, kiểm bằng máy chứ không đọc tay
+- [ ] Thêm endpoint mới không khai quyền: CI báo đỏ
 
 ---
 
-### PQ-011 — Ranh giới giữ nguyên: những gì đợt này **không** mở
+### PQ-011 — Quyền khoá root và chống tự nâng quyền
 
-**Vì sao cần.** Một request nới quyền chỉ được duyệt khi nói rõ cả phần **không** nới. Mục này để đối tác
-và bộ phận bảo mật đọc một chỗ là biết đợt này dừng ở đâu.
+**Vì sao cần.** Phân quyền cấu hình được chỉ an toàn khi có những thứ **không cấu hình được**. Ai sửa được
+vai trò thì tự cấp được mọi quyền cho mình.
 
 **Yêu cầu**
 
-Các nhóm sau **giữ nguyên chỉ root**, không vai trò nào khác chạm tới sau đợt này:
+Giữ **chỉ root**, không có mã quyền để gán:
 
-| Nhóm | Vì sao giữ |
+| Nhóm | Vì sao |
 |---|---|
-| Tạo, sửa, đổi mật khẩu, bật tắt **nhân sự** | Ai cấp được quyền thì tự cấp được quyền cho mình |
-| Tạo, sửa, ngừng hoạt động **ADV** | Chạm vào site đang chạy của một thương hiệu |
-| **Ban / gỡ ban** người dùng cuối | Cắt thu nhập của một creator |
-| **Hợp đồng điện tử**, **eKYC** | Giấy tờ pháp lý |
-| **Xác thực tài khoản**, **Tag**, **Vai trò** | Ảnh hưởng xuyên ADV |
-| Toàn bộ `/migration/*` | Công cụ kỹ thuật, không phải công cụ vận hành |
+| Vai trò & phân quyền | Ai sửa được vai trò thì tự nâng được quyền |
+| Tạo, sửa, ngừng hoạt động **ADV** | Chạm site đang chạy của một thương hiệu |
+| **Ban / gỡ ban** người dùng cuối | Cắt thu nhập của creator |
+| **Hợp đồng điện tử**, **eKYC**, tạo người dùng | Giấy tờ pháp lý |
+| Xác thực tài khoản, Tag, sửa Cấu hình chung | Ảnh hưởng xuyên ADV |
+| `/migration/*` | Công cụ kỹ thuật, không phải công cụ vận hành |
+| Bật cờ root cho tài khoản khác | Mục tiêu còn đúng một root |
 
-- CTV và `config_editor` **không được thêm một quyền nào** trong đợt này
-- Admin **không** nhận thêm quyền nào ngoài năm nhóm ở PQ-003 đến PQ-007
+Quản lý nhân sự (`staff.invite`, `staff.edit`) **được phép gán** — để Manager vận hành tự mời người trong
+đội — nhưng với ràng buộc:
+
+- Chỉ gán được vai trò có tập quyền **nằm trong** tập quyền của chính mình
+- Chỉ gán được ADV **nằm trong** danh sách ADV của chính mình
+- Không sửa được tài khoản của chính mình, không sửa được root
 
 **Nghiệm thu**
 
-- [ ] Đối chiếu ma trận quyền trước và sau: mọi ô thay đổi đều nằm trong PQ-003…PQ-007
-- [ ] CTV và `config_editor`: không ô nào đổi
-- [ ] Sáu nhóm trong bảng trên: chỉ root gọi được
+- [ ] Không có mã quyền nào trong danh mục ứng với các nhóm ở bảng trên
+- [ ] Manager có `staff.invite` mời người với vai trò rộng hơn mình, hoặc ADV ngoài phạm vi mình: bị chặn
+- [ ] Chỉ root bật được cờ root
 
 ---
 
-## 5. Yêu cầu phi chức năng
+### PQ-012 — Nhật ký thao tác đủ để truy trách nhiệm
 
-**NFR-001 — Không làm hỏng cái đang chạy.** CTV, `config_editor` và root giữ nguyên hành vi. Nhân sự đang
-gắn một ADV không mất quyền nào sau khi chuyển sang danh sách nhiều ADV. Nghiệm thu bằng đối chiếu
-trước/sau từng tài khoản, không bằng đọc mã nguồn.
+**Vì sao cần.** Cấp root rủi ro vì **không dựng lại được ai làm gì**. Nhật ký hôm nay có id người, id bản
+ghi và một câu mô tả tự do; **không có** trường hành động, **không có** trường ADV — dù danh mục hành động
+đã khai sẵn trong mã và không ai ghi vào. Màn Nhật ký chỉ cần đăng nhập là xem, không lọc theo ADV.
 
-**NFR-002 — Thiếu cấu hình thì từ chối.** Nhân sự không phải root mà chưa gắn ADV nào thì mọi màn đều
-rỗng và mọi nút đều bị chặn. Không có đường nào để "chưa cấu hình" thành "toàn quyền".
+**Yêu cầu**
 
-**NFR-003 — Không rò dữ liệu chéo ADV.** Mọi màn liệt kê, mọi màn chi tiết, mọi file xuất và mọi dòng
-nhật ký đều nằm trong phạm vi ADV của người xem. Có bài kiểm riêng cho từng loại, chạy tự động.
+- Mỗi dòng ghi đủ: **ai**, **hành động** (dùng danh mục có sẵn), **bản ghi nào**, **ADV nào**, **lúc nào**
+- Năm việc ở PQ-008 và mọi thay đổi vai trò, quyền, ADV, hạn dùng của nhân sự đều ghi nhật ký
+- Đọc nhật ký cần `audit.view`, chỉ trong phạm vi ADV của người đọc; root xem toàn bộ
+- Không xoá, không sửa nhật ký từ giao diện
 
-**NFR-004 — Chặn nằm ở backend.** Ẩn/hiện menu chỉ để màn hình sạch. Mọi thao tác phải bị chặn cả khi gọi
-thẳng API. Nghiệm thu bằng gọi API trực tiếp, không bằng bấm trên giao diện.
+**Nghiệm thu**
 
-**NFR-005 — Thông báo nói rõ thiếu gì.** Hôm nay mọi trường hợp đều trả đúng một câu "Không có quyền" —
-đó là lý do lỗi phạm vi bị hiểu nhầm thành thiếu quyền suốt ba tháng. Thông báo mới phải phân biệt được
-*vai trò không đủ* với *ADV ngoài phạm vi*, bằng tiếng Việt.
-
-**NFR-006 — Ma trận quyền có test tự động.** Một bộ test chạy qua mọi cặp (vai trò × endpoint) và đối
-chiếu với bảng khai báo. Thêm endpoint hay thêm vai trò mà quên khai thì CI báo đỏ. Đây là điều kiện để
-lần sau không phải làm lại đợt này.
-
-**NFR-007 — Đổi quyền có hiệu lực ngay.** Gỡ một ADV, đổi vai trò, tắt tài khoản, hết hạn dùng — tất cả
-phải chặn được thao tác kế tiếp, không chờ hết token 8 giờ.
-
-**NFR-008 — Tài liệu bàn giao.** Bảng endpoint–vai trò và bảng "vai trò nào làm được gì trên màn nào" là
-sản phẩm bàn giao, cập nhật cùng mã nguồn. Đợt này tồn tại một phần vì bảng đó chưa từng có.
+- [ ] Mỗi việc ở PQ-008 và mỗi lần sửa vai trò: nhật ký ghi đủ năm trường
+- [ ] Nhân sự ADV A không đọc được nhật ký ADV B
+- [ ] Lọc theo người, hành động, ADV đều ra đúng
 
 ---
 
-## 6. Phụ thuộc và giả định
+### PQ-013 — Thu hồi root tạm, còn một root
 
-1. Biz xác nhận **danh sách nhân sự và ADV từng người phụ trách** trước khi thiết kế màn Nhân viên. Không
-   có danh sách này thì PQ-002 không nghiệm thu được.
-2. PQ-001 là **điều kiện tiên quyết**. PQ-005, PQ-006, PQ-007 phần lớn tự chạy sau khi PQ-001 xong; làm
-   ngược thứ tự sẽ vá từng mục rồi vẫn sót.
-3. Thêm vai trò hoặc đổi ranh giới vai trò phải đi qua `StaffRoleList` → `StaffRoleNameList` →
-   `buildRoles()` → `GenerateRole()`. Quên một bước thì vai trò không có bản ghi dưới DB và cổng kiểm
-   quyền **im lặng không cho ai qua** — đã có test canh, giữ nguyên test đó.
-4. Mọi cổng kiểm quyền đọc bản ghi nhân sự và vai trò từ DB ở **mỗi** lần gọi API. Giữ nguyên cách này
-   trong đợt này; nó chậm nhưng là thứ khiến NFR-007 khả thi.
-5. Đổi bản ghi nhân sự (danh sách ADV, hạn dùng) cần một lần chuyển dữ liệu trên production, làm ngoài
-   giờ vận hành, có bản lùi.
-6. Số ADV hiện tại là 14 và còn tăng. Mọi thứ trong bản này phải đúng khi thêm ADV mà không sửa mã nguồn.
+**Vì sao cần.** Đây là kết quả rủi ro của cả đợt. Làm xong mà vẫn còn tài khoản root tạm thì chưa đạt.
+
+**Yêu cầu**
+
+- Sau khi PQ-008 nghiệm thu: Manager đội vận hành chuyển sang tài khoản riêng với vai trò Vận hành, tài
+  khoản root tạm bị tắt
+- Đội kỹ thuật dùng vai trò Kỹ thuật hỗ trợ, không cấp root cho hỗ trợ thường ngày
+- Màn Nhân viên hiện rõ số tài khoản root; có cảnh báo khi nhiều hơn một
+
+**Nghiệm thu**
+
+- [ ] Đếm nhân sự `isRoot = true` đang hoạt động trên production: **đúng 1**, do AT giữ
+- [ ] Đội vận hành làm năm việc trong một tuần mà không phải xin root lần nào
+
+---
+
+## 6. Yêu cầu phi chức năng
+
+**NFR-001 — Không làm hỏng cái đang chạy.** Chuyển đổi (PQ-005, PQ-007) không làm ai mất hay thừa quyền.
+Nghiệm thu bằng đối chiếu trước/sau từng tài khoản và từng endpoint, không bằng đọc mã.
+
+**NFR-002 — Thiếu cấu hình thì từ chối.** Không vai trò, vai trò ngừng dùng, không ADV, hết hạn — đều bị
+chặn. Không có đường nào để "chưa cấu hình" thành "toàn quyền".
+
+**NFR-003 — Không rò dữ liệu chéo ADV.** Mọi màn liệt kê, chi tiết, file xuất, dòng nhật ký nằm trong phạm
+vi ADV của người xem. Có bài kiểm tự động cho từng loại.
+
+**NFR-004 — Chặn nằm ở backend.** Nghiệm thu bằng gọi API trực tiếp, không bằng bấm giao diện.
+
+**NFR-005 — Thông báo nói rõ thiếu gì.** Phân biệt *thiếu quyền* (kèm tên quyền) với *ADV ngoài phạm vi*,
+bằng tiếng Việt. Thiếu quyền trả **403**, không trả 401 — 401 hôm nay làm admin tự đăng xuất người dùng.
+
+**NFR-006 — Đổi quyền có hiệu lực ngay.** Sửa vai trò, gỡ ADV, tắt tài khoản, hết hạn — chặn được thao tác
+kế tiếp, không chờ token 8 giờ. Nếu thêm cache vai trò để giảm tải DB thì phải xoá cache khi vai trò đổi.
+
+**NFR-007 — Ma trận quyền có test tự động.** Bộ test chạy qua mọi (vai trò mẫu × endpoint) và đối chiếu bảng
+khai báo. Thêm endpoint mà quên khai quyền thì CI đỏ.
+
+**NFR-008 — Tài liệu bàn giao.** Bảng endpoint → quyền và bảng vai trò mẫu → quyền sinh từ mã nguồn, cập
+nhật cùng mã.
+
+---
+
+## 7. Gợi ý chia mốc để estimate
+
+| Mốc | Gồm | Ai thấy khác biệt | Điều kiện xong |
+|---|---|---|---|
+| **1. Nền phân quyền** | PQ-001 → PQ-005 | Root thấy màn Vai trò & phân quyền. Người khác **không thấy gì đổi** | Ma trận trước/sau không ô nào đổi |
+| **2. Mở việc cho vận hành** | PQ-006 → PQ-009 | Đội vận hành dùng tài khoản riêng, làm đủ năm việc | Nghiệm thu PQ-008 với biz |
+| **3. Đóng rủi ro** | PQ-010 → PQ-013 | Chỉ còn một root; CTV mất các endpoint không được phép | Đếm root = 1; CI kiểm ma trận |
+
+Mốc 1 và mốc 2 nối tiếp nhau; PQ-006 và PQ-007 có thể làm song song với mốc 1 vì không đụng phần phân
+quyền chức năng. Nếu cần gỡ root tạm sớm nhất, thứ tự tối thiểu là PQ-006 + PQ-007 + PQ-008 chạy trên vai
+trò Admin hiện có, rồi mới chuyển sang mô hình mới — nhưng như vậy phải sửa cổng hai lần.
+
+---
+
+## 8. Phụ thuộc và giả định
+
+1. Biz xác nhận **danh sách nhân sự, vai trò và ADV từng người** trước mốc 2. Không có danh sách này thì
+   PQ-007 và PQ-013 không nghiệm thu được.
+2. Biz và AT chốt **tập quyền của vai trò Vận hành và Kỹ thuật hỗ trợ** (mục 2.2) trước mốc 2.
+3. Mọi cổng tiếp tục đọc nhân sự và vai trò từ DB ở mỗi lần gọi; đây là thứ khiến NFR-006 khả thi.
+4. Đổi bản ghi nhân sự (danh sách ADV, hạn dùng) và bản ghi vai trò (tập quyền) cần chuyển dữ liệu trên
+   production, ngoài giờ vận hành, có bản lùi.
+5. Số ADV hiện là 14 và còn tăng. Thêm ADV không cần sửa mã; thêm chức năng mới thì phải thêm mã quyền cùng
+   lúc (PQ-010 canh việc này).
+6. Số liệu mục 1.2, 1.3, PQ-010 đo ngày 25/9. Mã nguồn đã đổi từ đó (thêm `HasAnyRole`, các guard
+   `*InScope`, mời nhân sự qua email) — DISO đo lại khi estimate.
+
+---
+
+## 9. Câu hỏi cần chốt trước khi estimate
+
+1. Manager vận hành có được **tự mời người trong đội** (PQ-011, `staff.invite` có ràng buộc) hay mời nhân
+   sự giữ chỉ root?
+2. Vai trò Admin hiện có: giữ nguyên làm vai trò riêng, hay gộp vào Vận hành sau khi chuyển?
+3. Kỹ thuật hỗ trợ có cần xem **thông tin liên hệ creator** không, hay chỉ xem dữ liệu nghiệp vụ?
+4. Nhân sự VFDC không gắn ADV hôm nay (đang được hiểu là toàn quyền): gắn đủ 14 ADV, hay rà lại từng người?
