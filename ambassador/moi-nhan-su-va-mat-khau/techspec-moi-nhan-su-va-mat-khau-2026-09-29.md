@@ -426,7 +426,7 @@ File: `pkg/admin/service/staff_auth_mail.go`.
 | Mời | `recipientName`, `acceptUrl`, `expiryHours` ("48"), `year` |
 | Đặt lại | `recipientName`, `resetUrl`, `expiryMinutes` ("60"), `year` |
 
-Tên công ty và người mời **ghi cứng trong template**, không phải biến: tiêu đề "[Accesstrade]", câu mời "Admin Ambassador", dòng bản quyền "Accesstrade". So với `TECHCOMBANK_EMAIL_STAFF_*` thiếu hai biến `company` và `inviterName`. Bản bàn giao đầy đủ: [`TEMPLATE_EMAIL.md`](./TEMPLATE_EMAIL.md).
+Tên công ty và người mời **ghi cứng trong template**, không phải biến: tiêu đề "[AccessTrade]", câu mời "Admin Ambassador", dòng bản quyền "AccessTrade". So với `TECHCOMBANK_EMAIL_STAFF_*` thiếu hai biến `company` và `inviterName`. Bản bàn giao đầy đủ: [`TEMPLATE_EMAIL.md`](./TEMPLATE_EMAIL.md).
 
 ### 7.3 File mẫu HTML
 
