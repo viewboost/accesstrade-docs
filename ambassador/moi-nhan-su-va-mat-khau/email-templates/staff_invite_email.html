@@ -8,7 +8,7 @@
   trong template_data) — cùng cú pháp với bộ template T-Fluencers đã bàn giao,
   AccessTrade dán thẳng được, không phải sửa.
 
-  TIÊU ĐỀ EMAIL: [%company%] Bạn được mời tham gia trang quản trị Ambassador
+  TIÊU ĐỀ EMAIL: [Accesstrade] Bạn được mời tham gia trang quản trị Ambassador
   NGÔN NGỮ: tiếng Việt
 
   BIẾN (template_data):
@@ -17,10 +17,10 @@
                    một lần, hết hạn sau expiryHours giờ
     expiryHours    số giờ đường dẫn còn hiệu lực (hiện là "48")
     year           năm, cho dòng bản quyền
-    company        tên công ty (hiện là "Accesstrade")
 
-  Không có biến tên người mời: chỉ tài khoản cao nhất của Accesstrade được mời, và tên tài
-  khoản đó trong DB là "Root" — câu mời vì vậy ghi cố định "Admin %company%".
+  Tên công ty và người mời GHI CỨNG trong mẫu, không phải biến: tiêu đề "[Accesstrade]", câu mời
+  "Admin Ambassador", dòng bản quyền "Accesstrade". (Tài khoản gửi lời mời trong DB tên là "Root"
+  nên không hiện tên tài khoản.)
 
   ĐẦU THƯ: logo Accesstrade chữ trắng, lấy từ website accesstrade.vn. Nếu AccessTrade có
   đường dẫn logo chính thức cho email thì thay vào thuộc tính src.
@@ -59,7 +59,7 @@
             </p>
 
             <p style="margin: 0 0 24px; font-size: 16px; color: #344054; line-height: 24px;">
-              <b>Admin %company%</b> đã mời bạn tham gia trang quản trị Ambassador. Vui lòng nhấn nút bên dưới để chấp nhận lời mời và thiết lập mật khẩu cho tài khoản của bạn.
+              <b>Admin Ambassador</b> đã mời bạn tham gia trang quản trị. Vui lòng nhấn nút bên dưới để chấp nhận lời mời và thiết lập mật khẩu cho tài khoản của bạn.
             </p>
 
             <div style="text-align: center; margin-bottom: 24px;">
@@ -84,7 +84,7 @@
         <tr>
           <td style="padding: 24px; text-align: center; font-size: 12px; color: #667085; border-top: 1px solid #eaecf0; background-color: #f9fafb;">
             <p style="margin: 0 0 8px;">Email này được gửi tự động. Vui lòng không trả lời email này.</p>
-            <p style="margin: 0;">© %year% %company%. All rights reserved.</p>
+            <p style="margin: 0;">© %year% Accesstrade. All rights reserved.</p>
           </td>
         </tr>
       </table>

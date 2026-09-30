@@ -1,6 +1,6 @@
 # Email Templates — AT Gateway (AccessTrade) — Ambassador Admin Portal
 
-Tài liệu bàn giao 2 template email của luồng mời nhân sự và đặt lại mật khẩu trang quản trị Ambassador, để AccessTrade tạo trên email gateway. Viết theo khuôn tài liệu bàn giao của T-Fluencers: [`t-fluencers/otp-and-sms-gateway/TEMPLATE_EMAIL.md`](../../t-fluencers/otp-and-sms-gateway/TEMPLATE_EMAIL.md) mục 4 — **cùng bộ biến, cùng cú pháp**, chỉ khác thương hiệu. Tiêu đề theo khuôn TCB, thêm tên sản phẩm "trang quản trị Ambassador" vì `company` ở đây là tên công ty (Accesstrade), không phải tên sản phẩm như bên TCB (T-Fluencers).
+Tài liệu bàn giao 2 template email của luồng mời nhân sự và đặt lại mật khẩu trang quản trị Ambassador, để AccessTrade tạo trên email gateway. Viết theo khuôn tài liệu bàn giao của T-Fluencers: [`t-fluencers/otp-and-sms-gateway/TEMPLATE_EMAIL.md`](../../t-fluencers/otp-and-sms-gateway/TEMPLATE_EMAIL.md) mục 4 — **cùng cú pháp biến**, cùng các biến động (tên người nhận, đường dẫn, thời hạn, năm). Khác TCB ở chỗ tên công ty và người mời ghi cứng trong template (không có biến `company`, `inviterName`), và tiêu đề nêu rõ tên sản phẩm "trang quản trị Ambassador".
 
 PRD: [prd-moi-nhan-su-va-mat-khau-2026-09-29.md](./prd-moi-nhan-su-va-mat-khau-2026-09-29.md) (FR-015, FR-016) · Tech spec: [mục 7](./techspec-moi-nhan-su-va-mat-khau-2026-09-29.md)
 
@@ -20,7 +20,7 @@ sendStaffAuthEmail(ctx, templateCode, to, data)   // template_code, send_tos, te
 
 ## Khung HTML chung
 
-Theo khung email OTP đang chạy của Ambassador: nền `#f3f5f7`, card trắng bo góc 12px rộng tối đa 600px, header nền đen `#0b0d0f` hiện logo Accesstrade chữ trắng (`https://accesstrade.vn/wp-content/uploads/2023/07/logomain_at.png`), nút CTA nền đen, footer `© %year% %company%. All rights reserved.`. Font Arial, lang `vi`. Ảnh duy nhất là logo ở header, lấy từ website accesstrade.vn — nếu AccessTrade có đường dẫn logo chính thức cho email thì thay vào.
+Theo khung email OTP đang chạy của Ambassador: nền `#f3f5f7`, card trắng bo góc 12px rộng tối đa 600px, header nền đen `#0b0d0f` hiện logo Accesstrade chữ trắng (`https://accesstrade.vn/wp-content/uploads/2023/07/logomain_at.png`), nút CTA nền đen, footer `© %year% Accesstrade. All rights reserved.`. Font Arial, lang `vi`. Ảnh duy nhất là logo ở header, lấy từ website accesstrade.vn — nếu AccessTrade có đường dẫn logo chính thức cho email thì thay vào.
 
 Khác khung T-Fluencers ở chỗ không có icon mạng xã hội và banner (các ảnh đó là thương hiệu T-Fluencers).
 
@@ -35,21 +35,20 @@ Khác khung T-Fluencers ở chỗ không có icon mạng xã hội và banner (c
 | **Tương ứng bên TCB** | `TECHCOMBANK_EMAIL_STAFF_INVITE` |
 | **remark** | Gui email moi tham gia trang quan tri |
 | **HTML nguồn** | [`email-templates/staff_invite_email.html`](./email-templates/staff_invite_email.html) |
-| **Subject** | `[%company%] Bạn được mời tham gia trang quản trị Ambassador` |
+| **Subject** | `[Accesstrade] Bạn được mời tham gia trang quản trị Ambassador` |
 
 **template_data:**
 
 | key | HTML placeholder | kiểu | mô tả |
 |---|---|---|---|
 | `recipientName` | `%recipientName%` | string | tên người được mời |
-| `company` | `%company%` | string | tên công ty — hiện là "Accesstrade" |
 | `acceptUrl` | `%acceptUrl%` | string | link nhận lời mời (CTA) — **chứa token dùng một lần** |
 | `expiryHours` | `%expiryHours%` | string | số giờ link hết hạn — hiện là "48" |
 | `year` | `%year%` | string | năm (footer) |
 
-> Khác TCB một biến: **không dùng `inviterName`**. Chỉ tài khoản cao nhất của AccessTrade được mời, và tên tài khoản đó trong DB là "Root" — thư sẽ ghi "Root đã mời bạn". Câu mời vì vậy ghi cố định "Admin %company%". Backend không gửi khoá `inviterName` (bỏ ở PR #254 / #255).
+> Khác TCB hai biến: **không dùng `inviterName` và `company`** — ghi cứng trong template theo yêu cầu nghiệp vụ: câu mời "Admin Ambassador", tiêu đề "[Accesstrade]", dòng bản quyền "Accesstrade". Backend không gửi hai khoá này (PR #254 / #255).
 
-Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã mời tham gia trang quản trị Ambassador, nhấn nút để chấp nhận lời mời và thiết lập mật khẩu. CTA "Chấp nhận lời mời". Kèm đường dẫn dạng chữ phòng khi nút không bấm được. Ghi chú: dùng một lần, hết hạn sau `expiryHours` giờ.
+Nội dung: mời nhân sự vào trang quản trị. "Admin Ambassador" đã mời tham gia trang quản trị, nhấn nút để chấp nhận lời mời và thiết lập mật khẩu. CTA "Chấp nhận lời mời". Kèm đường dẫn dạng chữ phòng khi nút không bấm được. Ghi chú: dùng một lần, hết hạn sau `expiryHours` giờ.
 
 #### HTML
 
@@ -88,7 +87,7 @@ Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã m�
             </p>
 
             <p style="margin: 0 0 24px; font-size: 16px; color: #344054; line-height: 24px;">
-              <b>Admin %company%</b> đã mời bạn tham gia trang quản trị Ambassador. Vui lòng nhấn nút bên dưới để chấp nhận lời mời và thiết lập mật khẩu cho tài khoản của bạn.
+              <b>Admin Ambassador</b> đã mời bạn tham gia trang quản trị. Vui lòng nhấn nút bên dưới để chấp nhận lời mời và thiết lập mật khẩu cho tài khoản của bạn.
             </p>
 
             <div style="text-align: center; margin-bottom: 24px;">
@@ -113,7 +112,7 @@ Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã m�
         <tr>
           <td style="padding: 24px; text-align: center; font-size: 12px; color: #667085; border-top: 1px solid #eaecf0; background-color: #f9fafb;">
             <p style="margin: 0 0 8px;">Email này được gửi tự động. Vui lòng không trả lời email này.</p>
-            <p style="margin: 0;">© %year% %company%. All rights reserved.</p>
+            <p style="margin: 0;">© %year% Accesstrade. All rights reserved.</p>
           </td>
         </tr>
       </table>
@@ -135,14 +134,13 @@ Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã m�
 | **Tương ứng bên TCB** | `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD` |
 | **remark** | Gui email dat lai mat khau |
 | **HTML nguồn** | [`email-templates/staff_reset_password_email.html`](./email-templates/staff_reset_password_email.html) |
-| **Subject** | `[%company%] Yêu cầu đặt lại mật khẩu trang quản trị Ambassador` |
+| **Subject** | `[Accesstrade] Yêu cầu đặt lại mật khẩu trang quản trị Ambassador` |
 
 **template_data:**
 
 | key | HTML placeholder | kiểu | mô tả |
 |---|---|---|---|
 | `recipientName` | `%recipientName%` | string | tên người nhận |
-| `company` | `%company%` | string | tên công ty — hiện là "Accesstrade" |
 | `resetUrl` | `%resetUrl%` | string | link đặt lại mật khẩu (CTA) — **chứa token dùng một lần** |
 | `expiryMinutes` | `%expiryMinutes%` | string | số phút link hết hạn — hiện là "60" |
 | `year` | `%year%` | string | năm (footer) |
@@ -211,7 +209,7 @@ Nội dung: xác nhận yêu cầu đặt lại mật khẩu. CTA "Đặt lại 
         <tr>
           <td style="padding: 24px; text-align: center; font-size: 12px; color: #667085; border-top: 1px solid #eaecf0; background-color: #f9fafb;">
             <p style="margin: 0 0 8px;">Email này được gửi tự động. Vui lòng không trả lời email này.</p>
-            <p style="margin: 0;">© %year% %company%. All rights reserved.</p>
+            <p style="margin: 0;">© %year% Accesstrade. All rights reserved.</p>
           </td>
         </tr>
       </table>
@@ -228,8 +226,8 @@ Nội dung: xác nhận yêu cầu đặt lại mật khẩu. CTA "Đặt lại 
 
 | template_code | Subject | Data keys | Bản TCB tương ứng |
 |---|---|---|---|
-| `AMBASSADOR_EMAIL_STAFF_INVITE` | `[%company%] Bạn được mời tham gia trang quản trị Ambassador` | recipientName, company, acceptUrl, expiryHours, year | `TECHCOMBANK_EMAIL_STAFF_INVITE` |
-| `AMBASSADOR_EMAIL_STAFF_RESET_PASSWORD` | `[%company%] Yêu cầu đặt lại mật khẩu trang quản trị Ambassador` | recipientName, company, resetUrl, expiryMinutes, year | `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD` |
+| `AMBASSADOR_EMAIL_STAFF_INVITE` | `[Accesstrade] Bạn được mời tham gia trang quản trị Ambassador` | recipientName, acceptUrl, expiryHours, year | `TECHCOMBANK_EMAIL_STAFF_INVITE` |
+| `AMBASSADOR_EMAIL_STAFF_RESET_PASSWORD` | `[Accesstrade] Yêu cầu đặt lại mật khẩu trang quản trị Ambassador` | recipientName, resetUrl, expiryMinutes, year | `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD` |
 
 ## Điền form đăng ký template của AccessTrade
 
@@ -238,7 +236,7 @@ Nội dung: xác nhận yêu cầu đặt lại mật khẩu. CTA "Đặt lại 
 | Ô trên form | Lấy từ |
 |---|---|
 | Mã template | cột `template_code` |
-| Tiêu đề email | dòng **Subject** — có biến `%company%` |
+| Tiêu đề email | dòng **Subject** — chữ cố định, không có biến |
 | Nội dung email | khối **HTML** của template đó, dán nguyên văn từ `<!DOCTYPE html>` tới `</html>` |
 | Mô tả / ghi chú (nếu có) | dòng **remark** |
 

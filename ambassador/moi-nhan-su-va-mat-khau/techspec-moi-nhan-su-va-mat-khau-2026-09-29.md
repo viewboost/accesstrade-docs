@@ -423,10 +423,10 @@ File: `pkg/admin/service/staff_auth_mail.go`.
 
 | Template | Khoá |
 |---|---|
-| Mời | `recipientName`, `acceptUrl`, `expiryHours` ("48"), `year`, `company` ("Accesstrade"). Không có tên người mời: câu mời ghi cố định "Admin %company%" vì tài khoản Root trong DB tên là "Root" |
-| Đặt lại | `recipientName`, `resetUrl`, `expiryMinutes` ("60"), `year`, `company` |
+| Mời | `recipientName`, `acceptUrl`, `expiryHours` ("48"), `year` |
+| Đặt lại | `recipientName`, `resetUrl`, `expiryMinutes` ("60"), `year` |
 
-Cùng bộ biến với `TECHCOMBANK_EMAIL_STAFF_*`, trừ `inviterName` của thư mời → AT nhân bản được (PRD D-1). Bản bàn giao đầy đủ: [`TEMPLATE_EMAIL.md`](./TEMPLATE_EMAIL.md).
+Tên công ty và người mời **ghi cứng trong template**, không phải biến: tiêu đề "[Accesstrade]", câu mời "Admin Ambassador", dòng bản quyền "Accesstrade". So với `TECHCOMBANK_EMAIL_STAFF_*` thiếu hai biến `company` và `inviterName`. Bản bàn giao đầy đủ: [`TEMPLATE_EMAIL.md`](./TEMPLATE_EMAIL.md).
 
 ### 7.3 File mẫu HTML
 
