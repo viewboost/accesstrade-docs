@@ -687,7 +687,7 @@ Email mời gửi qua API email AccessTrade, template do AT đăng ký.
 **Business Rules:**
 
 - Mã template: `AMBASSADOR_EMAIL_STAFF_INVITE` (tạm đặt, chờ AT cấp). Đề nghị AT nhân bản `TECHCOMBANK_EMAIL_STAFF_INVITE` — cùng bộ biến (Phụ lục B)
-- Tiêu đề: `[%company%] Bạn được mời tham gia hệ thống` (theo khuôn template TCB). Người gửi: địa chỉ gửi mặc định của API email AT. Ngôn ngữ: tiếng Việt
+- Tiêu đề: `[%company%] Bạn được mời tham gia trang quản trị Ambassador`. Người gửi: địa chỉ gửi mặc định của API email AT. Ngôn ngữ: tiếng Việt
 - Nội dung: tên người được mời, câu mời ghi cố định "Admin Accesstrade" (không hiện tên tài khoản gửi — tài khoản Root trong DB tên là "Root"), nút kích hoạt, đường dẫn dạng văn bản (khi nút không hoạt động), thời hạn hiệu lực, lưu ý bỏ qua nếu không chờ lời mời
 
 **Acceptance Criteria:**
@@ -709,7 +709,7 @@ Email đặt lại mật khẩu gửi qua API email AccessTrade.
 **Business Rules:**
 
 - Mã template: `AMBASSADOR_EMAIL_STAFF_RESET_PASSWORD` (tạm đặt, chờ AT cấp). Đề nghị AT nhân bản `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD`
-- Tiêu đề: `[%company%] Yêu cầu đặt lại mật khẩu` (theo khuôn template TCB). Ngôn ngữ: tiếng Việt
+- Tiêu đề: `[%company%] Yêu cầu đặt lại mật khẩu trang quản trị Ambassador`. Ngôn ngữ: tiếng Việt
 - Nội dung: tên nhân sự, nút đặt lại, đường dẫn dạng văn bản, thời hạn 60 phút, lưu ý mật khẩu hiện tại giữ nguyên nếu không phải người yêu cầu
 
 **Acceptance Criteria:**
@@ -917,7 +917,7 @@ Root (AT) mở màn Nhân viên
   → Danh sách hiển thị trạng thái "Chờ nhận"
 
 Nhân sự nhận email
-  → Nhấn "Nhận lời mời"
+  → Nhấn "Chấp nhận lời mời"
   → Trang /accept-invite: đặt mật khẩu
   → Tài khoản kích hoạt → chuyển về /login, email điền sẵn
   → Đăng nhập
@@ -1253,7 +1253,7 @@ Bộ biến trùng với template TCB tương ứng. Trong 2 file mẫu (`email-
 
 ### D-1, D-2 — Team Email AccessTrade
 
-> Ambassador cần 2 template email cho luồng mời nhân sự và đặt lại mật khẩu trang quản trị. Đề nghị nhân bản 2 template đang dùng cho Techcombank — `TECHCOMBANK_EMAIL_STAFF_INVITE` và `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD` — giữ nguyên bộ biến, đổi thương hiệu theo 2 file mẫu đính kèm (`email-templates/`, biến đã viết sẵn theo cú pháp `%tenBien%` của gateway). Đề nghị cấp mã theo quy ước `AMBASSADOR_EMAIL_STAFF_INVITE`, `AMBASSADOR_EMAIL_STAFF_RESET_PASSWORD`; tiêu đề theo khuôn template TCB, lần lượt `[%company%] Bạn được mời tham gia hệ thống` và `[%company%] Yêu cầu đặt lại mật khẩu`, tiếng Việt. Tài liệu bàn giao đầy đủ theo khuôn TCB: [`TEMPLATE_EMAIL.md`](./TEMPLATE_EMAIL.md). Biến `acceptUrl` và `resetUrl` chứa token đăng nhập dùng một lần — đề nghị không ghi giá trị hai biến này vào log hoặc lịch sử gửi mà bên thứ ba truy cập được. Đề nghị cho biết giới hạn tần suất gửi của API (nếu có): chức năng mời hàng loạt gửi tối đa 50 email mỗi lượt, 10 email song song.
+> Ambassador cần 2 template email cho luồng mời nhân sự và đặt lại mật khẩu trang quản trị. Đề nghị nhân bản 2 template đang dùng cho Techcombank — `TECHCOMBANK_EMAIL_STAFF_INVITE` và `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD` — giữ nguyên bộ biến, đổi thương hiệu theo 2 file mẫu đính kèm (`email-templates/`, biến đã viết sẵn theo cú pháp `%tenBien%` của gateway). Đề nghị cấp mã theo quy ước `AMBASSADOR_EMAIL_STAFF_INVITE`, `AMBASSADOR_EMAIL_STAFF_RESET_PASSWORD`; tiêu đề theo khuôn template TCB, lần lượt `[%company%] Bạn được mời tham gia trang quản trị Ambassador` và `[%company%] Yêu cầu đặt lại mật khẩu trang quản trị Ambassador`, tiếng Việt. Tài liệu bàn giao đầy đủ theo khuôn TCB: [`TEMPLATE_EMAIL.md`](./TEMPLATE_EMAIL.md). Biến `acceptUrl` và `resetUrl` chứa token đăng nhập dùng một lần — đề nghị không ghi giá trị hai biến này vào log hoặc lịch sử gửi mà bên thứ ba truy cập được. Đề nghị cho biết giới hạn tần suất gửi của API (nếu có): chức năng mời hàng loạt gửi tối đa 50 email mỗi lượt, 10 email song song.
 
 ### D-3, D-4 — DevOps
 

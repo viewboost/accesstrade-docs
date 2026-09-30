@@ -1,6 +1,6 @@
 # Email Templates — AT Gateway (AccessTrade) — Ambassador Admin Portal
 
-Tài liệu bàn giao 2 template email của luồng mời nhân sự và đặt lại mật khẩu trang quản trị Ambassador, để AccessTrade tạo trên email gateway. Viết theo khuôn tài liệu bàn giao của T-Fluencers: [`t-fluencers/otp-and-sms-gateway/TEMPLATE_EMAIL.md`](../../t-fluencers/otp-and-sms-gateway/TEMPLATE_EMAIL.md) mục 4 — **cùng bộ biến, cùng cú pháp**, chỉ khác thương hiệu.
+Tài liệu bàn giao 2 template email của luồng mời nhân sự và đặt lại mật khẩu trang quản trị Ambassador, để AccessTrade tạo trên email gateway. Viết theo khuôn tài liệu bàn giao của T-Fluencers: [`t-fluencers/otp-and-sms-gateway/TEMPLATE_EMAIL.md`](../../t-fluencers/otp-and-sms-gateway/TEMPLATE_EMAIL.md) mục 4 — **cùng bộ biến, cùng cú pháp**, chỉ khác thương hiệu. Tiêu đề theo khuôn TCB, thêm tên sản phẩm "trang quản trị Ambassador" vì `company` ở đây là tên công ty (Accesstrade), không phải tên sản phẩm như bên TCB (T-Fluencers).
 
 PRD: [prd-moi-nhan-su-va-mat-khau-2026-09-29.md](./prd-moi-nhan-su-va-mat-khau-2026-09-29.md) (FR-015, FR-016) · Tech spec: [mục 7](./techspec-moi-nhan-su-va-mat-khau-2026-09-29.md)
 
@@ -35,7 +35,7 @@ Khác khung T-Fluencers ở chỗ không có icon mạng xã hội và banner (c
 | **Tương ứng bên TCB** | `TECHCOMBANK_EMAIL_STAFF_INVITE` |
 | **remark** | Gui email moi tham gia trang quan tri |
 | **HTML nguồn** | [`email-templates/staff_invite_email.html`](./email-templates/staff_invite_email.html) |
-| **Subject** | `[%company%] Bạn được mời tham gia hệ thống` |
+| **Subject** | `[%company%] Bạn được mời tham gia trang quản trị Ambassador` |
 
 **template_data:**
 
@@ -49,7 +49,7 @@ Khác khung T-Fluencers ở chỗ không có icon mạng xã hội và banner (c
 
 > Khác TCB một biến: **không dùng `inviterName`**. Chỉ tài khoản cao nhất của AccessTrade được mời, và tên tài khoản đó trong DB là "Root" — thư sẽ ghi "Root đã mời bạn". Câu mời vì vậy ghi cố định "Admin %company%". Backend không gửi khoá `inviterName` (bỏ ở PR #254 / #255).
 
-Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã mời, bấm nút để tự đặt mật khẩu và kích hoạt tài khoản. CTA "Nhận lời mời". Kèm đường dẫn dạng chữ phòng khi nút không bấm được. Ghi chú: dùng một lần, hết hạn sau `expiryHours` giờ.
+Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã mời tham gia trang quản trị Ambassador, nhấn nút để chấp nhận lời mời và thiết lập mật khẩu. CTA "Chấp nhận lời mời". Kèm đường dẫn dạng chữ phòng khi nút không bấm được. Ghi chú: dùng một lần, hết hạn sau `expiryHours` giờ.
 
 #### HTML
 
@@ -63,7 +63,7 @@ Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã m�
     <meta charset="utf-8" />
     <meta name="x-apple-disable-message-reformatting" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Lời mời tham gia trang quản trị</title>
+    <title>Lời mời tham gia trang quản trị Ambassador</title>
   </head>
   <body style="margin: 0; padding: 0; width: 100% !important; background-color: #f3f5f7; font-family: Arial, Helvetica, sans-serif;">
     <center style="width: 100%; background-color: #f3f5f7; padding: 24px 0">
@@ -80,7 +80,7 @@ Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã m�
         <tr>
           <td style="padding: 32px 24px">
             <h2 style="margin: 0 0 24px 0; font-size: 24px; font-weight: 700; color: #101828; text-align: center;">
-              Lời mời tham gia trang quản trị
+              Lời mời tham gia trang quản trị Ambassador
             </h2>
 
             <p style="margin: 0 0 16px; font-size: 16px; color: #344054; line-height: 24px;">
@@ -88,23 +88,23 @@ Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã m�
             </p>
 
             <p style="margin: 0 0 24px; font-size: 16px; color: #344054; line-height: 24px;">
-              <b>Admin %company%</b> đã mời bạn tham gia trang quản trị. Bấm nút bên dưới để tự đặt mật khẩu và kích hoạt tài khoản.
+              <b>Admin %company%</b> đã mời bạn tham gia trang quản trị Ambassador. Vui lòng nhấn nút bên dưới để chấp nhận lời mời và thiết lập mật khẩu cho tài khoản của bạn.
             </p>
 
             <div style="text-align: center; margin-bottom: 24px;">
               <a href="%acceptUrl%" target="_blank"
                 style="display: inline-block; background: #0b0d0f; color: #fff; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
-                Nhận lời mời
+                Chấp nhận lời mời
               </a>
             </div>
 
             <p style="margin: 0 0 16px; font-size: 14px; color: #667085; line-height: 20px;">
-              Nếu nút không bấm được, hãy sao chép đường dẫn sau vào trình duyệt:<br />
+              Nếu nút không hoạt động, vui lòng sao chép đường dẫn sau và dán vào trình duyệt:<br />
               <a href="%acceptUrl%" target="_blank" style="color: #175cd3; word-break: break-all;">%acceptUrl%</a>
             </p>
 
             <p style="margin: 0; font-size: 14px; color: #667085; line-height: 20px;">
-              Đường dẫn chỉ dùng được một lần và hết hạn sau %expiryHours% giờ. Nếu bạn không chờ lời mời này, hãy bỏ qua email — tài khoản sẽ không được kích hoạt.
+              Đường dẫn chỉ sử dụng được một lần và hết hạn sau %expiryHours% giờ. Nếu bạn không biết về lời mời này, vui lòng bỏ qua email này.
             </p>
           </td>
         </tr>
@@ -135,7 +135,7 @@ Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã m�
 | **Tương ứng bên TCB** | `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD` |
 | **remark** | Gui email dat lai mat khau |
 | **HTML nguồn** | [`email-templates/staff_reset_password_email.html`](./email-templates/staff_reset_password_email.html) |
-| **Subject** | `[%company%] Yêu cầu đặt lại mật khẩu` |
+| **Subject** | `[%company%] Yêu cầu đặt lại mật khẩu trang quản trị Ambassador` |
 
 **template_data:**
 
@@ -147,7 +147,7 @@ Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã m�
 | `expiryMinutes` | `%expiryMinutes%` | string | số phút link hết hạn — hiện là "60" |
 | `year` | `%year%` | string | năm (footer) |
 
-Nội dung: xác nhận yêu cầu đặt lại mật khẩu. CTA "Đặt mật khẩu mới". Kèm đường dẫn dạng chữ. Ghi chú: dùng một lần, hết hạn sau `expiryMinutes` phút; không yêu cầu thì bỏ qua, mật khẩu giữ nguyên.
+Nội dung: xác nhận yêu cầu đặt lại mật khẩu. CTA "Đặt lại mật khẩu". Kèm đường dẫn dạng chữ. Ghi chú: dùng một lần, hết hạn sau `expiryMinutes` phút; không yêu cầu thì bỏ qua, mật khẩu giữ nguyên.
 
 #### HTML
 
@@ -161,7 +161,7 @@ Nội dung: xác nhận yêu cầu đặt lại mật khẩu. CTA "Đặt mật 
     <meta charset="utf-8" />
     <meta name="x-apple-disable-message-reformatting" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Đặt lại mật khẩu trang quản trị</title>
+    <title>Đặt lại mật khẩu trang quản trị Ambassador</title>
   </head>
   <body style="margin: 0; padding: 0; width: 100% !important; background-color: #f3f5f7; font-family: Arial, Helvetica, sans-serif;">
     <center style="width: 100%; background-color: #f3f5f7; padding: 24px 0">
@@ -186,23 +186,23 @@ Nội dung: xác nhận yêu cầu đặt lại mật khẩu. CTA "Đặt mật 
             </p>
 
             <p style="margin: 0 0 24px; font-size: 16px; color: #344054; line-height: 24px;">
-              Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản quản trị của bạn. Bấm nút bên dưới để đặt mật khẩu mới.
+              Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn trên trang quản trị Ambassador. Vui lòng nhấn nút bên dưới để đặt mật khẩu mới.
             </p>
 
             <div style="text-align: center; margin-bottom: 24px;">
               <a href="%resetUrl%" target="_blank"
                 style="display: inline-block; background: #0b0d0f; color: #fff; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
-                Đặt mật khẩu mới
+                Đặt lại mật khẩu
               </a>
             </div>
 
             <p style="margin: 0 0 16px; font-size: 14px; color: #667085; line-height: 20px;">
-              Nếu nút không bấm được, hãy sao chép đường dẫn sau vào trình duyệt:<br />
+              Nếu nút không hoạt động, vui lòng sao chép đường dẫn sau và dán vào trình duyệt:<br />
               <a href="%resetUrl%" target="_blank" style="color: #175cd3; word-break: break-all;">%resetUrl%</a>
             </p>
 
             <p style="margin: 0; font-size: 14px; color: #667085; line-height: 20px;">
-              Đường dẫn chỉ dùng được một lần và hết hạn sau %expiryMinutes% phút. Nếu bạn không yêu cầu, hãy bỏ qua email — mật khẩu hiện tại vẫn giữ nguyên.
+              Đường dẫn chỉ sử dụng được một lần và hết hạn sau %expiryMinutes% phút. Nếu bạn không gửi yêu cầu này, vui lòng bỏ qua email này; mật khẩu hiện tại của bạn không thay đổi.
             </p>
           </td>
         </tr>
@@ -228,8 +228,8 @@ Nội dung: xác nhận yêu cầu đặt lại mật khẩu. CTA "Đặt mật 
 
 | template_code | Subject | Data keys | Bản TCB tương ứng |
 |---|---|---|---|
-| `AMBASSADOR_EMAIL_STAFF_INVITE` | `[%company%] Bạn được mời tham gia hệ thống` | recipientName, company, acceptUrl, expiryHours, year | `TECHCOMBANK_EMAIL_STAFF_INVITE` |
-| `AMBASSADOR_EMAIL_STAFF_RESET_PASSWORD` | `[%company%] Yêu cầu đặt lại mật khẩu` | recipientName, company, resetUrl, expiryMinutes, year | `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD` |
+| `AMBASSADOR_EMAIL_STAFF_INVITE` | `[%company%] Bạn được mời tham gia trang quản trị Ambassador` | recipientName, company, acceptUrl, expiryHours, year | `TECHCOMBANK_EMAIL_STAFF_INVITE` |
+| `AMBASSADOR_EMAIL_STAFF_RESET_PASSWORD` | `[%company%] Yêu cầu đặt lại mật khẩu trang quản trị Ambassador` | recipientName, company, resetUrl, expiryMinutes, year | `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD` |
 
 ## Điền form đăng ký template của AccessTrade
 
