@@ -1215,7 +1215,7 @@ Bộ biến trùng với template TCB tương ứng. Trong 2 file mẫu (`email-
 | Template | Biến | Ý nghĩa |
 |---|---|---|
 | `AMBASSADOR_EMAIL_STAFF_INVITE` | `recipientName` | Họ tên người được mời |
-| | `inviterName` | Họ tên người gửi lời mời |
+| | `inviterName` | Họ tên người gửi lời mời — backend gửi nhưng template **không dùng**: câu mời ghi cố định "Admin %company%" (tài khoản Root trong DB tên là "Root") |
 | | `acceptUrl` | Đường dẫn nhận lời mời — **chứa token** |
 | | `expiryHours` | Số giờ hiệu lực (`48`) |
 | | `year`, `company` | Dòng bản quyền |

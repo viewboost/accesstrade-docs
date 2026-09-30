@@ -13,7 +13,9 @@
 
   BIẾN (template_data):
     recipientName  tên người được mời
-    inviterName    tên quản trị viên gửi lời mời
+    inviterName    KHÔNG dùng trong mẫu — câu mời ghi cố định "Admin %company%" vì chỉ tài khoản
+                   cao nhất của AccessTrade được mời, và tên tài khoản đó trong DB là "Root".
+                   Backend vẫn gửi khoá này; template bỏ qua.
     acceptUrl      đường dẫn nhận lời mời và tự đặt mật khẩu — CHỨA TOKEN, dùng
                    một lần, hết hạn sau expiryHours giờ
     expiryHours    số giờ đường dẫn còn hiệu lực (hiện là "48")
@@ -54,7 +56,7 @@
             </p>
 
             <p style="margin: 0 0 24px; font-size: 16px; color: #344054; line-height: 24px;">
-              <b>%inviterName%</b> đã mời bạn tham gia trang quản trị. Bấm nút bên dưới để tự đặt mật khẩu và kích hoạt tài khoản.
+              <b>Admin %company%</b> đã mời bạn tham gia trang quản trị. Bấm nút bên dưới để tự đặt mật khẩu và kích hoạt tài khoản.
             </p>
 
             <div style="text-align: center; margin-bottom: 24px;">

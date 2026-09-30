@@ -42,13 +42,14 @@ Khác khung T-Fluencers ở chỗ không có logo, icon mạng xã hội và ban
 | key | HTML placeholder | kiểu | mô tả |
 |---|---|---|---|
 | `recipientName` | `%recipientName%` | string | tên người được mời |
-| `inviterName` | `%inviterName%` | string | tên người mời (trống thì backend gửi "Quản trị viên") |
 | `company` | `%company%` | string | tên công ty — hiện là "AccessTrade" |
 | `acceptUrl` | `%acceptUrl%` | string | link nhận lời mời (CTA) — **chứa token dùng một lần** |
 | `expiryHours` | `%expiryHours%` | string | số giờ link hết hạn — hiện là "48" |
 | `year` | `%year%` | string | năm (footer) |
 
-Nội dung: mời nhân sự vào trang quản trị. `inviterName` đã mời, bấm nút để tự đặt mật khẩu và kích hoạt tài khoản. CTA "Nhận lời mời". Kèm đường dẫn dạng chữ phòng khi nút không bấm được. Ghi chú: dùng một lần, hết hạn sau `expiryHours` giờ.
+> Khác TCB một biến: **không dùng `inviterName`**. Chỉ tài khoản cao nhất của AccessTrade được mời, và tên tài khoản đó trong DB là "Root" — thư sẽ ghi "Root đã mời bạn". Câu mời vì vậy ghi cố định "Admin %company%". Backend hiện vẫn gửi khoá `inviterName` trong `template_data`; template không tham chiếu nên bỏ qua.
+
+Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã mời, bấm nút để tự đặt mật khẩu và kích hoạt tài khoản. CTA "Nhận lời mời". Kèm đường dẫn dạng chữ phòng khi nút không bấm được. Ghi chú: dùng một lần, hết hạn sau `expiryHours` giờ.
 
 #### HTML
 
@@ -87,7 +88,7 @@ Nội dung: mời nhân sự vào trang quản trị. `inviterName` đã mời, 
             </p>
 
             <p style="margin: 0 0 24px; font-size: 16px; color: #344054; line-height: 24px;">
-              <b>%inviterName%</b> đã mời bạn tham gia trang quản trị. Bấm nút bên dưới để tự đặt mật khẩu và kích hoạt tài khoản.
+              <b>Admin %company%</b> đã mời bạn tham gia trang quản trị. Bấm nút bên dưới để tự đặt mật khẩu và kích hoạt tài khoản.
             </p>
 
             <div style="text-align: center; margin-bottom: 24px;">
@@ -227,7 +228,7 @@ Nội dung: xác nhận yêu cầu đặt lại mật khẩu. CTA "Đặt mật 
 
 | template_code | Subject | Data keys | Bản TCB tương ứng |
 |---|---|---|---|
-| `AMBASSADOR_EMAIL_STAFF_INVITE` | `[%company%] Bạn được mời tham gia hệ thống` | recipientName, inviterName, company, acceptUrl, expiryHours, year | `TECHCOMBANK_EMAIL_STAFF_INVITE` |
+| `AMBASSADOR_EMAIL_STAFF_INVITE` | `[%company%] Bạn được mời tham gia hệ thống` | recipientName, company, acceptUrl, expiryHours, year | `TECHCOMBANK_EMAIL_STAFF_INVITE` |
 | `AMBASSADOR_EMAIL_STAFF_RESET_PASSWORD` | `[%company%] Yêu cầu đặt lại mật khẩu` | recipientName, company, resetUrl, expiryMinutes, year | `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD` |
 
 ## Điền form đăng ký template của AccessTrade

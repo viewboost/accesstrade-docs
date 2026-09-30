@@ -423,7 +423,7 @@ File: `pkg/admin/service/staff_auth_mail.go`.
 
 | Template | Khoá |
 |---|---|
-| Mời | `recipientName`, `inviterName` (trống → "Quản trị viên"), `acceptUrl`, `expiryHours` ("48"), `year`, `company` ("AccessTrade") |
+| Mời | `recipientName`, `inviterName` (trống → "Quản trị viên"; template không dùng — câu mời ghi cố định "Admin %company%"), `acceptUrl`, `expiryHours` ("48"), `year`, `company` ("AccessTrade") |
 | Đặt lại | `recipientName`, `resetUrl`, `expiryMinutes` ("60"), `year`, `company` |
 
 Trùng bộ biến với `TECHCOMBANK_EMAIL_STAFF_*` → AT nhân bản được (PRD D-1).
