@@ -230,7 +230,7 @@ Khác TF (PRD 2.3 #4): TF xử lý song song, mỗi dòng tự kiểm trùng r�
 
 - Điều kiện: `active=false` và `inviteStatus ∈ {pending, revoked}` (gồm cả pending đã hết hạn)
 - `UpdateOne` với **điều kiện trạng thái lặp lại trong filter** — tránh race với người nhận đang bấm nhận lời mời. `MatchedCount == 0` → `InviteNotPending`
-- `$set`: token mới, hạn mới, `inviteStatus=pending`, `invitedBy`/`invitedAt` = người gửi lại (khớp tên người gửi trong thư)
+- `$set`: token mới, hạn mới, `inviteStatus=pending`, `invitedBy`/`invitedAt` = người gửi lại
 - Token cũ mất hiệu lực ngay vì bị ghi đè
 
 ### 4.6 Thu hồi — `POST /:id/revoke-invite`
@@ -423,10 +423,10 @@ File: `pkg/admin/service/staff_auth_mail.go`.
 
 | Template | Khoá |
 |---|---|
-| Mời | `recipientName`, `inviterName` (trống → "Quản trị viên"; template không dùng — câu mời ghi cố định "Admin %company%"), `acceptUrl`, `expiryHours` ("48"), `year`, `company` ("AccessTrade") |
+| Mời | `recipientName`, `acceptUrl`, `expiryHours` ("48"), `year`, `company` ("Accesstrade"). Không có tên người mời: câu mời ghi cố định "Admin %company%" vì tài khoản Root trong DB tên là "Root" |
 | Đặt lại | `recipientName`, `resetUrl`, `expiryMinutes` ("60"), `year`, `company` |
 
-Trùng bộ biến với `TECHCOMBANK_EMAIL_STAFF_*` → AT nhân bản được (PRD D-1).
+Cùng bộ biến với `TECHCOMBANK_EMAIL_STAFF_*`, trừ `inviterName` của thư mời → AT nhân bản được (PRD D-1). Bản bàn giao đầy đủ: [`TEMPLATE_EMAIL.md`](./TEMPLATE_EMAIL.md).
 
 ### 7.3 File mẫu HTML
 

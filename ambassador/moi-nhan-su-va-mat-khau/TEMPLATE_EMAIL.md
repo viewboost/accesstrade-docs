@@ -20,9 +20,9 @@ sendStaffAuthEmail(ctx, templateCode, to, data)   // template_code, send_tos, te
 
 ## Khung HTML chung
 
-Theo khung email OTP đang chạy của Ambassador: nền `#f3f5f7`, card trắng bo góc 12px rộng tối đa 600px, header nền đen `#0b0d0f` hiện tên `%company%` (không dùng ảnh), nút CTA nền đen, footer `© %year% %company%. All rights reserved.`. Font Arial, lang `vi`. Không có ảnh host ngoài.
+Theo khung email OTP đang chạy của Ambassador: nền `#f3f5f7`, card trắng bo góc 12px rộng tối đa 600px, header nền đen `#0b0d0f` hiện logo Accesstrade chữ trắng (`https://accesstrade.vn/wp-content/uploads/2023/07/logomain_at.png`), nút CTA nền đen, footer `© %year% %company%. All rights reserved.`. Font Arial, lang `vi`. Ảnh duy nhất là logo ở header, lấy từ website accesstrade.vn — nếu AccessTrade có đường dẫn logo chính thức cho email thì thay vào.
 
-Khác khung T-Fluencers ở chỗ không có logo, icon mạng xã hội và banner (các ảnh đó là thương hiệu T-Fluencers).
+Khác khung T-Fluencers ở chỗ không có icon mạng xã hội và banner (các ảnh đó là thương hiệu T-Fluencers).
 
 ---
 
@@ -42,12 +42,12 @@ Khác khung T-Fluencers ở chỗ không có logo, icon mạng xã hội và ban
 | key | HTML placeholder | kiểu | mô tả |
 |---|---|---|---|
 | `recipientName` | `%recipientName%` | string | tên người được mời |
-| `company` | `%company%` | string | tên công ty — hiện là "AccessTrade" |
+| `company` | `%company%` | string | tên công ty — hiện là "Accesstrade" |
 | `acceptUrl` | `%acceptUrl%` | string | link nhận lời mời (CTA) — **chứa token dùng một lần** |
 | `expiryHours` | `%expiryHours%` | string | số giờ link hết hạn — hiện là "48" |
 | `year` | `%year%` | string | năm (footer) |
 
-> Khác TCB một biến: **không dùng `inviterName`**. Chỉ tài khoản cao nhất của AccessTrade được mời, và tên tài khoản đó trong DB là "Root" — thư sẽ ghi "Root đã mời bạn". Câu mời vì vậy ghi cố định "Admin %company%". Backend hiện vẫn gửi khoá `inviterName` trong `template_data`; template không tham chiếu nên bỏ qua.
+> Khác TCB một biến: **không dùng `inviterName`**. Chỉ tài khoản cao nhất của AccessTrade được mời, và tên tài khoản đó trong DB là "Root" — thư sẽ ghi "Root đã mời bạn". Câu mời vì vậy ghi cố định "Admin %company%". Backend không gửi khoá `inviterName` (bỏ ở PR #254 / #255).
 
 Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã mời, bấm nút để tự đặt mật khẩu và kích hoạt tài khoản. CTA "Nhận lời mời". Kèm đường dẫn dạng chữ phòng khi nút không bấm được. Ghi chú: dùng một lần, hết hạn sau `expiryHours` giờ.
 
@@ -72,7 +72,7 @@ Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã m�
         <!-- HEADER -->
         <tr>
           <td style="background-color: #0b0d0f; padding: 16px 20px; color: #fff; font-size: 18px; font-weight: bold; text-align: center;">
-            %company%
+            <img src="https://accesstrade.vn/wp-content/uploads/2023/07/logomain_at.png" alt="Accesstrade" width="86" height="48" style="display: inline-block; width: 86px; height: 48px; border: 0; vertical-align: middle;" />
           </td>
         </tr>
 
@@ -142,7 +142,7 @@ Nội dung: mời nhân sự vào trang quản trị. "Admin %company%" đã m�
 | key | HTML placeholder | kiểu | mô tả |
 |---|---|---|---|
 | `recipientName` | `%recipientName%` | string | tên người nhận |
-| `company` | `%company%` | string | tên công ty — hiện là "AccessTrade" |
+| `company` | `%company%` | string | tên công ty — hiện là "Accesstrade" |
 | `resetUrl` | `%resetUrl%` | string | link đặt lại mật khẩu (CTA) — **chứa token dùng một lần** |
 | `expiryMinutes` | `%expiryMinutes%` | string | số phút link hết hạn — hiện là "60" |
 | `year` | `%year%` | string | năm (footer) |
@@ -170,7 +170,7 @@ Nội dung: xác nhận yêu cầu đặt lại mật khẩu. CTA "Đặt mật 
         <!-- HEADER -->
         <tr>
           <td style="background-color: #0b0d0f; padding: 16px 20px; color: #fff; font-size: 18px; font-weight: bold; text-align: center;">
-            %company%
+            <img src="https://accesstrade.vn/wp-content/uploads/2023/07/logomain_at.png" alt="Accesstrade" width="86" height="48" style="display: inline-block; width: 86px; height: 48px; border: 0; vertical-align: middle;" />
           </td>
         </tr>
 

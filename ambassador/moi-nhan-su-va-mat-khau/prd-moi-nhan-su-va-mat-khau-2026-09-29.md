@@ -342,7 +342,7 @@ Root gửi lại email mời cho lời mời đang chờ, đã hết hạn hoặ
 **Business Rules:**
 
 - Cấp token mới với TTL 48 giờ; token cũ mất hiệu lực ngay lập tức
-- Cập nhật người gửi và thời điểm gửi theo lần gửi này — khớp tên người gửi hiển thị trong email. Lịch sử từng lần gửi nằm trong audit log
+- Cập nhật người gửi và thời điểm gửi theo lần gửi này. Lịch sử từng lần gửi nằm trong audit log
 - Không áp dụng cho tài khoản đã kích hoạt
 - Điều kiện trạng thái được kiểm tra lại ngay trong câu lệnh cập nhật, tránh race condition với thao tác nhận lời mời
 
@@ -688,7 +688,7 @@ Email mời gửi qua API email AccessTrade, template do AT đăng ký.
 
 - Mã template: `AMBASSADOR_EMAIL_STAFF_INVITE` (tạm đặt, chờ AT cấp). Đề nghị AT nhân bản `TECHCOMBANK_EMAIL_STAFF_INVITE` — cùng bộ biến (Phụ lục B)
 - Tiêu đề: `[%company%] Bạn được mời tham gia hệ thống` (theo khuôn template TCB). Người gửi: địa chỉ gửi mặc định của API email AT. Ngôn ngữ: tiếng Việt
-- Nội dung: tên người được mời, tên người gửi lời mời, nút kích hoạt, đường dẫn dạng văn bản (khi nút không hoạt động), thời hạn hiệu lực, lưu ý bỏ qua nếu không chờ lời mời
+- Nội dung: tên người được mời, câu mời ghi cố định "Admin Accesstrade" (không hiện tên tài khoản gửi — tài khoản Root trong DB tên là "Root"), nút kích hoạt, đường dẫn dạng văn bản (khi nút không hoạt động), thời hạn hiệu lực, lưu ý bỏ qua nếu không chờ lời mời
 
 **Acceptance Criteria:**
 
@@ -1215,7 +1215,6 @@ Bộ biến trùng với template TCB tương ứng. Trong 2 file mẫu (`email-
 | Template | Biến | Ý nghĩa |
 |---|---|---|
 | `AMBASSADOR_EMAIL_STAFF_INVITE` | `recipientName` | Họ tên người được mời |
-| | `inviterName` | Họ tên người gửi lời mời — backend gửi nhưng template **không dùng**: câu mời ghi cố định "Admin %company%" (tài khoản Root trong DB tên là "Root") |
 | | `acceptUrl` | Đường dẫn nhận lời mời — **chứa token** |
 | | `expiryHours` | Số giờ hiệu lực (`48`) |
 | | `year`, `company` | Dòng bản quyền |
