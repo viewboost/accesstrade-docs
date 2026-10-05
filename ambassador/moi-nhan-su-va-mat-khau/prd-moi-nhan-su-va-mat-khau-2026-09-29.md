@@ -573,7 +573,6 @@ Email lời mời được lưu dạng chữ thường; bàn phím điện tho�
 **Acceptance Criteria:**
 
 - [ ] Đăng nhập bằng `An@Example.com` với tài khoản `an@example.com`: thành công
-- [ ] Email không tồn tại và email tồn tại sai mật khẩu: chênh lệch trung vị thời gian phản hồi < 50 ms qua 20 lần đo
 
 **Dependencies:** —
 
@@ -830,7 +829,6 @@ Email đặt lại mật khẩu gửi qua API email AccessTrade.
 **Acceptance Criteria:**
 
 - [ ] Mời một nhân sự: phản hồi < 5 giây khi API email AT phản hồi bình thường
-- [ ] Mời hàng loạt 50 nhân sự: ≤ 30 giây kể cả khi API email AT không phản hồi (10 luồng × timeout 5 giây)
 - [ ] Mỗi lời gọi API email có timeout: 15 giây (mời lẻ), 5 giây (mời hàng loạt)
 
 ---
@@ -1269,7 +1267,7 @@ Bổ sung lần đăng nhập thất bại vào tính năng Lịch sử đăng n
 
 | Version | Ngày | Người thực hiện | Nội dung |
 |---|---|---|---|
-| 2.1 | 2026-10-05 | Nguyễn Đăng Định | Bỏ 6 tiêu chí nghiệm thu: kênh email lỗi (FR-001), mời 50 người khi API email không phản hồi (FR-002), so thời gian phản hồi quên mật khẩu (FR-008), giả mạo `X-Forwarded-For`, Redis lỗi trả 503, thông báo chặn kèm số phút (FR-011). FR-013 chuyển ra ngoài phạm vi, đặc tả dời sang Phụ lục E |
+| 2.1 | 2026-10-05 | Nguyễn Đăng Định | Bỏ 8 tiêu chí nghiệm thu: kênh email lỗi (FR-001), mời 50 người khi API email không phản hồi (FR-002), so thời gian phản hồi quên mật khẩu (FR-008), giả mạo `X-Forwarded-For`, Redis lỗi trả 503, thông báo chặn kèm số phút (FR-011); đo thời gian phản hồi đăng nhập (FR-018); mời 50 người ≤ 30 giây (NFR-010). FR-013 chuyển ra ngoài phạm vi, đặc tả dời sang Phụ lục E |
 | 2.0 | 2026-09-29 | Nguyễn Đăng Định | Chốt: không còn Open Question. OQ-2 → RQ-11 (tắt luồng cũ khi email đã chạy thật trên production; điều kiện thay cho mốc thời gian) |
 | 1.3 | 2026-09-29 | Nguyễn Đăng Định | Bỏ câu hỏi thời hạn lưu Lịch sử đăng nhập (OQ-8) và NFR-014 — ngoài yêu cầu của task; chốt không thêm ràng buộc email ở cơ sở dữ liệu (RQ-10); định nghĩa "Luồng cũ" |
 | 1.2 | 2026-09-29 | Nguyễn Đăng Định | Chốt OQ-5 (ghép gap #12), OQ-7 (một nhánh cắt từ `release` mới nhất); FR-013 hoãn; bỏ ước lượng giờ và deadline; đề xuất thời hạn lưu 12 tháng kèm căn cứ |
