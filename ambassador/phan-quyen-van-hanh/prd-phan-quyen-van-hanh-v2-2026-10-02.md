@@ -1,6 +1,6 @@
 # PRD v2: Phân quyền chức năng cấu hình được — gỡ phụ thuộc vào Admin Root
 
-**Phiên bản:** 2.1 — ngày 2026-10-05 (bản 2: 2026-10-02)
+**Phiên bản:** 2.1 — ngày 2026-10-05 (bản 2: 2026-10-02). Q10 đã chốt 05/10
 **Thay cho:** `prd-phan-quyen-van-hanh-2026-09-25.md` (bản 30/9). Bản cũ giữ nguyên để đối chiếu.
 **Đầu vào:** `feedback-review-2026-10-01.md` của Vinh Nguyễn (DISO), đo trên `AT-Core/ambassador` nhánh `develop`,
 commit `0b411b25`. Số liệu trong bản này lấy theo lần đo đó, **trừ** các số ở mục 1.2 (đo 25/9, chưa đo lại —
@@ -16,7 +16,7 @@ có ghi rõ tại chỗ). Danh mục quyền và Phụ lục A đối chiếu ro
 | Mốc 0 phụ thuộc PQ-014 (Mốc 1): PQ-006 đọc phạm vi từ principal, PQ-007 cần nhiều ADV trong khi phạm vi đang nằm trong claim `partner` của JWT (một ADV) | Tách **PQ-014a — đọc phạm vi ADV từ DB** đưa lên Mốc 0. Phương án dự phòng ghi trong PQ-014a | PQ-014a, 8 |
 | Mục 1.2 dùng số đo 25/9 nhưng đầu bản ghi "mọi số liệu theo 01/10" | Ghi rõ nguồn; số chính xác lấy từ PQ-015 | 1.2 |
 | Danh mục quyền bỏ sót 10 nhóm endpoint, trong đó có **thưởng sự kiện** (tiền) | Bổ sung vào 2.3; thêm định nghĩa hành động | 2.3 |
-| "Cộng thưởng cho creator" và "Thưởng thêm" bị gộp làm một | Tách lại thành hai việc, chờ biz xác nhận (Q10) | 1, PQ-008, Q10 |
+| "Cộng thưởng cho creator" là việc nào | **Biz chốt 05/10: chính là Thưởng thêm** (`/event-bonus`). Thưởng sự kiện (`/event-reward`) giữ chỉ root | 1, 2.3, PQ-008, Q10 |
 | Ba vai trò hiện có chỉ ghi "như hôm nay" — biz không duyệt được | Thêm **Phụ lục A**: ma trận hiện trạng theo nhóm chức năng | Phụ lục A |
 | Thiếu vai trò Manager vận hành | Thêm cột vào 2.4 | 2.4 |
 | `staff.edit` chưa định nghĩa; chưa nói về tạo nhân sự kiểu cũ | Định nghĩa trong 2.3 và PQ-011 | 2.3, PQ-011 |
@@ -56,17 +56,17 @@ Rà soát lại toàn bộ danh sách quyền, sắp xếp lại thành các **n
 | Mời tài khoản qua email | Chỉ chọn được 1 trong 3 vai trò cứng, một ADV | Người được mời nhận **đúng nhóm quyền và ADV** ngay từ lời mời |
 | Thêm/đổi quyền cho một đội | Sửa mã ở 3 tầng, phát hành bản mới | Root tick quyền trên màn **Vai trò & phân quyền**, có hiệu lực ngay |
 
-Năm việc đội vận hành đang phải mượn root:
+Năm việc đội vận hành đang phải mượn root (request liệt kê "Cộng thưởng cho creator" và "Thưởng thêm" thành hai
+dòng; biz xác nhận 05/10 đó là cùng một chức năng Thưởng thêm, nên bảng gộp làm một):
 
 | Việc | Hôm nay |
 |---|---|
 | **Người dùng** — liên hệ creator bị sai video | `GET /users/:id`, `/users/:id/socials` nằm dưới `IsRoot` |
-| **Cộng thưởng cho creator** | Cần biz xác nhận là việc nào (Q10). Nếu là **thưởng sự kiện** (`/event-reward/*`) thì hôm nay chỉ root làm được |
-| **Thưởng thêm** — cộng thưởng | `/event-bonus/*`; Admin chưa gắn ADV bấm Lưu là "Không có quyền" |
+| **Cộng thưởng cho creator** — Thưởng thêm (tạo, sửa, import) | `/event-bonus/*`; Admin chưa gắn ADV bấm Lưu là "Không có quyền" |
 | **File đối soát** — huỷ nội dung, huỷ mốc thưởng, tải file | Mở chi tiết là trắng; Huỷ và Tải trả lỗi |
 | **File rút tiền** — xem và tải | Danh sách hiện, chi tiết trả lỗi |
 
-Lý do gốc của bốn việc sau: Manager phụ trách **nhiều ADV**, nhưng bản ghi nhân sự chỉ chứa **một** ADV. Không
+Lý do gốc của ba việc sau: Manager phụ trách **nhiều ADV**, nhưng bản ghi nhân sự chỉ chứa **một** ADV. Không
 gắn ADV thì bị các phép so sánh thô chặn; gắn một ADV thì thiếu các ADV còn lại. Root là tài khoản duy nhất chạm
 được nhiều ADV.
 
@@ -196,7 +196,7 @@ Xoá cứng không có mã quyền riêng; nếu endpoint xoá cứng tồn tạ
 | Thống kê, Dashboard | `statistic.view` | Gồm `/events/statistic`, `/staff-statistic`, `/chart`, `/report-statistic` |
 | Sự kiện | `event.view`, `event.edit` | `edit` gồm yêu cầu, ngân sách, opshub, cấu hình và ghim **bảng xếp hạng** |
 | Mẫu sự kiện | `event_schema.view`, `event_schema.edit` | `/event-schemas/*` — hôm nay ai đăng nhập cũng gọi được |
-| **Thưởng sự kiện** | `event_reward.change_status`, `event_reward.delete` | `/event-reward/*` — **liên quan tiền**, hôm nay chỉ root. Có mở cho Vận hành không: Q10 |
+| **Thưởng sự kiện** — đổi trạng thái, xoá | — | `/event-reward/*` — **khoá root**, giữ như hôm nay. Không thuộc request (Q10: "cộng thưởng" là Thưởng thêm) |
 | | huỷ thưởng sự kiện, chạy lại tính thưởng (`/events/reject-reward-event`, `/rerun-reward-event-by-cad`) | **Khoá root** — công cụ kỹ thuật |
 | Thưởng thêm | `bonus.view`, `bonus.edit`, `bonus.import`, `bonus.cancel` | Liên quan tiền |
 | Nhiệm vụ | `mission.view`, `mission.edit`, `mission.approve` | `approve` = duyệt điểm nhiệm vụ (`/point-approval`) |
@@ -246,7 +246,6 @@ danh sách "đổi hành vi có chủ đích" (PQ-005). Hành vi hôm nay của 
 | Người dùng — liên hệ | ✔ | ✔ | *Q5* |
 | Hồ sơ creator | xem | xem | xem |
 | Thưởng thêm | xem, sửa, import, huỷ | xem, sửa, import, huỷ | xem |
-| Thưởng sự kiện | *Q10* | *Q10* | — |
 | Đối soát | xem, huỷ mục, tải file | xem, huỷ mục, tải file | xem |
 | Rút tiền | xem, tải file | xem, tải file | xem |
 | Sự kiện, Nhiệm vụ, Quà | xem | xem | xem |
@@ -524,7 +523,6 @@ mỗi route tự gắn middleware như hôm nay.
 | `PUT /partners/users/wildrift` cần `user.edit_partner_data` hoặc bị gỡ | Mọi vai trò không phải root | 3 | Ghi dữ liệu người dùng mà không kiểm vai trò |
 | Nhật ký `/audits` cần `audit.view`, lọc theo phạm vi | CTV, Cấu hình ứng dụng; nhân sự ADV khác | 3 | PQ-012 |
 | Công cụ kỹ thuật dưới `/events`, `/common` (2.3) khoá root | Theo kết quả phân loại của DISO | 3 | Không phải công cụ vận hành |
-| Thưởng sự kiện mở cho Vận hành | Tuỳ Q10 | 2 | Một trong năm việc |
 | Nhân sự không gắn ADV chuyển sang `all` hoặc `list` | Theo Q7 | 0 | PQ-007 |
 | Chi tiết người dùng mở cho Admin | Admin | 0 | PQ-003a |
 | Thiếu quyền trả 403 thay vì 401 | Mọi vai trò | 1 | NFR-005 |
@@ -567,8 +565,7 @@ Danh sách này là nguồn duy nhất; thay đổi ngoài danh sách là lỗi.
 | Việc | Quyền | Yêu cầu riêng | Nghiệm thu |
 |---|---|---|---|
 | Liên hệ creator | `user.view_contact` | Ban, hợp đồng, eKYC không hiện và API chặn | Gõ id creator ngoài phạm vi: bị chặn. Mỗi lượt xem có nhật ký |
-| Cộng thưởng cho creator | Theo Q10: `event_reward.change_status` nếu là thưởng sự kiện | Mở được thì chỉ trong phạm vi ADV, ghi nhật ký | Chốt sau Q10 |
-| Thưởng thêm | `bonus.edit`, `bonus.import`, `bonus.cancel` | Import có dòng ngoài phạm vi: dòng đó bị từ chối kèm lý do, dòng hợp lệ vẫn vào | File trộn hai ADV xử lý đúng |
+| Cộng thưởng cho creator (Thưởng thêm) | `bonus.edit`, `bonus.import`, `bonus.cancel` | Import có dòng ngoài phạm vi: dòng đó bị từ chối kèm lý do, dòng hợp lệ vẫn vào | File trộn hai ADV xử lý đúng |
 | Đối soát | `reconciliation.cancel_item`, `reconciliation.export` | Đủ bốn tab chi tiết; huỷ kèm lý do; đổi trạng thái cả bản **không** thuộc vai trò này | Không tab nào trắng; thống kê cập nhật sau huỷ |
 | Tải file | `reconciliation.export`, `transfer.export` | Yêu cầu xuất luôn mang ADV; không sinh được file trộn nhiều ADV từ tài khoản không phải `all` | Id file ngoài phạm vi: bị chặn |
 | Rút tiền | `transfer.view`, `transfer.export` | Đổi trạng thái, từ chối lệnh rút **không** thuộc vai trò này | Đợt rút ngoài phạm vi: bị chặn |
@@ -618,7 +615,7 @@ endpoint duyệt), 5 `/partners`, 4 `/common`, 1 `/audits`.
 #### PQ-011 — Khoá root và chống tự nâng quyền
 
 Giữ **chỉ root**: Vai trò & phân quyền; tạo/sửa/ngừng **ADV**; **ban / gỡ ban**; **hợp đồng**, **eKYC**, tạo
-người dùng; Xác thực tài khoản; `/migration/*` và các công cụ kỹ thuật ở 2.3; huỷ / chạy lại tính thưởng sự kiện;
+người dùng; Xác thực tài khoản; `/migration/*` và các công cụ kỹ thuật ở 2.3; thưởng sự kiện (đổi trạng thái, xoá, huỷ, chạy lại tính thưởng);
 bật cờ root; đặt phạm vi `all`; đặt lại mật khẩu cho người khác; tạo nhân sự kiểu cũ (đặt sẵn mật khẩu).
 
 Tag và Cấu hình chung **không** khoá root (khác bản 30/9): dùng `tag.edit`, `common_config.edit` kèm phạm vi
@@ -718,11 +715,6 @@ Frontend (`admin/src/utils/request.ts`) hiển thị được thông báo 403 v�
 không xin. Phần thừa này nhỏ hơn root nhiều: không có 26 endpoint chỉ root, không chạm ADV ngoài phạm vi. Nó tồn
 tại tới hết Mốc 2.
 
-**Mốc 0 thiếu gì:** nếu Q10 xác nhận "Cộng thưởng cho creator" là **thưởng sự kiện** (`/event-reward/*`, hôm nay
-`IsRoot`), Mốc 0 phải thêm việc chuyển hai endpoint này sang Admin trong phạm vi ADV (giống PQ-003a). Nếu không
-thêm, việc đó vẫn phải nhờ root tới Mốc 2 — khi ấy root tạm chưa tắt được ở Mốc 0, mà chỉ được thay bằng quy trình
-"nhờ root của AT làm hộ, có ghi lại".
-
 Nếu biz không đồng ý (Q1): Mốc 0 gộp vào Mốc 2, root tạm giữ tới hết Mốc 2, cần gia hạn bằng văn bản.
 
 ---
@@ -748,7 +740,7 @@ Nếu biz không đồng ý (Q1): Mốc 0 gộp vào Mốc 2, root tạm giữ t
 | Q7 | Nhân sự không gắn ADV hôm nay: ai thành `all`, ai thành `list`? | Rà từng người | Biz |
 | Q8 | Vai trò Admin: giữ riêng, hay gộp vào Vận hành sau Mốc 2? | Giữ, xem lại sau Mốc 3 | Biz |
 | Q9 | Kênh nhận cảnh báo root đăng nhập; người được chạy break-glass | — | AT |
-| Q10 | "Cộng thưởng cho creator" trong request là việc nào: **thưởng sự kiện** (`/event-reward`, đổi trạng thái / xoá, hôm nay chỉ root) hay chính là **Thưởng thêm**? Nếu là thưởng sự kiện: Vận hành có được đổi trạng thái không, và có cần ở Mốc 0? | Hỏi biz kèm ảnh chụp màn hình việc họ làm | Biz |
+| Q10 | ~~"Cộng thưởng cho creator" là thưởng sự kiện hay Thưởng thêm?~~ | **Đã chốt 05/10: Thưởng thêm** (`/event-bonus`). Thưởng sự kiện giữ chỉ root | Biz ✔ |
 | Q11 | Admin có cần **Kênh hỗ trợ** không? Hôm nay chỉ root và Cấu hình ứng dụng sửa được, Admin không | Giữ như hôm nay | Biz |
 | Q12 | Các route cập nhật hàng loạt dưới `/contents`, `/events`, `/common` (2.3): công cụ vận hành hay công cụ kỹ thuật? | DISO phân loại khi dựng registry | DISO |
 | Q13 | `PUT /partners/users/wildrift` còn dùng không? | Không dùng thì gỡ | DISO |
