@@ -4,7 +4,7 @@
 **Date:** 2026-09-29
 **Author:** Nguyễn Đăng Định
 **Reviewer:** Review nội bộ 2026-09-29 (2 lượt). Chờ phân công Product Owner và Security
-**Version:** 2.0
+**Version:** 2.1
 **Project Level:** Level 2
 **Status:** Final — không còn Open Question; chờ Product Owner và Security phê duyệt
 **Phạm vi:** Admin Portal dùng chung cho mọi ADV. Không thay đổi luồng đăng nhập của creator (trừ bản vá HF-2, mục 2.5).
@@ -167,7 +167,7 @@ Giới hạn phạm vi đọc `/audits` không thuộc hotfix (thuộc PQ-009).
 | BO-1 | Loại bỏ việc chia sẻ mật khẩu qua kênh không an toàn | Trước khi tắt luồng cũ: ≥ 90% tài khoản không phải Root tạo mới đi qua lời mời. Sau khi tắt luồng cũ (RQ-11): 100% | Tỷ lệ tài khoản mới có trường `inviteStatus` |
 | BO-2 | Nhân sự tự khôi phục quyền truy cập, không phụ thuộc Root | Số lần Root đặt mật khẩu hộ giảm ≥ 90% so với 30 ngày trước phát hành | Đếm audit "Đã cập nhật mật khẩu" |
 | BO-3 | Rút ngắn thời gian cấp tài khoản khi tiếp nhận ADV mới | ≥ 90% lời mời được nhận trong vòng 48 giờ kể từ lần gửi gần nhất | `acceptedAt − invitedAt` |
-| BO-4 | Giảm bề mặt tấn công vào endpoint xác thực | 100% yêu cầu vượt ngưỡng nhận HTTP 429; lần đăng nhập sai của tài khoản hợp lệ được ghi nhận (khi FR-013 phát hành) | Log/giám sát (NFR-013); Lịch sử đăng nhập |
+| BO-4 | Giảm bề mặt tấn công vào endpoint xác thực | 100% yêu cầu vượt ngưỡng nhận HTTP 429; lần bị chặn được ghi log (NFR-013) | Log/giám sát (NFR-013) |
 | BO-5 | Truy vết được việc cấp quyền truy cập | 100% tài khoản tạo qua lời mời có người gửi lời mời gần nhất, thời điểm gửi, thời điểm nhận; lịch sử từng lần gửi có trong audit log | Trường `invitedBy`, `invitedAt`, `acceptedAt`; audit log |
 
 ---
@@ -229,7 +229,7 @@ Giới hạn phạm vi đọc `/audits` không thuộc hotfix (thuộc PQ-009).
 | Email thông báo "mật khẩu vừa được thay đổi" | Thấp–trung bình. Chủ tài khoản không biết khi mật khẩu bị đổi | Cần thêm một template AT; đề xuất đợt sau |
 | Chuẩn hoá Unicode (NFC) cho mật khẩu | Thấp. Mật khẩu có dấu gõ trên hai bộ gõ khác nhau có thể không khớp | Không làm: áp NFC khi đăng nhập sẽ làm hỏng mật khẩu hiện có đang lưu ở dạng khác |
 | Ràng buộc duy nhất cho email ở tầng cơ sở dữ liệu | Rất thấp. Chỉ một tài khoản Root tạo nhân sự; hai yêu cầu tạo cùng email cùng lúc gần như không xảy ra, và code đã kiểm tra trùng trước khi tạo | Không làm (RQ-10) |
-| Ghi lần đăng nhập thất bại (FR-013) | Thấp. Lần dò mật khẩu bị chặn bởi FR-011 nhưng không để lại dấu vết trong Lịch sử đăng nhập | Tính năng Lịch sử đăng nhập phát hành lên `release` (hiện chỉ có trên `develop`) |
+| Ghi lần đăng nhập thất bại (FR-013) — đặc tả ở Phụ lục E | Thấp. Lần dò mật khẩu bị chặn bởi FR-011 nhưng không để lại dấu vết trong Lịch sử đăng nhập | Tính năng Lịch sử đăng nhập phát hành lên `release` (hiện chỉ có trên `develop`) |
 | Tài khoản creator | — | Luồng đăng nhập khác; chỉ có bản vá HF-2 |
 
 ---
@@ -264,7 +264,6 @@ Root mời nhân sự mới bằng email. Hệ thống tạo tài khoản ở tr
 - [ ] Đăng nhập bằng email vừa mời trước khi nhận lời mời: thất bại với mọi mật khẩu
 - [ ] Mời email đã tồn tại (khác chữ hoa/thường): hiển thị lỗi "Email đã tồn tại", không tạo tài khoản
 - [ ] Phản hồi API và giao diện không chứa đường dẫn hay token mời
-- [ ] Kênh email lỗi: giao diện hiển thị "Đã tạo lời mời nhưng chưa gửi được email"; tài khoản chờ vẫn được tạo
 - [ ] Nhân sự không phải Root gọi trực tiếp API mời: bị từ chối
 
 **Dependencies:** FR-015, D-1, D-3
@@ -296,7 +295,6 @@ Root mời nhiều nhân sự trong một thao tác, dùng chung một vai trò 
 - [ ] Danh sách 5 dòng gồm 3 hợp lệ, 1 trùng khác chữ hoa, 1 không phải email: tạo đúng 3 lời mời
 - [ ] Danh sách chứa email đã tồn tại: dòng đó báo lỗi, các dòng còn lại vẫn được mời
 - [ ] Danh sách 51 dòng: không cho gửi, hiển thị giới hạn 50
-- [ ] Mời 50 người khi API email AT không phản hồi: hoàn tất trong ≤ 30 giây, các dòng quá hạn báo "Đã tạo, chưa gửi được email"
 
 **Dependencies:** FR-001
 
@@ -477,7 +475,6 @@ Nhân sự yêu cầu email đặt lại mật khẩu mà không cần liên h�
 **Acceptance Criteria:**
 
 - [ ] Trang đăng nhập có đường dẫn "Quên mật khẩu?"
-- [ ] Email có tài khoản và email không có tài khoản: cùng nội dung, cùng mã phản hồi; chênh lệch trung vị thời gian phản hồi < 50 ms qua 20 lần đo
 - [ ] Yêu cầu hai lần liên tiếp: đường dẫn trong email thứ nhất không còn hiệu lực
 
 **Dependencies:** FR-012, FR-016, NFR-004
@@ -610,36 +607,8 @@ Chặn brute-force attack vào endpoint đăng nhập Admin Portal.
 
 - [ ] 5 lần sai cùng email: lần thứ 6 bị từ chối kèm thời gian chờ, kể cả khi mật khẩu đúng
 - [ ] 4 lần sai rồi 1 lần đúng: bộ đếm theo email về 0
-- [ ] Thay header `X-Forwarded-For` ở mỗi yêu cầu: lớp email vẫn chặn
-- [ ] Redis không truy cập được: đăng nhập trả HTTP 503 kèm thông báo gián đoạn
-- [ ] Thông báo chặn bằng tiếng Việt, kèm số phút chờ
 
 **Dependencies:** Redis, D-4
-
----
-
-#### FR-013: Ghi nhận đăng nhập thất bại
-
-**Priority:** Should Have — **Hoãn** tới khi tính năng Lịch sử đăng nhập có trên `release` (RQ-9)
-
-**Description:**
-Bổ sung lần đăng nhập thất bại vào tính năng Lịch sử đăng nhập để phục vụ giám sát và điều tra sự cố.
-
-**Business Rules:**
-
-- Ghi vào collection Lịch sử đăng nhập, thêm trường `status` (`success` / `failed`). Không tạo collection audit riêng như T-Fluencers
-- Chỉ ghi lần sai mật khẩu của **tài khoản đang hoạt động**. Không ghi email không tồn tại, tài khoản bị tắt, hay yêu cầu bị chặn bởi rate limiting — tránh bảng lịch sử bị ghi tràn bằng dữ liệu rác. Số lần bị chặn được theo dõi qua giám sát (NFR-013)
-- Bản ghi cũ không có `status` được hiểu là thành công
-- Màn Lịch sử đăng nhập có cột "Kết quả" và bộ lọc theo kết quả
-- Phạm vi đọc theo ADV thuộc PQ-001 (mục 5)
-
-**Acceptance Criteria:**
-
-- [ ] Sai mật khẩu một tài khoản đang hoạt động: Lịch sử đăng nhập có bản ghi "Sai mật khẩu" kèm IP, thiết bị
-- [ ] Lọc "Sai mật khẩu": chỉ trả về lần thất bại
-- [ ] Bản ghi có trước ngày phát hành hiển thị "Thành công"
-
-**Dependencies:** FR-011; tính năng Lịch sử đăng nhập (đang ở `develop`, chưa có trên `release`)
 
 ---
 
@@ -970,7 +939,7 @@ Root phát hiện gõ sai email
 
 ```
 Kẻ tấn công thử mật khẩu cho email admin
-  → Lần 1–5 sai: từ chối (ghi vào Lịch sử đăng nhập khi FR-013 phát hành)
+  → Lần 1–5 sai: từ chối
   → Lần 6 trở đi trong khung 15 phút: HTTP 429, không kiểm tra mật khẩu
   → Kẻ tấn công lặp lại mỗi 15 phút: tài khoản bị chặn liên tục; giám sát cảnh báo (NFR-013)
   → Admin thật: dùng "Quên mật khẩu" để đặt lại và gỡ chặn ngay
@@ -1002,10 +971,10 @@ Kẻ tấn công thử mật khẩu cho email admin
 
 ### EPIC-003: Login Security (gap #12)
 
-**Mô tả:** Rate limiting cho endpoint đăng nhập và ghi nhận đăng nhập thất bại.
-**Functional Requirements:** FR-011, FR-013
-**Story Count Estimate:** 2–3 stories
-**Priority:** Must Have (FR-013: Should Have, hoãn)
+**Mô tả:** Rate limiting cho endpoint đăng nhập. Ghi nhận đăng nhập thất bại (FR-013) nằm ngoài phạm vi (mục 5, Phụ lục E).
+**Functional Requirements:** FR-011
+**Story Count Estimate:** 1–2 stories
+**Priority:** Must Have
 **Business Value:** BO-4
 
 ---
@@ -1026,10 +995,10 @@ Kẻ tấn công thử mật khẩu cho email admin
 |---|---|---|---|---|---|---|
 | EPIC-001 | Invite Management | FR-001, 002, 003, 004, 005, 006, 017 | NFR-001, 002, 006, 007, 009, 010 | BO-1, BO-3, BO-5 | 7–9 | Must Have |
 | EPIC-002 | Self-Service Authentication | FR-007, 008, 009, 010, 012, 018 | NFR-001, 002, 003, 004, 005, 006 | BO-1, BO-2 | 6–7 | Must Have |
-| EPIC-003 | Login Security | FR-011, 013 (hoãn) | NFR-006, 013 | BO-4 | 2–3 | Must Have |
+| EPIC-003 | Login Security | FR-011 | NFR-006, 013 | BO-4 | 1–2 | Must Have |
 | EPIC-004 | Audit & Email Communication | FR-014, 015, 016 | NFR-001, 007, 011 | BO-1, BO-5 | 2–3 | Must Have |
 
-**Tổng stories ước tính:** 17–22 stories
+**Tổng stories ước tính:** 16–21 stories
 
 ---
 
@@ -1135,7 +1104,7 @@ Không còn câu hỏi mở.
 
 | Loại | Must Have | Should Have | Could Have | Tổng |
 |---|---|---|---|---|
-| Functional Requirements | 16 (FR-001, 003–012, 014–018) | 2 (FR-002; FR-013 — hoãn) | 0 | 18 |
+| Functional Requirements | 16 (FR-001, 003–012, 014–018) | 1 (FR-002) | 0 | 17 (FR-013 ngoài phạm vi — Phụ lục E) |
 | Non-Functional Requirements | 11 (NFR-001–009, 011, 012) | 2 (NFR-010, 013) | 0 | 13 |
 
 ---
@@ -1170,7 +1139,7 @@ Một nhánh duy nhất: `feat/staff-invite-password`, cắt từ `release` mớ
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
 | FR-001 → FR-012, FR-015 → FR-018 | ✅ Đã phát triển | Chờ kiểm thử end-to-end với cơ sở dữ liệu và email thật |
-| FR-013 | ⏸ Hoãn | Mã đã viết trên nền `develop`, lưu dạng patch; áp lại khi Lịch sử đăng nhập có trên `release` |
+| FR-013 | Ngoài phạm vi | Mã đã viết trên nền `develop`, lưu dạng patch; áp lại khi Lịch sử đăng nhập có trên `release` |
 | FR-014 | ⚠️ Một phần | Audit ghi bằng câu mô tả; chưa theo danh mục hành động của PQ-009 |
 | NFR-013 | ⚠️ Một phần | Đã có log cho gửi email thất bại, yêu cầu bị chặn (429, kèm đối tượng đếm) và lỗi bộ đếm (503). Cảnh báo cần cấu hình trên hệ thống giám sát |
 | NFR-012 | ✅ | 18 unit test mới. Toàn bộ test `internal/...`, `pkg/admin/...`, `pkg/public/...` đạt, trừ 2 test đỏ sẵn trên `release` (`TestBuildDuplicateCheckFilter_*`), không liên quan |
@@ -1202,9 +1171,9 @@ Một nhánh duy nhất: `feat/staff-invite-password`, cắt từ `release` mớ
 | `POST` | `/staffs/invite/accept` | Nhận lời mời, đặt mật khẩu | Công khai | Ngoại lệ: như trên |
 | `POST` | `/staffs/forgot-password` | Yêu cầu email đặt lại mật khẩu | Công khai, rate limiting | Ngoại lệ: người dùng chưa đăng nhập được |
 | `POST` | `/staffs/reset-password` | Đặt lại mật khẩu bằng token | Công khai | Ngoại lệ: như trên |
-| `GET` | `/audits/login-histories?status=` | Lọc Lịch sử đăng nhập theo kết quả — **hoãn cùng FR-013** | Admin | — |
+| `GET` | `/audits/login-histories?status=` | Lọc Lịch sử đăng nhập theo kết quả — **ngoài phạm vi cùng FR-013** | Admin | — |
 
-Thay đổi trên endpoint có sẵn: `POST /staffs/login` — rate limiting (FR-011), không phân biệt chữ hoa/thường (FR-018), ghi lần thất bại (FR-013, hoãn). `POST /staffs/register` — không trả token (FR-017). `POST /staffs/login-with-google` — gỡ bỏ.
+Thay đổi trên endpoint có sẵn: `POST /staffs/login` — rate limiting (FR-011), không phân biệt chữ hoa/thường (FR-018), ghi lần thất bại (FR-013, ngoài phạm vi). `POST /staffs/register` — không trả token (FR-017). `POST /staffs/login-with-google` — gỡ bỏ.
 
 ---
 
@@ -1267,10 +1236,40 @@ Chạy script dọn audit của HF-1 theo hướng dẫn trong đầu file `back
 
 ---
 
+## Phụ lục E: FR-013 — ngoài phạm vi
+
+Đặc tả giữ lại để dùng khi đưa FR-013 trở lại phạm vi. Không thuộc phạm vi nghiệm thu của đợt này.
+
+### FR-013: Ghi nhận đăng nhập thất bại
+
+**Priority:** Ngoài phạm vi đợt này (mục 5) — đưa lại vào phạm vi khi tính năng Lịch sử đăng nhập có trên `release` (RQ-9)
+
+**Description:**
+Bổ sung lần đăng nhập thất bại vào tính năng Lịch sử đăng nhập để phục vụ giám sát và điều tra sự cố.
+
+**Business Rules:**
+
+- Ghi vào collection Lịch sử đăng nhập, thêm trường `status` (`success` / `failed`). Không tạo collection audit riêng như T-Fluencers
+- Chỉ ghi lần sai mật khẩu của **tài khoản đang hoạt động**. Không ghi email không tồn tại, tài khoản bị tắt, hay yêu cầu bị chặn bởi rate limiting — tránh bảng lịch sử bị ghi tràn bằng dữ liệu rác. Số lần bị chặn được theo dõi qua giám sát (NFR-013)
+- Bản ghi cũ không có `status` được hiểu là thành công
+- Màn Lịch sử đăng nhập có cột "Kết quả" và bộ lọc theo kết quả
+- Phạm vi đọc theo ADV thuộc PQ-001 (mục 5)
+
+**Acceptance Criteria:**
+
+- [ ] Sai mật khẩu một tài khoản đang hoạt động: Lịch sử đăng nhập có bản ghi "Sai mật khẩu" kèm IP, thiết bị
+- [ ] Lọc "Sai mật khẩu": chỉ trả về lần thất bại
+- [ ] Bản ghi có trước ngày phát hành hiển thị "Thành công"
+
+**Dependencies:** FR-011; tính năng Lịch sử đăng nhập (đang ở `develop`, chưa có trên `release`)
+
+---
+
 ## Lịch sử thay đổi
 
 | Version | Ngày | Người thực hiện | Nội dung |
 |---|---|---|---|
+| 2.1 | 2026-10-05 | Nguyễn Đăng Định | Bỏ 6 tiêu chí nghiệm thu: kênh email lỗi (FR-001), mời 50 người khi API email không phản hồi (FR-002), so thời gian phản hồi quên mật khẩu (FR-008), giả mạo `X-Forwarded-For`, Redis lỗi trả 503, thông báo chặn kèm số phút (FR-011). FR-013 chuyển ra ngoài phạm vi, đặc tả dời sang Phụ lục E |
 | 2.0 | 2026-09-29 | Nguyễn Đăng Định | Chốt: không còn Open Question. OQ-2 → RQ-11 (tắt luồng cũ khi email đã chạy thật trên production; điều kiện thay cho mốc thời gian) |
 | 1.3 | 2026-09-29 | Nguyễn Đăng Định | Bỏ câu hỏi thời hạn lưu Lịch sử đăng nhập (OQ-8) và NFR-014 — ngoài yêu cầu của task; chốt không thêm ràng buộc email ở cơ sở dữ liệu (RQ-10); định nghĩa "Luồng cũ" |
 | 1.2 | 2026-09-29 | Nguyễn Đăng Định | Chốt OQ-5 (ghép gap #12), OQ-7 (một nhánh cắt từ `release` mới nhất); FR-013 hoãn; bỏ ước lượng giờ và deadline; đề xuất thời hạn lưu 12 tháng kèm căn cứ |
@@ -1279,6 +1278,6 @@ Chạy script dọn audit của HF-1 theo hướng dẫn trong đầu file `back
 
 ---
 
-*PRD Version 2.0 — 2026-09-29*
+*PRD Version 2.1 — 2026-10-05*
 *Tech spec: chưa có*
 *Nhánh cài đặt tham chiếu: `feat/staff-invite-password`, cắt từ `release` (repo `ambassador`)*
