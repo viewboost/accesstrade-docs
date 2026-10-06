@@ -130,7 +130,7 @@ Repo `ambassador`, nhánh `release` `46de14a53`.
 
 ### 2.4 Đối chiếu SRS nghiệm thu T-Fluencers
 
-Làm theo Ambassador thì có 3 chỗ không khớp SRS. Bản 1.0 đã xử lý 3 chỗ này. Bản 2.0 giữ nguyên hành vi của Ambassador và chuyển cả 3 sang OQ-2 để Security quyết định.
+Làm theo Ambassador thì có 3 chỗ không khớp SRS. Bản 1.0 đã xử lý 3 chỗ này. Bản 2.0 giữ nguyên hành vi của Ambassador: 2 chỗ (PII, quyền xem) chuyển sang OQ-2 để Security quyết định, chỗ còn lại ghi ở R-3.
 
 | Mục SRS | Nội dung | Bản 2.0 | Trạng thái |
 |---|---|---|---|
