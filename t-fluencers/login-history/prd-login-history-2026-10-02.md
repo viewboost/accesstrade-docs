@@ -26,11 +26,10 @@ Hiện trạng được xác minh trên mã nguồn ngày 2026-10-06:
 
 **Làm theo Ambassador.** Giữ nguyên lược đồ dữ liệu, cách ghi nhận, API, quyền xem và màn tra cứu của Ambassador `release`.
 
-Chỉ khác Ambassador ở 3 điểm, vì T-Fluencers không làm được như Ambassador (mục 2.3):
+Chỉ khác Ambassador ở 2 điểm, vì T-Fluencers không làm được như Ambassador (mục 2.3):
 
 1. Bỏ trường và bộ lọc Đối tác (ADV): T-Fluencers không có dữ liệu để suy ra ADV
 2. Ghi thêm 2 luồng cấp phiên nhân sự mà Ambassador không có: nhận lời mời và SSO sang Dashboard
-3. Phân tích User-Agent từ chuỗi gốc: hàm đọc User-Agent của T-Fluencers trả chữ thường, thư viện phân tích không nhận ra
 
 Những chỗ bản Ambassador lệch SRS nghiệm thu T-Fluencers được ghi lại ở mục 2.4 và mang lên OQ-2 để Security quyết định. PRD này không tự sửa các chỗ đó.
 
@@ -97,7 +96,7 @@ Root / Admin mở Admin Portal → menu "Lịch sử đăng nhập"
 | Lịch sử đăng nhập trên `release` | ❌ Không có. Bản 1.0 vào `release` qua PR #771 rồi đã revert (PR #772) | `release` `88d189e0` |
 | Lịch sử đăng nhập trên `develop` | Có bản 1.0 (PR #773, 2026-10-05). Bản 2.0 thay thế bản này | `develop` `b74764b6` |
 | `audit-logins` (có sẵn) | Ghi mọi lần **thử** đăng nhập của nhân sự (`login_admin`) và đổi mã SSO (`auth_exchange`): IP, email hoặc 8 ký tự đầu của mã. Không có User-Agent, không ghi creator, không hiển thị ở đâu. Chỉ dùng để đếm cho rate limiting | `internal/model/mg/audit_login.go`; `pkg/admin/service/staff.go:158`; `pkg/admin/handler/staff.go:297`; `internal/service/check_rate_limit.go:68` |
-| Đọc User-Agent | `GetUserAgent()` hạ toàn bộ chuỗi về chữ thường. Thư viện `uap-go` so khớp có phân biệt hoa thường nên trả `Unknown` | `internal/echo/echo.go:230` |
+| Đọc User-Agent | `GetUserAgent()` hạ toàn bộ chuỗi về chữ thường. Thư viện `uap-go` so khớp có phân biệt hoa thường nên trả `Unknown`. Ambassador đã gặp lỗi này và sửa thẳng hàm (mục 2.2); T-Fluencers sửa giống vậy. Nơi khác dùng hàm này: chỉ ghi `user-devices.userAgent`, không có chỗ nào đọc | `internal/echo/echo.go:230`; `pkg/public/service/user.go:2045` |
 | Xác định IP client | `c.RealIP()`, chưa cấu hình `IPExtractor` → đọc `X-Forwarded-For` do client gửi, có thể giả mạo | `internal/echo/echo.go` (`GetHeaders`) |
 | Điểm cấp phiên nhân sự | 3 điểm: đăng nhập mật khẩu (Admin Portal và Dashboard cùng gọi), nhận lời mời (cấp phiên ngay sau khi đặt mật khẩu), SSO exchange | `pkg/admin/service/staff.go:181`, `:788`, `:930` |
 | Điểm cấp phiên creator | 6 endpoint công khai: Google, TikTok, Facebook, Instagram, mật khẩu, đăng ký | `pkg/public/router/user.go:21-26` |
@@ -128,7 +127,6 @@ Repo `ambassador`, nhánh `release` `46de14a53`.
 |---|---|---|---|---|
 | 1 | ADV | Trường `partnerId`/`partnerName`, cột và bộ lọc Đối tác | Bỏ cả trường, cột, bộ lọc, index | Partner của T-Fluencers không có `allowDomains`. Giữ lại thì cột luôn trống |
 | 2 | Điểm ghi của nhân sự | 1 điểm: `Login` | 3 điểm: `Login`, `AcceptInvite`, `ExchangeAuthCode` — cùng khuôn bản ghi với `Login` | Ambassador `release` không có luồng cấp phiên nào tương ứng. Không ghi thì nhân sự vào Dashboard qua SSO hoặc lần đầu qua lời mời không để lại dấu vết |
-| 3 | Nguồn User-Agent | `GetUserAgent()` (giữ hoa thường) | Thêm `HeaderInfo.RawUserAgent` lấy nguyên header | `GetUserAgent()` của T-Fluencers hạ chữ thường (mục 2.1). Không sửa thẳng hàm này vì nhiều chỗ khác đang dùng |
 
 ### 2.4 Đối chiếu SRS nghiệm thu T-Fluencers
 
@@ -148,7 +146,7 @@ Làm theo Ambassador thì có 3 chỗ không khớp SRS. Bản 1.0 đã xử lý
 
 | # | Mục tiêu | Chỉ số thành công (KPI) | Cách đo |
 |---|---|---|---|
-| BO-1 | Hai sản phẩm có cùng một tính năng | Lược đồ dữ liệu, tham số API, bộ lọc, cột màn hình trùng Ambassador `release`, trừ 3 khác biệt ở mục 2.3 | Đối chiếu Phụ lục C khi review code |
+| BO-1 | Hai sản phẩm có cùng một tính năng | Lược đồ dữ liệu, tham số API, bộ lọc, cột màn hình trùng Ambassador `release`, trừ 2 khác biệt ở mục 2.3 | Đối chiếu Phụ lục C khi review code |
 | BO-2 | Đáp ứng yêu cầu ghi đăng nhập Admin của SRS §5.5 | 100% lần cấp phiên cho nhân sự có bản ghi tương ứng | Đối chiếu số response thành công của 3 endpoint cấp phiên nhân sự trong access log với số bản ghi `role = admin`, trong 7 ngày đầu sau phát hành |
 | BO-3 | Truy vết được sự cố tài khoản | Trả lời được "đăng nhập lúc nào, từ IP nào, thiết bị nào" cho một tài khoản bất kỳ chỉ bằng màn Lịch sử đăng nhập | Chạy kịch bản Flow 1 khi nghiệm thu |
 | BO-4 | Không ảnh hưởng trải nghiệm đăng nhập | 0 lần đăng nhập thất bại do ghi lịch sử | Theo dõi lỗi đăng nhập 7 ngày sau phát hành |
@@ -283,7 +281,7 @@ Collection `login-histories`, lược đồ của Ambassador bỏ trường ADV.
 | `role` | `admin` / `creator` |
 | `ipAddress` | IP client theo cấu hình hiện hành; rỗng → `Unknown` |
 | `device` | `Mobile` / `Desktop` / `Unknown` — quy tắc ở mục 2.2 |
-| `model`, `platform`, `browser` | Phân tích bằng `uap-go` từ User-Agent gốc (mục 2.3 #3); không xác định → `Unknown` |
+| `model`, `platform`, `browser` | Phân tích bằng `uap-go` từ User-Agent (giữ nguyên hoa thường, mục 2.1); không xác định → `Unknown` |
 | `loginAt`, `createdAt`, `updatedAt` | Thời điểm ghi, UTC |
 
 - Không lưu User-Agent gốc, token, header khác hay nội dung request
@@ -397,7 +395,6 @@ Màn tra cứu theo khuôn Ambassador, bỏ bộ lọc và cột Đối tác.
 - [ ] Mở màn: thấy danh sách mới nhất trước, có phân trang
 - [ ] Giờ hiển thị theo GMT+7
 - [ ] Lọc theo từng tiêu chí và kết hợp nhiều tiêu chí: kết quả khớp FR-004
-- [ ] Đổi hai ô lọc liên tiếp trong vòng 300 ms: kết quả áp dụng cả hai ô
 - [ ] Không có cột, bộ lọc Đối tác
 
 **Dependencies:** FR-004, FR-005
@@ -493,7 +490,7 @@ Màn tra cứu theo khuôn Ambassador, bỏ bộ lọc và cột Đối tác.
 **Acceptance Criteria:**
 
 - [ ] Unit test phân tích User-Agent: Chrome trên macOS, Safari trên iPhone, Chrome trên Android, User-Agent rỗng, User-Agent không nhận dạng được
-- [ ] Test `GetHeaders()` giữ nguyên hoa thường ở `RawUserAgent`
+- [ ] Test `GetHeaders()` giữ nguyên hoa thường ở `UserAgent`
 - [ ] Test tích hợp với MongoDB thật: nội dung bản ghi nhân sự và creator, từng bộ lọc của FR-004, sắp xếp, phân trang, index
 
 ---
@@ -650,10 +647,10 @@ Request đăng nhập → xác thực thành công → sinh token
 | Hạng mục | Trạng thái |
 |---|---|
 | Bản 1.0 | PR #771 vào `release` bị merge nhầm, đã revert (PR #772). PR #773 đã vào `develop` (2026-10-05) |
-| Bản 2.0 | PR #774 vào `develop` (nhánh `feat/login-history-ambassador-parity`, cắt từ `release` `88d189e0`, commit `0bce3df1` hoàn tác bản revert `cdbf9e36`, commit `41d0976f` làm theo Ambassador). Chưa vào `release` |
+| Bản 2.0 | PR #774 vào `develop` (nhánh `feat/login-history-ambassador-parity`, cắt từ `release` `88d189e0`; commit `0bce3df1` hoàn tác bản revert `cdbf9e36`, `41d0976f`, `83299f8e` làm theo Ambassador). Chưa vào `release` |
 | Kiểm chứng bản 2.0 | Backend build sạch. Test các package bị chạm: 5 test đỏ, trùng đúng 5 test đỏ sẵn có trên `release`. Test tích hợp MongoDB thật đạt (NFR-007). Typecheck Admin Portal không phát sinh lỗi mới |
 | Dữ liệu bản 1.0 trên dev | Môi trường dev đã chạy bản 1.0 có thể còn bản ghi theo lược đồ cũ (`accountId`, `accountType`, `method`). Trên màn mới, các dòng này hiện trống cột User ID, Email, Username. Cần xoá trước khi QC. Production chưa từng chạy bản 1.0 |
-| Chi tiết cài đặt khác Ambassador | Màn Admin Portal gộp bộ lọc trước khi debounce. Cách của Ambassador làm mất ô lọc đầu khi đổi hai ô liên tiếp (FR-006) |
+| Hành vi kế thừa từ Ambassador | Màn Admin Portal chép nguyên bản Ambassador. Đổi hai ô lọc liên tiếp trong vòng 300 ms thì chỉ ô sau được áp dụng (debounce chỉ giữ lần gọi cuối) — Ambassador cũng vậy |
 
 ---
 
@@ -719,7 +716,7 @@ Request đăng nhập → xác thực thành công → sinh token
 | Index | `userId`, `email`, `username`, `partner` (kèm `loginAt`), `loginAt` | Như Ambassador, bỏ index `partner` |
 | Bộ lọc màn hình | User ID, Username, Email, Đối tác, Thời gian | Như Ambassador, bỏ Đối tác |
 | Cột màn hình | 11 cột | 10 cột, bỏ Đối tác |
-| Nguồn User-Agent | `GetUserAgent()` | `HeaderInfo.RawUserAgent` (mục 2.3 #3) |
+| Nguồn User-Agent | `GetUserAgent()` giữ hoa thường | Như Ambassador (sửa `GetUserAgent()` của T-Fluencers) |
 
 ---
 
@@ -727,7 +724,7 @@ Request đăng nhập → xác thực thành công → sinh token
 
 | Hạng mục | Bản 1.0 | Bản 2.0 |
 |---|---|---|
-| Nguyên tắc | Lấy Ambassador làm tham chiếu, sửa theo SRS và sửa lỗi Ambassador | Làm theo Ambassador; chỉ khác 3 điểm bắt buộc (mục 2.3) |
+| Nguyên tắc | Lấy Ambassador làm tham chiếu, sửa theo SRS và sửa lỗi Ambassador | Làm theo Ambassador; chỉ khác 2 điểm bắt buộc (mục 2.3) |
 | Định danh tài khoản | `accountId` + `accountType`; email, tên tra lúc hiển thị | `userId`; lưu `email`, `username` trong bản ghi |
 | Vai trò | Mã vai trò thật (`root`, `admin`, `collaborator`, …) | `admin` / `creator` |
 | Phương thức đăng nhập | Trường `method` (8 giá trị) | Bỏ |
@@ -739,6 +736,7 @@ Request đăng nhập → xác thực thành công → sinh token
 | Ghi lỗi | Logger hệ thống, timeout 5 giây, chặn panic | In stdout, như Ambassador |
 | Index | `accountId`, `-loginAt/_id`, `ipAddress`, `accountType` | `userId`, `email`, `username`, `loginAt` |
 | Màn hình | Cột Tài khoản (tên + email + ID), Loại, Phương thức, tooltip User-Agent; nhãn tiếng Việt | 10 cột như Ambassador, hiển thị nguyên giá trị |
+| Đọc User-Agent | Thêm `RawUserAgent`, giữ `GetUserAgent()` chữ thường | Sửa `GetUserAgent()` giữ hoa thường như Ambassador |
 | Mục 2.1 | Ghi "không có dấu vết đăng nhập nào" — sai, đã có `audit-logins` | Sửa (mục 2.1) |
 
 ---
