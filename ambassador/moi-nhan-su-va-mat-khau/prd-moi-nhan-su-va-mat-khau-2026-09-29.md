@@ -290,7 +290,7 @@ Root mời nhiều nhân sự trong một thao tác, dùng chung một vai trò 
 
 - [ ] Có nút "Mời nhiều" trên màn Nhân viên
 - [ ] Trước khi gửi, giao diện hiển thị: số dòng hợp lệ, số dòng trùng bị loại, các dòng không đọc được email
-- [ ] Sau khi gửi, hiển thị kết quả từng dòng: "Đã gửi email mời" / "Đã tạo, chưa gửi được email" / lỗi kèm lý do
+- [ ] Sau khi gửi, hiển thị kết quả từng dòng: "Đã gửi email mời" / lỗi kèm lý do
 - [ ] Danh sách 5 dòng gồm 3 hợp lệ, 1 trùng khác chữ hoa, 1 không phải email: tạo đúng 3 lời mời
 - [ ] Danh sách chứa email đã tồn tại: dòng đó báo lỗi, các dòng còn lại vẫn được mời
 - [ ] Danh sách 51 dòng: không cho gửi, hiển thị giới hạn 50
