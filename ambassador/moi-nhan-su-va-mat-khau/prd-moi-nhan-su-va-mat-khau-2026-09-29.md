@@ -107,7 +107,6 @@ Mặc định là nhánh `release` (production). Dòng nào chỉ đúng trên `
 | Endpoint `POST /staffs/login-with-google` | Route công khai; cả handler lẫn validation chỉ có `panic("implement me")`. Frontend không gọi | `pkg/admin/handler/staff.go`, `routevalidation/staff.go` |
 | Mời qua email · Quên / đặt lại mật khẩu · Tự đổi mật khẩu · Rate limiting đăng nhập | ❌ Không có | — |
 | Lịch sử đăng nhập | ⚠️ Có trên `develop` từ 2026-09-15, **chưa có trên `release`** — production chưa ghi lịch sử đăng nhập. Trên `develop` chỉ ghi lần thành công, không lọc theo ADV | `internal/service/login_history.go`, commit `8f9faa169` |
-| Xác định IP client | `c.RealIP()`, chưa cấu hình `IPExtractor` → đọc header `X-Forwarded-For` do client gửi, có thể giả mạo | `internal/echo/echo.go` |
 | Kênh gửi email | API email của AccessTrade (`/v1.0/partner/email/send`), dùng template do AT cấp mã. Module SMTP có trong repo nhưng không được gọi | `internal/constants/email_template.go` |
 | Tiến độ cấp template của AT | Template cảnh báo đối soát khai báo từ 2026-08-12, hằng số vẫn ghi "CHƯA ĐƯỢC AccessTrade CẤP" | `internal/constants/email_template.go`, commit `fb3d122d2` |
 | Email từ backend admin | Chỉ có một luồng gửi: cảnh báo lệch số liệu khi chi đối soát. Template chưa được cấp nên theo mã nguồn luồng này chưa gửi thành công. Email đang chạy thật duy nhất (OTP) thuộc backend **public**. Khoá `ACCESS_TRADE_SMS_*` không bắt buộc khi khởi động — backend admin thiếu khoá vẫn chạy, chỉ gửi email thất bại | `pkg/admin/service/reconciliation_running.go:121`; `pkg/public/service/user.go`; `internal/config/env.go` |
@@ -129,7 +128,7 @@ Mặc định là nhánh `release` (production). Dòng nào chỉ đúng trên `
 | 2 | Endpoint quên mật khẩu **không có rate limiting** | Gửi email hàng loạt vào hộp thư của nhân sự (email flooding) | FR-012 |
 | 3 | Đường dẫn mời được trả về cho admin; thao tác gửi lại tự copy đường dẫn vào clipboard | Đường dẫn tiếp tục được chia sẻ qua kênh chat — đúng vấn đề tính năng cần loại bỏ | Không trả đường dẫn về cho admin — FR-001 |
 | 4 | Mời hàng loạt xử lý song song, mỗi dòng tự kiểm tra trùng rồi mới ghi | Hai dòng trùng email trong cùng danh sách tạo ra hai tài khoản | Kiểm tra trùng trong danh sách trước, ghi tuần tự — FR-002 |
-| 5 | Rate limiting đăng nhập đếm theo IP, đếm cả lần thành công, khoá 2 giờ, mặc định **tắt** | Một văn phòng dùng chung IP có thể bị khoá toàn bộ; giả mạo IP qua header là vượt được | Đếm lần thất bại theo email là lớp chính — FR-011 |
+| 5 | Rate limiting đăng nhập đếm theo IP, đếm cả lần thành công, khoá 2 giờ, mặc định **tắt** | Một văn phòng dùng chung IP có thể bị khoá toàn bộ; giả mạo IP qua header là vượt được | Chỉ đếm lần thất bại, theo email — FR-011 |
 | 6 | Mời không kiểm tra ADV đích so với ADV của người mời | Admin của ADV này mời được nhân sự vào ADV khác | Không phát sinh vì chỉ Root được mời |
 
 ### 2.4 Liên hệ với PRD Phân quyền vận hành (PQ) và kế hoạch tháng 10
@@ -493,7 +492,6 @@ Chống email flooding và account enumeration qua endpoint quên mật khẩu. 
 | Đối tượng đếm | Ngưỡng |
 |---|---|
 | Email | 3 yêu cầu / 30 phút |
-| IP | 10 yêu cầu / 60 phút |
 
 - Đếm **mọi** yêu cầu, kể cả email không tồn tại, và đếm trước khi tra cứu tài khoản. Nếu chỉ đếm email có tài khoản thì chính cơ chế rate limiting trở thành kênh account enumeration
 - Fail-closed như FR-011
@@ -524,7 +522,7 @@ Nhân sự đặt mật khẩu mới bằng đường dẫn trong email đặt l
 **Acceptance Criteria:**
 
 - [ ] Đặt lại thành công: phiên đang mở ở trình duyệt khác bị đăng xuất
-- [ ] Tài khoản đang bị chặn do đăng nhập sai theo email: đặt lại xong đăng nhập được ngay (trừ khi IP đang bị chặn)
+- [ ] Tài khoản đang bị chặn do đăng nhập sai theo email: đặt lại xong đăng nhập được ngay
 - [ ] Đường dẫn quá 60 phút: thông báo hết hạn; đường dẫn đã dùng: thông báo không hợp lệ
 
 **Dependencies:** FR-008, NFR-005
@@ -591,23 +589,21 @@ Chặn brute-force attack vào endpoint đăng nhập Admin Portal.
 
 **Business Rules:**
 
-| Đối tượng đếm | Ngưỡng | Vai trò |
-|---|---|---|
-| Email | 5 lần **thất bại** / 15 phút | Lớp kiểm soát chính |
-| IP | 20 lần thất bại / 15 phút | Lớp bổ sung, chỉ hiệu quả khi cấu hình đúng nguồn IP (D-4) |
+| Đối tượng đếm | Ngưỡng |
+|---|---|
+| Email | 5 lần **thất bại** / 15 phút |
 
 - Chỉ đếm lần thất bại. Đăng nhập thành công xoá bộ đếm theo email
 - Đếm theo fixed window: khung 15 phút bắt đầu từ lần thất bại đầu tiên
 - Vượt ngưỡng: từ chối ngay, không kiểm tra mật khẩu, trả HTTP 429 kèm số giây phải chờ (`retryAfterSeconds`)
 - **Fail-closed:** không đọc được bộ đếm (Redis lỗi) thì trả HTTP 503 (RQ-5). Mọi request đã đăng nhập vốn tra phiên trong Redis; Redis lỗi thì Portal đã không dùng được, cho qua chỉ để lại khe thử mật khẩu không giới hạn
-- Không giảm ngưỡng theo email vì dựa vào lớp IP: IP hiện có thể giả mạo (mục 2.1)
 
 **Acceptance Criteria:**
 
 - [ ] 5 lần sai cùng email: lần thứ 6 bị từ chối kèm thời gian chờ, kể cả khi mật khẩu đúng
 - [ ] 4 lần sai rồi 1 lần đúng: bộ đếm theo email về 0
 
-**Dependencies:** Redis, D-4
+**Dependencies:** Redis
 
 ---
 
@@ -1040,7 +1036,6 @@ Kẻ tấn công thử mật khẩu cho email admin
 | D-1 | Cấp mã 2 template email. Đề nghị nhân bản `TECHCOMBANK_EMAIL_STAFF_INVITE`, `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD` (cùng bộ biến), đổi thương hiệu theo mẫu trong `email-templates/` | Team Email AccessTrade | **Critical path** — thiếu thì không gửi được email nào. Nội dung yêu cầu: Phụ lục D |
 | D-2 | Không ghi nội dung đường dẫn trong email vào log hoặc lịch sử gửi mà bên thứ ba truy cập được | Team Email AccessTrade | Bắt buộc (NFR-001) |
 | D-3 | Khai báo `ADMIN_WEB_HOST` cho develop, staging, production; bảo đảm service **admin** có đủ `ACCESS_TRADE_SMS_*` như service public (tới nay admin chưa gửi email thành công lần nào) | DevOps | Bắt buộc |
-| D-4 | Cấu hình `IPExtractor` theo nguồn IP thật. Môi trường develop đứng sau Cloudflare (header `cf-ray`), IP thật ở `CF-Connecting-IP`; production cần xác nhận chuỗi proxy | DevOps | Khuyến nghị — ảnh hưởng lớp IP của FR-011, FR-012; thay đổi cũng tác động tới IP trong Lịch sử đăng nhập và CORS middleware |
 | D-5 | SPF/DKIM cho tên miền gửi email | Team Email AccessTrade | Khuyến nghị — giảm tỷ lệ email vào spam |
 | D-6 | Chạy script dọn audit của HF-1 trên production | DevOps / DBA | Bắt buộc cho HF-1 |
 
@@ -1074,7 +1069,7 @@ Không còn câu hỏi mở.
 | RQ-3 (OQ-3 cũ) | Vai trò nào được mời? | Chỉ Root | PQ-011; kế hoạch tháng 10 ("chỉ còn một tài khoản quyền cao nhất, do AT giữ"). Muốn mở cho Admin thì sửa PQ-011 trước |
 | RQ-4 (OQ-4 cũ) | ADV có bắt buộc khi mời? | Tuỳ chọn tới khi PQ-001 phát hành; bắt buộc với mọi vai trò không phải Root từ thời điểm đó | Hệ quả trực tiếp của PQ-001 (fail-closed). Hôm nay giữ đúng hành vi của luồng tạo cũ |
 | RQ-5 | Rate limiting khi Redis lỗi: fail-open hay fail-closed? | Fail-closed (HTTP 503) | Mọi request đã đăng nhập tra phiên trong Redis (`routeauth.Auth`); fail-open không giữ được Portal hoạt động, chỉ mở khe brute-force |
-| RQ-6 (OQ-6 cũ) | TTL và ngưỡng rate limiting | TTL 48 giờ / 60 phút; đăng nhập 5 lần sai / 15 phút (email), 20 / 15 phút (IP); quên mật khẩu 3 / 30 phút (email), 10 / 60 phút (IP) | Theo thực hành phổ biến; Security có thể điều chỉnh khi duyệt |
+| RQ-6 (OQ-6 cũ) | TTL và ngưỡng rate limiting | TTL 48 giờ / 60 phút; đăng nhập 5 lần sai / 15 phút; quên mật khẩu 3 yêu cầu / 30 phút; cùng đếm theo email | Theo thực hành phổ biến; Security có thể điều chỉnh khi duyệt |
 | RQ-7 | Bỏ token trong API tạo nhân sự? | Có — FR-017, HF-3 | Admin FE không đọc trường này; token là phiên hợp lệ 8 giờ của người khác |
 | RQ-8 (OQ-7 cũ) | Lộ trình phát hành | Code cắt từ `release` mới nhất, một nhánh duy nhất; phát hành lên `release` khi cần, rồi đồng bộ sang `develop` | Quyết định 2026-09-29 |
 | RQ-9 | FR-013 trên nền `release`? | Hoãn — tính năng Lịch sử đăng nhập chưa có trên `release`. Phần mã đã viết được lưu lại để áp khi tính năng đó lên `release` | Hệ quả của RQ-8 |
@@ -1090,7 +1085,6 @@ Không còn câu hỏi mở.
 | R-1 | AT cấp mã template chậm | Trung bình — có tiền lệ template đối soát chờ từ 2026-08-12; nhưng có thể nhân bản template TCB | Tính năng phát hành nhưng không gửi được email | Gửi D-1 ngay khi duyệt PRD; NFR-007 bảo đảm giao diện phản ánh đúng; kill switch (NFR-009) |
 | R-2 | Kẻ tấn công biết email admin, cố ý nhập sai để chặn tài khoản (account lockout) | Trung bình | Chỉ cần 5 yêu cầu mỗi 15 phút là giữ tài khoản bị chặn liên tục | Admin gỡ chặn bằng đặt lại mật khẩu (FR-009); cảnh báo khi một email bị 429 nhiều khung liên tiếp (NFR-013) |
 | R-3 | Email mời tới nhầm người | Thấp | Người nhận nhầm kích hoạt và chiếm tài khoản | TTL 48 giờ; thu hồi (FR-005); sửa email tự huỷ token (FR-006) |
-| R-4 | Chưa cấu hình nguồn IP thật | Cao | Lớp IP của rate limiting không có hiệu lực | Lớp email là lớp kiểm soát chính, không phụ thuộc IP |
 | R-5 | Email vào thư mục spam | Trung bình | Nhân sự không nhận được lời mời | Gửi lại (FR-004); SPF/DKIM (D-5) |
 | R-6 | Luồng cũ tồn tại song song | Chắc chắn cho tới khi tắt (RQ-11) | BO-1 chưa đạt 100% | KPI chia hai giai đoạn (BO-1); RQ-11 |
 | R-7 | Hash mật khẩu đã lộ qua audit trước khi có HF-1 | Đã xảy ra (chưa rõ có bị khai thác) | Mật khẩu yếu (luồng cũ cho phép 6 ký tự) có thể bị bẻ offline | Phát hành HF-1 ngay; đề nghị Root và nhân sự quyền cao đổi mật khẩu sau khi FR-010 phát hành |
@@ -1117,7 +1111,7 @@ Không còn câu hỏi mở.
 | Security | — | Duyệt RQ-1, RQ-5, RQ-6, NFR-001, NFR-004; duyệt hotfix HF-1 → HF-3 |
 | Development Team | AT-Core | Phát triển theo tech spec |
 | QA | — | Viết và chạy test case theo Acceptance Criteria |
-| DevOps / DBA | — | D-3, D-4, D-6 |
+| DevOps / DBA | — | D-3, D-6 |
 | Team Email AccessTrade | — | D-1, D-2, D-5 |
 
 ---
@@ -1222,11 +1216,10 @@ Bộ biến trùng với template TCB tương ứng. Trong 2 file mẫu (`email-
 
 > Ambassador cần 2 template email cho luồng mời nhân sự và đặt lại mật khẩu trang quản trị. Đề nghị nhân bản 2 template đang dùng cho Techcombank — `TECHCOMBANK_EMAIL_STAFF_INVITE` và `TECHCOMBANK_EMAIL_STAFF_FORGOT_PASSWORD` — giữ nguyên bộ biến, đổi thương hiệu theo 2 file mẫu đính kèm (`email-templates/`, biến đã viết sẵn theo cú pháp `%tenBien%` của gateway). Đề nghị cấp mã theo quy ước `AMBASSADOR_EMAIL_STAFF_INVITE`, `AMBASSADOR_EMAIL_STAFF_RESET_PASSWORD`; tiêu đề theo khuôn template TCB, lần lượt `[AccessTrade] Bạn được mời tham gia trang quản trị Ambassador` và `[AccessTrade] Yêu cầu đặt lại mật khẩu trang quản trị Ambassador`, tiếng Việt. Tài liệu bàn giao đầy đủ theo khuôn TCB: [`TEMPLATE_EMAIL.md`](./TEMPLATE_EMAIL.md). Biến `acceptUrl` và `resetUrl` chứa token đăng nhập dùng một lần — đề nghị không ghi giá trị hai biến này vào log hoặc lịch sử gửi mà bên thứ ba truy cập được. Đề nghị cho biết giới hạn tần suất gửi của API (nếu có): chức năng mời hàng loạt gửi tối đa 50 email mỗi lượt, 10 email song song.
 
-### D-3, D-4 — DevOps
+### D-3 — DevOps
 
 - Khai `ADMIN_WEB_HOST` = địa chỉ Admin Portal (không có dấu `/` cuối) cho develop, staging, production
 - Kiểm service **admin** có đủ 4 khoá `ACCESS_TRADE_SMS_END_POINT`, `ACCESS_TRADE_SMS_ACCESS_KEY`, `ACCESS_TRADE_SMS_SECRET_KEY`, `ACCESS_TRADE_SMS_CHANNEL` — cùng giá trị với service public đang gửi email OTP
-- Xác nhận chuỗi proxy trước backend production. Nếu là Cloudflare: cấu hình `IPExtractor` đọc `CF-Connecting-IP`, và kiểm lại IP ghi trong Lịch sử đăng nhập cùng CORS middleware
 
 ### D-6 — DBA
 
@@ -1267,7 +1260,7 @@ Bổ sung lần đăng nhập thất bại vào tính năng Lịch sử đăng n
 
 | Version | Ngày | Người thực hiện | Nội dung |
 |---|---|---|---|
-| 2.1 | 2026-10-05 | Nguyễn Đăng Định | Bỏ 8 tiêu chí nghiệm thu: kênh email lỗi (FR-001), mời 50 người khi API email không phản hồi (FR-002), so thời gian phản hồi quên mật khẩu (FR-008), giả mạo `X-Forwarded-For`, Redis lỗi trả 503, thông báo chặn kèm số phút (FR-011); đo thời gian phản hồi đăng nhập (FR-018); mời 50 người ≤ 30 giây (NFR-010). FR-013 chuyển ra ngoài phạm vi, đặc tả dời sang Phụ lục E |
+| 2.1 | 2026-10-05 | Nguyễn Đăng Định | Bỏ 8 tiêu chí nghiệm thu: kênh email lỗi (FR-001), mời 50 người khi API email không phản hồi (FR-002), so thời gian phản hồi quên mật khẩu (FR-008), giả mạo `X-Forwarded-For`, Redis lỗi trả 503, thông báo chặn kèm số phút (FR-011); đo thời gian phản hồi đăng nhập (FR-018); mời 50 người ≤ 30 giây (NFR-010). FR-013 chuyển ra ngoài phạm vi, đặc tả dời sang Phụ lục E. Bỏ rate limiting theo IP ở FR-011, FR-012 (chỉ còn đếm theo email), cùng D-4, R-4 và dòng hiện trạng xác định IP client |
 | 2.0 | 2026-09-29 | Nguyễn Đăng Định | Chốt: không còn Open Question. OQ-2 → RQ-11 (tắt luồng cũ khi email đã chạy thật trên production; điều kiện thay cho mốc thời gian) |
 | 1.3 | 2026-09-29 | Nguyễn Đăng Định | Bỏ câu hỏi thời hạn lưu Lịch sử đăng nhập (OQ-8) và NFR-014 — ngoài yêu cầu của task; chốt không thêm ràng buộc email ở cơ sở dữ liệu (RQ-10); định nghĩa "Luồng cũ" |
 | 1.2 | 2026-09-29 | Nguyễn Đăng Định | Chốt OQ-5 (ghép gap #12), OQ-7 (một nhánh cắt từ `release` mới nhất); FR-013 hoãn; bỏ ước lượng giờ và deadline; đề xuất thời hạn lưu 12 tháng kèm căn cứ |
