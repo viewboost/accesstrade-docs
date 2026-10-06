@@ -26,10 +26,9 @@ Hiện trạng được xác minh trên mã nguồn ngày 2026-10-06:
 
 **Làm theo Ambassador.** Giữ nguyên lược đồ dữ liệu, cách ghi nhận, API, quyền xem và màn tra cứu của Ambassador `release`.
 
-Chỉ khác Ambassador ở 2 điểm, vì T-Fluencers không làm được như Ambassador (mục 2.3):
+Chỉ khác Ambassador ở 1 điểm, vì T-Fluencers không làm được như Ambassador (mục 2.3): bỏ trường và bộ lọc Đối tác (ADV), do T-Fluencers không có dữ liệu để suy ra ADV.
 
-1. Bỏ trường và bộ lọc Đối tác (ADV): T-Fluencers không có dữ liệu để suy ra ADV
-2. Ghi thêm 2 luồng cấp phiên nhân sự mà Ambassador không có: nhận lời mời và SSO sang Dashboard
+Hai luồng cấp phiên nhân sự mà Ambassador không có (nhận lời mời, SSO sang Dashboard) **không ghi**, giống Ambassador chỉ ghi `Login` (RQ-2).
 
 Những chỗ bản Ambassador lệch SRS nghiệm thu T-Fluencers được ghi lại ở mục 2.4 và mang lên OQ-2 để Security quyết định. PRD này không tự sửa các chỗ đó.
 
@@ -54,7 +53,7 @@ Những chỗ bản Ambassador lệch SRS nghiệm thu T-Fluencers được ghi 
 | **Dashboard** | Ứng dụng phân tích cho thương hiệu `dashboard`. Đăng nhập qua cùng API với Admin Portal |
 | **SSO exchange** | Luồng chuyển phiên từ Admin Portal sang Dashboard: Admin Portal xin mã dùng một lần (`/staffs/auth/generate-code`), Dashboard đổi mã lấy token phiên (`/staffs/auth/exchange`) |
 | **Sự kiện đăng nhập** | Một lần hệ thống cấp token phiên mới cho một tài khoản sau khi xác thực thành công. Là đơn vị ghi nhận của tính năng |
-| **Điểm cấp phiên** | Hàm backend phát hành token phiên. T-Fluencers có 9 điểm, tính năng ghi ở 5 điểm (Phụ lục B) |
+| **Điểm cấp phiên** | Hàm backend phát hành token phiên. T-Fluencers có 9 điểm, tính năng ghi ở 3 điểm (Phụ lục B) |
 | **User-Agent (UA)** | Header trình duyệt gửi kèm request, mô tả trình duyệt, hệ điều hành, thiết bị |
 | **Append-only** | Bản ghi chỉ được thêm, không được sửa hay xoá qua ứng dụng |
 | **PII** | Personally Identifiable Information — dữ liệu định danh cá nhân |
@@ -70,7 +69,7 @@ T-Fluencers hiện không có màn nào cho biết một tài khoản đăng nh�
 Ambassador đã có tính năng Lịch sử đăng nhập. PRD đưa nguyên tính năng đó sang T-Fluencers:
 
 ```
-Nhân sự đăng nhập (mật khẩu, nhận lời mời, SSO Dashboard)
+Nhân sự đăng nhập bằng email + mật khẩu (Admin Portal, Dashboard)
 Creator đăng nhập (Google, TikTok)
   → Hệ thống cấp token như hiện tại (không đổi hành vi, không chờ ghi)
   → Ghi bất đồng bộ một bản ghi: ID tài khoản, email, username, vai trò,
@@ -98,7 +97,7 @@ Root / Admin mở Admin Portal → menu "Lịch sử đăng nhập"
 | `audit-logins` (có sẵn) | Ghi mọi lần **thử** đăng nhập của nhân sự (`login_admin`) và đổi mã SSO (`auth_exchange`): IP, email hoặc 8 ký tự đầu của mã. Không có User-Agent, không ghi creator, không hiển thị ở đâu. Chỉ dùng để đếm cho rate limiting | `internal/model/mg/audit_login.go`; `pkg/admin/service/staff.go:158`; `pkg/admin/handler/staff.go:297`; `internal/service/check_rate_limit.go:68` |
 | Đọc User-Agent | `GetUserAgent()` hạ toàn bộ chuỗi về chữ thường. Thư viện `uap-go` so khớp có phân biệt hoa thường nên trả `Unknown`. Ambassador đã gặp lỗi này và sửa thẳng hàm (mục 2.2); T-Fluencers sửa giống vậy. Nơi khác dùng hàm này: chỉ ghi `user-devices.userAgent`, không có chỗ nào đọc | `internal/echo/echo.go:230`; `pkg/public/service/user.go:2045` |
 | Xác định IP client | `c.RealIP()`, chưa cấu hình `IPExtractor` → đọc `X-Forwarded-For` do client gửi, có thể giả mạo | `internal/echo/echo.go` (`GetHeaders`) |
-| Điểm cấp phiên nhân sự | 3 điểm: đăng nhập mật khẩu (Admin Portal và Dashboard cùng gọi), nhận lời mời (cấp phiên ngay sau khi đặt mật khẩu), SSO exchange | `pkg/admin/service/staff.go:181`, `:788`, `:930` |
+| Điểm cấp phiên nhân sự | 3 điểm: đăng nhập mật khẩu (Admin Portal và Dashboard cùng gọi), nhận lời mời (cấp phiên ngay sau khi đặt mật khẩu), SSO exchange | `pkg/admin/service/staff.go:181`, `:785`, `:926` |
 | Điểm cấp phiên creator | 6 endpoint công khai: Google, TikTok, Facebook, Instagram, mật khẩu, đăng ký | `pkg/public/router/user.go:21-26` |
 | Web creator | Chỉ có nút Google (luôn hiện) và TikTok (hiện khi bật cờ `app.enableTikTok`). Nút Facebook đã bị comment. Không gọi Instagram, mật khẩu, đăng ký | `frontend/src/components/layout/main/header/components/modal-login.tsx:152`, `:164`, `:175` |
 | Dữ liệu mạng xã hội của creator | Dữ liệu Google, TikTok lưu trong `users` được mã hoá AES | `pkg/public/service/user.go:1742`, `:1915` |
@@ -126,15 +125,14 @@ Repo `ambassador`, nhánh `release` `46de14a53`.
 | # | Điểm | Ambassador | T-Fluencers | Lý do |
 |---|---|---|---|---|
 | 1 | ADV | Trường `partnerId`/`partnerName`, cột và bộ lọc Đối tác | Bỏ cả trường, cột, bộ lọc, index | Partner của T-Fluencers không có `allowDomains`. Giữ lại thì cột luôn trống |
-| 2 | Điểm ghi của nhân sự | 1 điểm: `Login` | 3 điểm: `Login`, `AcceptInvite`, `ExchangeAuthCode` — cùng khuôn bản ghi với `Login` | Ambassador `release` không có luồng cấp phiên nào tương ứng. Không ghi thì nhân sự vào Dashboard qua SSO hoặc lần đầu qua lời mời không để lại dấu vết |
 
 ### 2.4 Đối chiếu SRS nghiệm thu T-Fluencers
 
-Làm theo Ambassador thì có 3 chỗ không khớp SRS. Bản 1.0 đã xử lý 3 chỗ này. Bản 2.0 giữ nguyên hành vi của Ambassador: 2 chỗ (PII, quyền xem) chuyển sang OQ-2 để Security quyết định, chỗ còn lại ghi ở R-3.
+Làm theo Ambassador thì có 4 chỗ không khớp SRS. Bản 1.0 đã xử lý cả 4. Bản 2.0 giữ nguyên hành vi của Ambassador: 2 chỗ (PII, quyền xem) chuyển sang OQ-2 để Security quyết định, 2 chỗ còn lại (điểm cấp phiên không ghi) ghi ở R-3, R-7.
 
 | Mục SRS | Nội dung | Bản 2.0 | Trạng thái |
 |---|---|---|---|
-| §5.5 | Ghi audit log append-only cho đăng nhập/đăng xuất Admin | Ghi đủ 3 điểm cấp phiên nhân sự (FR-001); không có API sửa xoá (NFR-002). Đăng xuất: OQ-1 | Đáp ứng phần đăng nhập |
+| §5.5 | Ghi audit log append-only cho đăng nhập/đăng xuất Admin | Chỉ ghi đăng nhập email + mật khẩu như Ambassador (FR-001). Nhận lời mời và SSO sang Dashboard cấp phiên mà không ghi (R-7). Không có API sửa xoá (NFR-002). Đăng xuất: OQ-1 | **Đáp ứng một phần** |
 | §5.5 | "Ẩn PII trong log: không ghi đầy đủ email/phone/CCCD; thay bằng token/ID" | Lưu nguyên email và username như Ambassador (FR-003). Đáng lưu ý: chính T-Fluencers đang mã hoá dữ liệu Google/TikTok trong `users` (mục 2.1) | **Lệch** — OQ-2 |
 | §5.1, §5.4 | Lịch sử đăng nhập là dữ liệu Confidential; least privilege | Quyền `IsAdmin` như Ambassador: Admin của ADV cũng xem được IP, thiết bị, email của mọi tài khoản (FR-005) | **Lệch** — OQ-2 |
 | §5.5 | Đủ dấu vết để truy vết | 4 endpoint creator (Facebook, Instagram, mật khẩu, đăng ký) cấp token mà không ghi, như Ambassador (FR-002). Web creator không dùng 4 endpoint này, nhưng gọi thẳng API thì vẫn được | **Lệch một phần** — R-3 |
@@ -146,8 +144,8 @@ Làm theo Ambassador thì có 3 chỗ không khớp SRS. Bản 1.0 đã xử lý
 
 | # | Mục tiêu | Chỉ số thành công (KPI) | Cách đo |
 |---|---|---|---|
-| BO-1 | Hai sản phẩm có cùng một tính năng | Lược đồ dữ liệu, tham số API, bộ lọc, cột màn hình trùng Ambassador `release`, trừ 2 khác biệt ở mục 2.3 | Đối chiếu Phụ lục C khi review code |
-| BO-2 | Đáp ứng yêu cầu ghi đăng nhập Admin của SRS §5.5 | 100% lần cấp phiên cho nhân sự có bản ghi tương ứng | Đối chiếu số response thành công của 3 endpoint cấp phiên nhân sự trong access log với số bản ghi `role = admin`, trong 7 ngày đầu sau phát hành |
+| BO-1 | Hai sản phẩm có cùng một tính năng | Lược đồ dữ liệu, tham số API, bộ lọc, cột màn hình trùng Ambassador `release`, trừ khác biệt ở mục 2.3 | Đối chiếu Phụ lục C khi review code |
+| BO-2 | Ghi đăng nhập Admin bằng mật khẩu (SRS §5.5, một phần) | 100% lần đăng nhập thành công qua `POST /staffs/login` có bản ghi tương ứng | Đối chiếu số response thành công của `POST /staffs/login` trong access log với số bản ghi `role = admin`, trong 7 ngày đầu sau phát hành |
 | BO-3 | Truy vết được sự cố tài khoản | Trả lời được "đăng nhập lúc nào, từ IP nào, thiết bị nào" cho một tài khoản bất kỳ chỉ bằng màn Lịch sử đăng nhập | Chạy kịch bản Flow 1 khi nghiệm thu |
 | BO-4 | Không ảnh hưởng trải nghiệm đăng nhập | 0 lần đăng nhập thất bại do ghi lịch sử | Theo dõi lỗi đăng nhập 7 ngày sau phát hành |
 
@@ -173,7 +171,7 @@ Làm theo Ambassador thì có 3 chỗ không khớp SRS. Bản 1.0 đã xử lý
 
 ### Trong phạm vi (In Scope)
 
-- Ghi sự kiện đăng nhập thành công tại 5 điểm cấp phiên: 3 của nhân sự, Google và TikTok của creator
+- Ghi sự kiện đăng nhập thành công tại 3 điểm cấp phiên: đăng nhập mật khẩu của nhân sự, Google và TikTok của creator
 - Lược đồ dữ liệu của Ambassador, bỏ trường ADV
 - API danh sách có lọc, phân trang, quyền `IsAdmin`
 - Màn "Lịch sử đăng nhập" trên Admin Portal theo khuôn Ambassador
@@ -183,6 +181,7 @@ Làm theo Ambassador thì có 3 chỗ không khớp SRS. Bản 1.0 đã xử lý
 
 | Hạng mục | Rủi ro tồn dư | Điều kiện kích hoạt |
 |---|---|---|
+| Ghi 2 luồng nhân sự: nhận lời mời, SSO sang Dashboard | Trung bình. Nhân sự vào Dashboard qua SSO, hoặc vào lần đầu qua lời mời, không để lại dấu vết (R-7) | Security yêu cầu khi nghiệm thu §5.5. Code bản 1.0 đã có, đưa lại được |
 | Ghi 4 endpoint creator: Facebook, Instagram, mật khẩu, đăng ký | Trung bình. Gọi thẳng API (không qua web) lấy được phiên mà không để lại dấu vết (R-3) | Web creator bật lại nút Facebook, hoặc Security yêu cầu. Ambassador cũng chưa ghi các endpoint này |
 | Trường và bộ lọc ADV | Thấp | Partner của T-Fluencers có cách nhận diện ADV cho creator |
 | Ẩn PII (chỉ lưu ID), giới hạn Admin của ADV | Theo OQ-2 | OQ-2 kết luận phải sửa |
@@ -211,25 +210,20 @@ Mỗi lần backend admin cấp token phiên cho nhân sự, hệ thống ghi m�
 
 **Business Rules:**
 
-- Ba điểm cấp phiên:
-
-  | Điểm cấp phiên | Endpoint | Ambassador |
-  |---|---|---|
-  | Đăng nhập email + mật khẩu (Admin Portal, Dashboard) | `POST /staffs/login` | Có ghi |
-  | Nhận lời mời và đặt mật khẩu | `POST /staffs/invite/accept` | Không có luồng này (mục 2.3 #2) |
-  | Chuyển phiên từ Admin Portal sang Dashboard | `POST /staffs/auth/exchange` | Không có luồng này (mục 2.3 #2) |
+- Chỉ ghi ở `POST /staffs/login` (đăng nhập email + mật khẩu; Admin Portal và Dashboard cùng gọi), như Ambassador
+- Không ghi `POST /staffs/invite/accept` (nhận lời mời) và `POST /staffs/auth/exchange` (SSO sang Dashboard) — RQ-2
 
 - `role = "admin"` cho **mọi** nhân sự, kể cả Root, Cộng tác viên, Quản lý chiến dịch — như Ambassador
 - `email` = email của nhân sự; `username` để trống
-- Chỉ ghi khi token đã được cấp. Request bị từ chối (sai mật khẩu, bị rate limiting, token mời hết hạn, mã SSO sai) không ghi
+- Chỉ ghi khi token đã được cấp. Request bị từ chối (sai mật khẩu, bị rate limiting) không ghi
 
 **Acceptance Criteria:**
 
 - [ ] Đăng nhập thành công ở Admin Portal: có 1 bản ghi `role = admin`, đúng `email`, `userId` = ID nhân sự
 - [ ] Đăng nhập thành công ở Dashboard: có 1 bản ghi, thiết bị/trình duyệt là của máy mở Dashboard
-- [ ] Chuyển từ Admin Portal sang Dashboard qua SSO: có 1 bản ghi
-- [ ] Nhận lời mời và đặt mật khẩu: có 1 bản ghi
-- [ ] Sai mật khẩu, bị chặn 429, mã SSO không hợp lệ: không phát sinh bản ghi
+- [ ] Chuyển từ Admin Portal sang Dashboard qua SSO: không phát sinh bản ghi
+- [ ] Nhận lời mời và đặt mật khẩu: không phát sinh bản ghi
+- [ ] Sai mật khẩu, bị chặn 429: không phát sinh bản ghi
 - [ ] Root, Cộng tác viên đăng nhập: `role = admin`
 
 **Dependencies:** FR-003, NFR-001
@@ -600,7 +594,7 @@ Request đăng nhập → xác thực thành công → sinh token
 | # | Câu hỏi | Quyết định | Căn cứ |
 |---|---|---|---|
 | RQ-1 | Làm theo Ambassador hay theo SRS như bản 1.0? | Làm theo Ambassador | Quyết định của team, 2026-10-06 |
-| RQ-2 | Ghi 2 luồng nhân sự Ambassador không có (nhận lời mời, SSO)? | Có, cùng khuôn bản ghi với `Login` | 2026-10-06; SRS §5.5 yêu cầu ghi đăng nhập Admin |
+| RQ-2 | Ghi 2 luồng nhân sự Ambassador không có (nhận lời mời, SSO)? | Không — chỉ ghi `Login` như Ambassador | Quyết định của team, 2026-10-06 |
 | RQ-3 | Giữ trường, cột, bộ lọc ADV? | Không | 2026-10-06; mục 2.3 #1 |
 | RQ-4 | Ghi 4 endpoint creator mà Ambassador không ghi? | Không | Làm theo Ambassador; web creator không dùng (mục 2.1) |
 | RQ-5 | Thời hạn lưu? | Không xoá; tối thiểu 12 tháng | SRS §5.6 |
@@ -616,7 +610,8 @@ Request đăng nhập → xác thực thành công → sinh token
 | R-3 | Gọi thẳng 4 endpoint creator không ghi (Facebook, Instagram, mật khẩu, đăng ký) để lấy phiên mà không để lại dấu vết | Thấp | Lịch sử thiếu mà giao diện không cho biết | Theo dõi; khi bật lại một trong các endpoint trên web phải thêm ghi nhận. Cân nhắc tắt endpoint không dùng (việc riêng) |
 | R-4 | Ghi thất bại kéo dài mà không ai biết (lỗi chỉ in ra stdout) | Thấp | Lịch sử thiếu | Theo dõi log container; đổi sang logger hệ thống ở cả hai sản phẩm nếu cần |
 | R-5 | Collection tăng không giới hạn | Chắc chắn, tốc độ thấp | Dung lượng tăng, đếm tổng chậm dần | Theo dõi dung lượng; thêm TTL ≥ 12 tháng khi cần |
-| R-6 | Không lọc riêng nhân sự, không phân biệt SSO với đăng nhập mật khẩu | Chắc chắn | Rà soát nhân sự tốn công hơn (Flow 2) | Chấp nhận theo RQ-1; mục 5 |
+| R-6 | Không lọc riêng nhân sự | Chắc chắn | Rà soát nhân sự tốn công hơn (Flow 2) | Chấp nhận theo RQ-1; mục 5 |
+| R-7 | Nhân sự vào Dashboard qua SSO hoặc lần đầu qua lời mời không để lại bản ghi | Chắc chắn | Lịch sử đăng nhập nhân sự thiếu; nghiệm thu §5.5 có thể không đạt | Chấp nhận theo RQ-2; đưa lại được từ code bản 1.0 nếu Security yêu cầu |
 
 ---
 
@@ -647,7 +642,7 @@ Request đăng nhập → xác thực thành công → sinh token
 | Hạng mục | Trạng thái |
 |---|---|
 | Bản 1.0 | PR #771 vào `release` bị merge nhầm, đã revert (PR #772). PR #773 đã vào `develop` (2026-10-05) |
-| Bản 2.0 | PR #774 vào `develop` (nhánh `feat/login-history-ambassador-parity`, cắt từ `release` `88d189e0`; commit `0bce3df1` hoàn tác bản revert `cdbf9e36`, `41d0976f`, `83299f8e` làm theo Ambassador). Chưa vào `release` |
+| Bản 2.0 | PR #774 vào `develop` (nhánh `feat/login-history-ambassador-parity`, cắt từ `release` `88d189e0`; commit `0bce3df1` hoàn tác bản revert `cdbf9e36`, `41d0976f`, `83299f8e`, `255a0b44` làm theo Ambassador). Chưa vào `release` |
 | Kiểm chứng bản 2.0 | Backend build sạch. Test các package bị chạm: 5 test đỏ, trùng đúng 5 test đỏ sẵn có trên `release`. Test tích hợp MongoDB thật đạt (NFR-007). Typecheck Admin Portal không phát sinh lỗi mới |
 | Dữ liệu bản 1.0 trên dev | Môi trường dev đã chạy bản 1.0 có thể còn bản ghi theo lược đồ cũ (`accountId`, `accountType`, `method`). Trên màn mới, các dòng này hiện trống cột User ID, Email, Username. Cần xoá trước khi QC. Production chưa từng chạy bản 1.0 |
 | Hành vi kế thừa từ Ambassador | Màn Admin Portal chép nguyên bản Ambassador. Đổi hai ô lọc liên tiếp trong vòng 300 ms thì chỉ ô sau được áp dụng (debounce chỉ giữ lần gọi cuối) — Ambassador cũng vậy |
@@ -692,9 +687,9 @@ Request đăng nhập → xác thực thành công → sinh token
 
 | # | Loại | Endpoint | Hàm | Ghi lịch sử | Ambassador |
 |---|---|---|---|---|---|
-| 1 | Nhân sự | `POST /staffs/login` | `staffImpl.Login` (`pkg/admin/service/staff.go:182`) | Có | Có ghi |
-| 2 | Nhân sự | `POST /staffs/invite/accept` | `staffImpl.AcceptInvite` (`:789`) | Có | Không có luồng này |
-| 3 | Nhân sự | `POST /staffs/auth/exchange` | `staffImpl.ExchangeAuthCode` (`:932`) | Có | Không có luồng này |
+| 1 | Nhân sự | `POST /staffs/login` | `staffImpl.Login` (`pkg/admin/service/staff.go:184`) | Có | Có ghi |
+| 2 | Nhân sự | `POST /staffs/invite/accept` | `staffImpl.AcceptInvite` (`:785`) | Không | Không có luồng này |
+| 3 | Nhân sự | `POST /staffs/auth/exchange` | `staffImpl.ExchangeAuthCode` (`:926`) | Không | Không có luồng này |
 | 4 | Creator | `POST /users/login-with-google` | `userImpl.LoginWithGoogle` (`pkg/public/service/user.go:1984`) | Có | Có ghi |
 | 5 | Creator | `POST /users/login-with-tiktok` | `userImpl.LoginWithTiktok` (`:1834`) | Có | Có ghi |
 | 6 | Creator | `POST /users/login-with-facebook` | `userImpl.LoginWithFacebook` (`:973`) | Không | Không ghi |
@@ -710,7 +705,7 @@ Request đăng nhập → xác thực thành công → sinh token
 |---|---|---|
 | Trường dữ liệu | `userId`, `email`, `username`, `role`, `partnerId`, `partnerName`, `device`, `model`, `platform`, `browser`, `ipAddress`, `loginAt`, `createdAt`, `updatedAt` | Như Ambassador, bỏ `partnerId`, `partnerName` |
 | Giá trị `role` | `admin` / `creator` | Như Ambassador |
-| Điểm ghi | Nhân sự: `Login`. Creator: Google, TikTok | Như Ambassador, thêm `AcceptInvite`, `ExchangeAuthCode` |
+| Điểm ghi | Nhân sự: `Login`. Creator: Google, TikTok | Như Ambassador |
 | Tham số API | `page`, `limit`, `userId`, `email`, `username`, `partner`, `fromAt`, `toAt` | Như Ambassador, bỏ `partner` |
 | Quyền | `IsAdmin` / `isAdminAccess` | Như Ambassador |
 | Index | `userId`, `email`, `username`, `partner` (kèm `loginAt`), `loginAt` | Như Ambassador, bỏ index `partner` |
@@ -724,12 +719,12 @@ Request đăng nhập → xác thực thành công → sinh token
 
 | Hạng mục | Bản 1.0 | Bản 2.0 |
 |---|---|---|
-| Nguyên tắc | Lấy Ambassador làm tham chiếu, sửa theo SRS và sửa lỗi Ambassador | Làm theo Ambassador; chỉ khác 2 điểm bắt buộc (mục 2.3) |
+| Nguyên tắc | Lấy Ambassador làm tham chiếu, sửa theo SRS và sửa lỗi Ambassador | Làm theo Ambassador; chỉ bỏ ADV (mục 2.3) |
 | Định danh tài khoản | `accountId` + `accountType`; email, tên tra lúc hiển thị | `userId`; lưu `email`, `username` trong bản ghi |
 | Vai trò | Mã vai trò thật (`root`, `admin`, `collaborator`, …) | `admin` / `creator` |
 | Phương thức đăng nhập | Trường `method` (8 giá trị) | Bỏ |
 | User-Agent gốc, `deviceId` | Có lưu | Bỏ |
-| Điểm ghi | 9 điểm | 5 điểm (Phụ lục B) |
+| Điểm ghi | 9 điểm | 3 điểm (Phụ lục B) |
 | Quyền xem | Root + Admin không gắn ADV | `IsAdmin` (cả Admin của ADV) |
 | Bộ lọc API | `accountId`, `email` (tra tài khoản, không phân biệt hoa thường), `accountType`, `method`, `ip`, khoảng ngày | `userId`, `email`, `username` (khớp nguyên văn), khoảng ngày |
 | Kiểm tham số | Kiểm định dạng, `limit` tối đa 100 | Không kiểm, như Ambassador |
