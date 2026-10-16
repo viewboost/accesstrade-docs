@@ -150,6 +150,8 @@ Mục này viết bằng lời thường. Phần mã quyền cho đội kỹ thu
 
 ### 4.2 Các vai trò
 
+> **Bảng chuẩn theo code:** [vai-tro-va-quyen-2026-10-16.md](vai-tro-va-quyen-2026-10-16.md). Mục này là bản đề xuất ban đầu; chỗ nào lệch (77 mã, `content.delete` cho QLVH/VHHS, `user.view_sensitive`, tên mã cũ) thì theo file kia.
+
 **Root** — *một tài khoản duy nhất, do AT giữ*
 - Làm được mọi việc, trên mọi ADV.
 - Những việc **chỉ root** làm được (không vai trò nào khác nhận được): tạo và sửa ADV; khoá, mở khoá creator; hợp
@@ -209,6 +211,8 @@ Mục này viết bằng lời thường. Phần mã quyền cho đội kỹ thu
   ADV mình thì vẫn sửa như hôm nay.
 
 ### 4.3 Bảng vai trò × việc
+
+> **Bảng chuẩn theo code:** [vai-tro-va-quyen-2026-10-16.md](vai-tro-va-quyen-2026-10-16.md). Mục này là bản đề xuất ban đầu; chỗ nào lệch (77 mã, `content.delete` cho QLVH/VHHS, `user.view_sensitive`, tên mã cũ) thì theo file kia.
 
 Ký hiệu: ✔ làm được · — không làm được · *(tiền)* việc liên quan tiền · *(cá nhân)* xem dữ liệu cá nhân, mỗi lượt có
 ghi lại. Admin giữ như hôm nay (Phụ lục A).
@@ -341,6 +345,8 @@ Tag, danh mục, cấu hình **có thể gắn ADV** (`TagRaw.Partner`, `CommonC
 Trường `type` (`vfdc` / `partner`) trên bản ghi nhân sự hiện không chỗ nào đọc; bỏ đi khi có `all` / `list`.
 
 ### 5.3 Bảng quyền
+
+> **Bảng chuẩn theo code:** [vai-tro-va-quyen-2026-10-16.md](vai-tro-va-quyen-2026-10-16.md). Mục này là bản đề xuất ban đầu; chỗ nào lệch (77 mã, `content.delete` cho QLVH/VHHS, `user.view_sensitive`, tên mã cũ) thì theo file kia.
 
 Mỗi dòng là **một quyền** — đơn vị nhỏ nhất root tick được trên màn Vai trò & phân quyền. DISO rà lại khi dựng
 registry route (PQ-09): mỗi endpoint thuộc đúng một quyền, hoặc `root`, hoặc `public`.
@@ -509,6 +515,8 @@ DISO liệt kê đủ các lời gọi kèm khi dựng registry (PQ-09); mỗi l
 rỗng thì từ chối" ở 5.2.
 
 ### 5.4 Vai trò → mã quyền
+
+> **Bảng chuẩn theo code:** [vai-tro-va-quyen-2026-10-16.md](vai-tro-va-quyen-2026-10-16.md). Mục này là bản đề xuất ban đầu; chỗ nào lệch (77 mã, `content.delete` cho QLVH/VHHS, `user.view_sensitive`, tên mã cũ) thì theo file kia.
 
 | Vai trò | Mã | Số quyền | Phạm vi gợi ý |
 |---|---|---|---|

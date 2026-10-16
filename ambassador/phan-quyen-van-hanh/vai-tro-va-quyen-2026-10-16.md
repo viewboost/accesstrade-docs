@@ -194,7 +194,7 @@ Bảng dưới là đề xuất, chờ biz chốt.
 | Cấu hình ứng dụng, Cộng tác viên | Chờ chốt | Chờ chốt | Root |
 | **Người nghỉ việc** | Quản lý trực tiếp báo | — | QLVH tắt với VHND/VHHS; root tắt với vai trò khác; thời hạn: chờ chốt |
 
-Tắt tài khoản, đổi vai trò hay đổi phạm vi **có hiệu lực ngay từ thao tác kế tiếp** của người đó: mỗi request hệ thống đều đọc lại nhân sự và vai trò từ DB.
+Tắt tài khoản, đổi vai trò hay đổi phạm vi **có hiệu lực ngay từ thao tác kế tiếp** của người đó: mỗi request hệ thống đều đọc lại nhân sự và vai trò từ DB. Riêng dịch vụ tải file chỉ kiểm chữ ký token, nên người đã bị tắt vẫn tải file lên được tới khi phiên đăng nhập hết hạn (tối đa 8 giờ).
 
 ### 5.4 Rà soát quyền định kỳ
 - Tần suất: chờ chốt (đề xuất hằng tháng).
