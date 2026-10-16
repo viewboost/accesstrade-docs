@@ -383,100 +383,99 @@ Có `edit` / `import` / `export` / `approve` thì **tự có** `view` cùng ch�
 | 13 | `partner_member.approve` | Duyệt thành viên ADV | Duyệt hoặc từ chối yêu cầu tham gia ADV của người dùng | `/users/approval-partner*` |  |
 | 14 | `user_partner.view` | Xem người dùng ADV | Xem người dùng thuộc ADV và trạng thái CBNV | Người dùng ADV |  |
 | 15 | `user_partner.edit_staff_status` | Đổi trạng thái CBNV | Đánh dấu / bỏ đánh dấu người dùng ADV là nhân viên của thương hiệu | `PUT /user-partners/:id/staff-status` |  |
-| 16 | `user.edit_partner_data` | Sửa dữ liệu người dùng ADV | Sửa dữ liệu người dùng riêng của ADV WildRift | `PUT /partners/users/wildrift` | Q10 |
 
 **Sự kiện và thống kê**
 
 | # | Mã quyền | Tên hiển thị | Cho phép làm gì | Màn / API | Ghi chú |
 |---|---|---|---|---|---|
-| 17 | `event.view` | Xem danh sách sự kiện | Danh sách sự kiện (dùng cả ở ô chọn sự kiện khi duyệt nội dung) | `GET /events` |  |
-| 18 | `event.view_detail` | Xem chi tiết sự kiện | Chi tiết sự kiện, yêu cầu, ngân sách, bảng xếp hạng | `GET /events/:id`, `/:id/leaderboard*` |  |
-| 19 | `event.edit` | Quản lý sự kiện | Tạo, sửa, nhân bản, bật/tắt sự kiện; yêu cầu, ngân sách, opshub; cấu hình và ghim bảng xếp hạng | `/events/*` |  |
-| 20 | `event_schema.view` | Xem mẫu sự kiện | Danh sách mẫu sự kiện | `GET /event-schemas` |  |
-| 21 | `event_schema.edit` | Quản lý mẫu sự kiện | Tạo, sửa, bật/tắt mẫu sự kiện dùng để dựng sự kiện | `/event-schemas*` |  |
-| 22 | `statistic.view` | Xem thống kê | Dashboard, thống kê sự kiện, thống kê theo nhân sự, biểu đồ, báo cáo | Thống kê, Dashboard — `/events/statistic`, `/staff-statistic`, `/chart`, `/report-statistic` |  |
-| 23 | `statistic.export` | Xuất thống kê | Xuất biểu đồ người dùng, sự kiện (loại `user_chart`, `event_chart`) | Dữ liệu xuất |  |
+| 16 | `event.view` | Xem danh sách sự kiện | Danh sách sự kiện (dùng cả ở ô chọn sự kiện khi duyệt nội dung) | `GET /events` |  |
+| 17 | `event.view_detail` | Xem chi tiết sự kiện | Chi tiết sự kiện, yêu cầu, ngân sách, bảng xếp hạng | `GET /events/:id`, `/:id/leaderboard*` |  |
+| 18 | `event.edit` | Quản lý sự kiện | Tạo, sửa, nhân bản, bật/tắt sự kiện; yêu cầu, ngân sách, opshub; cấu hình và ghim bảng xếp hạng | `/events/*` |  |
+| 19 | `event_schema.view` | Xem mẫu sự kiện | Danh sách mẫu sự kiện | `GET /event-schemas` |  |
+| 20 | `event_schema.edit` | Quản lý mẫu sự kiện | Tạo, sửa, bật/tắt mẫu sự kiện dùng để dựng sự kiện | `/event-schemas*` |  |
+| 21 | `statistic.view` | Xem thống kê | Dashboard, thống kê sự kiện, thống kê theo nhân sự, biểu đồ, báo cáo | Thống kê, Dashboard — `/events/statistic`, `/staff-statistic`, `/chart`, `/report-statistic` |  |
+| 22 | `statistic.export` | Xuất thống kê | Xuất biểu đồ người dùng, sự kiện (loại `user_chart`, `event_chart`) | Dữ liệu xuất |  |
 
 **Thưởng, nhiệm vụ, quà**
 
 | # | Mã quyền | Tên hiển thị | Cho phép làm gì | Màn / API | Ghi chú |
 |---|---|---|---|---|---|
-| 24 | `bonus.view` | Xem thưởng thêm | Danh sách và chi tiết các khoản thưởng thêm | Thưởng thêm — `GET /event-bonus*` | 💰 |
-| 25 | `bonus.edit` | Cộng thưởng thêm | Tạo, sửa một khoản thưởng thêm cho creator. **Không đổi được trạng thái** khoản thưởng — `PUT /event-bonus` bỏ qua hoặc từ chối trường `status` khi thiếu `bonus.change_status` | `POST`/`PUT /event-bonus` | 💰 lập |
-| 26 | `bonus.import` | Import thưởng thêm | Cộng thưởng hàng loạt bằng file Excel; dòng ngoài phạm vi ADV bị từ chối kèm lý do, dòng hợp lệ vẫn vào | `/event-bonus/import-excel` | 💰 lập |
-| 27 | `bonus.cancel` | Huỷ thưởng thêm | Huỷ một khoản thưởng thêm đã tạo | `/event-bonus` | 💰 lập |
-| 28 | `bonus.change_status` | Duyệt thưởng thêm | Duyệt hoặc từ chối khoản thưởng thêm (đổi trạng thái) | `PUT /event-bonus` (trường `status`) | 💰 duyệt |
-| 29 | `mission.view` | Xem nhiệm vụ | Danh sách và chi tiết nhiệm vụ, danh sách điểm chờ duyệt | `GET /missions*` |  |
-| 30 | `mission.edit` | Quản lý nhiệm vụ | Tạo, sửa nhiệm vụ | `/missions` |  |
-| 31 | `mission.approve` | Duyệt điểm nhiệm vụ | Duyệt hoặc từ chối điểm creator nhận từ nhiệm vụ | `/missions/point-approval` |  |
-| 32 | `gift.view` | Xem quà | Danh sách quà, chi tiết, lịch sử đổi quà | `GET /gifts*` |  |
-| 33 | `gift.edit` | Quản lý quà | Tạo, sửa, bật/tắt quà | `/gifts` |  |
-| 34 | `gift.process` | Xử lý lượt đổi quà | Duyệt, từ chối, đổi trạng thái lượt creator đổi quà | `PUT /gifts/:id/status` | 💰 |
+| 23 | `bonus.view` | Xem thưởng thêm | Danh sách và chi tiết các khoản thưởng thêm | Thưởng thêm — `GET /event-bonus*` | 💰 |
+| 24 | `bonus.edit` | Cộng thưởng thêm | Tạo, sửa một khoản thưởng thêm cho creator. **Không đổi được trạng thái** khoản thưởng — `PUT /event-bonus` bỏ qua hoặc từ chối trường `status` khi thiếu `bonus.change_status` | `POST`/`PUT /event-bonus` | 💰 lập |
+| 25 | `bonus.import` | Import thưởng thêm | Cộng thưởng hàng loạt bằng file Excel; dòng ngoài phạm vi ADV bị từ chối kèm lý do, dòng hợp lệ vẫn vào | `/event-bonus/import-excel` | 💰 lập |
+| 26 | `bonus.cancel` | Huỷ thưởng thêm | Huỷ một khoản thưởng thêm đã tạo | `/event-bonus` | 💰 lập |
+| 27 | `bonus.change_status` | Duyệt thưởng thêm | Duyệt hoặc từ chối khoản thưởng thêm (đổi trạng thái) | `PUT /event-bonus` (trường `status`) | 💰 duyệt |
+| 28 | `mission.view` | Xem nhiệm vụ | Danh sách và chi tiết nhiệm vụ, danh sách điểm chờ duyệt | `GET /missions*` |  |
+| 29 | `mission.edit` | Quản lý nhiệm vụ | Tạo, sửa nhiệm vụ | `/missions` |  |
+| 30 | `mission.approve` | Duyệt điểm nhiệm vụ | Duyệt hoặc từ chối điểm creator nhận từ nhiệm vụ | `/missions/point-approval` |  |
+| 31 | `gift.view` | Xem quà | Danh sách quà, chi tiết, lịch sử đổi quà | `GET /gifts*` |  |
+| 32 | `gift.edit` | Quản lý quà | Tạo, sửa, bật/tắt quà | `/gifts` |  |
+| 33 | `gift.process` | Xử lý lượt đổi quà | Duyệt, từ chối, đổi trạng thái lượt creator đổi quà | `PUT /gifts/:id/status` | 💰 |
 
 **Đối soát, rút tiền, dữ liệu xuất**
 
 | # | Mã quyền | Tên hiển thị | Cho phép làm gì | Màn / API | Ghi chú |
 |---|---|---|---|---|---|
-| 35 | `reconciliation.view` | Xem đối soát | Danh sách và chi tiết bản đối soát, đủ bốn tab: Tổng quan, Nội dung, Mốc thưởng, Thưởng thêm | Đối soát — `GET /reconciliations*` | 💰 |
-| 36 | `reconciliation.edit` | Lập bản đối soát | Tạo, sửa bản đối soát trên admin | `POST /reconciliations`, `PATCH /reconciliations/:id` | 💰 lập |
-| 37 | `reconciliation.cancel_item` | Huỷ mục đối soát | Huỷ từng mục nội dung hoặc mốc thưởng trong bản đối soát, kèm lý do | `/reconciliations/:id/item/:idItem/change-status` | 💰 lập |
-| 38 | `reconciliation.change_status` | Chốt đối soát | Đổi trạng thái cả bản đối soát (chốt để chi, từ chối) | `/reconciliations/:id/change-status` | 💰 duyệt |
-| 39 | `reconciliation.export` | Tải file đối soát | Tạo yêu cầu xuất và tải file đối soát (loại `reconciliation_item`); file luôn mang ADV của bản đối soát | Đối soát, Dữ liệu xuất | 💰 |
-| 40 | `transfer.view` | Xem rút tiền | Danh sách, chi tiết đợt rút và danh sách lệnh rút bên trong | Rút tiền — `GET /transfers*`, `/:id/withdraw-cashes` | 💰 |
-| 41 | `transfer.edit` | Lập đợt rút tiền | Tạo, sửa đợt rút tiền trên admin | `POST /transfers`, `PUT /transfers/:id` | 💰 lập |
-| 42 | `transfer.export` | Tải file rút tiền | Tạo yêu cầu xuất và tải file rút tiền (loại `transfer_withdraw`, `transfer_user_cash`) | Rút tiền, Dữ liệu xuất | 💰 |
-| 43 | `transfer.change_status` | Duyệt rút tiền | Đổi trạng thái đợt rút, từ chối lệnh rút | `/transfers/:id/change-status`, `/change-declined` | 💰 duyệt |
-| 44 | `export.view` | Xem dữ liệu xuất | Xem danh sách file đã xuất. Tải từng file cần quyền tải của loại file đó (`reconciliation.export`, `transfer.export`) | Dữ liệu xuất — `GET /data-exports` |  |
+| 34 | `reconciliation.view` | Xem đối soát | Danh sách và chi tiết bản đối soát, đủ bốn tab: Tổng quan, Nội dung, Mốc thưởng, Thưởng thêm | Đối soát — `GET /reconciliations*` | 💰 |
+| 35 | `reconciliation.edit` | Lập bản đối soát | Tạo, sửa bản đối soát trên admin | `POST /reconciliations`, `PATCH /reconciliations/:id` | 💰 lập |
+| 36 | `reconciliation.cancel_item` | Huỷ mục đối soát | Huỷ từng mục nội dung hoặc mốc thưởng trong bản đối soát, kèm lý do | `/reconciliations/:id/item/:idItem/change-status` | 💰 lập |
+| 37 | `reconciliation.change_status` | Chốt đối soát | Đổi trạng thái cả bản đối soát (chốt để chi, từ chối) | `/reconciliations/:id/change-status` | 💰 duyệt |
+| 38 | `reconciliation.export` | Tải file đối soát | Tạo yêu cầu xuất và tải file đối soát (loại `reconciliation_item`); file luôn mang ADV của bản đối soát | Đối soát, Dữ liệu xuất | 💰 |
+| 39 | `transfer.view` | Xem rút tiền | Danh sách, chi tiết đợt rút và danh sách lệnh rút bên trong | Rút tiền — `GET /transfers*`, `/:id/withdraw-cashes` | 💰 |
+| 40 | `transfer.edit` | Lập đợt rút tiền | Tạo, sửa đợt rút tiền trên admin | `POST /transfers`, `PUT /transfers/:id` | 💰 lập |
+| 41 | `transfer.export` | Tải file rút tiền | Tạo yêu cầu xuất và tải file rút tiền (loại `transfer_withdraw`, `transfer_user_cash`) | Rút tiền, Dữ liệu xuất | 💰 |
+| 42 | `transfer.change_status` | Duyệt rút tiền | Đổi trạng thái đợt rút, từ chối lệnh rút | `/transfers/:id/change-status`, `/change-declined` | 💰 duyệt |
+| 43 | `export.view` | Xem dữ liệu xuất | Xem danh sách file đã xuất. Tải từng file cần quyền tải của loại file đó (`reconciliation.export`, `transfer.export`) | Dữ liệu xuất — `GET /data-exports` |  |
 
 **Phân khúc, mã, thông báo, danh mục**
 
 | # | Mã quyền | Tên hiển thị | Cho phép làm gì | Màn / API | Ghi chú |
 |---|---|---|---|---|---|
-| 45 | `segment.view` | Xem phân khúc | Danh sách và chi tiết phân khúc | `GET /segments*` |  |
-| 46 | `segment.edit` | Quản lý phân khúc | Tạo, sửa, bật/tắt phân khúc | `/segments` |  |
-| 47 | `user_segment.view` | Xem người dùng trong phân khúc | Danh sách người dùng thuộc phân khúc | `GET /user-segments` |  |
-| 48 | `user_segment.edit` | Sửa người dùng trong phân khúc | Thêm, xoá người dùng khỏi phân khúc | `/user-segments` |  |
-| 49 | `user_segment.import` | Import người dùng vào phân khúc | Thêm hàng loạt bằng Excel | `/user-segments/import-excel` |  |
-| 50 | `code.view` | Xem mã | Danh sách mã | `GET /manage-codes` |  |
-| 51 | `code.edit` | Quản lý mã | Tạo, sửa mã | `/manage-codes` |  |
-| 52 | `code.import` | Import mã | Nhập mã hàng loạt bằng Excel | `/manage-codes/import-excel` |  |
-| 53 | `notification.view` | Xem thông báo | Danh sách và chi tiết thông báo admin | `GET /admin-notifications*` |  |
-| 54 | `notification.edit` | Soạn thông báo | Tạo, sửa, nhân bản thông báo | `/admin-notifications` |  |
-| 55 | `notification.approve` | Duyệt thông báo | Đánh dấu hoàn thành hoặc từ chối thông báo | `/:id/completed`, `/:id/rejected` |  |
-| 56 | `category.view` | Xem danh mục | Danh sách danh mục | `GET /categories` |  |
-| 57 | `category.edit` | Quản lý danh mục | Tạo, sửa danh mục | `/categories` |  |
+| 44 | `segment.view` | Xem phân khúc | Danh sách và chi tiết phân khúc | `GET /segments*` |  |
+| 45 | `segment.edit` | Quản lý phân khúc | Tạo, sửa, bật/tắt phân khúc | `/segments` |  |
+| 46 | `user_segment.view` | Xem người dùng trong phân khúc | Danh sách người dùng thuộc phân khúc | `GET /user-segments` |  |
+| 47 | `user_segment.edit` | Sửa người dùng trong phân khúc | Thêm, xoá người dùng khỏi phân khúc | `/user-segments` |  |
+| 48 | `user_segment.import` | Import người dùng vào phân khúc | Thêm hàng loạt bằng Excel | `/user-segments/import-excel` |  |
+| 49 | `code.view` | Xem mã | Danh sách mã | `GET /manage-codes` |  |
+| 50 | `code.edit` | Quản lý mã | Tạo, sửa mã | `/manage-codes` |  |
+| 51 | `code.import` | Import mã | Nhập mã hàng loạt bằng Excel | `/manage-codes/import-excel` |  |
+| 52 | `notification.view` | Xem thông báo | Danh sách và chi tiết thông báo admin | `GET /admin-notifications*` |  |
+| 53 | `notification.edit` | Soạn thông báo | Tạo, sửa, nhân bản thông báo | `/admin-notifications` |  |
+| 54 | `notification.approve` | Duyệt thông báo | Đánh dấu hoàn thành hoặc từ chối thông báo | `/:id/completed`, `/:id/rejected` |  |
+| 55 | `category.view` | Xem danh mục | Danh sách danh mục | `GET /categories` |  |
+| 56 | `category.edit` | Quản lý danh mục | Tạo, sửa danh mục | `/categories` |  |
 
 **Cấu hình ADV và nội dung site**
 
 | # | Mã quyền | Tên hiển thị | Cho phép làm gì | Màn / API | Ghi chú |
 |---|---|---|---|---|---|
-| 58 | `app_config.view` | Xem cấu hình ứng dụng | Xem cấu hình site của ADV, bản nháp, lịch sử phiên bản, trạng thái onboarding | Cấu hình ứng dụng — `/partners/:id/app-config*` |  |
-| 59 | `app_config.edit` | Sửa cấu hình ứng dụng | Sửa bản nháp cấu hình site, bật/tắt tính năng của ADV | `/partners/:id/app-config`, `/:id/features` |  |
-| 60 | `app_config.publish` | Xuất bản cấu hình | Xuất bản bản nháp lên site đang chạy, khôi phục phiên bản cũ | `/app-config/publish`, `/restore/:version` | Đổi ngay site công khai |
-| 61 | `news.view` | Xem tin tức | Danh sách và chi tiết tin tức (gồm banner trang chủ) | `GET /news*` |  |
-| 62 | `news.edit` | Quản lý tin tức | Tạo, sửa, nhân bản, bật/tắt tin tức | `/news` |  |
-| 63 | `article.view` | Xem bài viết | Danh sách và chi tiết bài viết (gồm ba bài pháp lý) | `GET /articles*` |  |
-| 64 | `article.edit` | Quản lý bài viết | Tạo, sửa bài viết | `/articles` |  |
-| 65 | `quick_action.view` | Xem kênh hỗ trợ | Danh sách kênh hỗ trợ của ADV | `GET /quick-actions` |  |
-| 66 | `quick_action.edit` | Quản lý kênh hỗ trợ | Tạo, sửa, bật/tắt kênh hỗ trợ | `/quick-actions` |  |
-| 67 | `affiliate.view` | Xem chiến dịch affiliate | Danh sách, chi tiết chiến dịch và liên kết chiến dịch – sự kiện | `GET /affiliate-campaigns*`, `/campaign-affiliate-mappings*` |  |
-| 68 | `affiliate.edit` | Quản lý chiến dịch affiliate | Tạo, sửa, bật/tắt chiến dịch, gắn chiến dịch vào sự kiện | `/affiliate-campaigns`, `/campaign-affiliate-mappings` |  |
+| 57 | `app_config.view` | Xem cấu hình ứng dụng | Xem cấu hình site của ADV, bản nháp, lịch sử phiên bản, trạng thái onboarding | Cấu hình ứng dụng — `/partners/:id/app-config*` |  |
+| 58 | `app_config.edit` | Sửa cấu hình ứng dụng | Sửa bản nháp cấu hình site, bật/tắt tính năng của ADV | `/partners/:id/app-config`, `/:id/features` |  |
+| 59 | `app_config.publish` | Xuất bản cấu hình | Xuất bản bản nháp lên site đang chạy, khôi phục phiên bản cũ | `/app-config/publish`, `/restore/:version` | Đổi ngay site công khai |
+| 60 | `news.view` | Xem tin tức | Danh sách và chi tiết tin tức (gồm banner trang chủ) | `GET /news*` |  |
+| 61 | `news.edit` | Quản lý tin tức | Tạo, sửa, nhân bản, bật/tắt tin tức | `/news` |  |
+| 62 | `article.view` | Xem bài viết | Danh sách và chi tiết bài viết (gồm ba bài pháp lý) | `GET /articles*` |  |
+| 63 | `article.edit` | Quản lý bài viết | Tạo, sửa bài viết | `/articles` |  |
+| 64 | `quick_action.view` | Xem kênh hỗ trợ | Danh sách kênh hỗ trợ của ADV | `GET /quick-actions` |  |
+| 65 | `quick_action.edit` | Quản lý kênh hỗ trợ | Tạo, sửa, bật/tắt kênh hỗ trợ | `/quick-actions` |  |
+| 66 | `affiliate.view` | Xem chiến dịch affiliate | Danh sách, chi tiết chiến dịch và liên kết chiến dịch – sự kiện | `GET /affiliate-campaigns*`, `/campaign-affiliate-mappings*` |  |
+| 67 | `affiliate.edit` | Quản lý chiến dịch affiliate | Tạo, sửa, bật/tắt chiến dịch, gắn chiến dịch vào sự kiện | `/affiliate-campaigns`, `/campaign-affiliate-mappings` |  |
 
 **Hệ thống**
 
 | # | Mã quyền | Tên hiển thị | Cho phép làm gì | Màn / API | Ghi chú |
 |---|---|---|---|---|---|
-| 69 | `tag.view` | Xem tag | Danh sách tag (gồm tag cảnh báo dùng khi duyệt nội dung) | `GET /tags` |  |
-| 70 | `tag.edit` | Quản lý tag | Tạo, sửa, bật/tắt tag của ADV trong phạm vi. Tag không gắn ADV (dùng chung) cần phạm vi `all` | `/tags` |  |
-| 71 | `common_config.view` | Xem cấu hình chung | Xem cấu hình của ADV trong phạm vi và cấu hình không gắn ADV | `GET /common-configs*`, `GET /common/configurations` |  |
-| 72 | `common_config.edit` | Sửa cấu hình chung | Sửa cấu hình của ADV trong phạm vi. Cấu hình không gắn ADV (toàn hệ thống) cần phạm vi `all` | `/common-configs`, `PUT /common/configurations` |  |
-| 73 | `audit.view` | Xem nhật ký thao tác | Xem nhật ký thao tác trong phạm vi ADV của mình | `GET /audits` |  |
-| 74 | `login_history.view` | Xem lịch sử đăng nhập | Xem lịch sử đăng nhập của nhân sự | `/audits/login-histories` |  |
-| 75 | `staff.view` | Xem nhân sự | Danh sách và chi tiết nhân sự có phạm vi giao với phạm vi của mình; không thấy root | Nhân viên — `GET /staffs` |  |
-| 76 | `staff.invite` | Mời nhân sự | Mời, mời hàng loạt, gửi lại, thu hồi lời mời — chỉ với vai trò và ADV không vượt quá mình | `/staffs/invite`, `/bulk-invite`, `/:id/resend-invite`, `/:id/revoke-invite` | Ràng buộc PQ-011 |
-| 77 | `staff.edit` | Sửa nhân sự | Đổi vai trò, phạm vi, hạn dùng, thông tin; bật/tắt tài khoản — chỉ nhân sự nằm trọn trong phạm vi mình và mang vai trò mình được gán (PQ-16) | `/staffs/:id/update-info`, `/:id/status` | Ràng buộc PQ-011 |
+| 68 | `tag.view` | Xem tag | Danh sách tag (gồm tag cảnh báo dùng khi duyệt nội dung) | `GET /tags` |  |
+| 69 | `tag.edit` | Quản lý tag | Tạo, sửa, bật/tắt tag của ADV trong phạm vi. Tag không gắn ADV (dùng chung) cần phạm vi `all` | `/tags` |  |
+| 70 | `common_config.view` | Xem cấu hình chung | Xem cấu hình của ADV trong phạm vi và cấu hình không gắn ADV | `GET /common-configs*`, `GET /common/configurations` |  |
+| 71 | `common_config.edit` | Sửa cấu hình chung | Sửa cấu hình của ADV trong phạm vi. Cấu hình không gắn ADV (toàn hệ thống) cần phạm vi `all` | `/common-configs`, `PUT /common/configurations` |  |
+| 72 | `audit.view` | Xem nhật ký thao tác | Xem nhật ký thao tác trong phạm vi ADV của mình | `GET /audits` |  |
+| 73 | `login_history.view` | Xem lịch sử đăng nhập | Xem lịch sử đăng nhập của nhân sự | `/audits/login-histories` |  |
+| 74 | `staff.view` | Xem nhân sự | Danh sách và chi tiết nhân sự có phạm vi giao với phạm vi của mình; không thấy root | Nhân viên — `GET /staffs` |  |
+| 75 | `staff.invite` | Mời nhân sự | Mời, mời hàng loạt, gửi lại, thu hồi lời mời — chỉ với vai trò và ADV không vượt quá mình | `/staffs/invite`, `/bulk-invite`, `/:id/resend-invite`, `/:id/revoke-invite` | Ràng buộc PQ-011 |
+| 76 | `staff.edit` | Sửa nhân sự | Đổi vai trò, phạm vi, hạn dùng, thông tin; bật/tắt tài khoản — chỉ nhân sự nằm trọn trong phạm vi mình và mang vai trò mình được gán (PQ-16) | `/staffs/:id/update-info`, `/:id/status` | Ràng buộc PQ-011 |
 
-Tổng: **77 quyền**.
+Tổng: **76 quyền**.
 
 **Không có mã quyền — chỉ root:**
 
@@ -546,74 +545,73 @@ Ký hiệu: ✔ có · M0 có từ Mốc 0 (PQ-04) · ô trống: không có · 
 | 13 | `partner_member.approve` | ✔ | ✔ |  |  |  |  |  | ✔ |
 | 14 | `user_partner.view` |  |  |  |  | ✔ |  |  | ✔ |
 | 15 | `user_partner.edit_staff_status` |  |  |  |  |  |  |  | ✔ |
-| 16 | `user.edit_partner_data` |  |  |  |  |  |  |  | Q10 |
 | | **Sự kiện và thống kê** | | | | | | | | |
-| 17 | `event.view` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
-| 18 | `event.view_detail` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |  | ✔ |
-| 19 | `event.edit` |  |  |  |  |  | ✔ |  | ✔ |
-| 20 | `event_schema.view` |  |  |  |  | ✔ | ✔ |  | ✔ |
-| 21 | `event_schema.edit` |  |  |  |  |  | ✔ |  | ✔ |
-| 22 | `statistic.view` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |  | ✔ |
-| 23 | `statistic.export` | ✔ |  | ✔ |  |  |  |  | ✔ |
+| 16 | `event.view` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| 17 | `event.view_detail` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |  | ✔ |
+| 18 | `event.edit` |  |  |  |  |  | ✔ |  | ✔ |
+| 19 | `event_schema.view` |  |  |  |  | ✔ | ✔ |  | ✔ |
+| 20 | `event_schema.edit` |  |  |  |  |  | ✔ |  | ✔ |
+| 21 | `statistic.view` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |  | ✔ |
+| 22 | `statistic.export` | ✔ |  | ✔ |  |  |  |  | ✔ |
 | | **Thưởng, nhiệm vụ, quà** | | | | | | | | |
-| 24 | `bonus.view` | ✔ |  | ✔ | ✔ | ✔ |  |  | ✔ |
-| 25 | `bonus.edit` | ✔ |  | ✔ |  |  |  |  | ✔ |
-| 26 | `bonus.import` | ✔ |  | ✔ |  |  |  |  | ✔ |
-| 27 | `bonus.cancel` | ✔ |  | ✔ |  |  |  |  | ✔ |
-| 28 | `bonus.change_status` |  |  |  | ✔ |  |  |  | ✔ |
-| 29 | `mission.view` |  |  |  |  | ✔ |  |  | ✔ |
-| 30 | `mission.edit` |  |  |  |  |  |  |  | ✔ |
-| 31 | `mission.approve` |  |  |  |  |  |  |  | ✔ |
-| 32 | `gift.view` |  |  |  |  | ✔ |  |  | ✔ |
-| 33 | `gift.edit` |  |  |  |  |  |  |  | ✔ |
-| 34 | `gift.process` |  |  |  |  |  |  |  | ✔ |
+| 23 | `bonus.view` | ✔ |  | ✔ | ✔ | ✔ |  |  | ✔ |
+| 24 | `bonus.edit` | ✔ |  | ✔ |  |  |  |  | ✔ |
+| 25 | `bonus.import` | ✔ |  | ✔ |  |  |  |  | ✔ |
+| 26 | `bonus.cancel` | ✔ |  | ✔ |  |  |  |  | ✔ |
+| 27 | `bonus.change_status` |  |  |  | ✔ |  |  |  | ✔ |
+| 28 | `mission.view` |  |  |  |  | ✔ |  |  | ✔ |
+| 29 | `mission.edit` |  |  |  |  |  |  |  | ✔ |
+| 30 | `mission.approve` |  |  |  |  |  |  |  | ✔ |
+| 31 | `gift.view` |  |  |  |  | ✔ |  |  | ✔ |
+| 32 | `gift.edit` |  |  |  |  |  |  |  | ✔ |
+| 33 | `gift.process` |  |  |  |  |  |  |  | ✔ |
 | | **Đối soát, rút tiền, dữ liệu xuất** | | | | | | | | |
-| 35 | `reconciliation.view` | ✔ |  | ✔ | ✔ | ✔ |  |  | ✔ |
-| 36 | `reconciliation.edit` |  |  |  |  |  |  |  | ✔ |
-| 37 | `reconciliation.cancel_item` | ✔ |  | ✔ |  |  |  |  | ✔ |
-| 38 | `reconciliation.change_status` |  |  |  | ✔ |  |  |  | ✔ |
-| 39 | `reconciliation.export` | ✔ |  | ✔ | ✔ |  |  |  | ✔ |
-| 40 | `transfer.view` | ✔ |  | ✔ | ✔ | ✔ |  |  | ✔ |
-| 41 | `transfer.edit` |  |  |  |  |  |  |  | ✔ |
-| 42 | `transfer.export` | ✔ |  | ✔ | ✔ |  |  |  | ✔ |
-| 43 | `transfer.change_status` |  |  |  | ✔ |  |  |  | ✔ |
-| 44 | `export.view` | ✔ |  | ✔ | ✔ |  |  |  | ✔ |
+| 34 | `reconciliation.view` | ✔ |  | ✔ | ✔ | ✔ |  |  | ✔ |
+| 35 | `reconciliation.edit` |  |  |  |  |  |  |  | ✔ |
+| 36 | `reconciliation.cancel_item` | ✔ |  | ✔ |  |  |  |  | ✔ |
+| 37 | `reconciliation.change_status` |  |  |  | ✔ |  |  |  | ✔ |
+| 38 | `reconciliation.export` | ✔ |  | ✔ | ✔ |  |  |  | ✔ |
+| 39 | `transfer.view` | ✔ |  | ✔ | ✔ | ✔ |  |  | ✔ |
+| 40 | `transfer.edit` |  |  |  |  |  |  |  | ✔ |
+| 41 | `transfer.export` | ✔ |  | ✔ | ✔ |  |  |  | ✔ |
+| 42 | `transfer.change_status` |  |  |  | ✔ |  |  |  | ✔ |
+| 43 | `export.view` | ✔ |  | ✔ | ✔ |  |  |  | ✔ |
 | | **Phân khúc, mã, thông báo, danh mục** | | | | | | | | |
-| 45 | `segment.view` |  |  |  |  | ✔ |  |  | ✔ |
-| 46 | `segment.edit` |  |  |  |  |  |  |  | ✔ |
-| 47 | `user_segment.view` |  |  |  |  | ✔ |  |  | ✔ |
-| 48 | `user_segment.edit` |  |  |  |  |  |  |  | ✔ |
-| 49 | `user_segment.import` |  |  |  |  |  |  |  | ✔ |
-| 50 | `code.view` |  |  |  |  | ✔ |  |  | ✔ |
-| 51 | `code.edit` |  |  |  |  |  |  |  | ✔ |
-| 52 | `code.import` |  |  |  |  |  |  |  | ✔ |
-| 53 | `notification.view` |  |  |  |  | ✔ |  |  | ✔ |
-| 54 | `notification.edit` |  |  |  |  |  |  |  | ✔ |
-| 55 | `notification.approve` |  |  |  |  |  |  |  | ✔ |
-| 56 | `category.view` | ✔ | ✔ | ✔ |  | ✔ | ✔ |  | ✔ |
-| 57 | `category.edit` |  |  |  |  |  |  |  | ✔ |
+| 44 | `segment.view` |  |  |  |  | ✔ |  |  | ✔ |
+| 45 | `segment.edit` |  |  |  |  |  |  |  | ✔ |
+| 46 | `user_segment.view` |  |  |  |  | ✔ |  |  | ✔ |
+| 47 | `user_segment.edit` |  |  |  |  |  |  |  | ✔ |
+| 48 | `user_segment.import` |  |  |  |  |  |  |  | ✔ |
+| 49 | `code.view` |  |  |  |  | ✔ |  |  | ✔ |
+| 50 | `code.edit` |  |  |  |  |  |  |  | ✔ |
+| 51 | `code.import` |  |  |  |  |  |  |  | ✔ |
+| 52 | `notification.view` |  |  |  |  | ✔ |  |  | ✔ |
+| 53 | `notification.edit` |  |  |  |  |  |  |  | ✔ |
+| 54 | `notification.approve` |  |  |  |  |  |  |  | ✔ |
+| 55 | `category.view` | ✔ | ✔ | ✔ |  | ✔ | ✔ |  | ✔ |
+| 56 | `category.edit` |  |  |  |  |  |  |  | ✔ |
 | | **Cấu hình ADV và nội dung site** | | | | | | | | |
-| 58 | `app_config.view` |  |  |  |  | ✔ | ✔ |  | ✔ |
-| 59 | `app_config.edit` |  |  |  |  |  | ✔ |  | ✔ |
-| 60 | `app_config.publish` |  |  |  |  |  | ✔ |  | ✔ |
-| 61 | `news.view` |  |  |  |  | ✔ | ✔ |  | ✔ |
-| 62 | `news.edit` |  |  |  |  |  | ✔ |  | ✔ |
-| 63 | `article.view` |  |  |  |  | ✔ | ✔ |  | ✔ |
-| 64 | `article.edit` |  |  |  |  |  | ✔ |  | ✔ |
-| 65 | `quick_action.view` |  |  |  |  | ✔ | ✔ |  |  |
-| 66 | `quick_action.edit` |  |  |  |  |  | ✔ |  |  |
-| 67 | `affiliate.view` |  |  |  |  | ✔ | ✔ |  | ✔ |
-| 68 | `affiliate.edit` |  |  |  |  |  | ✔ |  | ✔ |
+| 57 | `app_config.view` |  |  |  |  | ✔ | ✔ |  | ✔ |
+| 58 | `app_config.edit` |  |  |  |  |  | ✔ |  | ✔ |
+| 59 | `app_config.publish` |  |  |  |  |  | ✔ |  | ✔ |
+| 60 | `news.view` |  |  |  |  | ✔ | ✔ |  | ✔ |
+| 61 | `news.edit` |  |  |  |  |  | ✔ |  | ✔ |
+| 62 | `article.view` |  |  |  |  | ✔ | ✔ |  | ✔ |
+| 63 | `article.edit` |  |  |  |  |  | ✔ |  | ✔ |
+| 64 | `quick_action.view` |  |  |  |  | ✔ | ✔ |  |  |
+| 65 | `quick_action.edit` |  |  |  |  |  | ✔ |  |  |
+| 66 | `affiliate.view` |  |  |  |  | ✔ | ✔ |  | ✔ |
+| 67 | `affiliate.edit` |  |  |  |  |  | ✔ |  | ✔ |
 | | **Hệ thống** | | | | | | | | |
-| 69 | `tag.view` | ✔ | ✔ | ✔ |  | ✔ | ✔ | ✔ | ✔ |
-| 70 | `tag.edit` |  |  |  |  |  |  |  | ✔ |
-| 71 | `common_config.view` |  |  |  |  | ✔ |  |  | ✔ |
-| 72 | `common_config.edit` |  |  |  |  |  |  |  | ✔ |
-| 73 | `audit.view` | ✔ |  |  |  | ✔ |  |  | ✔ |
-| 74 | `login_history.view` | ✔ |  |  |  | ✔ |  |  | ✔ |
-| 75 | `staff.view` | ✔ |  |  |  |  |  |  |  |
-| 76 | `staff.invite` | ✔ |  |  |  |  |  |  |  |
-| 77 | `staff.edit` | ✔ |  |  |  |  |  |  |  |
+| 68 | `tag.view` | ✔ | ✔ | ✔ |  | ✔ | ✔ | ✔ | ✔ |
+| 69 | `tag.edit` |  |  |  |  |  |  |  | ✔ |
+| 70 | `common_config.view` |  |  |  |  | ✔ |  |  | ✔ |
+| 71 | `common_config.edit` |  |  |  |  |  |  |  | ✔ |
+| 72 | `audit.view` | ✔ |  |  |  | ✔ |  |  | ✔ |
+| 73 | `login_history.view` | ✔ |  |  |  | ✔ |  |  | ✔ |
+| 74 | `staff.view` | ✔ |  |  |  |  |  |  |  |
+| 75 | `staff.invite` | ✔ |  |  |  |  |  |  |  |
+| 76 | `staff.edit` | ✔ |  |  |  |  |  |  |  |
 
 **Kiểm tra tách lập / duyệt:** không vai trò nào ngoài Admin có cùng lúc một quyền nhóm *lập*
 (`bonus.edit`, `bonus.import`, `bonus.cancel`, `reconciliation.cancel_item`, `reconciliation.edit`, `transfer.edit`)
@@ -874,7 +872,6 @@ route tự gắn middleware như hôm nay.
 | Duyệt creator / thành viên ADV cần quyền riêng | CTV, Cấu hình ứng dụng; Admin giữ quyền | 3 | Hôm nay ai đăng nhập cũng duyệt được |
 | Danh sách người dùng (`GET /users`, `/partners/users`) cần `creator.view` | CTV, Cấu hình ứng dụng | 3 | Dữ liệu người dùng |
 | `PUT /common/configurations` cần `common_config.edit` + phạm vi `all` | Mọi vai trò không phải root | 3 | Ghi cấu hình xuyên ADV |
-| `PUT /partners/users/wildrift` cần `user.edit_partner_data` hoặc bị gỡ | Mọi vai trò không phải root | 3 | Q10 |
 | Nhật ký `/audits` cần `audit.view`, lọc theo phạm vi | CTV, Cấu hình ứng dụng; nhân sự ADV khác | 3 | PQ-17 |
 | `/migration/*` và công cụ kỹ thuật (5.3) chỉ root | Mọi vai trò không phải root; Admin mất `/events/run-analytic-daily` | 3 | Không phải công cụ vận hành |
 
@@ -1122,7 +1119,6 @@ ký khi gọi sang AT (`internal/module/core/client.go:42`).
 | Q7 | Nhiệm vụ, duyệt điểm nhiệm vụ, quà, xử lý đổi quà, phân khúc, mã, thông báo admin, sửa hồ sơ creator, trạng thái CBNV, xuất danh sách người dùng, sửa danh mục, tag, cấu hình: hôm nay chỉ Admin làm. Sau này đội nào làm? | Giữ ở Admin tới khi biz chỉ định | Biz | Không |
 | Q8 | Kênh nhận cảnh báo root đăng nhập; người được chạy quy trình khôi phục root | — | AT | Mốc 0 |
 | Q9 | Các route cập nhật hàng loạt dưới `/contents` (`/update-status-data-contents`, `/update-warning-tags-content`): công cụ vận hành hay công cụ kỹ thuật? | DISO phân loại khi dựng registry | DISO | Mốc 1 |
-| Q10 | `PUT /partners/users/wildrift` còn dùng không? | Không dùng thì gỡ | DISO | Mốc 3 |
 | Q11 | Kỹ thuật hỗ trợ phía **đối tác** có được xem dữ liệu mọi ADV không? | Không: đội kỹ thuật AT được `all`; đối tác được giao danh sách ADV đang hỗ trợ | AT | Mốc 2 |
 | Q12 | Duyệt chi có ít nhất 2 người để thay nhau khi vắng không? | Có, để không quay lại phụ thuộc một người | Biz | Mốc 2 |
 | Q13 | Admin cũ giữ quyền tới khi nào? | Tới hết Mốc 3 cộng 30 ngày; sau đó chuyển từng người sang vai trò mới, Admin chỉ còn cho trường hợp biz chỉ định | Biz | Mốc 3 |
@@ -1171,7 +1167,6 @@ nhân sự gắn ADV và bản ghi thuộc ADV đó
 | ADV — danh sách | `GET /partners` | ∀ | ∀ | ∀ | ✔ |
 | Người dùng của ADV — danh sách (**trả số thẻ, mã số thuế**) | `GET /partners/users` | ∀ | ∀ | ∀ | ✔ |
 | ADV — tạo, sửa, ngừng | `/partners` | — | — | — | ✔ |
-| Dữ liệu người dùng WildRift | `PUT /partners/users/wildrift` | ∀ | ∀ | ∀ | ✔ |
 | Tag — danh sách | `GET /tags` | ✔ | ✔ | ✔ | ✔ |
 | Tag — tạo, sửa (gắn ADV của nhân sự) | `/tags` | ✔ | — | — | ✔ |
 | Cấu hình chung (theo ADV; handler dùng root giả — mục 11) | `/common-configs` | ✔ | — | — | ✔ |
