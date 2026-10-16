@@ -150,6 +150,8 @@ Mục này viết bằng lời thường. Phần mã quyền cho đội kỹ thu
 
 ### 4.2 Các vai trò
 
+> **Bảng chuẩn theo code:** [vai-tro-va-quyen-2026-10-16.md](vai-tro-va-quyen-2026-10-16.md). Mục này là bản đề xuất ban đầu; chỗ nào lệch (77 mã, `content.delete` cho QLVH/VHHS, `user.view_sensitive`, tên mã cũ) thì theo file kia.
+
 **Root** — *một tài khoản duy nhất, do AT giữ*
 - Làm được mọi việc, trên mọi ADV.
 - Những việc **chỉ root** làm được (không vai trò nào khác nhận được): tạo và sửa ADV; khoá, mở khoá creator; hợp
@@ -210,6 +212,8 @@ Mục này viết bằng lời thường. Phần mã quyền cho đội kỹ thu
 
 ### 4.3 Bảng vai trò × việc
 
+> **Bảng chuẩn theo code:** [vai-tro-va-quyen-2026-10-16.md](vai-tro-va-quyen-2026-10-16.md). Mục này là bản đề xuất ban đầu; chỗ nào lệch (77 mã, `content.delete` cho QLVH/VHHS, `user.view_sensitive`, tên mã cũ) thì theo file kia.
+
 Ký hiệu: ✔ làm được · — không làm được · *(tiền)* việc liên quan tiền · *(cá nhân)* xem dữ liệu cá nhân, mỗi lượt có
 ghi lại. Admin giữ như hôm nay (Phụ lục A).
 
@@ -268,7 +272,7 @@ giao "mọi ADV" và root. Các việc trong nhóm "hôm nay chỉ Admin làm" g
 | Nhân viên vận hành | Admin, thiếu việc, phải nhờ người có root | Vận hành nội dung hoặc Vận hành hiệu suất, làm đủ việc của mình |
 | Người chốt tiền | Dùng Admin hoặc root | Duyệt chi; không tự lập khoản thưởng |
 | Đội kỹ thuật | Xin root khi hỗ trợ | Kỹ thuật hỗ trợ, xem mọi ADV; chạy công cụ kỹ thuật vẫn nhờ root của AT |
-| Cộng tác viên | Duyệt nội dung; xoá nội dung; gọi được API thưởng thêm, duyệt creator, nhật ký, cấu hình chung; thấy CCCD, số thẻ creator | Chỉ duyệt nội dung |
+| Cộng tác viên | Duyệt nội dung; gọi được API thưởng thêm, duyệt creator, nhật ký, cấu hình chung; thấy CCCD, số thẻ creator | Chỉ duyệt nội dung |
 | Cấu hình ứng dụng | Dựng site; gọi được API thưởng thêm, duyệt creator, nhật ký, cấu hình chung; thấy CCCD, số thẻ creator | Dựng site như hôm nay; mất các API ngoài việc |
 | Admin | Như Phụ lục A | Giữ nguyên; thêm xem liên hệ creator; mất các API công cụ kỹ thuật; không còn thấy CCCD, mã số thuế, số thẻ; sửa tag, cấu hình không gắn ADV cần được giao "mọi ADV" |
 
@@ -341,6 +345,8 @@ Tag, danh mục, cấu hình **có thể gắn ADV** (`TagRaw.Partner`, `CommonC
 Trường `type` (`vfdc` / `partner`) trên bản ghi nhân sự hiện không chỗ nào đọc; bỏ đi khi có `all` / `list`.
 
 ### 5.3 Bảng quyền
+
+> **Bảng chuẩn theo code:** [vai-tro-va-quyen-2026-10-16.md](vai-tro-va-quyen-2026-10-16.md). Mục này là bản đề xuất ban đầu; chỗ nào lệch (77 mã, `content.delete` cho QLVH/VHHS, `user.view_sensitive`, tên mã cũ) thì theo file kia.
 
 Mỗi dòng là **một quyền** — đơn vị nhỏ nhất root tick được trên màn Vai trò & phân quyền. DISO rà lại khi dựng
 registry route (PQ-09): mỗi endpoint thuộc đúng một quyền, hoặc `root`, hoặc `public`.
@@ -509,6 +515,8 @@ DISO liệt kê đủ các lời gọi kèm khi dựng registry (PQ-09); mỗi l
 rỗng thì từ chối" ở 5.2.
 
 ### 5.4 Vai trò → mã quyền
+
+> **Bảng chuẩn theo code:** [vai-tro-va-quyen-2026-10-16.md](vai-tro-va-quyen-2026-10-16.md). Mục này là bản đề xuất ban đầu; chỗ nào lệch (77 mã, `content.delete` cho QLVH/VHHS, `user.view_sensitive`, tên mã cũ) thì theo file kia.
 
 | Vai trò | Mã | Số quyền | Phạm vi gợi ý |
 |---|---|---|---|
@@ -867,7 +875,6 @@ route tự gắn middleware như hôm nay.
 | Thiếu quyền trả 403 thay vì 401 | Mọi vai trò | 1 | NFR-05 |
 | Sửa tag, cấu hình **không gắn ADV** cần phạm vi `all`; tag, cấu hình của ADV giữ như hôm nay | Admin phạm vi `list` | 1 | Bản ghi không gắn ADV (5.2) |
 | Che CCCD, mã số thuế, số thẻ với mọi vai trò trừ root | Admin, CTV, Cấu hình ứng dụng | Ticket vá (mục 11) | Dữ liệu cá nhân (4.5) |
-| Xoá nội dung cần `content.delete` | CTV | 3 | Nội dung bị xoá không còn tính thưởng |
 | Thưởng thêm cần `bonus.*` | CTV, Cấu hình ứng dụng | 3 | Hôm nay ai đăng nhập cũng tạo, nhập được thưởng |
 | Duyệt creator / thành viên ADV cần quyền riêng | CTV, Cấu hình ứng dụng; Admin giữ quyền | 3 | Hôm nay ai đăng nhập cũng duyệt được |
 | Danh sách người dùng (`GET /users`, `/partners/users`) cần `creator.view` | CTV, Cấu hình ứng dụng | 3 | Dữ liệu người dùng |
