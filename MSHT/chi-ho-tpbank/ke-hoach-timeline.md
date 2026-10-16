@@ -157,15 +157,15 @@
 
 | Bên | Vai trò | Người | Trách nhiệm chính |
 |---|---|---|---|
-| Diso / MSHT | PM / Product | **Vĩnh** | Lập & theo dõi kế hoạch, chủ trì Go/No-Go, ký nghiệm thu, đầu mối nội bộ với Ngọc Thảo/AT |
+| Diso / MSHT | PM / Product | **Huyền** | Lập & theo dõi kế hoạch, chủ trì Go/No-Go, ký nghiệm thu, đầu mối nội bộ với Ngọc Thảo/AT |
 | Diso / MSHT | Người bàn giao | Huyền | Bàn giao hiện trạng, hỗ trợ PM trong tuần đầu khi cần tra lại lịch sử trao đổi với AT |
 | Diso / MSHT | Dev Lead / Dev BE | Trung | Code batch, deploy, đối chiếu log, trực sau release |
 | Diso / MSHT | QC | Huyền | Testcase, test DEV, nghiệm thu E2E, smoke test production |
 | Diso / MSHT | DevOps | Trung | Cấu hình prod, cron, flag, backup/rollback |
 | Biz | Account / đầu mối AT | Ngọc Thảo | Gửi kế hoạch cho AT, chốt thời điểm dừng chi thủ công, kênh escalate với AT |
-| AccessTrade | AT Core / HSM | Chính (+ team AT Core) | API batch, ký HSM, môi trường DEV/Prod, xác nhận giao dịch, trực ngày release |
-| AccessTrade | Nghiệp vụ | Quỳnh | Xác nhận nghiệp vụ, ngưỡng chi hộ, nghiệm thu phía AT |
-| AccessTrade | Kế toán | Hằng | Chi thủ công kỳ cuối 21/10, gửi kết quả, đối soát sau release |
+| AT-Core | AT Core / HSM | Dev AT-Core | API batch, ký HSM, môi trường DEV/Prod, xác nhận giao dịch, trực ngày release |
+| AT-MSHT | Nghiệp vụ | Quỳnh | Xác nhận nghiệp vụ, ngưỡng chi hộ, nghiệm thu phía AT |
+| AT-MSHT | Kế toán | Hằng | Chi thủ công kỳ cuối 21/10, gửi kết quả, đối soát sau release |
 | TPBank | Ngân hàng | Làm việc **qua AT** | Mở dịch vụ chi hộ cho MSHT (đã mở 12/10), thực hiện chuyển tiền |
 
 ### 5.2 Cam kết của từng bên
