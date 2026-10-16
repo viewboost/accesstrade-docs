@@ -22,6 +22,7 @@
    |---|---|---|
    | Số GD / tài khoản tổng / giờ | 30 | Mỗi lô tối đa 30 lệnh, phần dư dời sang khung kế tiếp (theo thứ tự thời gian tạo) |
    | Số GD / tài khoản tổng / ngày | 100 | Tổng các lô trong ngày ≤ 100, phần dư dời sang ngày sau |
+   | Số tiền GD tối đa / tài khoản tổng / giờ | 10.000.000đ | Tổng tiền mỗi lô ≤ 10.000.000đ; lô dừng ở lệnh đầu tiên làm vượt ngưỡng, phần dư dời sang khung kế tiếp (FIFO) |
    | Số tiền tối thiểu / GD | 10.000đ | Chặn từ lúc user tạo yêu cầu |
    | Hạn mức / ngày / user | 1.900.000đ | Chặn từ lúc user tạo yêu cầu |
    | Hạn mức / tháng / user | 1.900.000đ | Chặn từ lúc user tạo yêu cầu |
@@ -65,7 +66,7 @@
 |---|---|---|---|---|
 | 1.1 | Trạng thái mới "Chờ lô": yêu cầu rút sau khi validate thì vào hàng đợi, không gọi AT Core ngay | Dev BE | 16/10 | Migration + logic |
 | 1.2 | Validate ngưỡng: min 10.000đ, 1.900.000đ/ngày/user, 1.900.000đ/tháng/user (tận dụng logic Phase 1) | Dev BE | 16/10 | Unit test |
-| 1.3 | Scheduler 0h/8h/12h/16h/20h: chọn tối đa 30 lệnh/lô, ≤ 100 lệnh/ngày, FIFO, khoá chống chạy song song (lock) | Dev BE | 19/10 sáng | Job batch |
+| 1.3 | Scheduler 0h/8h/12h/16h/20h: chọn tối đa 30 lệnh và ≤ 10.000.000đ/lô, ≤ 100 lệnh/ngày, FIFO, khoá chống chạy song song (lock) | Dev BE | 19/10 sáng | Job batch |
 | 1.4 | Gọi AT Core 1 lần/lô theo spec chi theo lô đã thống nhất với AT; lưu batch_id; idempotency theo mã lệnh | Dev BE | 19/10 sáng | Client AT Core batch |
 | 1.5 | Nhận/truy vấn kết quả lô, cập nhật trạng thái từng lệnh, hoàn số dư khi thất bại (theo quy tắc đã thống nhất với AT) | Dev BE | 19/10 chiều | Cập nhật lịch sử GD |
 | 1.6 | Log + báo cáo theo lô (batch_id, số lệnh, tổng tiền, kết quả); alert khi lô lỗi hoặc dư lệnh dồn quá 1 ngày | Dev BE | 19/10 chiều | Báo cáo đối soát |
@@ -80,7 +81,7 @@
 | 2.0 | Cập nhật testcase: thêm case chi theo lô / ngưỡng / cutover vào file nghiệm thu DEV | QC | 16/10 | Testcase v2 |
 | 2.1 | Regression luồng rút tiền theo file smoke test TPBank | QC | 20/10 sáng | Kết quả smoke |
 | 2.2 | Test batch: lệnh vào đúng lô, không gọi ngoài khung giờ, 1 lần gọi AT/lô | QC | 20/10 sáng | Kết quả |
-| 2.3 | Test ngưỡng: lô > 30 lệnh, ngày > 100 lệnh, < 10.000đ, vượt 1,9tr ngày/tháng | QC | 20/10 | Kết quả |
+| 2.3 | Test ngưỡng: lô > 30 lệnh, lô > 10.000.000đ, ngày > 100 lệnh, < 10.000đ, vượt 1,9tr ngày/tháng | QC | 20/10 | Kết quả |
 | 2.4 | Test lỗi: AT Core timeout / trả lỗi / một phần lô thất bại; chạy lại lô không gây chi trùng | QC | 20/10 chiều | Kết quả |
 | 2.5 | Test cutover: lệnh đã chi thủ công (đã import) không bị đưa vào lô | QC | 20/10 chiều | Kết quả |
 | 2.6 | Fix bug + retest | Dev | 20/10 | **Test report (M2)** |
@@ -102,7 +103,7 @@
 | AC-01 | **E2E (bắt buộc AT)** | Chi tiền thành công end-to-end MSHT → AT Core → TPBank → TK nhận | Tiền về đúng số, đúng TK; trạng thái MSHT = Thành công |
 | AC-02 | Batch | Lệnh chỉ được gửi tại 0h00 / 8h00 / 12h00 / 16h00 / 20h00 | Không có lần gọi AT Core nào ngoài khung (kiểm tra log) |
 | AC-03 | Batch | Mỗi khung gọi AT Core **1 lần cho cả lô**; truy vấn trạng thái theo lô | Số lần gọi = số lô (+ số lần truy vấn đã chốt) |
-| AC-04 | Ngưỡng | Lô tối đa 30 lệnh; tổng/ngày ≤ 100; phần dư dời khung sau theo FIFO | Test 35 lệnh → lô 1: 30, lô 2: 5 |
+| AC-04 | Ngưỡng | Lô tối đa 30 lệnh và ≤ 10.000.000đ; tổng/ngày ≤ 100; phần dư dời khung sau theo FIFO | Test 35 lệnh → lô 1: 30, lô 2: 5. Test 6 lệnh × 1.900.000đ → lô 1: 5 lệnh (9.500.000đ), lô 2: 1 |
 | AC-05 | Ngưỡng | Chặn < 10.000đ, vượt 1.900.000đ/ngày/user, vượt 1.900.000đ/tháng/user | Báo lỗi rõ cho user, không tạo lệnh |
 | AC-06 | An toàn tiền | Không chi trùng khi chạy lại lô, AT timeout, hay scheduler chạy 2 lần | Mỗi mã lệnh chỉ được chi 1 lần |
 | AC-07 | An toàn tiền | Lệnh thất bại được xử lý đúng quy tắc chốt (hoàn số dư / chờ xử lý) | Số dư user đúng sau thất bại |
@@ -172,7 +173,7 @@
 
 **Diso / MSHT**
 - Chỉ gọi AT Core theo lô ở 5 khung giờ. Không gọi lẻ, không truy vấn trạng thái ngoài số lần đã chốt (để không phát sinh phí HSM).
-- Tuân thủ ngưỡng 30 GD/giờ, 100 GD/ngày, 10.000đ tối thiểu, 1.900.000đ/ngày và /tháng mỗi user.
+- Tuân thủ ngưỡng 30 GD/giờ, 10.000.000đ/giờ, 100 GD/ngày, 10.000đ tối thiểu, 1.900.000đ/ngày và /tháng mỗi user.
 - Bảo đảm không chi trùng giữa luồng thủ công và luồng tự động.
 - Bảo mật key `TPBANK_MSHT`; trực theo dõi các lô trong 1 tuần sau release.
 - Báo AT ngay khi phát hiện lô lỗi; có flag để quay về chi thủ công.

@@ -8,7 +8,7 @@
 
 **Lịch:** nghiệm thu E2E **T3 21/10**, release và bật chi tự động **T4 22/10**.
 
-**Cách chi mới:** MSHT gom lệnh và gọi AT Core **1 lần mỗi lô** vào 5 khung giờ 0h00 · 8h00 · 12h00 · 16h00 · 20h00. Mỗi lô tối đa 30 lệnh, mỗi ngày tối đa 100 lệnh, theo ngưỡng chi hộ cập nhật ngày 10/09.
+**Cách chi mới:** MSHT gom lệnh và gọi AT Core **1 lần mỗi lô** vào 5 khung giờ 0h00 · 8h00 · 12h00 · 16h00 · 20h00. Mỗi lô tối đa 30 lệnh và 10.000.000đ, mỗi ngày tối đa 100 lệnh, theo ngưỡng chi hộ cập nhật ngày 10/09.
 
 **Đầu mối phía MSHT:** Huyền (PM / QC) · Trung (Dev Lead / DevOps) · Ngọc Thảo (Biz, kênh escalate)
 
