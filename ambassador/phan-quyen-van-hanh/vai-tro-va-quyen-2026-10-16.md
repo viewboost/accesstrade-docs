@@ -23,13 +23,14 @@ Một thao tác được phép khi: nhân sự đang hoạt động, chưa hết
 **Nguyên tắc chung**
 - Có quyền sửa / import / xuất / duyệt của một chức năng thì tự có quyền xem chức năng đó.
 - **Người lập khoản chi và người duyệt khoản chi là hai vai trò khác nhau.** Chỉ root và Admin có cả hai nhóm. Dù vậy, trừ root, **không ai duyệt được khoản do chính mình tạo**, kể cả Admin.
+  - **Khe còn lại:** hệ thống chỉ so người duyệt với người tạo khoản. Người có cả quyền sửa lẫn quyền duyệt (Admin) sửa số tiền một khoản người khác lập rồi tự duyệt khoản đó được (mục 7).
   - Nhóm lập: `bonus.edit`, `bonus.import`, `bonus.cancel`, `reconciliation.create`, `reconciliation.cancel_item`, `transfer.create`.
   - Nhóm duyệt: `bonus.approve`, `reconciliation.change_status`, `transfer.change_status`.
   - Luật này chỉ áp dụng trên **trang admin**. Đối soát và đợt rút tạo, đổi trạng thái qua API ngoài của AT không đi qua luật hai người (mục 5.5).
 - **Dữ liệu cá nhân của creator:**
   - SĐT, email: chỉ người có `user.view_contact` thấy (QLVH, VHND, Admin, root); người khác không thấy. Riêng ô tìm creator ở bảng xếp hạng, người không có quyền vẫn thấy 4 số cuối SĐT để phân biệt creator trùng tên.
   - Nhật ký xem SĐT, email hiện **chỉ ghi khi mở chi tiết creator**. SĐT, email còn hiện ở danh sách người dùng, hồ sơ creator, lịch sử đổi quà, file xuất người dùng và bảng xếp hạng mà không ghi nhật ký.
-  - CCCD, mã số thuế, ngân hàng: chỉ root thấy đầy đủ; người khác thấy bản che (CCCD/MST 3 ký tự cuối, số thẻ 4 số cuối, không thấy chủ thẻ).
+  - CCCD, mã số thuế, ngân hàng: chỉ root và hệ thống AT qua API ngoài (mục 5.5) thấy đầy đủ; người khác thấy bản che (CCCD/MST 3 ký tự cuối, số thẻ 4 số cuối, không thấy chủ thẻ).
   - **Ngoại lệ — file rút tiền:** file chuyển khoản gửi ngân hàng chứa **đủ CCCD, MST, SĐT và số thẻ**, không che. Ai có `transfer.export` đều tải được: QLVH, VHHS, Duyệt chi, Admin (cần chốt, mục 7).
 - Token đăng nhập mạng xã hội của creator: không ai thấy, kể cả root.
 
@@ -145,7 +146,7 @@ Một thao tác được phép khi: nhân sự đang hoạt động, chưa hết
 - Thưởng sự kiện: đổi trạng thái, xoá, từ chối, chạy lại tính thưởng.
 - **Xoá nội dung** (xoá cứng, kéo theo thưởng sự kiện và số liệu; nội dung đã vào đối soát thì không xoá được). Cần chốt, mục 7.
 - Sửa dữ liệu người dùng ADV WildRift (`PUT /partners/users/wildrift`). Không dùng nữa thì gỡ route khỏi code.
-- Công cụ kỹ thuật: chạy lại analytic, cập nhật dữ liệu sự kiện, cập nhật hàng loạt trạng thái / tag cảnh báo nội dung.
+- Công cụ kỹ thuật: mọi route `/migration/*` (chạy migration, backfill dữ liệu); chạy lại analytic, cập nhật dữ liệu sự kiện, cập nhật hàng loạt trạng thái / tag cảnh báo nội dung.
 
 **Không cần đăng nhập:** đăng nhập; xác minh và nhận lời mời; quên, đặt lại mật khẩu.
 
@@ -153,11 +154,11 @@ Một thao tác được phép khi: nhân sự đang hoạt động, chưa hết
 
 ## 4. Gán người khi triển khai
 
-Biz ký bảng này **trước khi deploy**. Mỗi tài khoản đang hoạt động một dòng.
+Biz ký bảng này **trước khi deploy**. Mỗi tài khoản đang hoạt động một dòng. DISO đổ sẵn 4 cột đầu từ DB production; biz điền các cột còn lại.
 
-| Tài khoản (email) | Vai trò hôm nay | Vai trò mới | ADV phụ trách | Hạn dùng | Người duyệt |
-|---|---|---|---|---|---|
-| | | | | | |
+| Tài khoản (email) | Vai trò hôm nay | ADV hôm nay | Root | Vai trò mới | Phạm vi (mọi ADV / danh sách) | ADV phụ trách | Hạn dùng | Người duyệt |
+|---|---|---|---|---|---|---|---|---|
+| | | | | | | | | |
 
 Nếu deploy mà chưa có bảng này:
 - Nhân sự không gắn ADV tự thành phạm vi **mọi ADV**.
@@ -172,13 +173,13 @@ Nếu deploy mà chưa có bảng này:
 - **Kênh nhận cảnh báo, quy trình khôi phục root khẩn cấp:** chờ AT chốt (mục 7).
 
 ### 5.2 Hạn dùng tài khoản
-| Loại tài khoản | Hạn mặc định | Ai gia hạn | Nhắc trước |
-|---|---|---|---|
-| Nội bộ AT | Chờ chốt | Chờ chốt | Chờ chốt |
-| Đối tác (kể cả KTHT phía đối tác) | Chờ chốt — bắt buộc có hạn | Chờ chốt | Chờ chốt |
-| Cộng tác viên | Chờ chốt | Chờ chốt | Chờ chốt |
+| Loại tài khoản | Hạn mặc định | Ai gia hạn |
+|---|---|---|
+| Nội bộ AT | Chờ chốt | Chờ chốt |
+| Đối tác (kể cả KTHT phía đối tác) | Chờ chốt — bắt buộc có hạn | Chờ chốt |
+| Cộng tác viên | Chờ chốt | Chờ chốt |
 
-Màn Nhân viên đã có bộ lọc **"Sắp hết hạn"** (còn ≤ 7 ngày hoặc đã quá hạn) để theo dõi.
+**Nhắc hết hạn:** hệ thống **chưa gửi nhắc**. Người phụ trách tự lọc **"Sắp hết hạn"** (còn ≤ 7 ngày hoặc đã quá hạn) trên màn Nhân viên. Muốn có email nhắc thì cần ticket (mục 7).
 
 ### 5.3 Cấp và thu hồi quyền
 Bảng dưới là đề xuất, chờ biz chốt.
@@ -193,13 +194,17 @@ Bảng dưới là đề xuất, chờ biz chốt.
 | Cấu hình ứng dụng, Cộng tác viên | Chờ chốt | Chờ chốt | Root |
 | **Người nghỉ việc** | Quản lý trực tiếp báo | — | QLVH tắt với VHND/VHHS; root tắt với vai trò khác; thời hạn: chờ chốt |
 
+Tắt tài khoản, đổi vai trò hay đổi phạm vi **có hiệu lực ngay từ thao tác kế tiếp** của người đó: mỗi request hệ thống đều đọc lại nhân sự và vai trò từ DB.
+
 ### 5.4 Rà soát quyền định kỳ
 - Tần suất: chờ chốt (đề xuất hằng tháng).
 - Quản lý vận hành rà người trong đội mình; root rà Admin, Duyệt chi, Kỹ thuật hỗ trợ, Cấu hình ứng dụng.
 - Dùng màn Nhân viên (lọc vai trò, phạm vi, sắp hết hạn) và nhật ký thao tác, lịch sử đăng nhập.
 
 ### 5.5 Ranh giới với API ngoài của AT
-AT tạo, sửa bản đối soát và đợt rút, đổi trạng thái đối soát, mục đối soát, đợt rút, lệnh rút qua **API ngoài bằng khoá API**, với quyền ngang root. Các thao tác này **không** đi qua luật tách người lập / người duyệt của trang admin.
+AT gọi **API ngoài bằng khoá API**, với quyền ngang root:
+- **Ghi tiền:** tạo, sửa bản đối soát và đợt rút; đổi trạng thái đối soát, mục đối soát, đợt rút, lệnh rút. Các thao tác này **không** đi qua luật tách người lập / người duyệt của trang admin.
+- **Đọc dữ liệu cá nhân không che:** danh sách người dùng (`GET /users`) trả đủ CCCD, MST; lệnh rút của một đợt (`GET /transfers/:id/withdraw-cashes`) trả đủ số thẻ, chủ thẻ; tạo file xuất (`POST /data-exports`).
 
 ## 6. Tiêu chí thành công sau release
 - Số tài khoản root đang hoạt động: **đúng 1**.
@@ -217,4 +222,6 @@ AT tạo, sửa bản đối soát và đợt rút, đổi trạng thái đối 
 | 5 | **Kỹ thuật hỗ trợ phía đối tác** có được xem mọi ADV không | Đề xuất: không; đội AT được mọi ADV, đối tác chỉ các ADV đang hỗ trợ, có hạn dùng. | AT |
 | 6 | **Nhật ký xem SĐT, email** chỉ ghi ở chi tiết creator | (a) Chấp nhận như hiện tại. (b) Ghi thêm nhật ký ở các chỗ còn lại (cần ticket). | Anh Vinh |
 | 7 | **Root:** kênh nhận cảnh báo đăng nhập; quy trình khôi phục khẩn cấp | Chờ AT chỉ định kênh; cần ticket gửi cảnh báo. | AT |
-| 8 | **Hạn dùng, cấp/thu hồi, rà soát định kỳ** (mục 5.2–5.4) | Điền các ô "chờ chốt". | Biz + AT |
+| 8 | **Hạn dùng, cấp/thu hồi, rà soát định kỳ** (mục 5.2–5.4) | Điền các ô "chờ chốt". Có cần email nhắc tài khoản sắp hết hạn không (cần ticket). | Biz + AT |
+| 9 | **Sửa tiền rồi tự duyệt** — Admin sửa số tiền khoản người khác lập rồi tự duyệt được. | (a) Chấp nhận, ghi rõ trong tài liệu. (b) Sửa code: người sửa số tiền cũng không được duyệt khoản đó. | Anh Vinh |
+| 10 | **Root có được tạo vai trò mới không** — code đã cho (`POST /roles`), PRD Q4 đề xuất "chưa cần ở đợt này". | (a) Cho phép như code. (b) Chặn tạo mới, root chỉ sửa tập quyền của vai trò có sẵn. | AT |

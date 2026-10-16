@@ -268,7 +268,7 @@ giao "mọi ADV" và root. Các việc trong nhóm "hôm nay chỉ Admin làm" g
 | Nhân viên vận hành | Admin, thiếu việc, phải nhờ người có root | Vận hành nội dung hoặc Vận hành hiệu suất, làm đủ việc của mình |
 | Người chốt tiền | Dùng Admin hoặc root | Duyệt chi; không tự lập khoản thưởng |
 | Đội kỹ thuật | Xin root khi hỗ trợ | Kỹ thuật hỗ trợ, xem mọi ADV; chạy công cụ kỹ thuật vẫn nhờ root của AT |
-| Cộng tác viên | Duyệt nội dung; xoá nội dung; gọi được API thưởng thêm, duyệt creator, nhật ký, cấu hình chung; thấy CCCD, số thẻ creator | Chỉ duyệt nội dung |
+| Cộng tác viên | Duyệt nội dung; gọi được API thưởng thêm, duyệt creator, nhật ký, cấu hình chung; thấy CCCD, số thẻ creator | Chỉ duyệt nội dung |
 | Cấu hình ứng dụng | Dựng site; gọi được API thưởng thêm, duyệt creator, nhật ký, cấu hình chung; thấy CCCD, số thẻ creator | Dựng site như hôm nay; mất các API ngoài việc |
 | Admin | Như Phụ lục A | Giữ nguyên; thêm xem liên hệ creator; mất các API công cụ kỹ thuật; không còn thấy CCCD, mã số thuế, số thẻ; sửa tag, cấu hình không gắn ADV cần được giao "mọi ADV" |
 
@@ -867,7 +867,6 @@ route tự gắn middleware như hôm nay.
 | Thiếu quyền trả 403 thay vì 401 | Mọi vai trò | 1 | NFR-05 |
 | Sửa tag, cấu hình **không gắn ADV** cần phạm vi `all`; tag, cấu hình của ADV giữ như hôm nay | Admin phạm vi `list` | 1 | Bản ghi không gắn ADV (5.2) |
 | Che CCCD, mã số thuế, số thẻ với mọi vai trò trừ root | Admin, CTV, Cấu hình ứng dụng | Ticket vá (mục 11) | Dữ liệu cá nhân (4.5) |
-| Xoá nội dung cần `content.delete` | CTV | 3 | Nội dung bị xoá không còn tính thưởng |
 | Thưởng thêm cần `bonus.*` | CTV, Cấu hình ứng dụng | 3 | Hôm nay ai đăng nhập cũng tạo, nhập được thưởng |
 | Duyệt creator / thành viên ADV cần quyền riêng | CTV, Cấu hình ứng dụng; Admin giữ quyền | 3 | Hôm nay ai đăng nhập cũng duyệt được |
 | Danh sách người dùng (`GET /users`, `/partners/users`) cần `creator.view` | CTV, Cấu hình ứng dụng | 3 | Dữ liệu người dùng |
