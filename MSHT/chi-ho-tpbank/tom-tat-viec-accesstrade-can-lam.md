@@ -1,6 +1,6 @@
 # TÓM TẮT VIỆC ACCESSTRADE CẦN PHỐI HỢP — MSHT × TPBANK CHI HỘ THEO LÔ (PHASE 2)
 
-> **Bản nháp chờ a Vĩnh review trước khi gửi AccessTrade.** Nguồn: [ke-hoach-timeline.md](ke-hoach-timeline.md) v1.4. Mục "Câu hỏi cần a Vĩnh chốt" ở cuối file là ghi chú nội bộ, xoá đi trước khi gửi.
+> **Bản nháp chờ a Vĩnh review trước khi gửi AccessTrade.** Nguồn: [ke-hoach-timeline.md](ke-hoach-timeline.md) v1.4.
 
 **Gửi:**
 - **AT-Core:** Dev AT-Core (AT Core / HSM)
@@ -58,13 +58,3 @@
 1. TK test cấp ngày 10/09 còn dùng được cho nghiệm thu D-1 không?
 2. Cert HSM hiện tại hết hạn ngày nào?
 3. AT-MSHT đồng ý huỷ các lệnh rút chưa chi tính đến thời điểm golive không? Có cần MSHT thông báo cho user trước không?
-
----
-
-## Câu hỏi cần a Vĩnh chốt (nội bộ — xoá trước khi gửi)
-
-1. **Quy tắc xử lý lệnh thất bại:** kế hoạch ghi là "theo quy tắc đã thống nhất với AT" (hoàn số dư hay để chờ xử lý?), nhưng chưa có văn bản nào ghi cụ thể. Nếu chưa thật sự chốt thì thêm câu này vào mục 6 để AccessTrade trả lời.
-2. **Số lần truy vấn trạng thái mỗi lô:** AC-03 ghi "số lần truy vấn đã chốt", nhưng chưa thấy con số cụ thể. Con số này quyết định phí HSM. Nếu chưa chốt thì thêm vào mục 6.
-3. **AT-Core DEV sẵn sàng từ chiều D-3:** mốc này suy ra từ phương án của rủi ro R1, kế hoạch không ghi thẳng. Anh xác nhận có yêu cầu AT-Core mốc này không.
-4. **Người chi kỳ thủ công cuối bên AT-MSHT:** đã bỏ vai trò Kế toán (Hằng) khỏi kế hoạch, các dòng chi thủ công đang để trống người. Anh xác nhận ai phụ trách, hay chỉ ghi chung là AT-MSHT.
-5. **Lệnh bị huỷ trước golive:** user có được hoàn số dư để tạo lại yêu cầu rút không, và ai thông báo cho user?
