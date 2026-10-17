@@ -70,9 +70,8 @@
 | 1.4 | Gọi AT Core 1 lần/lô theo spec chi theo lô đã thống nhất với AT; lưu batch_id; idempotency theo mã lệnh | Dev BE | 19/10 sáng | Client AT Core batch |
 | 1.5 | Nhận/truy vấn kết quả lô, cập nhật trạng thái từng lệnh, hoàn số dư khi thất bại (theo quy tắc đã thống nhất với AT) | Dev BE | 19/10 chiều | Cập nhật lịch sử GD |
 | 1.6 | Log + báo cáo theo lô (batch_id, số lệnh, tổng tiền, kết quả); alert khi lô lỗi hoặc dư lệnh dồn quá 1 ngày | Dev BE | 19/10 chiều | Báo cáo đối soát |
-| 1.7 | Feature flag: bật/tắt chi tự động (tắt = quay về luồng Pending thủ công Phase 1) | Dev BE | 19/10 chiều | Flag cấu hình |
-| 1.8 | Cho phép chạy lô thủ công trên DEV (trigger tay) để QC không phải chờ khung giờ | Dev BE | 19/10 | Endpoint/command nội bộ |
-| 1.9 | Code review, deploy DEV, self-test | Dev Lead | 19/10 cuối ngày | **Build DEV (M1)** |
+| 1.7 | Cho phép chạy lô thủ công trên DEV (trigger tay) để QC không phải chờ khung giờ | Dev BE | 19/10 | Endpoint/command nội bộ |
+| 1.8 | Code review, deploy DEV, self-test | Dev Lead | 19/10 cuối ngày | **Build DEV (M1)** |
 
 ### Giai đoạn 2 — QC (16/10 viết TC, 20/10 test)
 
@@ -110,8 +109,7 @@
 | AC-08 | Cutover | Lệnh đã chi thủ công không bị đưa vào lô tự động | 0 lệnh trùng giữa file thủ công và lô |
 | AC-09 | Hiển thị | Lịch sử giao dịch user hiển thị đúng trạng thái: Chờ lô / Đang xử lý / Thành công / Thất bại | Khớp DB |
 | AC-10 | Đối soát | Báo cáo theo lô khớp log AT Core (số lệnh, tổng tiền, trạng thái) | Khớp 100% |
-| AC-11 | Vận hành | Feature flag tắt được chi tự động, quay về luồng thủ công | Test bật/tắt pass |
-| AC-12 | Smoke | 100% testcase trong file smoke test luồng rút tiền TPBank pass | Pass |
+| AC-11 | Smoke | 100% testcase trong file smoke test luồng rút tiền TPBank pass | Pass |
 
 **Điều kiện ký:** AC-01, AC-02, AC-03, AC-06, AC-08 đạt 100%. Không còn bug Critical/Major.
 
@@ -121,7 +119,7 @@
 
 | # | Công việc | PIC | Phối hợp | Thời gian |
 |---|---|---|---|---|
-| 4.1 | Kiểm tra cấu hình Production: partner code `TPBANK_MSHT`, key, endpoint AT Core prod, cron 5 khung giờ, flag mặc định TẮT | DevOps | Dev Lead | 20/10 |
+| 4.1 | Kiểm tra cấu hình Production: partner code `TPBANK_MSHT`, key, endpoint AT Core prod, cron 5 khung giờ | DevOps | Dev Lead | 20/10 |
 | 4.2 | AT xác nhận phía AT Core/TPBank Production sẵn sàng nhận lô từ MSHT (cert HSM còn hạn, dịch vụ TP đã mở) | Ngọc Thảo | AT Core | 20/10 |
 | 4.3 | **Kỳ chi thủ công cuối T4 21/10:** MSHT xuất file như thường lệ → Kế toán AT chi → gửi kết quả | PM | Kế toán AT | 21/10 |
 | 4.4 | MSHT import kết quả kỳ 21/10 **trước Go/No-Go ngày 22/10** | PM | Dev | 22/10 sáng |
@@ -132,10 +130,10 @@
 |---|---|---|---|
 | 1 | **Go/No-Go**: checklist mục 7, đã import xong kết quả kỳ thủ công cuối | PM | Dev Lead, QC, Ngọc Thảo |
 | 2 | Thông báo bắt đầu release trên group nội bộ + Slack với AT | PM | — |
-| 3 | Backup DB, deploy Production, chạy migration | DevOps | Dev Lead |
-| 4 | Smoke test production theo file smoke test (flag vẫn TẮT) | QC | PM |
-| 5 | Rà danh sách lệnh "Chờ lô": chỉ còn lệnh chưa chi thủ công | Dev Lead | PM |
-| 6 | **Bật flag chi tự động** | DevOps | PM |
+| 3 | Rà danh sách lệnh "Chờ lô" **trước khi deploy**: chỉ còn lệnh chưa chi thủ công | Dev Lead | PM |
+| 4 | Backup DB, **deploy Production ngay sau một khung lô** (để có thời gian smoke test trước lô kế tiếp), chạy migration. Chi theo lô có hiệu lực ngay sau deploy | DevOps | Dev Lead |
+| 5 | Smoke test production theo file smoke test, xong trước khung lô kế tiếp | QC | PM |
+| 6 | Kiểm tra cron 5 khung giờ đã chạy đúng lịch trên Production | Dev Lead | PM |
 | 7 | **Lô production đầu tiên:** theo dõi realtime, đối chiếu với AT Core | Dev Lead | AT Core |
 | 8 | AT/Biz xác nhận tiền về TK user của lô đầu tiên | Ngọc Thảo | AT |
 | 9 | Lô thứ 2: theo dõi và đối chiếu | Dev Lead | AT Core |
@@ -143,10 +141,9 @@
 | 11 | Các lô tối và đêm: alert tự động, Dev trực on-call | Dev trực | — |
 
 **Rollback** (khi lô lỗi, chi trùng, sai tiền, hoặc AT báo bất thường):
-1. Tắt flag chi tự động. Yêu cầu mới quay về Pending như Phase 1.
+1. Deploy lại bản Production trước đó (luồng Phase 1: yêu cầu rút lưu Pending, không gọi AT Core), làm trước khung lô kế tiếp.
 2. Đối chiếu với AT từng lệnh đã gửi trong lô lỗi.
 3. AT tiếp tục chi thủ công theo kỳ T2/T4 cho tới khi fix xong.
-4. Rollback code chỉ khi lỗi ảnh hưởng luồng rút tiền chung.
 
 **Sau release (23/10 → 30/10):** Dev Lead đối soát log lô với AT mỗi sáng trong 1 tuần, kể cả các lô cuối tuần. PM gửi báo cáo ngắn cho Biz/AT.
 
@@ -162,7 +159,7 @@
 | Diso / MSHT | Người bàn giao | Huyền | Bàn giao hiện trạng, hỗ trợ PM trong tuần đầu khi cần tra lại lịch sử trao đổi với AT |
 | Diso / MSHT | Dev Lead / Dev BE | Trung | Code batch, deploy, đối chiếu log, trực sau release |
 | Diso / MSHT | QC | Huyền | Testcase, test DEV, nghiệm thu E2E, smoke test production |
-| Diso / MSHT | DevOps | Trung | Cấu hình prod, cron, flag, backup/rollback |
+| Diso / MSHT | DevOps | Trung | Cấu hình prod, cron, backup/rollback |
 | Biz | Account / đầu mối AT | Ngọc Thảo | Gửi kế hoạch cho AT, chốt thời điểm dừng chi thủ công, kênh escalate với AT |
 | AT-Core | AT Core / HSM | Dev AT-Core | API batch, ký HSM, môi trường DEV/Prod, xác nhận giao dịch, trực ngày release |
 | AT-MSHT | Nghiệp vụ | Quỳnh | Xác nhận nghiệp vụ, ngưỡng chi hộ, nghiệm thu phía AT |
@@ -176,7 +173,7 @@
 - Tuân thủ ngưỡng 30 GD/giờ, 10.000.000đ/giờ, 100 GD/ngày, 10.000đ tối thiểu, 1.900.000đ/ngày và /tháng mỗi user.
 - Bảo đảm không chi trùng giữa luồng thủ công và luồng tự động.
 - Bảo mật key `TPBANK_MSHT`; trực theo dõi các lô trong 1 tuần sau release.
-- Báo AT ngay khi phát hiện lô lỗi; có flag để quay về chi thủ công.
+- Báo AT ngay khi phát hiện lô lỗi; rollback về luồng chi thủ công khi cần.
 
 **AT (AccessTrade)**
 - Đảm bảo cert HSM còn hạn và AT Core sẵn sàng trên DEV (ngày 21/10) và Production (ngày 22/10).
@@ -199,7 +196,7 @@
 | # | Rủi ro | Mức | Phương án |
 |---|---|---|---|
 | R1 | 2 ngày code sát; phát sinh lỗi khi tích hợp lô với AT Core DEV | Cao | Dev tập trung 100% cho dự án 16–19/10; test sớm với AT Core DEV từ chiều 19/10; nếu trễ thì báo ngay để dời M1 sang 20/10 sáng |
-| R2 | **Chi trùng** giữa kỳ thủ công 21/10 và lô tự động đầu tiên | Cao | Import kết quả trước Go/No-Go 22/10; rà "Chờ lô" trước khi bật flag; AC-08 |
+| R2 | **Chi trùng** giữa kỳ thủ công 21/10 và lô tự động đầu tiên | Cao | Import kết quả trước Go/No-Go 22/10; rà "Chờ lô" trước khi deploy; AC-08 |
 | R3 | Cert HSM của AT hết hạn lần nữa (đã từng xảy ra) | TB | AT xác nhận hạn cert ở bước 4.2; alert khi AT Core trả lỗi ký số |
 | R4 | Tồn đọng lệnh vượt 100 GD/ngày → user chờ lâu | TB | Báo cáo lệnh dồn hằng ngày; nếu tồn đọng kéo dài, đề xuất AT/TP nâng ngưỡng |
 | R5 | User nhập sai tên/số TK (không có API check) → chi thất bại | TB | Xử lý lệnh thất bại theo quy tắc đã thống nhất với AT; message hướng dẫn user |
@@ -212,8 +209,8 @@
 - [ ] 0 bug Critical/Major mở
 - [ ] Kết quả kỳ chi thủ công 21/10 đã import xong
 - [ ] AT Core Production sẵn sàng, cert HSM còn hạn (AT xác nhận)
-- [ ] Cấu hình prod đúng: partner code, key, endpoint, cron 5 khung giờ, flag mặc định TẮT
-- [ ] Đã test bật/tắt flag; kịch bản rollback rõ ràng
+- [ ] Cấu hình prod đúng: partner code, key, endpoint, cron 5 khung giờ
+- [ ] Kịch bản rollback rõ ràng: có sẵn bản Production trước đó để deploy lại
 - [ ] Người trực ngày release và các lô tối/đêm đã chốt; AT Core xác nhận trực các lô đầu tiên
 - [ ] Đã thông báo lịch release cho Biz/AT
 
@@ -224,3 +221,4 @@
 | v1.0 | 15/10/2026 | Huyền (PM) | Lập kế hoạch theo tài liệu transfer, khung 15/10 → 22/10 |
 | v1.1 | 16/10/2026 | Huyền (PM) | Bỏ giai đoạn tiếp nhận & chốt batch (đã clear chi theo lô với AT); bỏ ma trận RACI |
 | v1.2 | 16/10/2026 | Huyền (PM) | Bỏ bảng thông tin chung & mục ghi nhận PM; bỏ giờ ở ngày release; bỏ kênh liên lạc |
+| v1.3 | 17/10/2026 | Huyền (PM) | Bỏ feature flag bật/tắt chi tự động (task 1.7, AC-11); deploy là chi theo lô có hiệu lực ngay; rollback bằng deploy lại bản trước |
