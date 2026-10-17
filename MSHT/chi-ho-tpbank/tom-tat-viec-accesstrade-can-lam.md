@@ -1,7 +1,5 @@
 # TÓM TẮT VIỆC ACCESSTRADE CẦN PHỐI HỢP — MSHT × TPBANK CHI HỘ THEO LÔ (PHASE 2)
 
-> **Bản nháp chờ a Vĩnh review trước khi gửi AccessTrade.** Nguồn: [ke-hoach-timeline.md](ke-hoach-timeline.md) v1.4.
-
 **Gửi:**
 - **AT-Core:** Dev AT-Core (AT Core / HSM)
 - **AT-MSHT:** Quỳnh (Nghiệp vụ)
@@ -31,7 +29,6 @@
 | AT-Core | Dev AT-Core | Trực cùng Huyền: xác nhận tiền về đúng TK test; xác nhận case chi thất bại (sai TK) được xử lý đúng | Ảnh / sao kê làm bằng chứng |
 | AT-Core | Dev AT-Core | Đối chiếu log AT Core với log lô MSHT cùng Trung | Khớp số lệnh, tổng tiền, trạng thái |
 | AT-MSHT | Quỳnh | Xác nhận nghiệm thu nghiệp vụ | Email xác nhận **trước 17:00** |
-| AT-MSHT | — | Chi kỳ thủ công **cuối cùng** theo file MSHT xuất như thường lệ | Gửi kết quả **trong ngày D-1**, để MSHT import trước Go/No-Go ngày D (tránh chi trùng) |
 | AT-MSHT | Quỳnh | **Xác nhận việc huỷ các lệnh rút chưa chi trước golive** (Ngọc Thảo gửi thông báo) | Email xác nhận đồng ý huỷ; AT không chi thủ công thêm các lệnh này |
 
 ## 3. D — Release
