@@ -23,7 +23,7 @@
    | Ngưỡng | Giá trị | Xử lý trong hệ thống |
    |---|---|---|
    | Số GD / tài khoản tổng / giờ | 30 | Mỗi lô tối đa 30 lệnh, phần dư dời sang khung kế tiếp (theo thứ tự thời gian tạo) |
-   | Số GD / tài khoản tổng / ngày | 100 | Tổng các lô trong ngày ≤ 100, phần dư dời sang ngày sau |
+   | Số GD / tài khoản tổng / ngày | 150 | Tổng các lô trong ngày ≤ 150, phần dư dời sang ngày sau |
    | Số tiền GD tối đa / tài khoản tổng / giờ | 10.000.000đ | Tổng tiền mỗi lô ≤ 10.000.000đ; lô dừng ở lệnh đầu tiên làm vượt ngưỡng, phần dư dời sang khung kế tiếp (FIFO) |
    | Số tiền tối thiểu / GD | 10.000đ | Chặn từ lúc user tạo yêu cầu |
    | Hạn mức / ngày / user | 1.900.000đ | Chặn từ lúc user tạo yêu cầu |
@@ -68,7 +68,7 @@
 |---|---|---|---|---|
 | 1.1 | Trạng thái mới "Chờ lô": yêu cầu rút sau khi validate thì vào hàng đợi, không gọi AT Core ngay | Dev BE | D-4 | Migration + logic |
 | 1.2 | Validate ngưỡng: min 10.000đ, 1.900.000đ/ngày/user, 1.900.000đ/tháng/user (tận dụng logic Phase 1) | Dev BE | D-4 | Unit test |
-| 1.3 | Scheduler 0h/8h/12h/16h/20h: chọn tối đa 30 lệnh và ≤ 10.000.000đ/lô, ≤ 100 lệnh/ngày, FIFO, khoá chống chạy song song (lock) | Dev BE | D-3 sáng | Job batch |
+| 1.3 | Scheduler 0h/8h/12h/16h/20h: chọn tối đa 30 lệnh và ≤ 10.000.000đ/lô, ≤ 150 lệnh/ngày, FIFO, khoá chống chạy song song (lock) | Dev BE | D-3 sáng | Job batch |
 | 1.4 | Gọi AT Core 1 lần/lô theo spec chi theo lô đã thống nhất với AT; lưu batch_id; idempotency theo mã lệnh | Dev BE | D-3 sáng | Client AT Core batch |
 | 1.5 | Nhận/truy vấn kết quả lô, cập nhật trạng thái từng lệnh, hoàn số dư khi thất bại (theo quy tắc đã thống nhất với AT) | Dev BE | D-3 chiều | Cập nhật lịch sử GD |
 | 1.6 | Alert về kênh Slack khi gọi API AT Core lỗi (timeout, lỗi ký HSM, AT Core trả lỗi), kèm batch_id và nội dung lỗi | Dev BE | D-3 chiều | Alert Slack |
@@ -82,7 +82,7 @@
 | 2.0 | Cập nhật testcase: thêm case chi theo lô / ngưỡng / cutover vào file nghiệm thu DEV | QC | D-4 | Testcase v2 |
 | 2.1 | Regression luồng rút tiền theo file smoke test TPBank | QC | D-2 sáng | Kết quả smoke |
 | 2.2 | Test batch: lệnh vào đúng lô, không gọi ngoài khung giờ, 1 lần gọi AT/lô | QC | D-2 sáng | Kết quả |
-| 2.3 | Test ngưỡng: lô > 30 lệnh, lô > 10.000.000đ, ngày > 100 lệnh, < 10.000đ, vượt 1,9tr ngày/tháng | QC | D-2 | Kết quả |
+| 2.3 | Test ngưỡng: lô > 30 lệnh, lô > 10.000.000đ, ngày > 150 lệnh, < 10.000đ, vượt 1,9tr ngày/tháng | QC | D-2 | Kết quả |
 | 2.4 | Test lỗi: AT Core timeout / trả lỗi / một phần lô thất bại; chạy lại lô không gây chi trùng | QC | D-2 chiều | Kết quả |
 | 2.5 | Test cutover: lệnh đã chi thủ công (đã import) và lệnh đã huỷ không bị đưa vào lô | QC | D-2 chiều | Kết quả |
 | 2.6 | Fix bug + retest | Dev | D-2 | **Test report (M2)** |
@@ -104,7 +104,7 @@
 | AC-01 | **E2E (bắt buộc AT)** | Chi tiền thành công end-to-end MSHT → AT Core → TPBank → TK nhận | Tiền về đúng số, đúng TK; trạng thái MSHT = Thành công |
 | AC-02 | Batch | Lệnh chỉ được gửi tại 0h00 / 8h00 / 12h00 / 16h00 / 20h00 | Không có lần gọi AT Core nào ngoài khung (kiểm tra log) |
 | AC-03 | Batch | Mỗi khung gọi AT Core **1 lần cho cả lô**; truy vấn trạng thái theo lô | Số lần gọi = số lô (+ số lần truy vấn đã chốt) |
-| AC-04 | Ngưỡng | Lô tối đa 30 lệnh và ≤ 10.000.000đ; tổng/ngày ≤ 100; phần dư dời khung sau theo FIFO | Test 35 lệnh → lô 1: 30, lô 2: 5. Test 6 lệnh × 1.900.000đ → lô 1: 5 lệnh (9.500.000đ), lô 2: 1 |
+| AC-04 | Ngưỡng | Lô tối đa 30 lệnh và ≤ 10.000.000đ; tổng/ngày ≤ 150; phần dư dời khung sau theo FIFO | Test 35 lệnh → lô 1: 30, lô 2: 5. Test 6 lệnh × 1.900.000đ → lô 1: 5 lệnh (9.500.000đ), lô 2: 1 |
 | AC-05 | Ngưỡng | Chặn < 10.000đ, vượt 1.900.000đ/ngày/user, vượt 1.900.000đ/tháng/user | Báo lỗi rõ cho user, không tạo lệnh |
 | AC-06 | An toàn tiền | Không chi trùng khi chạy lại lô, AT timeout, hay scheduler chạy 2 lần | Mỗi mã lệnh chỉ được chi 1 lần |
 | AC-07 | An toàn tiền | Lệnh thất bại được xử lý đúng quy tắc chốt (hoàn số dư / chờ xử lý) | Số dư user đúng sau thất bại |
@@ -174,7 +174,7 @@
 
 **Diso / MSHT**
 - Chỉ gọi AT Core theo lô ở 5 khung giờ. Không gọi lẻ, không truy vấn trạng thái ngoài số lần đã chốt (để không phát sinh phí HSM).
-- Tuân thủ ngưỡng 30 GD/giờ, 10.000.000đ/giờ, 100 GD/ngày, 10.000đ tối thiểu, 1.900.000đ/ngày và /tháng mỗi user.
+- Tuân thủ ngưỡng 30 GD/giờ, 10.000.000đ/giờ, 150 GD/ngày, 10.000đ tối thiểu, 1.900.000đ/ngày và /tháng mỗi user.
 - Bảo đảm không chi trùng giữa luồng thủ công và luồng tự động.
 - Bảo mật key `TPBANK_MSHT`; trực theo dõi các lô trong 1 tuần sau release.
 - Báo AT ngay khi phát hiện lô lỗi; rollback về luồng chi thủ công khi cần.
@@ -204,7 +204,7 @@
 | R1 | 2 ngày code sát; phát sinh lỗi khi tích hợp lô với AT Core DEV | Cao | Dev tập trung 100% cho dự án D-4 → D-3; test sớm với AT Core DEV từ chiều D-3; nếu trễ thì báo ngay để dời M1 sang D-2 sáng |
 | R2 | **Chi trùng** giữa kỳ thủ công D-1 và lô tự động đầu tiên | Cao | Import kết quả trước Go/No-Go D; huỷ các lệnh chưa chi (đã có AT xác nhận) trước khi deploy; AC-08 |
 | R3 | Cert HSM của AT hết hạn lần nữa (đã từng xảy ra) | TB | AT xác nhận hạn cert ở bước 4.2; alert khi AT Core trả lỗi ký số |
-| R4 | Tồn đọng lệnh vượt 100 GD/ngày → user chờ lâu | TB | Dev kiểm tra số lệnh 'Chờ lô' trên DB hằng ngày trong tuần đầu; nếu tồn đọng kéo dài, đề xuất AT/TP nâng ngưỡng |
+| R4 | Tồn đọng lệnh vượt 150 GD/ngày → user chờ lâu | TB | Dev kiểm tra số lệnh 'Chờ lô' trên DB hằng ngày trong tuần đầu; nếu tồn đọng kéo dài, đề xuất AT/TP nâng ngưỡng |
 | R5 | User nhập sai tên/số TK (không có API check) → chi thất bại | TB | Xử lý lệnh thất bại theo quy tắc đã thống nhất với AT; message hướng dẫn user |
 | R6 | Phí HSM phát sinh do truy vấn trạng thái quá nhiều | TB | Giới hạn số lần truy vấn/lô; theo dõi số lần gọi qua log |
 | R7 | Timeline 5 ngày làm việc rất sát, không có buffer | Cao | Release trong giờ hành chính để có buffer trong ngày; nếu M3 trễ thì dời D sang ngày làm việc kế tiếp, **không** release cuối tuần |
@@ -231,3 +231,4 @@
 | v1.3 | 17/10/2026 | Huyền (PM) | Bỏ feature flag bật/tắt chi tự động (task 1.7, AC-11); deploy là chi theo lô có hiệu lực ngay; rollback bằng deploy lại bản trước |
 | v1.4 | 17/10/2026 | Huyền (PM) | Bỏ vai trò Kế toán (Hằng); thêm đầu việc huỷ lệnh chưa chi trước golive (4.5–4.7); đổi các mốc sang D-n với D = 22/10 |
 | v1.5 | 19/10/2026 | Huyền (PM) | Task 1.6 chỉ còn alert Slack khi gọi API AT Core lỗi; bỏ báo cáo theo lô và cảnh báo lệnh dồn; AC-10 đổi sang alert |
+| v1.6 | 19/10/2026 | Huyền (PM) | Đổi ngưỡng số GD / tài khoản tổng / ngày từ 100 lên 150 |
