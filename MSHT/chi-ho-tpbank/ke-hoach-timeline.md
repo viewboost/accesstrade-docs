@@ -32,7 +32,7 @@
 3. **Trạng thái giao dịch:** Chờ lô → Đã gửi lô → Thành công / Thất bại. Cập nhật lịch sử giao dịch cho user.
 4. **Truy vấn trạng thái theo lô**, hạn chế số lần gọi để tiết kiệm phí HSM.
 5. **Chuyển đổi (cutover)** từ chi thủ công sang chi tự động, **không chi trùng**.
-6. Log/báo cáo theo từng lô để đối soát với AT.
+6. Alert về kênh Slack khi gọi API AT Core lỗi.
 
 **Ngoài phạm vi:** API kiểm tra tên chủ tài khoản. TPBank không cung cấp API này, nên giữ logic cũ: user tự nhập số TK và tên TK. Thay đổi hạn mức hay UI rút tiền cũng không làm trong đợt này.
 
@@ -71,7 +71,7 @@
 | 1.3 | Scheduler 0h/8h/12h/16h/20h: chọn tối đa 30 lệnh và ≤ 10.000.000đ/lô, ≤ 100 lệnh/ngày, FIFO, khoá chống chạy song song (lock) | Dev BE | D-3 sáng | Job batch |
 | 1.4 | Gọi AT Core 1 lần/lô theo spec chi theo lô đã thống nhất với AT; lưu batch_id; idempotency theo mã lệnh | Dev BE | D-3 sáng | Client AT Core batch |
 | 1.5 | Nhận/truy vấn kết quả lô, cập nhật trạng thái từng lệnh, hoàn số dư khi thất bại (theo quy tắc đã thống nhất với AT) | Dev BE | D-3 chiều | Cập nhật lịch sử GD |
-| 1.6 | Log + báo cáo theo lô (batch_id, số lệnh, tổng tiền, kết quả); alert khi lô lỗi hoặc dư lệnh dồn quá 1 ngày | Dev BE | D-3 chiều | Báo cáo đối soát |
+| 1.6 | Alert về kênh Slack khi gọi API AT Core lỗi (timeout, lỗi ký HSM, AT Core trả lỗi), kèm batch_id và nội dung lỗi | Dev BE | D-3 chiều | Alert Slack |
 | 1.7 | Cho phép chạy lô thủ công trên DEV (trigger tay) để QC không phải chờ khung giờ | Dev BE | D-3 | Endpoint/command nội bộ |
 | 1.8 | Code review, deploy DEV, self-test | Dev Lead | D-3 cuối ngày | **Build DEV (M1)** |
 
@@ -110,7 +110,7 @@
 | AC-07 | An toàn tiền | Lệnh thất bại được xử lý đúng quy tắc chốt (hoàn số dư / chờ xử lý) | Số dư user đúng sau thất bại |
 | AC-08 | Cutover | Lệnh đã chi thủ công không bị đưa vào lô tự động; lệnh chưa chi trước golive được huỷ, không bị đưa vào lô | 0 lệnh trùng giữa file thủ công và lô; 0 lệnh đã huỷ xuất hiện trong lô |
 | AC-09 | Hiển thị | Lịch sử giao dịch user hiển thị đúng trạng thái: Chờ lô / Đang xử lý / Thành công / Thất bại | Khớp DB |
-| AC-10 | Đối soát | Báo cáo theo lô khớp log AT Core (số lệnh, tổng tiền, trạng thái) | Khớp 100% |
+| AC-10 | Alert | Gọi API AT Core lỗi thì có alert về kênh Slack, kèm batch_id và nội dung lỗi | Nhận alert khi giả lập lỗi; không có alert khi gọi thành công |
 | AC-11 | Smoke | 100% testcase trong file smoke test luồng rút tiền TPBank pass | Pass |
 
 **Điều kiện ký:** AC-01, AC-02, AC-03, AC-06, AC-08 đạt 100%. Không còn bug Critical/Major.
@@ -143,7 +143,7 @@
 | 8 | AT/Biz xác nhận tiền về TK user của lô đầu tiên | Ngọc Thảo | AT |
 | 9 | Lô thứ 2: theo dõi và đối chiếu | Dev Lead | AT Core |
 | 10 | **Ngọc Thảo xác nhận với AT: dừng chi thủ công** (M6). Thông báo hoàn tất | Ngọc Thảo | PM |
-| 11 | Các lô tối và đêm: alert tự động, Dev trực on-call | Dev trực | — |
+| 11 | Các lô tối và đêm: Dev trực on-call, theo dõi alert Slack khi gọi AT Core lỗi | Dev trực | — |
 
 **Rollback** (khi lô lỗi, chi trùng, sai tiền, hoặc AT báo bất thường):
 1. Deploy lại bản Production trước đó (luồng Phase 1: yêu cầu rút lưu Pending, không gọi AT Core), làm trước khung lô kế tiếp.
@@ -204,7 +204,7 @@
 | R1 | 2 ngày code sát; phát sinh lỗi khi tích hợp lô với AT Core DEV | Cao | Dev tập trung 100% cho dự án D-4 → D-3; test sớm với AT Core DEV từ chiều D-3; nếu trễ thì báo ngay để dời M1 sang D-2 sáng |
 | R2 | **Chi trùng** giữa kỳ thủ công D-1 và lô tự động đầu tiên | Cao | Import kết quả trước Go/No-Go D; huỷ các lệnh chưa chi (đã có AT xác nhận) trước khi deploy; AC-08 |
 | R3 | Cert HSM của AT hết hạn lần nữa (đã từng xảy ra) | TB | AT xác nhận hạn cert ở bước 4.2; alert khi AT Core trả lỗi ký số |
-| R4 | Tồn đọng lệnh vượt 100 GD/ngày → user chờ lâu | TB | Báo cáo lệnh dồn hằng ngày; nếu tồn đọng kéo dài, đề xuất AT/TP nâng ngưỡng |
+| R4 | Tồn đọng lệnh vượt 100 GD/ngày → user chờ lâu | TB | Dev kiểm tra số lệnh 'Chờ lô' trên DB hằng ngày trong tuần đầu; nếu tồn đọng kéo dài, đề xuất AT/TP nâng ngưỡng |
 | R5 | User nhập sai tên/số TK (không có API check) → chi thất bại | TB | Xử lý lệnh thất bại theo quy tắc đã thống nhất với AT; message hướng dẫn user |
 | R6 | Phí HSM phát sinh do truy vấn trạng thái quá nhiều | TB | Giới hạn số lần truy vấn/lô; theo dõi số lần gọi qua log |
 | R7 | Timeline 5 ngày làm việc rất sát, không có buffer | Cao | Release trong giờ hành chính để có buffer trong ngày; nếu M3 trễ thì dời D sang ngày làm việc kế tiếp, **không** release cuối tuần |
@@ -230,3 +230,4 @@
 | v1.2 | 16/10/2026 | Huyền (PM) | Bỏ bảng thông tin chung & mục ghi nhận PM; bỏ giờ ở ngày release; bỏ kênh liên lạc |
 | v1.3 | 17/10/2026 | Huyền (PM) | Bỏ feature flag bật/tắt chi tự động (task 1.7, AC-11); deploy là chi theo lô có hiệu lực ngay; rollback bằng deploy lại bản trước |
 | v1.4 | 17/10/2026 | Huyền (PM) | Bỏ vai trò Kế toán (Hằng); thêm đầu việc huỷ lệnh chưa chi trước golive (4.5–4.7); đổi các mốc sang D-n với D = 22/10 |
+| v1.5 | 19/10/2026 | Huyền (PM) | Task 1.6 chỉ còn alert Slack khi gọi API AT Core lỗi; bỏ báo cáo theo lô và cảnh báo lệnh dồn; AC-10 đổi sang alert |
