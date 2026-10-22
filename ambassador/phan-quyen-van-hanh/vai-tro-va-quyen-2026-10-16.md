@@ -161,7 +161,7 @@ Biz ký bảng này **trước khi deploy**. Mỗi tài khoản đang hoạt đ�
 | | | | | | | | | |
 
 Nếu deploy mà chưa có bảng này:
-- Nhân sự không gắn ADV tự thành phạm vi **mọi ADV**.
+- Nhân sự không gắn ADV tự thành phạm vi **mọi ADV** (đã chốt 07/10, root rà lại sau deploy). Ngoại lệ: vai trò **Cấu hình ứng dụng** chưa gắn ADV thì phạm vi rỗng, **không đăng nhập được** cho tới khi được giao ít nhất 1 ADV.
 - Ai mang vai trò đã ngừng sẽ **không đăng nhập được**.
 - Một số người mất việc quen làm, ví dụ Admin, CTV, Cấu hình ứng dụng **không còn thấy CCCD, MST, số thẻ** của creator; CTV và Cấu hình ứng dụng mất các API ngoài việc (thưởng thêm, duyệt creator, nhật ký, cấu hình chung).
 
