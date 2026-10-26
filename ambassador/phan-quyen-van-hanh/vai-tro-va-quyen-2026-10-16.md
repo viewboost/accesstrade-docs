@@ -59,7 +59,7 @@ Một thao tác được phép khi: nhân sự đang hoạt động, chưa hết
 | 4 | `content_manual_flow.edit` | Tạo luồng nội dung thủ công | Thêm tay một luồng nội dung cho creator | ✔ | ✔ |  |  |  |  | ✔ | ✔ |
 | | **Người dùng và creator** | | | | | | | | | | |
 | 5 | `user.view_contact` | Xem liên hệ creator | Mở chi tiết creator: số điện thoại, email, kênh mạng xã hội, nội dung đã đăng. Mỗi lượt xem ghi nhật ký | ✔ | ✔ |  |  |  |  |  | ✔ |
-| 6 | `creator.view` | Xem hồ sơ creator | Danh sách người dùng, danh sách và chi tiết hồ sơ creator, thống kê hồ sơ, danh sách người dùng của ADV | ✔ | ✔ | ✔ | ✔ | ✔ |  |  | ✔ |
+| 6 | `creator.view` | Xem hồ sơ creator | Danh sách và chi tiết hồ sơ creator, thống kê hồ sơ và bộ lọc tìm creator | ✔ | ✔ | ✔ | ✔ | ✔ |  |  | ✔ |
 | 7 | `creator.edit` | Sửa hồ sơ creator | Đổi trạng thái hồ sơ, cập nhật chỉ số, cấu hình điều kiện hồ sơ |  |  |  |  |  |  |  | ✔ |
 | 8 | `creator.approve` | Duyệt creator | Duyệt hoặc từ chối hồ sơ đăng ký làm creator | ✔ | ✔ |  |  |  |  |  | ✔ |
 | 9 | `partner_member.approve` | Duyệt thành viên ADV | Duyệt hoặc từ chối yêu cầu tham gia ADV của người dùng | ✔ | ✔ |  |  |  |  |  | ✔ |

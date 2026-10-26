@@ -388,7 +388,7 @@ Có `edit` / `import` / `export` / `approve` thì **tự có** `view` cùng ch�
 | 7 | `user.view_contact` | Xem liên hệ creator | Mở chi tiết creator: số điện thoại, email, kênh mạng xã hội, nội dung đã đăng. **Mỗi lượt xem ghi nhật ký** | Người dùng — `GET /users/:id`, `/users/:id/socials` | *(cá nhân)* — mỗi lượt xem ghi nhật ký |
 | ~~8~~ | ~~`user.view_sensitive`~~ | Xem CCCD, MST, ngân hàng | **Không còn là mã quyền.** Việc xem đủ CCCD, MST, số thẻ viết cứng cho root; lưu vai trò có mã này bị từ chối "Mã quyền không hợp lệ". Các trường bị che theo 4.5 | `GET /users*`, `/partners/users` | *(cá nhân)* chỉ root |
 | 9 | `user_partner.export` + `creator.export` | Xuất file người dùng ADV; xuất file kênh creator | `user.export` được **tách thành 2 mã**: `user_partner.export` (loại `user_partner`) và `creator.export` (loại `user_social`). Dữ liệu trong file che theo 4.5 | Dữ liệu xuất | *(cá nhân)* — chỉ Admin |
-| 10 | `creator.view` | Xem hồ sơ creator | Danh sách người dùng, danh sách và chi tiết hồ sơ creator, thống kê hồ sơ, danh sách người dùng của ADV | `GET /users`, `/creator-profiles*`, `/partners/users` |  |
+| 10 | `creator.view` | Xem hồ sơ creator | Danh sách và chi tiết hồ sơ creator, thống kê hồ sơ và bộ lọc tìm creator | `GET /users`, `/creator-profiles*` |  |
 | 11 | `creator.edit` | Sửa hồ sơ creator | Đổi trạng thái hồ sơ, cập nhật chỉ số, cấu hình điều kiện hồ sơ | `/creator-profiles/:id/change-status`, `/update-stats`, `/conditions` |  |
 | 12 | `creator.approve` | Duyệt creator | Duyệt hoặc từ chối hồ sơ đăng ký làm creator | `/users/approval-creator*` |  |
 | 13 | `partner_member.approve` | Duyệt thành viên ADV | Duyệt hoặc từ chối yêu cầu tham gia ADV của người dùng | `/users/approval-partner*` |  |
@@ -883,7 +883,7 @@ route tự gắn middleware như hôm nay.
 | Che CCCD, mã số thuế, số thẻ với mọi vai trò trừ root | Admin, CTV, Cấu hình ứng dụng | Ticket vá (mục 11) | Dữ liệu cá nhân (4.5) |
 | Thưởng thêm cần `bonus.*` | CTV, Cấu hình ứng dụng | 3 | Hôm nay ai đăng nhập cũng tạo, nhập được thưởng |
 | Duyệt creator / thành viên ADV cần quyền riêng | CTV, Cấu hình ứng dụng; Admin giữ quyền | 3 | Hôm nay ai đăng nhập cũng duyệt được |
-| Danh sách người dùng (`GET /users`, `/partners/users`) cần `creator.view` | CTV, Cấu hình ứng dụng | 3 | Dữ liệu người dùng |
+| Danh sách người dùng: `GET /users` cần `creator.view` hoặc `content.view`; `/partners/users` cần `user_partner.view` | CTV, Cấu hình ứng dụng | 3 | Dữ liệu người dùng |
 | `PUT /common/configurations` cần `common_config.edit` + phạm vi `all` | Mọi vai trò không phải root | 3 | Ghi cấu hình xuyên ADV |
 | Nhật ký `/audits` cần `audit.view`, lọc theo phạm vi | CTV, Cấu hình ứng dụng; nhân sự ADV khác | 3 | PQ-17 |
 | `/migration/*` và công cụ kỹ thuật (5.3) chỉ root | Mọi vai trò không phải root; Admin mất `/events/run-analytic-daily` | 3 | Không phải công cụ vận hành |
@@ -958,6 +958,7 @@ Các việc vận hành và vai trò làm:
 - Hạn dùng áp cho mọi vai trò **trừ root**
 - Quá hạn: không đăng nhập được; phiên đang mở bị chặn ở thao tác kế tiếp (nhờ PQ-07)
 - Màn Nhân viên sửa được ngày này, lọc tài khoản sắp hết hạn
+- Sửa nhân sự: body không có `expiresAt` thì giữ hạn đang lưu; gửi `null` hoặc `""` mới bỏ hạn *(đã sửa theo code, review #312)*
 - Tắt tài khoản: giữ nguyên cơ chế `resetToken` hiện có — đã có hiệu lực ngay
 - Không cấp vai trò Admin cho người mới (ô chọn vai trò khi mời không có Admin; root vẫn đổi được cho người cũ)
 
