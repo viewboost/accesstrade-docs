@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>DISO - Kế hoạch Tháng 11/2026</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #202124; line-height: 1.6; max-width: 1280px; margin: 20px auto; padding: 0 16px; }
+  h1 { font-size: 18px; margin-top: 28px; border-bottom: 2px solid #1a73e8; padding-bottom: 6px; }
+  h2 { font-size: 16px; margin-top: 24px; color: #1a73e8; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; table-layout: fixed; }
+  th, td { border: 1px solid #dadce0; padding: 8px 10px; text-align: left; vertical-align: top; word-wrap: break-word; }
+  th { background: #f1f3f4; font-weight: 600; }
+  td.num, th.num { text-align: right; }
+  .status-done { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-testing { background: #cce5ff; color: #004085; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-progress { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-notstarted { background: #e2e3e5; color: #383d41; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-pending { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .group-row { background: #fef7e0; font-weight: 600; }
+  .group-total { background: #e8f0fe; font-weight: 700; }
+  .grand-total { background: #d2e3fc; font-weight: 700; }
+  .strategy { background: #e8f0fe; padding: 16px; border-left: 4px solid #1a73e8; margin: 16px 0; }
+  .strategy ul { margin: 6px 0 0 18px; padding: 0; }
+  .strategy li { margin-bottom: 6px; }
+  .plan-link { background: #e6f4ea; padding: 12px 16px; border-left: 4px solid #34a853; margin: 16px 0; text-align: center; font-size: 15px; }
+  .confirm { background: #fef7e0; padding: 16px; border-left: 4px solid #f9ab00; margin: 16px 0; }
+  a { color: #1a73e8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .signature { margin-top: 24px; }
+  .subject-hint { background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: #856404; }
+</style>
+</head>
+<body>
+
+<div class="subject-hint"><strong>Gợi ý Subject:</strong> [DISO] Kế hoạch triển khai Tháng 11/2026 (Dự kiến)</div>
+
+<p>Dear team,</p>
+
+<p>DISO gửi team bản <strong>kế hoạch triển khai Tháng 11/2026 (dự kiến)</strong>, gồm danh sách hạng mục, mô tả, impact, deadline, workload ước tính (BE / FE / QC / PM) và trạng thái hiện tại. Đây là bản kế hoạch lần 1 của tháng 11, sẽ chốt lại sau khi hai bên xác nhận scope.</p>
+
+<div class="strategy">
+  <strong>🎯 Định hướng triển khai Tháng 11/2026</strong>
+  <ul>
+    <li><strong>Trọng tâm: hệ thống vẫn chạy được khi bộ thu thập dữ liệu gặp sự cố</strong> (82h — 58% khối lượng tháng). Hai hạng mục cùng giải một lớp sự cố đã xảy ra trong thực tế: khi bộ thu thập ngừng hoạt động, người dùng bị chặn ngay lúc gửi bài, và không ai biết chuyện gì đang xảy ra cho tới khi có người liên hệ hỗ trợ.
+      <br>— <strong>Về phía người dùng:</strong> cho gửi bài ngay, việc kiểm tra đường dẫn chuyển sang chạy nền.
+      <br>— <strong>Về phía vận hành:</strong> tự tra được hành trình thu thập lượt xem của từng bài, phát hiện sự cố mà không phải chờ người dùng báo.</li>
+    <li><strong>Bổ sung hiển thị tiền thưởng trên trang riêng của đối tác</strong> (34h) — theo đề nghị của đội vận hành FE Credit và NCB. Creator theo dõi được lượt xem và thu nhập ngay trên trang của đối tác, không phải quay về Ambassador.</li>
+    <li><strong>Nâng cấp trình soạn thảo bài viết và tin tức</strong> (25h) — gỡ các vướng mắc khi soạn nội dung trong trang quản trị.</li>
+  </ul>
+</div>
+
+<h1>Tổng quan kế hoạch Tháng 11/2026 (dự kiến)</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 30px;">STT</th>
+      <th style="width: 150px;">Hạng mục</th>
+      <th style="width: 42%;">Mô tả</th>
+      <th style="width: 23%;">Impact</th>
+      <th style="width: 58px;">Deadline</th>
+      <th class="num" style="width: 32px;">BE</th>
+      <th class="num" style="width: 32px;">FE</th>
+      <th class="num" style="width: 32px;">QC</th>
+      <th class="num" style="width: 32px;">PM</th>
+      <th class="num" style="width: 46px;">Total</th>
+      <th style="width: 76px;">Trạng thái</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- Nhóm 1 -->
+    <tr class="group-row"><td colspan="11">1. Hệ thống chịu được khi bộ thu thập dữ liệu gặp sự cố</td></tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Cho phép gửi bài kể cả khi bộ thu thập dữ liệu không hoạt động</strong></td>
+      <td>Hiện nay nếu bộ thu thập dữ liệu gặp sự cố, người dùng bị chặn ngay khi gửi bài và nhận thông báo lỗi. Không ai biết sự cố đang xảy ra cho tới khi người dùng liên hệ hỗ trợ; và kể cả khi hỗ trợ tiếp nhận thì vẫn phải chờ bộ thu thập hoạt động trở lại, người dùng mới gửi lại được.<br><br>Hạng mục này cho phép người dùng <strong>gửi bài ngay</strong>, việc kiểm tra đường dẫn chuyển sang <strong>chạy nền</strong>.</td>
+      <td>– Bộ thu thập chưa hoạt động ngay thì bài đăng vẫn được tạm ghi nhận và chờ kiểm tra<br>– Bộ thu thập chạy bình thường thì việc kiểm tra bài đăng vẫn diễn ra trơn tru như hiện nay<br>– Trường hợp không thu thập được, bài đăng vẫn nhập thủ công được nếu cần</td>
+      <td>20/11</td>
+      <td class="num">24</td>
+      <td class="num">12</td>
+      <td class="num">12</td>
+      <td class="num">4</td>
+      <td class="num"><strong>52</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Theo dõi hành trình thu thập lượt xem của bài đăng</strong></td>
+      <td>Ticket hỗ trợ về việc bài đăng không được ghi nhận lượt xem đang chiếm tỉ lệ cao nhất, và hầu hết chỉ có một hướng xử lý là chuyển cho người phụ trách kiểm tra thủ công.<br><br>Dữ liệu cần thiết đã có sẵn khoảng một nửa trong hệ thống, chỉ còn thiếu phần ghi lại các lần gọi bị lỗi. Bổ sung phần còn thiếu và dựng màn tra cứu để vận hành tự xem được hành trình thu thập của từng bài.</td>
+      <td>– Vận hành tự trả lời được vì sao một bài không tăng lượt xem, không phải chuyển cho người khác kiểm tra<br>– Khi có sự cố (thu thập lỗi, thiếu lượt thu thập) thì báo ngay được về phía nhà cung cấp kèm bằng chứng<br>– Giảm lượng ticket hỗ trợ phải xử lý thủ công</td>
+      <td>12/11</td>
+      <td class="num">12</td>
+      <td class="num">8</td>
+      <td class="num">8</td>
+      <td class="num">2</td>
+      <td class="num"><strong>30</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 1 (2 hoạt động)</td>
+      <td class="num">36</td>
+      <td class="num">20</td>
+      <td class="num">20</td>
+      <td class="num">6</td>
+      <td class="num">82</td>
+      <td>(55.0% / 149h)</td>
+    </tr>
+
+    <!-- Nhóm 2 -->
+    <tr class="group-row"><td colspan="11">2. Phục vụ đối tác và người dùng cuối</td></tr>
+    <tr>
+      <td>1</td>
+      <td><strong>Hiển thị thông tin tiền thưởng trên trang riêng của đối tác</strong></td>
+      <td>Trang riêng của đối tác hiện thiếu phần hiển thị tiền thưởng. Đội vận hành FE Credit và NCB đã đề nghị bổ sung.</td>
+      <td>– Creator theo dõi được lượt xem và thu nhập của mình ngay trên trang cá nhân tại trang của đối tác, không phải quay về Ambassador</td>
+      <td><strong>05/11</strong></td>
+      <td class="num">12</td>
+      <td class="num">12</td>
+      <td class="num">8</td>
+      <td class="num">2</td>
+      <td class="num"><strong>34</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 2 (1 hoạt động)</td>
+      <td class="num">12</td>
+      <td class="num">12</td>
+      <td class="num">8</td>
+      <td class="num">2</td>
+      <td class="num">34</td>
+      <td>(22.8% / 149h)</td>
+    </tr>
+
+    <!-- Nhóm 3 -->
+    <tr class="group-row"><td colspan="11">3. Cải tiến công cụ quản trị</td></tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Nâng cấp trình soạn thảo bài viết và tin tức</strong></td>
+      <td>Thay trình soạn thảo bài viết và tin tức trong trang quản trị bằng trình soạn thảo mới, có kèm chức năng tải ảnh thẳng vào bài.<br><br>Chuyển toàn bộ bài viết cũ sang định dạng mới, người dùng không phải soạn lại bằng tay.</td>
+      <td>– Sao chép nội dung giữa các bài không còn bị vỡ định dạng như hiện nay<br>– Soạn nội dung bằng AI rồi dán thẳng vào bài, không phải chỉnh lại từ đầu<br>– Xem trước được bài ngay trong lúc soạn, không phải lưu rồi tải lại trang mới thấy</td>
+      <td>12/11</td>
+      <td class="num">4</td>
+      <td class="num">12</td>
+      <td class="num">8</td>
+      <td class="num">1</td>
+      <td class="num"><strong>25</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 3 (1 hoạt động)</td>
+      <td class="num">4</td>
+      <td class="num">12</td>
+      <td class="num">8</td>
+      <td class="num">1</td>
+      <td class="num">25</td>
+      <td>(16.8% / 149h)</td>
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Tổng hợp workload Tháng 11/2026</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nhóm chức năng</th>
+      <th class="num" style="width: 70px;">Số hoạt động</th>
+      <th class="num" style="width: 56px;">BE</th>
+      <th class="num" style="width: 56px;">FE</th>
+      <th class="num" style="width: 56px;">QC</th>
+      <th class="num" style="width: 56px;">PM</th>
+      <th class="num" style="width: 70px;">Total (h)</th>
+      <th class="num" style="width: 110px;">% so với chuẩn 149h</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1. Hệ thống chịu được khi bộ thu thập dữ liệu gặp sự cố</td>
+      <td class="num">2</td><td class="num">36</td><td class="num">20</td><td class="num">20</td><td class="num">6</td><td class="num">82</td><td class="num">55.0%</td>
+    </tr>
+    <tr>
+      <td>2. Phục vụ đối tác và người dùng cuối</td>
+      <td class="num">1</td><td class="num">12</td><td class="num">12</td><td class="num">8</td><td class="num">2</td><td class="num">34</td><td class="num">22.8%</td>
+    </tr>
+    <tr>
+      <td>3. Cải tiến công cụ quản trị</td>
+      <td class="num">1</td><td class="num">4</td><td class="num">12</td><td class="num">8</td><td class="num">1</td><td class="num">25</td><td class="num">16.8%</td>
+    </tr>
+    <tr class="grand-total">
+      <td><strong>TỔNG THÁNG 11/2026</strong></td>
+      <td class="num"><strong>4</strong></td>
+      <td class="num"><strong>52</strong></td>
+      <td class="num"><strong>44</strong></td>
+      <td class="num"><strong>36</strong></td>
+      <td class="num"><strong>9</strong></td>
+      <td class="num"><strong>141</strong></td>
+      <td class="num"><strong>94.6%</strong></td>
+    </tr>
+    <tr>
+      <td style="color: #5f6368;">Tiêu chuẩn hợp đồng tháng</td>
+      <td class="num" style="color: #5f6368;">–</td>
+      <td class="num" style="color: #5f6368;">53</td>
+      <td class="num" style="color: #5f6368;">38</td>
+      <td class="num" style="color: #5f6368;">38</td>
+      <td class="num" style="color: #5f6368;">20</td>
+      <td class="num" style="color: #5f6368;">149</td>
+      <td class="num" style="color: #5f6368;">100%</td>
+    </tr>
+    <tr>
+      <td>Chênh lệch</td>
+      <td class="num">–</td>
+      <td class="num">−1</td>
+      <td class="num">+6</td>
+      <td class="num">−2</td>
+      <td class="num">−11</td>
+      <td class="num">−8</td>
+      <td class="num">−5.4%</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="plan-link">
+  📄 <strong>Chi tiết Kế hoạch Tháng 11/2026 (full):</strong> <a href="https://docs.google.com/spreadsheets/d/1llWv7MwEkyceEH5f16zujxS_R_t-ZaX7kAVKh2R0Yzg/edit?gid=1773302330#gid=1773302330">XEM TẠI ĐÂY</a>
+</div>
+
+<div class="confirm">
+  <strong>✅ Đề nghị xác nhận kế hoạch</strong>
+  <p style="margin: 8px 0 0 0;">Nhờ team review và <strong>xác nhận lại bản kế hoạch Tháng 11/2026 (dự kiến)</strong> ở trên để DISO làm cơ sở nghiệm thu cuối tháng.</p>
+</div>
+
+<p>Báo cáo tiến độ tuần sẽ gửi riêng vào đầu mỗi tuần. Trong quá trình triển khai, nếu có vướng mắc, thay đổi scope hoặc cần điều chỉnh deadline, DISO sẽ chủ động cập nhật và trao đổi với các bên liên quan kịp thời.</p>
+
+<p>Cảm ơn team đã phối hợp.</p>
+
+<div class="signature">
+  <p>Thanks &amp; Regards,<br>
+  <strong>DISO Team</strong></p>
+</div>
+
+</body>
+</html>
