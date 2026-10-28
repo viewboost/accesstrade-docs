@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Mã tài liệu** | PRD-AMB-PROFILE-PAGE-001 |
-| **Phiên bản** | 1.1 |
+| **Phiên bản** | 1.2 |
 | **Ngày ban hành** | 2026-10-23 |
 | **Trạng thái** | Đã triển khai trên nhánh tính năng, chờ nghiệm thu |
 | **Mức độ ưu tiên** | P1 |
@@ -62,10 +62,9 @@ thay đổi hợp đồng API.
 
 | Vấn đề hiện tại | Ảnh hưởng |
 |---|---|
-| Thu nhập bị phân tán giữa các tab, không có tổng tiền tạm tính rõ ràng | Creator khó đối chiếu số tiền đang chờ duyệt, chờ đối soát và đã đối soát |
+| Thu nhập bị phân tán giữa các tab, không có tổng tiền tạm tính rõ ràng | Creator khó đối chiếu số tiền chờ đối soát và đã đối soát |
 | Không có bảng thống kê theo nền tảng | Creator không biết lượt xem và lượt xem tính thưởng đến từ nguồn nào |
 | Danh sách chiến dịch dùng chip ngang | Khó sử dụng khi creator tham gia nhiều chiến dịch |
-| Bố cục tham chiếu từ `frontend/` thiếu một số nguồn và thiếu tiền chờ duyệt | Sao chép nguyên trạng sẽ hiển thị thiếu dữ liệu |
 | Modal mã tham gia không được mount tại trang cá nhân | Nút Đăng bài có thể bật state nhưng không hiện hộp thoại |
 | Banner liên kết tài khoản dùng `position: fixed` nhưng không giữ chỗ | Banner che breadcrumb và phần đầu nội dung |
 | Wording “Thử thách của tôi” không khớp tên trang | Người dùng khó nhận biết đích điều hướng |
@@ -84,8 +83,8 @@ thay đổi hợp đồng API.
 
 | Mã | Chỉ số | Ngưỡng đạt |
 |---|---|---|
-| M1 | Sai lệch giữa tổng tạm tính và `waiting + pending + completed` | 0 |
-| M2 | Nguồn trong `applyForSources` bị mất khỏi bảng | 0 |
+| M1 | Sai lệch giữa tổng tạm tính và `pending + completed` | 0 |
+| M2 | Số liệu trang cá nhân lệch `frontend/` cùng creator, cùng chiến dịch | 0 |
 | M3 | Luồng Đăng bài bỏ qua hoặc đảo thứ tự một cổng nghiệp vụ tại PP-006 | 0 |
 | M4 | Test các hàm thuần nêu tại NFR-005 | 100% pass |
 | M5 | Trường hợp banner che breadcrumb/nội dung ở desktop hoặc mobile | 0 |
@@ -115,7 +114,6 @@ thay đổi hợp đồng API.
 |---|---|
 | Creator tham gia một chiến dịch | Xem nhanh thu nhập, thống kê và bài đã đăng |
 | Creator tham gia nhiều chiến dịch | Chuyển đúng chiến dịch mà không rời trang |
-| Creator có bài đang chờ duyệt | Thấy khoản tiền đang được giữ tạm tính, không bị báo thiếu |
 | Creator thuộc chiến dịch có điều kiện | Nhận đúng hướng dẫn hoàn thiện hồ sơ, khai báo nhân viên hoặc nhập mã |
 | Bộ phận vận hành | Có số liệu hiển thị nhất quán với trạng thái backend để hỗ trợ người dùng |
 
@@ -174,8 +172,8 @@ Bố cục hai tab **Tiến trình / Danh sách bài đăng** cũ PHẢI đượ
 
 ### PP-002 — Chọn chiến dịch theo ADV
 
-Hệ thống PHẢI gom chiến dịch theo `event.partner._id` và giữ thứ tự ADV do API
-`/partners` trả về.
+Hệ thống PHẢI gom chiến dịch theo ADV y hệt `frontend/`: giữ thứ tự ADV do API
+`/partners` trả về, chiến dịch gắn vào ADV khi khớp `_id` hoặc `slug` của ADV.
 
 **Tiêu chí chấp nhận:**
 
@@ -183,25 +181,24 @@ Hệ thống PHẢI gom chiến dịch theo `event.partner._id` và giữ thứ 
 - [ ] Có từ hai ADV trở lên thì hiển thị tầng ADV → chiến dịch và cho phép thu gọn.
 - [ ] Nhóm chứa chiến dịch hiện tại được mở sẵn.
 - [ ] Việc người dùng tự mở nhóm khác không bị reset khi đổi dữ liệu.
-- [ ] Chiến dịch không khớp danh sách ADV vẫn xuất hiện trong một nhóm dự phòng, không bị mất.
+- [ ] Chưa có danh sách ADV thì gom theo partner ghi trên chiến dịch, như `frontend/`.
 - [ ] Trạng thái đang chọn có `aria-current` để hỗ trợ công nghệ trợ năng.
 
 ### PP-003 — Hiển thị số tiền tạm tính
 
-Tổng tiền tạm tính PHẢI được tính từ `userEventStatistic.cashTotal` theo công thức:
+Tổng tiền tạm tính PHẢI được tính từ `userEventStatistic.cashTotal` như `frontend/`:
 
 ```text
-Tổng tạm tính = waiting + pending + completed
+Tổng tạm tính = pending + completed
 ```
 
-Trong đó `waiting` là chờ duyệt, `pending` là chờ đối soát và `completed` là đã đối
-soát. Giá trị thiếu, `null` hoặc không phải số được coi là 0.
+Trong đó `pending` là chờ đối soát và `completed` là đã đối soát. Giá trị thiếu, `null`
+hoặc không phải số được coi là 0.
 
 **Tiêu chí chấp nhận:**
 
-- [ ] Tổng tiền bao gồm cả khoản chờ duyệt.
-- [ ] Luôn hiển thị hai dòng Đã đối soát và Chờ đối soát.
-- [ ] Chỉ hiển thị dòng Chờ duyệt khi giá trị lớn hơn 0 để giảm nhiễu.
+- [ ] Tổng tiền bằng đúng số `frontend/` hiển thị cho cùng creator, cùng chiến dịch.
+- [ ] Hiển thị hai dòng Đã đối soát và Chờ đối soát.
 - [ ] Tất cả giá trị dùng cùng hàm định dạng tiền tệ của ứng dụng.
 
 ### PP-004 — Bảng thống kê theo nền tảng
@@ -209,9 +206,8 @@ soát. Giá trị thiếu, `null` hoặc không phải số được coi là 0.
 Bảng PHẢI tạo một dòng cho từng phần tử trong `event.options.applyForSources`, theo
 đúng thứ tự cấu hình chiến dịch.
 
-Các nguồn tối thiểu phải hỗ trợ: TikTok, YouTube, YouTube Shorts, Facebook, Facebook
-Reels, Facebook Post, Instagram, Instagram Reels, Threads và Shopee. Tên nguồn hiển thị
-giống `frontend/`: khóa `snake_case` viết hoa chữ đầu từng từ (`tiktok` → Tiktok,
+Khóa quy đổi nguồn → field `userEventStatistic` y hệt `frontend/`; nguồn không có trong
+bảng quy đổi dùng chính tên nguồn làm khóa. Tên nguồn hiển thị giống `frontend/`: khóa `snake_case` viết hoa chữ đầu từng từ (`tiktok` → Tiktok,
 `youtube_shorts` → Youtube Shorts). Nguồn mới không được loại bỏ.
 
 | Cột | Nguồn dữ liệu |
@@ -287,8 +283,8 @@ luồng tải dữ liệu hiện có. Tiêu đề PHẢI dùng token cỡ chữ 
   có `aria-current`, nút icon có nội dung thay thế phù hợp.
 - **NFR-005 — Khả năng kiểm thử:** Phép tính tiền, ánh xạ nguồn và gom chiến dịch phải
   nằm trong hàm thuần và có kiểm thử đơn vị.
-- **NFR-006 — Wording đồng nhất:** Mọi chữ trên trang lấy y hệt `frontend/`. Chỉ khác
-  `frontend/` ở số liệu: tổng tạm tính gồm `waiting` (PP-003) và đủ khóa nguồn (PP-004).
+- **NFR-006 — Đồng nhất với `frontend/`:** Hạng mục chỉ đổi giao diện. Wording và cách
+  tính số trên trang y hệt `frontend/`; không thêm, bớt hay sửa logic tính.
 
 ## 8. Phụ thuộc và giả định
 
@@ -304,7 +300,7 @@ luồng tải dữ liệu hiện có. Tiêu đề PHẢI dùng token cỡ chữ 
 
 ### 8.2 Giả định
 
-- `cashTotal.waiting`, `pending`, `completed` có cùng đơn vị tiền tệ.
+- `cashTotal.pending`, `completed` có cùng đơn vị tiền tệ.
 - `applyForSources` là nguồn sự thật về các dòng cần xuất hiện trong bảng.
 - Số liệu `viewRewarded` do backend chốt; frontend không tự tái tạo quy tắc tính thưởng.
 - `creator-app/` và `fecredit/` cùng phục vụ trải nghiệm FE Credit ở hai lộ trình triển
@@ -318,8 +314,7 @@ liệu thay thế trước khi đổi cách tính trên giao diện.
 | Rủi ro | Biện pháp |
 |---|---|
 | Sao chép UI từ `frontend/` làm mất quy tắc riêng FE Credit | Tách `PostActions`, giữ thứ tự bốn cổng tại PP-006 |
-| Tổng tiền thấp hơn số backend giữ ngân sách | Cộng đủ `waiting + pending + completed`, khóa bằng unit test |
-| Nguồn mới hoặc nguồn ít dùng biến mất khỏi bảng | Fallback trực tiếp theo khóa nguồn và sinh nhãn chuẩn hóa |
+| Số liệu lệch `frontend/` | Chép nguyên phép tính của `frontend/`, khóa bằng unit test |
 | Bảng rộng làm tràn khung | `min-width: 0` cho cột nội dung và scroll ngang riêng cho bảng |
 | Banner che nội dung trên kích thước màn hình khác nhau | Đo chiều cao bằng `ResizeObserver`, không hardcode pixel |
 | Modal chồng nhau | Không hiển thị mã tham gia khi modal hệ thống đang mở; cổng nhân viên chạy trước |
@@ -334,9 +329,8 @@ là bằng chứng nghiệm thu.
 - [ ] Unit test của `cash-summary`, `source-rows` và `group-events-by-partner` đều pass.
 - [ ] Kiểm tra thủ công desktop và mobile với: một ADV/một chiến dịch, một ADV/nhiều
   chiến dịch, nhiều ADV, chiến dịch hết hạn và chiến dịch yêu cầu mã.
-- [ ] Kiểm tra creator có đủ ba trạng thái tiền; tổng hiển thị bằng tổng ba trạng thái.
-- [ ] Kiểm tra chiến dịch có `facebook_post`, `threads` và `shopee` không hiển thị sai 0
-  khi API có dữ liệu.
+- [ ] So từng số (tạm tính, đã/chờ đối soát, bảng theo nguồn, thưởng mốc) với `frontend/`
+  cùng creator, cùng chiến dịch: phải trùng.
 - [ ] Banner liên kết tài khoản không che breadcrumb trước và sau khi resize viewport.
 - [ ] Không phát sinh thay đổi backend hoặc lỗi hồi quy ở luồng nộp bài.
 
@@ -344,9 +338,9 @@ là bằng chứng nghiệm thu.
 
 | Nhóm | Ca kiểm bắt buộc |
 |---|---|
-| Dữ liệu tiền | Không có thống kê; chỉ có `waiting`; đủ ba trạng thái; field sai kiểu |
-| Nguồn | Nguồn phổ biến; `facebook_post`; `threads`; `shopee`; nguồn mới chưa có nhãn |
-| Chiến dịch | Một ADV/một chiến dịch; một ADV/nhiều chiến dịch; nhiều ADV; chiến dịch lệch danh sách ADV |
+| Dữ liệu tiền | Không có thống kê; có chờ đối soát + đã đối soát; có `waiting` (không cộng); field sai kiểu |
+| Nguồn | Mọi nguồn chiến dịch khai; số trùng `frontend/` |
+| Chiến dịch | Một ADV/một chiến dịch; một ADV/nhiều chiến dịch; nhiều ADV |
 | Cổng nộp bài | Thiếu hồ sơ; không đủ điều kiện nhân viên; yêu cầu mã; hết hạn; đủ điều kiện |
 | Responsive | Desktop; mobile; bảng rộng; banner một dòng; banner xuống nhiều dòng; đóng banner |
 
@@ -385,6 +379,7 @@ Các đường dẫn trong bảng tồn tại dưới cả `fecredit/src/` và `
 | `4e7acc29b` | Hoàn thiện tiêu đề bảng theo nền tảng |
 | `3fc93a490` | Đồng bộ tiêu đề bảng với Ambassador |
 | `0a0c6cef5` | Trả toàn bộ wording về y hệt Ambassador |
+| `da8dcc646` | Trả cách tính (tạm tính, khóa nguồn, gom ADV) về y hệt Ambassador |
 
 Tài liệu này ghi lại yêu cầu sản phẩm và tiêu chí nghiệm thu của phần đã triển khai;
 không dùng PRD `ambassador/creator-profile/prd.md` vì tài liệu đó mô tả đăng ký,
@@ -396,3 +391,4 @@ xác minh và enrich kênh social — một phạm vi nghiệp vụ khác.
 |---|---|---|
 | 1.0 | 2026-10-23 | Bản đầu, lập hồi cứu từ nhánh tính năng |
 | 1.1 | 2026-10-28 | Wording y hệt `frontend/`: “Doanh thu của bạn”, hiện “Lần cập nhật kế tiếp”, “Thưởng:”, tên nguồn và tooltip như `frontend/` |
+| 1.2 | 2026-10-28 | Cách tính y hệt `frontend/`: tạm tính = `pending + completed` (bỏ `waiting`), khóa nguồn và gom ADV như `frontend/` |

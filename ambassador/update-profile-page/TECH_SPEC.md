@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Mã tài liệu** | SDD-AMB-PROFILE-PAGE-001 |
-| **Phiên bản** | 1.1 |
+| **Phiên bản** | 1.2 |
 | **Ngày ban hành** | 2026-10-23 |
 | **Trạng thái** | Đã triển khai trên nhánh tính năng, chờ nghiệm thu |
 | **PRD** | [PRD-AMB-PROFILE-PAGE-001](./PRD.md) |
@@ -51,7 +51,7 @@ Tech Spec quyết định **how**.
 | Mã | Ràng buộc |
 |---|---|
 | C1 | API là nguồn sự thật của số liệu; frontend chỉ ánh xạ và trình bày. |
-| C2 | Tổng tiền tạm tính phải cộng `waiting + pending + completed`; không tin field tổng có sẵn. |
+| C2 | Tổng tiền tạm tính = `pending + completed`, y hệt `frontend/`; không đọc field tổng có sẵn. |
 | C3 | Bảng nguồn chỉ sinh dòng từ `applyForSources`; không suy nguồn từ object thống kê. |
 | C4 | Không được bỏ chiến dịch chỉ vì `/partners` chưa tải xong hoặc thiếu ADV tương ứng. |
 | C5 | Cổng nộp bài chạy đúng thứ tự: hồ sơ → nhân viên → mã tham gia → biểu mẫu. |
@@ -67,8 +67,8 @@ Tech Spec quyết định **how**.
 | Bố cục sidebar + nội dung | `frontend/src/pages/home/components/` | `fecredit/`, `creator-app/` | Port cấu trúc, không port nguyên hành vi |
 | Màu sidebar | Theme Ambassador | Theme FE Credit | Dùng `#00994f`, `#e8f6f0`, gradient FE Credit |
 | Nút hành động | FE Credit trước thay đổi | `PostActions` mới | Giữ cổng hồ sơ, nhân viên, mã và hết hạn |
-| Thống kê nguồn | Bảng của `frontend/` | `source-rows.ts` | Bổ sung nguồn bị thiếu; nhãn giữ như `frontend/` |
-| Tổng tiền | `userEventStatistic.cashTotal` | `cash-summary.ts` | Cộng đủ ba trạng thái, gồm `waiting` |
+| Thống kê nguồn | Bảng của `frontend/` | `source-rows.ts` | Khóa quy đổi và nhãn y hệt `frontend/` |
+| Tổng tiền | `userEventStatistic.cashTotal` | `cash-summary.ts` | Cùng phép cộng với `frontend/` |
 | Banner liên kết | Header hiện có | `alert-link-account.tsx` | Thêm spacer đo động, không hardcode chiều cao |
 
 ## 3. Kiến trúc hiện trạng đã xác minh
@@ -188,21 +188,19 @@ Files:
 
 #### 4.3.1 Thuật toán
 
-```text
-groups = partners.map(partner => group rỗng)     // giữ thứ tự API
-byId   = Map(groups._id -> group)
+Y hệt `frontend/src/pages/home/components/partner-sidebar/index.tsx`:
 
-for event of events:                             // giữ thứ tự event API
-  partnerId = event.partner._id || ''
-  group = byId[partnerId]
-  if group chưa tồn tại:
-    tạo group từ event.partner
-    fallback id = 'khac', name = 'Chiến dịch'
-  group.events.push(event)
+```text
+if partners có phần tử:                          // giữ thứ tự API
+  groups = partners.map(p => {
+    events: events.filter(ev => ev.partner._id == p._id || ev.partner.slug == p.slug)
+  })
+else:                                            // /partners chưa tải
+  gom events theo partner ghi trên event
+  fallback id = 'default', name = 'KOC Camp'
 ```
 
-Độ phức tạp `O(P + E)`, với `P` là số ADV và `E` là số chiến dịch. Không dùng vòng lặp
-lồng `partners × events`, và không filter làm mất event chưa khớp danh sách ADV.
+Chiến dịch không khớp ADV nào trong `/partners` thì không hiện, giống `frontend/`.
 
 #### 4.3.2 Trạng thái hiển thị
 
@@ -219,17 +217,16 @@ lồng `partners × events`, và không filter làm mất event chưa khớp dan
 File: `statistic/cash-summary.ts`.
 
 ```ts
-waiting   = Number(cashTotal?.waiting)   || 0;
 pending   = Number(cashTotal?.pending)   || 0;
 completed = Number(cashTotal?.completed) || 0;
-total     = waiting + pending + completed;
+total     = pending + completed;          // như frontend/statistic/index.tsx
 ```
 
 Không đọc `cashTotal.total`: field này có thể không tồn tại hoặc không cùng định nghĩa
 với “tạm tính” của màn hình. `Number(...) || 0` bảo vệ `undefined`, `null`, chuỗi rỗng
 và `NaN`; số âm nếu backend trả về vẫn được giữ để không âm thầm che sai lệch dữ liệu.
 
-UI luôn render `completed` và `pending`. `waiting` chỉ render khi lớn hơn 0. Tất cả số
+UI render `completed` và `pending`, không có dòng chờ duyệt (như `frontend/`). Tất cả số
 tiền đi qua `formatter.currency`.
 
 ### 4.5 Chuẩn hóa thống kê nguồn — PP-004
@@ -249,11 +246,8 @@ Files:
 | `youtube_shorts` | `youtubeShort` | Youtube Shorts |
 | `facebook` | `facebook` | Facebook |
 | `facebook_reels` | `facebookReels` | Facebook Reels |
-| `facebook_post` | `facebookPost` | Facebook Post |
 | `instagram` | `instagram` | Instagram |
 | `instagram_reels` | `instagramReels` | Instagram Reels |
-| `threads` | `threads` | Threads |
-| `shopee` | `shopeeVideo` | Shopee |
 
 Nhãn của mọi source (kể cả source chưa khai báo) là `snake_case` viết hoa chữ đầu từng
 từ, giống `frontend/`. Source chưa khai báo dùng chính source làm statistic key; đây là
@@ -418,9 +412,9 @@ Ba module bắt buộc có test ở cả hai ứng dụng:
 
 | Module | Case tối thiểu |
 |---|---|
-| `cash-summary` | đủ ba khoản; chỉ waiting; input thiếu |
-| `source-rows` | ánh xạ phổ biến; Facebook Post/Threads/Shopee; input thiếu; source lạ |
-| `group-events-by-partner` | giữ thứ tự; ADV rỗng; event lệch ADV; partners chưa tải; active theo code/id |
+| `cash-summary` | pending + completed, bỏ qua waiting; input thiếu |
+| `source-rows` | ánh xạ như `frontend/`; input thiếu; source lạ |
+| `group-events-by-partner` | giữ thứ tự; ADV rỗng; khớp slug; event lệch ADV không hiện; partners chưa tải; active theo code/id |
 
 Lệnh:
 
@@ -484,7 +478,7 @@ git diff --check
 1. Gộp nhánh feature vào nhánh tích hợp tương ứng.
 2. Build riêng `fecredit/` và `creator-app/` theo pipeline hiện có.
 3. Smoke test `/trang-ca-nhan` với user có ít nhất hai event và một bài đăng.
-4. Kiểm tra thêm user có `cashTotal.waiting > 0` và event yêu cầu mã.
+4. So số với `frontend/` cùng creator, cùng chiến dịch; kiểm tra event yêu cầu mã.
 5. Theo dõi lỗi client, lỗi tải `events/by-slug` và phản hồi sai số sau phát hành.
 
 Không có migration, feature flag hoặc thứ tự deploy backend/frontend.
@@ -524,3 +518,4 @@ Hai mục này không thay đổi thiết kế nhưng phải được ghi nhận
 |---|---|---|
 | 1.0 | 2026-10-23 | Lập thiết kế hồi cứu từ nhánh `feat/profile-page-ui-from-frontend`, liên kết PP-001–PP-009 |
 | 1.1 | 2026-10-28 | Wording y hệt `frontend/` (commit `0a0c6cef5`): nhãn nguồn, “Thưởng:”, hiện lần cập nhật kế tiếp |
+| 1.2 | 2026-10-28 | Cách tính y hệt `frontend/` (commit `da8dcc646`): tạm tính, khóa nguồn, gom ADV |
