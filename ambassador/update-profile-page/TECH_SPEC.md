@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Mã tài liệu** | SDD-AMB-PROFILE-PAGE-001 |
-| **Phiên bản** | 1.0 |
+| **Phiên bản** | 1.1 |
 | **Ngày ban hành** | 2026-10-23 |
 | **Trạng thái** | Đã triển khai trên nhánh tính năng, chờ nghiệm thu |
 | **PRD** | [PRD-AMB-PROFILE-PAGE-001](./PRD.md) |
@@ -57,7 +57,7 @@ Tech Spec quyết định **how**.
 | C5 | Cổng nộp bài chạy đúng thứ tự: hồ sơ → nhân viên → mã tham gia → biểu mẫu. |
 | C6 | `fecredit/` và `creator-app/` phải giữ cùng thuật toán và cùng test cho logic dùng chung. |
 | C7 | Cuộn ngang chỉ nằm trong bảng; không được làm tràn toàn bộ trang. |
-| C8 | Không hiển thị lịch cập nhật do frontend tự suy đoán. |
+| C8 | Wording y hệt `frontend/`, gồm “Lần cập nhật kế tiếp” = `lastUpdatedAt` + 2 giờ. |
 | C9 | Việc port từ `frontend/` phải giữ branding và hành vi riêng của FE Credit. |
 
 ### 2.1 Bảng nguồn — đích
@@ -67,7 +67,7 @@ Tech Spec quyết định **how**.
 | Bố cục sidebar + nội dung | `frontend/src/pages/home/components/` | `fecredit/`, `creator-app/` | Port cấu trúc, không port nguyên hành vi |
 | Màu sidebar | Theme Ambassador | Theme FE Credit | Dùng `#00994f`, `#e8f6f0`, gradient FE Credit |
 | Nút hành động | FE Credit trước thay đổi | `PostActions` mới | Giữ cổng hồ sơ, nhân viên, mã và hết hạn |
-| Thống kê nguồn | Bảng của `frontend/` | `source-rows.ts` | Bổ sung nguồn bị thiếu và sửa nhãn thương hiệu |
+| Thống kê nguồn | Bảng của `frontend/` | `source-rows.ts` | Bổ sung nguồn bị thiếu; nhãn giữ như `frontend/` |
 | Tổng tiền | `userEventStatistic.cashTotal` | `cash-summary.ts` | Cộng đủ ba trạng thái, gồm `waiting` |
 | Banner liên kết | Header hiện có | `alert-link-account.tsx` | Thêm spacer đo động, không hardcode chiều cao |
 
@@ -163,7 +163,7 @@ LoggedInView
 ├─ AppBreadcrumb
 ├─ PartnerSidebar
 └─ content panel
-   ├─ heading + lastUpdatedAt
+   ├─ heading + lastUpdatedAt (gần nhất / kế tiếp)
    ├─ PostActions
    ├─ StatisticUser
    │  ├─ cash summary card
@@ -244,19 +244,20 @@ Files:
 
 | `applyForSources` | Field trong `userEventStatistic` | Nhãn |
 |---|---|---|
-| `tiktok` | `tiktok` | TikTok |
-| `youtube` | `youtube` | YouTube |
-| `youtube_shorts` | `youtubeShort` | YouTube Shorts |
+| `tiktok` | `tiktok` | Tiktok |
+| `youtube` | `youtube` | Youtube |
+| `youtube_shorts` | `youtubeShort` | Youtube Shorts |
 | `facebook` | `facebook` | Facebook |
 | `facebook_reels` | `facebookReels` | Facebook Reels |
 | `facebook_post` | `facebookPost` | Facebook Post |
 | `instagram` | `instagram` | Instagram |
 | `instagram_reels` | `instagramReels` | Instagram Reels |
 | `threads` | `threads` | Threads |
-| `shopee` | `shopeeVideo` | Shopee Video |
+| `shopee` | `shopeeVideo` | Shopee |
 
-Source chưa khai báo dùng chính source làm statistic key và chuyển `snake_case` thành
-nhãn Title Case. Đây là forward-compatible fallback, không cam kết backend đã có số.
+Nhãn của mọi source (kể cả source chưa khai báo) là `snake_case` viết hoa chữ đầu từng
+từ, giống `frontend/`. Source chưa khai báo dùng chính source làm statistic key; đây là
+forward-compatible fallback, không cam kết backend đã có số.
 
 #### 4.5.2 Field hiển thị
 
@@ -280,7 +281,7 @@ client có thể tạo số sai hoặc âm.
 
 ### 4.6 Mốc thưởng — PP-005
 
-`EventSchema` chỉ render khi mảng có phần tử. Dòng “Thưởng mốc đã đạt” dùng:
+`EventSchema` chỉ render khi mảng có phần tử. Dòng “Thưởng:” dùng:
 
 ```text
 cashReward.completed + cashReward.pending
@@ -522,3 +523,4 @@ Hai mục này không thay đổi thiết kế nhưng phải được ghi nhận
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
 | 1.0 | 2026-10-23 | Lập thiết kế hồi cứu từ nhánh `feat/profile-page-ui-from-frontend`, liên kết PP-001–PP-009 |
+| 1.1 | 2026-10-28 | Wording y hệt `frontend/` (commit `0a0c6cef5`): nhãn nguồn, “Thưởng:”, hiện lần cập nhật kế tiếp |

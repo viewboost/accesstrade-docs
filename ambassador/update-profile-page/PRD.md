@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Mã tài liệu** | PRD-AMB-PROFILE-PAGE-001 |
-| **Phiên bản** | 1.0 |
+| **Phiên bản** | 1.1 |
 | **Ngày ban hành** | 2026-10-23 |
 | **Trạng thái** | Đã triển khai trên nhánh tính năng, chờ nghiệm thu |
 | **Mức độ ưu tiên** | P1 |
@@ -160,7 +160,7 @@ thay đổi hợp đồng API.
 ### PP-001 — Bố cục thống nhất cho Trang cá nhân
 
 Trang PHẢI hiển thị breadcrumb **Trang chủ / Trang cá nhân**, sidebar chiến dịch,
-khối **Thu nhập của bạn**, mốc thưởng và danh sách bài đăng trong cùng một trang.
+khối **Doanh thu của bạn**, mốc thưởng và danh sách bài đăng trong cùng một trang.
 Bố cục hai tab **Tiến trình / Danh sách bài đăng** cũ PHẢI được loại bỏ.
 
 **Tiêu chí chấp nhận:**
@@ -168,8 +168,9 @@ Bố cục hai tab **Tiến trình / Danh sách bài đăng** cũ PHẢI đượ
 - [ ] Desktop hiển thị sidebar bên trái và nội dung bên phải.
 - [ ] Mobile xếp các khối theo chiều dọc, không mất nội dung.
 - [ ] Breadcrumb thẳng hàng với trang `/tai-khoan`.
-- [ ] Tên và thời điểm cập nhật gần nhất của chiến dịch được hiển thị khi API có dữ liệu.
-- [ ] Không hiển thị “Lần cập nhật kế tiếp” do backend không cam kết chu kỳ cập nhật cố định.
+- [ ] Tên chiến dịch, “Lần cập nhật gần nhất” và “Lần cập nhật kế tiếp” (gần nhất + 2 giờ)
+  được hiển thị khi API có `lastUpdatedAt`, giống `frontend/`.
+- [ ] Wording trên trang y hệt `frontend/`.
 
 ### PP-002 — Chọn chiến dịch theo ADV
 
@@ -209,11 +210,13 @@ Bảng PHẢI tạo một dòng cho từng phần tử trong `event.options.appl
 đúng thứ tự cấu hình chiến dịch.
 
 Các nguồn tối thiểu phải hỗ trợ: TikTok, YouTube, YouTube Shorts, Facebook, Facebook
-Reels, Facebook Post, Instagram, Instagram Reels, Threads và Shopee Video. Nguồn mới
-chưa có nhãn riêng vẫn PHẢI hiển thị bằng tên được chuẩn hóa, không được loại bỏ.
+Reels, Facebook Post, Instagram, Instagram Reels, Threads và Shopee. Tên nguồn hiển thị
+giống `frontend/`: khóa `snake_case` viết hoa chữ đầu từng từ (`tiktok` → Tiktok,
+`youtube_shorts` → Youtube Shorts). Nguồn mới không được loại bỏ.
 
 | Cột | Nguồn dữ liệu |
 |---|---|
+| Nguồn | tên nguồn như trên |
 | Lượt xem | `<source>.view.completed` |
 | Lượt xem tính thưởng (đã đối soát) | `<source>.viewRewarded.cashback` |
 | Lượt xem tính thưởng (chờ đối soát) | `<source>.viewRewarded.completed` |
@@ -222,21 +225,20 @@ chưa có nhãn riêng vẫn PHẢI hiển thị bằng tên được chuẩn h�
 
 - [ ] Không tự lấy `Lượt xem` trừ cho `Lượt xem tính thưởng`; mỗi số đọc đúng field backend.
 - [ ] Field thiếu hiển thị 0.
-- [ ] Viết đúng tên thương hiệu: TikTok, YouTube, Facebook, Instagram, Threads.
+- [ ] Tiêu đề cột và tên nguồn y hệt `frontend/`.
 - [ ] Mỗi cột số sắp xếp theo chính giá trị của cột đó.
-- [ ] Tooltip giải thích rõ trường hợp lượt xem không được tính thưởng.
+- [ ] Tooltip ở cột “Lượt xem tính thưởng (đã đối soát)” chép nguyên văn `frontend/`.
 - [ ] Tiêu đề nằm trên một hàng; khung hẹp cho phép cuộn ngang thay vì làm vỡ layout.
 
 ### PP-005 — Mốc thưởng
 
-Khi chiến dịch có `eventSchema`, trang PHẢI hiển thị dãy mốc và dòng **Thưởng mốc đã
-đạt**. Tiền thưởng mốc đã đạt bằng `cashReward.pending + cashReward.completed`.
+Khi chiến dịch có `eventSchema`, trang PHẢI hiển thị dãy mốc và dòng **Thưởng:** như
+`frontend/`. Số tiền bằng `cashReward.pending + cashReward.completed`.
 
 **Tiêu chí chấp nhận:**
 
-- [ ] Không cộng khoản chưa được duyệt vào thưởng mốc đã đạt.
+- [ ] Không cộng khoản chưa được duyệt vào số tiền thưởng.
 - [ ] Không hiển thị khối khi chiến dịch không có mốc.
-- [ ] Wording không làm người dùng hiểu số tiền là giá của mốc cuối cùng.
 
 ### PP-006 — Đăng bài không làm mất cổng nghiệp vụ
 
@@ -285,8 +287,8 @@ luồng tải dữ liệu hiện có. Tiêu đề PHẢI dùng token cỡ chữ 
   có `aria-current`, nút icon có nội dung thay thế phù hợp.
 - **NFR-005 — Khả năng kiểm thử:** Phép tính tiền, ánh xạ nguồn và gom chiến dịch phải
   nằm trong hàm thuần và có kiểm thử đơn vị.
-- **NFR-006 — Không suy diễn dữ liệu:** Không hiển thị thời điểm cập nhật kế tiếp nếu
-  backend không cung cấp lịch cập nhật.
+- **NFR-006 — Wording đồng nhất:** Mọi chữ trên trang lấy y hệt `frontend/`. Chỉ khác
+  `frontend/` ở số liệu: tổng tạm tính gồm `waiting` (PP-003) và đủ khóa nguồn (PP-004).
 
 ## 8. Phụ thuộc và giả định
 
@@ -382,7 +384,15 @@ Các đường dẫn trong bảng tồn tại dưới cả `fecredit/src/` và `
 | `7d3e8ba40` | Làm phẳng sidebar một ADV, đồng bộ spacing và wording |
 | `4e7acc29b` | Hoàn thiện tiêu đề bảng theo nền tảng |
 | `3fc93a490` | Đồng bộ tiêu đề bảng với Ambassador |
+| `0a0c6cef5` | Trả toàn bộ wording về y hệt Ambassador |
 
 Tài liệu này ghi lại yêu cầu sản phẩm và tiêu chí nghiệm thu của phần đã triển khai;
 không dùng PRD `ambassador/creator-profile/prd.md` vì tài liệu đó mô tả đăng ký,
 xác minh và enrich kênh social — một phạm vi nghiệp vụ khác.
+
+## Lịch sử sửa đổi
+
+| Phiên bản | Ngày | Nội dung |
+|---|---|---|
+| 1.0 | 2026-10-23 | Bản đầu, lập hồi cứu từ nhánh tính năng |
+| 1.1 | 2026-10-28 | Wording y hệt `frontend/`: “Doanh thu của bạn”, hiện “Lần cập nhật kế tiếp”, “Thưởng:”, tên nguồn và tooltip như `frontend/` |
