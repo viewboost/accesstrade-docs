@@ -21,15 +21,14 @@ Một thao tác được phép khi: nhân sự đang hoạt động, chưa hết
 ## 2. Tóm tắt quyền
 
 **Nguyên tắc chung**
-- Có quyền sửa / import / xuất / duyệt của một chức năng thì tự có quyền xem chức năng đó.
-- **Người lập khoản chi và người duyệt khoản chi là hai vai trò khác nhau.** Chỉ root và Admin có cả hai nhóm. Dù vậy, trừ root, **không ai duyệt được khoản do chính mình tạo**, kể cả Admin.
-  - **Khe còn lại:** hệ thống chỉ so người duyệt với người tạo khoản. Người có cả quyền sửa lẫn quyền duyệt (Admin) sửa số tiền một khoản người khác lập rồi tự duyệt khoản đó được (mục 7).
+- Có quyền sửa / import / xuất / duyệt của một chức năng thì tự có quyền xem chức năng đó. Một số quyền còn tự kéo theo quyền tra cứu mà hộp của nó cần: `bonus.view` → `event.view`; `bonus.edit` → `creator.view`; `mission.edit` → `category.view`; `user_segment.edit` → `creator.view`.
+- **Không bắt buộc tách người lập và người duyệt khoản chi** (chốt 29/10, [comment #312](https://github.com/AT-Core/ambassador/pull/312#issuecomment-6487523688); code #312 đang gỡ phần chặn). Một vai trò được giữ cả hai nhóm quyền, một người duyệt được khoản do mình tạo, giống production. Vai trò mặc định vẫn tách: VHHS lập, Duyệt chi duyệt; Admin có cả hai.
   - Nhóm lập: `bonus.edit`, `bonus.import`, `bonus.cancel`, `reconciliation.create`, `reconciliation.cancel_item`, `transfer.create`.
   - Nhóm duyệt: `bonus.approve`, `reconciliation.change_status`, `transfer.change_status`.
-  - Luật này chỉ áp dụng trên **trang admin**. Đối soát và đợt rút tạo, đổi trạng thái qua API ngoài của AT không đi qua luật hai người (mục 5.5).
+  - Hai nhóm này vẫn dùng cho **luật quản lý tài khoản**: người mang vai trò có quyền nhóm lập không mời, sửa hay gán được vai trò có quyền nhóm duyệt.
 - **Dữ liệu cá nhân của creator:**
   - SĐT, email: chỉ người có `user.view_contact` thấy (QLVH, VHND, Admin, root); người khác không thấy. Riêng ô tìm creator ở bảng xếp hạng, người không có quyền vẫn thấy 4 số cuối SĐT để phân biệt creator trùng tên.
-  - Nhật ký xem SĐT, email hiện **chỉ ghi khi mở chi tiết creator**. SĐT, email còn hiện ở danh sách người dùng, hồ sơ creator, lịch sử đổi quà, file xuất người dùng và bảng xếp hạng mà không ghi nhật ký.
+  - Nhật ký xem SĐT, email hiện **chỉ ghi khi mở chi tiết creator**. Người có `user.view_contact` còn thấy SĐT, email ở các bảng Creator (Danh sách creator, Duyệt Creator), Sự kiện › Duyệt sự kiện, Hồ sơ, Quà tặng › Lịch sử đổi quà, Thông số › CBNV, Lịch sử đăng nhập và file xuất người dùng ADV, kênh creator — các chỗ này không ghi nhật ký.
   - CCCD, mã số thuế, ngân hàng: chỉ root và hệ thống AT qua API ngoài (mục 5.5) thấy đầy đủ; người khác thấy bản che (CCCD/MST 3 ký tự cuối, số thẻ 4 số cuối, không thấy chủ thẻ).
   - **Ngoại lệ — file rút tiền:** file chuyển khoản gửi ngân hàng chứa **đủ CCCD, MST, SĐT và số thẻ**, không che. Ai có `transfer.export` đều tải được: QLVH, VHHS, Duyệt chi, Admin (cần chốt, mục 7).
 - Token đăng nhập mạng xã hội của creator: không ai thấy, kể cả root.
@@ -38,13 +37,13 @@ Một thao tác được phép khi: nhân sự đang hoạt động, chưa hết
 |---|---|---|
 | Root | Mọi việc trên mọi ADV, kể cả các việc chỉ root (mục 3) | — |
 | Quản lý vận hành | Mọi việc của VHND và VHHS; xem nhật ký thao tác, lịch sử đăng nhập; mời, đổi vai trò, tắt tài khoản nhân sự VHND/VHHS trong ADV mình | Duyệt chi; sửa tài khoản Duyệt chi, KTHT, Admin, QLVH khác; xoá nội dung |
-| Vận hành nội dung | Duyệt, từ chối, ghim nội dung, gắn cảnh báo, thêm tay nội dung; duyệt creator đăng ký và người dùng vào ADV; xem SĐT, email creator; xuất và tải file nội dung | Việc tiền; sửa sự kiện; xoá nội dung |
-| Vận hành hiệu suất | Xem thống kê, bảng xếp hạng; lập thưởng thêm (tạo, sửa, import, huỷ); huỷ mục đối soát không hợp lệ; tải file đối soát, rút tiền; xuất nội dung, thống kê | Duyệt chi (kể cả khoản mình lập); duyệt nội dung; xem SĐT, email; xoá nội dung |
-| Duyệt chi | Duyệt, từ chối thưởng thêm; chốt đối soát; duyệt, từ chối đợt rút và lệnh rút; xem màn tiền; tải file đối soát, rút tiền | Tạo, sửa, huỷ khoản thưởng; huỷ mục đối soát; lập đối soát, đợt rút |
+| Vận hành nội dung | Duyệt, từ chối, ghim nội dung, gắn cảnh báo, cộng trừ tay lượt xem; duyệt creator đăng ký sự kiện và người dùng vào ADV; xem SĐT, email creator; xuất và tải file nội dung | Việc tiền; sửa sự kiện; xoá nội dung |
+| Vận hành hiệu suất | Xem thống kê, bảng xếp hạng; lập thưởng thêm (tạo, sửa, import, huỷ); từ chối mục đối soát không hợp lệ; tải file đối soát, rút tiền; xuất nội dung, thống kê | Duyệt chi (kể cả khoản mình lập); duyệt nội dung; xem SĐT, email; xoá nội dung |
+| Duyệt chi | Duyệt, từ chối thưởng thêm; lấy danh sách, duyệt, huỷ cả bản đối soát; duyệt, từ chối đợt rút và lệnh rút; xem màn tiền; tải file đối soát, rút tiền | Tạo, sửa, huỷ khoản thưởng; từ chối mục trong đối soát; lập đối soát, đợt rút |
 | Kỹ thuật hỗ trợ | Chỉ xem mọi màn nghiệp vụ trong phạm vi ADV được giao | Mọi thao tác ghi; xem SĐT, email; tải file; xem nhân sự |
 | Cấu hình ứng dụng | Cấu hình, xuất bản, khôi phục site; tin tức, bài viết, kênh hỗ trợ, affiliate; tạo, sửa sự kiện và mẫu sự kiện | Việc tiền; duyệt nội dung |
-| Cộng tác viên | Chỉ duyệt nội dung | Mọi việc khác |
-| Admin | Gần như toàn bộ nghiệp vụ, cả lập lẫn duyệt chi (không tự duyệt khoản mình tạo); xem SĐT, email creator | Xem đủ CCCD, MST, ngân hàng; kênh hỗ trợ; quản lý nhân sự; xoá nội dung; sửa tag, cấu hình dùng chung nếu không có phạm vi "mọi ADV" |
+| Cộng tác viên | Duyệt nội dung; cộng trừ tay lượt xem của bài | Mọi việc khác |
+| Admin | Gần như toàn bộ nghiệp vụ, cả lập lẫn duyệt chi; xem SĐT, email creator | Xem đủ CCCD, MST, ngân hàng; kênh hỗ trợ; quản lý nhân sự; xoá nội dung; sửa tag, cấu hình dùng chung nếu không có phạm vi "mọi ADV" |
 
 ## 3. Danh sách quyền
 
@@ -55,15 +54,15 @@ Một thao tác được phép khi: nhân sự đang hoạt động, chưa hết
 | | **Nội dung** | | | | | | | | | | |
 | 1 | `content.view` | Xem nội dung | Xem danh sách, chi tiết, số liệu nội dung creator đã đăng | ✔ | ✔ | ✔ |  | ✔ |  | ✔ | ✔ |
 | 2 | `content.moderate` | Duyệt nội dung | Duyệt, từ chối (từng bài và theo lô), ghim, gắn tag cảnh báo, cập nhật số liệu một nội dung | ✔ | ✔ |  |  |  |  | ✔ | ✔ |
-| 3 | `content_manual_flow.view` | Xem luồng nội dung thủ công | Xem các luồng nội dung được thêm tay | ✔ | ✔ |  |  | ✔ |  | ✔ | ✔ |
-| 4 | `content_manual_flow.edit` | Tạo luồng nội dung thủ công | Thêm tay một luồng nội dung cho creator | ✔ | ✔ |  |  |  |  | ✔ | ✔ |
+| 3 | `content_manual_flow.view` | Xem cộng trừ lượt xem thủ công | Xem các lần cộng, trừ tay lượt xem của một bài (tab Cộng trừ thủ công) | ✔ | ✔ |  |  | ✔ |  | ✔ | ✔ |
+| 4 | `content_manual_flow.edit` | Cộng trừ lượt xem thủ công | Cộng hoặc trừ tay lượt xem của một bài; có thể làm đổi thưởng tính theo lượt xem | ✔ | ✔ |  |  |  |  | ✔ | ✔ |
 | | **Người dùng và creator** | | | | | | | | | | |
-| 5 | `user.view_contact` | Xem liên hệ creator | Mở chi tiết creator: số điện thoại, email, kênh mạng xã hội, nội dung đã đăng. Mỗi lượt xem ghi nhật ký | ✔ | ✔ |  |  |  |  |  | ✔ |
+| 5 | `user.view_contact` | Xem liên hệ creator | Thấy số điện thoại, email creator ở mọi bảng và file xuất, mở trang chi tiết creator. Chỉ lượt mở trang chi tiết được ghi nhật ký | ✔ | ✔ |  |  |  |  |  | ✔ |
 | 6 | `creator.view` | Xem hồ sơ creator | Danh sách và chi tiết hồ sơ creator, thống kê hồ sơ và bộ lọc tìm creator | ✔ | ✔ | ✔ | ✔ | ✔ |  |  | ✔ |
 | 7 | `creator.edit` | Sửa hồ sơ creator | Đổi trạng thái hồ sơ, cập nhật chỉ số, cấu hình điều kiện hồ sơ |  |  |  |  |  |  |  | ✔ |
-| 8 | `creator.approve` | Duyệt creator | Duyệt hoặc từ chối hồ sơ đăng ký làm creator | ✔ | ✔ |  |  |  |  |  | ✔ |
-| 9 | `partner_member.approve` | Duyệt thành viên ADV | Duyệt hoặc từ chối yêu cầu tham gia ADV của người dùng | ✔ | ✔ |  |  |  |  |  | ✔ |
-| 10 | `user_partner.view` | Xem người dùng ADV | Xem người dùng thuộc ADV và trạng thái CBNV |  |  |  |  | ✔ |  |  | ✔ |
+| 8 | `creator.approve` | Duyệt đăng ký sự kiện | Duyệt hoặc từ chối yêu cầu tham gia sự kiện của creator (tab Duyệt sự kiện) | ✔ | ✔ |  |  |  |  |  | ✔ |
+| 9 | `partner_member.approve` | Duyệt thành viên ADV | Duyệt hoặc từ chối yêu cầu tham gia ADV của người dùng (tab Duyệt Creator) | ✔ | ✔ |  |  |  |  |  | ✔ |
+| 10 | `user_partner.view` | Xem người dùng ADV | Xem người dùng thuộc ADV: trạng thái CBNV, số dư, đã rút, ngân hàng và MST đã che |  |  |  |  | ✔ |  |  | ✔ |
 | 11 | `user_partner.edit_staff_status` | Đổi trạng thái CBNV | Đánh dấu / bỏ đánh dấu người dùng ADV là nhân viên của thương hiệu |  |  |  |  |  |  |  | ✔ |
 | | **Sự kiện và thống kê** | | | | | | | | | | |
 | 12 | `event.view` | Xem danh sách sự kiện | Danh sách sự kiện (dùng cả ở ô chọn sự kiện khi duyệt nội dung) | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
@@ -71,7 +70,7 @@ Một thao tác được phép khi: nhân sự đang hoạt động, chưa hết
 | 14 | `event.edit` | Quản lý sự kiện | Tạo, sửa, nhân bản, bật/tắt sự kiện; yêu cầu, ngân sách, opshub; cấu hình và ghim bảng xếp hạng |  |  |  |  |  | ✔ |  | ✔ |
 | 15 | `event_schema.view` | Xem mẫu sự kiện | Danh sách mẫu sự kiện |  |  |  |  | ✔ | ✔ |  | ✔ |
 | 16 | `event_schema.edit` | Quản lý mẫu sự kiện | Tạo, sửa, bật/tắt mẫu sự kiện dùng để dựng sự kiện |  |  |  |  |  | ✔ |  | ✔ |
-| 17 | `statistic.view` | Xem thống kê | Dashboard, thống kê sự kiện, thống kê theo nhân sự, biểu đồ, báo cáo | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |  | ✔ |
+| 17 | `statistic.view` | Xem thống kê | Thông số, Thông số cũ, thống kê theo nhân viên (CBNV), biểu đồ, báo cáo | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |  | ✔ |
 | | **Thưởng, nhiệm vụ, quà** | | | | | | | | | | |
 | 18 | `bonus.view` | Xem thưởng thêm | Danh sách và chi tiết các khoản thưởng thêm | ✔ |  | ✔ | ✔ | ✔ |  |  | ✔ |
 | 19 | `bonus.edit` | Cộng thưởng thêm | Tạo, sửa một khoản thưởng thêm cho creator | ✔ |  | ✔ |  |  |  |  | ✔ |
@@ -85,32 +84,32 @@ Một thao tác được phép khi: nhân sự đang hoạt động, chưa hết
 | 27 | `gift.edit` | Quản lý quà | Tạo, sửa, bật/tắt quà |  |  |  |  |  |  |  | ✔ |
 | 28 | `gift.process` | Xử lý đổi quà | Duyệt / từ chối lượt đổi quà của creator |  |  |  |  |  |  |  | ✔ |
 | | **Đối soát, rút tiền, xuất** | | | | | | | | | | |
-| 29 | `reconciliation.view` | Xem đối soát | Danh sách và chi tiết bản đối soát, đủ bốn tab: Tổng quan, Nội dung, Mốc thưởng, Thưởng thêm | ✔ |  | ✔ | ✔ | ✔ |  |  | ✔ |
+| 29 | `reconciliation.view` | Xem đối soát | Danh sách và chi tiết bản đối soát với các tab Tổng quan, Nội dung, Nhiệm vụ, Thưởng thêm | ✔ |  | ✔ | ✔ | ✔ |  |  | ✔ |
 | 30 | `reconciliation.create` | Tạo bản đối soát | Tạo, sửa thông tin bản đối soát |  |  |  |  |  |  |  | ✔ |
-| 31 | `reconciliation.cancel_item` | Huỷ mục đối soát | Huỷ từng mục nội dung hoặc mốc thưởng trong bản đối soát, kèm lý do | ✔ |  | ✔ |  |  |  |  | ✔ |
-| 32 | `reconciliation.change_status` | Đổi trạng thái đối soát | Đổi trạng thái cả bản đối soát (chốt, duyệt, huỷ) |  |  |  | ✔ |  |  |  | ✔ |
+| 31 | `reconciliation.cancel_item` | Từ chối từng mục trong đối soát | Nút Từ chối trên từng dòng Chờ duyệt (tab Nội dung, Nhiệm vụ, Thưởng thêm) để loại một khoản khỏi bản đối soát, kèm lý do. Không phải nút Hủy đối soát ở đầu trang | ✔ |  | ✔ |  |  |  |  | ✔ |
+| 32 | `reconciliation.change_status` | Lấy danh sách, duyệt, hủy cả bản đối soát | Các nút đầu trang chi tiết: Lấy danh sách, Duyệt tất cả, Hủy đối soát (cả bản) |  |  |  | ✔ |  |  |  | ✔ |
 | 33 | `reconciliation.export` | Tải file đối soát | Tạo yêu cầu xuất và tải file đối soát; file luôn mang ADV của bản đối soát | ✔ |  | ✔ | ✔ |  |  |  | ✔ |
 | 34 | `transfer.view` | Xem rút tiền | Danh sách, chi tiết đợt rút và danh sách lệnh rút bên trong | ✔ |  | ✔ | ✔ | ✔ |  |  | ✔ |
 | 35 | `transfer.create` | Tạo đợt rút tiền | Tạo, sửa đợt rút tiền |  |  |  |  |  |  |  | ✔ |
 | 36 | `transfer.export` | Tải file rút tiền | Tạo yêu cầu xuất và tải file rút tiền | ✔ |  | ✔ | ✔ |  |  |  | ✔ |
 | 37 | `transfer.change_status` | Xử lý rút tiền | Đổi trạng thái đợt rút, từ chối lệnh rút |  |  |  | ✔ |  |  |  | ✔ |
-| 38 | `export.view` | Xem dữ liệu xuất | Xem danh sách file đã xuất. Tải từng file cần quyền tải của loại file đó | ✔ | ✔ | ✔ | ✔ |  |  |  | ✔ |
+| 38 | `export.view` | Xem dữ liệu xuất | Xem danh sách file đã xuất. Tải từng file cần quyền tải của loại file đó (xem Giải thích quyền) | ✔ | ✔ | ✔ | ✔ |  |  |  | ✔ |
 | 39 | `content.export` | Xuất file nội dung | Tạo yêu cầu xuất và tải file nội dung | ✔ | ✔ | ✔ |  |  |  |  | ✔ |
 | 40 | `statistic.export` | Xuất file biểu đồ | Tạo yêu cầu xuất và tải file biểu đồ thống kê | ✔ |  | ✔ |  |  |  |  | ✔ |
 | 41 | `user_partner.export` | Xuất file người dùng ADV | Tạo yêu cầu xuất và tải file người dùng ADV |  |  |  |  |  |  |  | ✔ |
 | 42 | `creator.export` | Xuất file kênh creator | Tạo yêu cầu xuất và tải file kênh mạng xã hội của creator |  |  |  |  |  |  |  | ✔ |
-| | **Phân khúc, mã, thông báo, danh mục** | | | | | | | | | | |
-| 43 | `segment.view` | Xem phân khúc | Danh sách và chi tiết phân khúc |  |  |  |  | ✔ |  |  | ✔ |
-| 44 | `segment.edit` | Quản lý phân khúc | Tạo, sửa, bật/tắt phân khúc |  |  |  |  |  |  |  | ✔ |
-| 45 | `user_segment.view` | Xem người dùng trong phân khúc | Danh sách người dùng thuộc phân khúc |  |  |  |  | ✔ |  |  | ✔ |
-| 46 | `user_segment.edit` | Sửa người dùng trong phân khúc | Thêm, xoá người dùng khỏi phân khúc |  |  |  |  |  |  |  | ✔ |
-| 47 | `user_segment.import` | Import người dùng vào phân khúc | Thêm hàng loạt bằng Excel |  |  |  |  |  |  |  | ✔ |
+| | **Segment, mã, thông báo, danh mục** | | | | | | | | | | |
+| 43 | `segment.view` | Xem segment | Danh sách và chi tiết segment |  |  |  |  | ✔ |  |  | ✔ |
+| 44 | `segment.edit` | Quản lý segment | Tạo, sửa, bật/tắt segment |  |  |  |  |  |  |  | ✔ |
+| 45 | `user_segment.view` | Xem người dùng trong segment | Danh sách người dùng thuộc segment |  |  |  |  | ✔ |  |  | ✔ |
+| 46 | `user_segment.edit` | Sửa người dùng trong segment | Thêm, xoá người dùng khỏi segment |  |  |  |  |  |  |  | ✔ |
+| 47 | `user_segment.import` | Import người dùng vào segment | Thêm hàng loạt bằng Excel |  |  |  |  |  |  |  | ✔ |
 | 48 | `code.view` | Xem mã | Danh sách mã |  |  |  |  | ✔ |  |  | ✔ |
-| 49 | `code.edit` | Quản lý mã | Tạo, sửa mã |  |  |  |  |  |  |  | ✔ |
+| 49 | `code.edit` | Quản lý mã | Tạo, xoá mã |  |  |  |  |  |  |  | ✔ |
 | 50 | `code.import` | Import mã | Nhập mã hàng loạt bằng Excel |  |  |  |  |  |  |  | ✔ |
 | 51 | `notification.view` | Xem thông báo | Danh sách và chi tiết thông báo admin |  |  |  |  | ✔ |  |  | ✔ |
 | 52 | `notification.edit` | Soạn thông báo | Tạo, sửa, nhân bản thông báo |  |  |  |  |  |  |  | ✔ |
-| 53 | `notification.approve` | Duyệt thông báo | Đánh dấu hoàn thành hoặc từ chối thông báo |  |  |  |  |  |  |  | ✔ |
+| 53 | `notification.approve` | Duyệt thông báo | Duyệt (gửi ngay hoặc hẹn giờ) hoặc huỷ bỏ thông báo |  |  |  |  |  |  |  | ✔ |
 | 54 | `category.view` | Xem danh mục | Danh sách danh mục | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |  | ✔ |
 | 55 | `category.edit` | Quản lý danh mục | Tạo, sửa danh mục |  |  |  |  |  |  |  | ✔ |
 | | **Cấu hình ADV và site** | | | | | | | | | | |
@@ -127,15 +126,17 @@ Một thao tác được phép khi: nhân sự đang hoạt động, chưa hết
 | 66 | `affiliate.edit` | Quản lý chiến dịch affiliate | Tạo, sửa, bật/tắt chiến dịch, gắn chiến dịch vào sự kiện |  |  |  |  |  | ✔ |  | ✔ |
 | | **Hệ thống** | | | | | | | | | | |
 | 67 | `tag.view` | Xem tag | Danh sách tag (gồm tag cảnh báo dùng khi duyệt nội dung) | ✔ | ✔ | ✔ |  | ✔ | ✔ | ✔ | ✔ |
-| 68 | `tag.edit` | Quản lý tag | Tạo, sửa, bật/tắt tag. Tag dùng chung cần phạm vi all |  |  |  |  |  |  |  | ✔ |
+| 68 | `tag.edit` | Quản lý tag | Tạo, sửa, bật/tắt tag. Tag dùng chung cần phạm vi Mọi ADV |  |  |  |  |  |  |  | ✔ |
 | 69 | `common_config.view` | Xem cấu hình chung | Xem cấu hình dùng chung của hệ thống |  |  |  |  | ✔ |  |  | ✔ |
-| 70 | `common_config.edit` | Sửa cấu hình chung | Sửa cấu hình dùng chung. Cần phạm vi all |  |  |  |  |  |  |  | ✔ |
-| 71 | `audit.view` | Xem nhật ký thao tác | Xem nhật ký thao tác trong phạm vi ADV của mình | ✔ |  |  |  | ✔ |  |  | ✔ |
-| 72 | `login_history.view` | Xem lịch sử đăng nhập | Xem lịch sử đăng nhập của nhân sự | ✔ |  |  |  | ✔ |  |  | ✔ |
+| 70 | `common_config.edit` | Sửa cấu hình chung | Tạo, sửa, xoá cấu hình chung trong ADV được giao; cấu hình toàn hệ thống cần phạm vi Mọi ADV |  |  |  |  |  |  |  | ✔ |
+| 71 | `audit.view` | Xem nhật ký thao tác | Xem nhật ký thao tác chung trong phạm vi ADV của mình (chưa có màn). Lịch sử từng bản ghi không cần quyền này | ✔ |  |  |  | ✔ |  |  | ✔ |
+| 72 | `login_history.view` | Xem lịch sử đăng nhập | Xem lịch sử đăng nhập của nhân sự và creator, kèm IP, thiết bị | ✔ |  |  |  | ✔ |  |  | ✔ |
 | 73 | `staff.view` | Xem nhân sự | Danh sách và chi tiết nhân sự có phạm vi giao với phạm vi của mình; không thấy root | ✔ |  |  |  |  |  |  |  |
 | 74 | `staff.invite` | Mời nhân sự | Mời, mời hàng loạt, gửi lại, thu hồi lời mời — chỉ với vai trò và ADV không vượt quá mình | ✔ |  |  |  |  |  |  |  |
 | 75 | `staff.edit` | Sửa nhân sự | Đổi vai trò, phạm vi, hạn dùng, thông tin; bật/tắt tài khoản — chỉ nhân sự nằm trọn trong phạm vi mình | ✔ |  |  |  |  |  |  |  |
 | | **Tổng** | | | 30 | 15 | 19 | 14 | 27 | 19 | 6 | 70 |
+
+Cột Tên và Cho phép làm gì lấy đúng nhãn và mô tả trong code (`constants.Permissions`), là chữ hiện trên màn tick quyền. `user_segment.import` bị **ẩn trên màn tick quyền** vì chưa có nút trên giao diện; mã vẫn hợp lệ, Admin có sẵn từ lúc gieo.
 
 **Chỉ root (không có mã quyền, không gán được cho vai trò nào):**
 - Vai trò & phân quyền: xem chi tiết, tạo, sửa, ngừng vai trò; tick quyền.
@@ -203,13 +204,12 @@ Tắt tài khoản, đổi vai trò hay đổi phạm vi **có hiệu lực ngay
 
 ### 5.5 Ranh giới với API ngoài của AT
 AT gọi **API ngoài bằng khoá API**, với quyền ngang root:
-- **Ghi tiền:** tạo, sửa bản đối soát và đợt rút; đổi trạng thái đối soát, mục đối soát, đợt rút, lệnh rút. Các thao tác này **không** đi qua luật tách người lập / người duyệt của trang admin.
+- **Ghi tiền:** tạo, sửa bản đối soát và đợt rút; đổi trạng thái đối soát, mục đối soát, đợt rút, lệnh rút.
 - **Đọc dữ liệu cá nhân không che:** danh sách người dùng (`GET /users`) trả đủ CCCD, MST; lệnh rút của một đợt (`GET /transfers/:id/withdraw-cashes`) trả đủ số thẻ, chủ thẻ; tạo file xuất (`POST /data-exports`).
 
 ## 6. Tiêu chí thành công sau release
 - Số tài khoản root đang hoạt động: **đúng 1**.
 - **7 ngày liền** không đăng nhập root để làm việc vận hành.
-- Ngoài root và Admin, **không tài khoản nào** vừa có quyền lập vừa có quyền duyệt khoản chi.
 
 ## 7. Điểm còn chờ chốt
 
@@ -223,5 +223,5 @@ AT gọi **API ngoài bằng khoá API**, với quyền ngang root:
 | 6 | **Nhật ký xem SĐT, email** chỉ ghi ở chi tiết creator | (a) Chấp nhận như hiện tại. (b) Ghi thêm nhật ký ở các chỗ còn lại (cần ticket). | Anh Vinh |
 | 7 | **Root:** kênh nhận cảnh báo đăng nhập; quy trình khôi phục khẩn cấp | Chờ AT chỉ định kênh; cần ticket gửi cảnh báo. | AT |
 | 8 | **Hạn dùng, cấp/thu hồi, rà soát định kỳ** (mục 5.2–5.4) | Điền các ô "chờ chốt". Có cần email nhắc tài khoản sắp hết hạn không (cần ticket). | Biz + AT |
-| 9 | **Sửa tiền rồi tự duyệt** — Admin sửa số tiền khoản người khác lập rồi tự duyệt được. | (a) Chấp nhận, ghi rõ trong tài liệu. (b) Sửa code: người sửa số tiền cũng không được duyệt khoản đó. | Anh Vinh |
+| ~~9~~ | ~~**Sửa tiền rồi tự duyệt**~~ | **Hết ý nghĩa (chốt 29/10):** đã bỏ luật tách người lập / người duyệt, một người duyệt được khoản do mình tạo, giống production (mục 2). | — |
 | 10 | **Root có được tạo vai trò mới không** — code đã cho (`POST /roles`), PRD Q4 đề xuất "chưa cần ở đợt này". | (a) Cho phép như code. (b) Chặn tạo mới, root chỉ sửa tập quyền của vai trò có sẵn. | AT |
