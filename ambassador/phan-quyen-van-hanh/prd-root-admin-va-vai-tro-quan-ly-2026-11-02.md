@@ -30,8 +30,8 @@
 |---|---|---|---|
 | **Root** | Cờ `isRoot` trong DB, có người đăng nhập | Giữ nguyên | Giữ cờ. **Không ai đăng nhập** |
 | **Admin hệ thống** | Vai trò `admin`, không ADV | `admin`, 70/75 quyền, không ADV | `admin`, đủ mọi mã, không ADV |
-| **Quản lý vận hành** | Vai trò `admin`, không ADV | Vẫn là `admin`, chưa tách khỏi Admin hệ thống | Vai trò `ops_manager`, root chỉnh bộ quyền và gán người |
-| **Quản lý ADV** | Vai trò `admin`, có ADV | Vẫn là `admin`, chưa tách khỏi hai vai trên | Vai trò mới, root tạo và gán người |
+| **Quản lý vận hành** | Vai trò `admin`, không ADV | Vẫn là `admin`, chưa tách khỏi Admin hệ thống | Vai trò `ops_manager`, bộ quyền do biz chốt, root chỉnh và gán người |
+| **Quản lý ADV** | Vai trò `admin`, có ADV | Vẫn là `admin`, chưa tách khỏi hai vai trên | Vai trò mới, bộ quyền do biz chốt, root tạo và gán người |
 | **Vận hành nội dung, Vận hành hiệu suất, Duyệt chi, Kỹ thuật hỗ trợ, Cấu hình ứng dụng, Cộng tác viên** | Chỉ Cấu hình ứng dụng và Cộng tác viên có sẵn | Theo `vai-tro-va-quyen` | **Giữ nguyên hiện trạng.** Admin tự rà soát và đánh giá thêm |
 
 ### Mục tiêu từng vai trò
@@ -54,7 +54,7 @@
 
 **Quản lý ADV: phụ trách một hoặc vài ADV**
 - Ai dùng: người đang giữ `admin` có gắn ADV.
-- Làm được: nghiệp vụ của ADV mình, theo bộ quyền root chọn.
+- Làm được: nghiệp vụ của ADV mình, theo bộ quyền biz chốt.
 - Không làm được: những việc dùng chung toàn hệ thống, kể cả khi lỡ được tick mã (mục 4, PQ-21).
 - Phạm vi: danh sách ADV.
 
@@ -85,11 +85,11 @@ Hiện có 75 mã. Thêm 14 mã, tổng là **89 mã**. Tên mã bên dưới l�
 
 ### 3.2 Admin nhận gì
 
-Admin hiện có 70 mã. Root tick thêm **19 mã**: 14 mã mới, cộng 3 mã nhân sự và 2 mã kênh hỗ trợ đang thiếu (`staff.view`, `staff.invite`, `staff.edit`, `quick_action.view`, `quick_action.edit`).
+Admin hiện có 70 mã, cần thêm **19 mã**: 14 mã mới, cộng 3 mã nhân sự và 2 mã kênh hỗ trợ đang thiếu (`staff.view`, `staff.invite`, `staff.edit`, `quick_action.view`, `quick_action.edit`). Kết quả là 89/89.
 
-**Không dùng migration để cấp các mã này cho `admin`.** Migration cấp theo vai trò, nên mọi người đang giữ `admin` sẽ có đủ quyền ngay lúc deploy, trước khi kịp chuyển sang vai khác. Root tick bằng tay ở bước 6 mục 6, sau khi đã chuyển người.
+Việc này đi bằng **migration chạy tay** (PQ-27), root không phải tự tick. Không để migration tự chạy lúc khởi động: migration cấp theo vai trò, nên mọi người đang giữ `admin` sẽ có đủ quyền ngay khi deploy.
 
-Danh sách `SeedRoles` của `admin` phải loại trừ 14 mã mới, để DB mới cũng đi theo đúng thứ tự này và không cần `rbac-v6`.
+Quản lý vận hành và Quản lý ADV **không có migration** trong PRD này. Biz chốt bộ quyền theo ma trận ở mục 3.4, rồi root cấu hình trên màn Vai trò.
 
 ### 3.3 Giữ root, không tạo mã
 
@@ -106,30 +106,120 @@ Các API này không có màn hình trên admin, nên không thuộc phạm vi "
 
 Sau khi khoá root, muốn gọi các API này phải đi theo quy trình khẩn cấp (mục 7) hoặc chạy script phía server. Nếu sau này các việc này có màn hình thì thêm mã quyền lúc đó.
 
-### 3.4 Bộ quyền đề xuất cho hai vai trò quản lý
+### 3.4 Ma trận vai trò và quyền
 
-Đây là điểm xuất phát để biz chốt trước bước 3 mục 6. Root tick trên màn Vai trò, không cần code.
+Cột Admin là chốt. Hai cột còn lại chỉ là **đề xuất để biz chốt**, chưa phải quyết định. ✔ = có, ô trống = không.
 
-| Nhóm | Quản lý vận hành | Quản lý ADV |
-|---|---|---|
-| Nội dung, cộng trừ lượt xem | Có sẵn | Có |
-| Creator: xem, duyệt, xem liên hệ, duyệt thành viên ADV | Có sẵn | Có |
-| Sửa hồ sơ creator | **Biz chốt** | Có |
-| Người dùng ADV, trạng thái CBNV, xuất file | **Biz chốt** | Có |
-| Sự kiện: xem, thống kê, xuất | Có sẵn | Có |
-| Sự kiện: sửa, mẫu sự kiện | **Biz chốt** | **Biz chốt** |
-| Thưởng thêm: xem, sửa, import, huỷ | Có sẵn | Có |
-| Duyệt thưởng thêm | **Biz chốt** | **Biz chốt** |
-| Đối soát, rút tiền: xem, tải file, từ chối mục | Có sẵn | Có |
-| Lập đối soát, lập đợt rút | **Biz chốt** (Q14) | **Biz chốt** |
-| Duyệt đối soát, xử lý rút tiền | **Biz chốt** | **Biz chốt** |
-| Nhiệm vụ, quà, segment, mã, thông báo | **Biz chốt** | Có |
-| Cấu hình site, tin tức, bài viết, affiliate | Không | **Biz chốt** |
-| Nhật ký thao tác, lịch sử đăng nhập | Có sẵn | Có |
-| Nhân sự | Có sẵn, chỉ Vận hành nội dung và Vận hành hiệu suất | **Biz chốt** danh sách vai trò gán được |
-| Vai trò, ADV, Mọi ADV, nhật ký hệ thống | Không | Không |
+Cách đề xuất:
+- **Quản lý vận hành:** 30 mã mặc định của `ops_manager`, thêm nhiệm vụ, quà, segment, mã, thông báo, sửa hồ sơ creator, người dùng ADV và xuất file. Tổng 52 mã.
+- **Quản lý ADV:** bộ trên, thêm sự kiện, mẫu sự kiện, cấu hình site, tin tức, bài viết, affiliate, danh mục, tag và cấu hình chung của ADV mình. Tổng 68 mã.
+- **Cả hai không có:** lập đối soát, lập đợt rút, duyệt thưởng thêm, duyệt đối soát, xử lý rút tiền, vì vẫn để Admin lập và Duyệt chi duyệt (Q14 chưa chốt).
 
-"Có sẵn" nghĩa là đã nằm trong 30 mã mặc định của `ops_manager`. Nên tick đủ những việc họ đang làm bằng `admin`, nếu không họ sẽ mất việc sau khi chuyển vai.
+Nên đối chiếu với việc họ đang làm bằng `admin`: bớt mã nào thì họ mất việc đó sau khi chuyển vai.
+
+| Mã quyền | Tên | Admin | QLVH (đề xuất) | Quản lý ADV (đề xuất) |
+|---|---|:-:|:-:|:-:|
+| **Nội dung** | | | | |
+| `content.view` | Xem nội dung | ✔ | ✔ | ✔ |
+| `content.moderate` | Duyệt nội dung | ✔ | ✔ | ✔ |
+| `content_manual_flow.view` | Xem cộng trừ lượt xem thủ công | ✔ | ✔ | ✔ |
+| `content_manual_flow.edit` | Cộng trừ lượt xem thủ công | ✔ | ✔ | ✔ |
+| **Người dùng và creator** | | | | |
+| `user.view_contact` | Xem liên hệ creator | ✔ | ✔ | ✔ |
+| `creator.view` | Xem hồ sơ creator | ✔ | ✔ | ✔ |
+| `creator.edit` | Sửa hồ sơ creator | ✔ | ✔ | ✔ |
+| `creator.approve` | Duyệt đăng ký sự kiện | ✔ | ✔ | ✔ |
+| `partner_member.approve` | Duyệt thành viên ADV | ✔ | ✔ | ✔ |
+| `user_partner.view` | Xem người dùng ADV | ✔ | ✔ | ✔ |
+| `user_partner.edit_staff_status` | Đổi trạng thái CBNV | ✔ | ✔ | ✔ |
+| **Sự kiện và thống kê** | | | | |
+| `event.view` | Xem danh sách sự kiện | ✔ | ✔ | ✔ |
+| `event.view_detail` | Xem chi tiết sự kiện | ✔ | ✔ | ✔ |
+| `event.edit` | Quản lý sự kiện | ✔ |  | ✔ |
+| `event_schema.view` | Xem mẫu sự kiện | ✔ |  | ✔ |
+| `event_schema.edit` | Quản lý mẫu sự kiện | ✔ |  | ✔ |
+| `statistic.view` | Xem thống kê | ✔ | ✔ | ✔ |
+| **Thưởng, nhiệm vụ, quà** | | | | |
+| `bonus.view` | Xem thưởng thêm | ✔ | ✔ | ✔ |
+| `bonus.edit` | Cộng thưởng thêm | ✔ | ✔ | ✔ |
+| `bonus.import` | Import thưởng thêm | ✔ | ✔ | ✔ |
+| `bonus.cancel` | Huỷ thưởng thêm | ✔ | ✔ | ✔ |
+| `bonus.approve` | Duyệt thưởng thêm | ✔ |  |  |
+| `mission.view` | Xem nhiệm vụ | ✔ | ✔ | ✔ |
+| `mission.edit` | Quản lý nhiệm vụ | ✔ | ✔ | ✔ |
+| `mission.approve` | Duyệt điểm nhiệm vụ | ✔ | ✔ | ✔ |
+| `gift.view` | Xem quà | ✔ | ✔ | ✔ |
+| `gift.edit` | Quản lý quà | ✔ | ✔ | ✔ |
+| `gift.process` | Xử lý đổi quà | ✔ | ✔ | ✔ |
+| **Đối soát, rút tiền, xuất** | | | | |
+| `reconciliation.view` | Xem đối soát | ✔ | ✔ | ✔ |
+| `reconciliation.create` | Tạo bản đối soát | ✔ |  |  |
+| `reconciliation.cancel_item` | Từ chối từng mục trong đối soát | ✔ | ✔ | ✔ |
+| `reconciliation.change_status` | Lấy danh sách, duyệt, hủy cả bản đối soát | ✔ |  |  |
+| `reconciliation.export` | Tải file đối soát | ✔ | ✔ | ✔ |
+| `transfer.view` | Xem rút tiền | ✔ | ✔ | ✔ |
+| `transfer.create` | Tạo đợt rút tiền | ✔ |  |  |
+| `transfer.export` | Tải file rút tiền | ✔ | ✔ | ✔ |
+| `transfer.change_status` | Xử lý rút tiền | ✔ |  |  |
+| `export.view` | Xem dữ liệu xuất | ✔ | ✔ | ✔ |
+| `content.export` | Xuất file nội dung | ✔ | ✔ | ✔ |
+| `statistic.export` | Xuất file biểu đồ | ✔ | ✔ | ✔ |
+| `user_partner.export` | Xuất file người dùng ADV | ✔ | ✔ | ✔ |
+| `creator.export` | Xuất file kênh creator | ✔ | ✔ | ✔ |
+| **Segment, mã, thông báo, danh mục** | | | | |
+| `segment.view` | Xem segment | ✔ | ✔ | ✔ |
+| `segment.edit` | Quản lý segment | ✔ | ✔ | ✔ |
+| `user_segment.view` | Xem người dùng trong segment | ✔ | ✔ | ✔ |
+| `user_segment.edit` | Sửa người dùng trong segment | ✔ | ✔ | ✔ |
+| `user_segment.import` | Import người dùng vào segment | ✔ | ✔ | ✔ |
+| `code.view` | Xem mã | ✔ | ✔ | ✔ |
+| `code.edit` | Quản lý mã | ✔ | ✔ | ✔ |
+| `code.import` | Import mã | ✔ | ✔ | ✔ |
+| `notification.view` | Xem thông báo | ✔ | ✔ | ✔ |
+| `notification.edit` | Soạn thông báo | ✔ | ✔ | ✔ |
+| `notification.approve` | Duyệt thông báo | ✔ | ✔ | ✔ |
+| `category.view` | Xem danh mục | ✔ | ✔ | ✔ |
+| `category.edit` | Quản lý danh mục | ✔ |  | ✔ |
+| **Cấu hình ADV và site** | | | | |
+| `app_config.view` | Xem cấu hình ứng dụng | ✔ |  | ✔ |
+| `app_config.edit` | Sửa cấu hình ứng dụng | ✔ |  | ✔ |
+| `app_config.publish` | Xuất bản cấu hình | ✔ |  | ✔ |
+| `news.view` | Xem tin tức | ✔ |  | ✔ |
+| `news.edit` | Quản lý tin tức | ✔ |  | ✔ |
+| `article.view` | Xem bài viết | ✔ |  | ✔ |
+| `article.edit` | Quản lý bài viết | ✔ |  | ✔ |
+| `quick_action.view` | Xem kênh hỗ trợ | ✔ |  |  |
+| `quick_action.edit` | Quản lý kênh hỗ trợ | ✔ |  |  |
+| `affiliate.view` | Xem chiến dịch affiliate | ✔ |  | ✔ |
+| `affiliate.edit` | Quản lý chiến dịch affiliate | ✔ |  | ✔ |
+| **Hệ thống** | | | | |
+| `tag.view` | Xem tag | ✔ | ✔ | ✔ |
+| `tag.edit` | Quản lý tag | ✔ |  | ✔ |
+| `common_config.view` | Xem cấu hình chung | ✔ |  | ✔ |
+| `common_config.edit` | Sửa cấu hình chung | ✔ |  | ✔ |
+| `audit.view` | Xem nhật ký thao tác | ✔ | ✔ | ✔ |
+| `login_history.view` | Xem lịch sử đăng nhập | ✔ | ✔ | ✔ |
+| `staff.view` | Xem nhân sự | ✔ | ✔ | ✔ |
+| `staff.invite` | Mời nhân sự | ✔ | ✔ | ✔ |
+| `staff.edit` | Sửa nhân sự | ✔ | ✔ | ✔ |
+| **Mã mới** | | | | |
+| `role.view` | Xem vai trò | ✔ |  |  |
+| `role.edit` | Quản lý vai trò | ✔ |  |  |
+| `staff.create` | Tạo nhân sự trực tiếp | ✔ |  |  |
+| `staff.reset_password` | Đổi mật khẩu nhân sự khác | ✔ |  |  |
+| `staff.assign_all_scope` | Gán phạm vi Mọi ADV | ✔ |  |  |
+| `partner.create` | Tạo ADV | ✔ |  |  |
+| `partner.edit` | Quản lý ADV | ✔ |  |  |
+| `user_partner.edit_wildrift` | Sửa thông tin Wild Rift | ✔ |  |  |
+| `creator.create` | Tạo người dùng | ✔ |  |  |
+| `creator.ban` | Khoá, mở khoá creator | ✔ |  |  |
+| `contract.view` | Tải hợp đồng | ✔ |  |  |
+| `contract.reject` | Từ chối hợp đồng | ✔ |  |  |
+| `user.view_sensitive` | Xem đủ CCCD, mã số thuế, số thẻ | ✔ |  |  |
+| `audit.view_system` | Xem nhật ký hệ thống | ✔ |  |  |
+| | **Tổng** | **89** | **52** | **68** |
+
+Sáu vai trò còn lại không đổi quyền, xem `vai-tro-va-quyen` mục 3. Không vai trò nào trong số đó nhận 14 mã mới.
 
 ---
 
@@ -194,6 +284,15 @@ Tiếp nối đánh số của PRD 05/10.
 
 **Nghiệm thu:** Admin thấy dòng `role.*` và dòng về root; Quản lý vận hành không thấy.
 
+### PQ-27: Migration nâng Admin đủ quyền
+- Thêm `POST /migration/rbac-admin-full`, chạy tay như `rbac-staff-scope`, theo dõi qua `GET /migration/jobs/:id`.
+- `dryRun`: liệt kê mọi người đang giữ `admin` và phạm vi của họ, không ghi gì.
+- Chạy thật: body phải có `confirmEmails` khớp đúng danh sách đang giữ `admin`. Lệch thì từ chối, không ghi gì.
+- Cấp 19 mã bằng `$addToSet`, chỉ vào vai trò `admin` có `isSystem`. Chạy lại không đổi kết quả. Ghi nhật ký.
+- `SeedRoles` của `admin` loại trừ 14 mã mới, để luồng này giống nhau ở DB cũ và DB mới, và `TestRBACMigrationsReproduceSeedRoles` vẫn đúng.
+
+**Nghiệm thu:** dry-run không đổi dữ liệu; `confirmEmails` lệch thì bị từ chối; chạy xong Admin có 89/89, các vai trò khác không đổi.
+
 ### Không đổi
 - Luật tiền vẫn giữ: sửa tiền của khoản đã duyệt thì khoản về "Chờ duyệt", kể cả với Admin. Ngoại lệ ở `checkBonusUpdate` vẫn chỉ cho root.
 - Vẫn không bắt buộc tách người lập và người duyệt (chốt 29/10).
@@ -203,9 +302,11 @@ Tiếp nối đánh số của PRD 05/10.
 
 ## 5. Thứ tự bắt buộc
 
-1. Chuyển người ra khỏi `admin` trước, rồi mới tick đủ quyền cho `admin`.
+1. Chuyển người ra khỏi `admin` trước, rồi mới chạy migration nâng Admin. Nếu chạy trước, mọi người đang giữ `admin` đều có đủ quyền.
 2. Có Admin đích danh và thử xong, rồi mới khoá root.
-3. Các bước từ khi deploy đến khi gán xong nên làm trong cùng một ngày, vì trong khoảng đó admin không ADV sửa được site của mọi ADV (phiên bản trước tháng 10 đang chặn việc này).
+3. Từ khi deploy đến khi gán xong nên làm trong cùng một ngày, vì trong khoảng đó admin không ADV sửa được site của mọi ADV (phiên bản trước tháng 10 đang chặn việc này).
+
+**Nếu biz chưa chốt ma trận:** dừng sau bước 2 ở mục 6. Admin chưa đủ quyền và root vẫn mở, hệ thống chạy như phiên bản hiện tại.
 
 ---
 
@@ -217,8 +318,8 @@ Tiếp nối đánh số của PRD 05/10.
 |---|---|---|
 | Lấy danh sách nhân sự production bằng lệnh dưới | DISO | Có danh sách từng người |
 | Kiểm tra có tài khoản `isGenerate`. Không có thì dừng, vì việc nền đang dựa vào nó | DISO | Có đúng tài khoản hệ thống |
-| Chốt bảng gán: mỗi tài khoản một vai trò và phạm vi. Không tự suy được, vì Admin hệ thống và Quản lý vận hành đều là "admin không ADV" | Biz, Vinh | Bảng được duyệt |
-| Chốt bộ quyền mục 3.4 và danh sách Admin | Biz, Vinh | Không còn "Biz chốt" |
+| Chốt ma trận mục 3.4 cho Quản lý vận hành và Quản lý ADV | Biz | Không còn cột "đề xuất" |
+| Chốt danh sách Admin và bảng gán: mỗi tài khoản một vai trò và phạm vi. Không tự suy được, vì Admin hệ thống và Quản lý vận hành đều là "admin không ADV" | Biz, Vinh | Bảng được duyệt |
 
 ```
 db.staffs.aggregate([{$match:{active:true}},{$lookup:{from:"roles",localField:"role",foreignField:"_id",as:"r"}},{$project:{_id:0,email:1,isRoot:1,isGenerate:1,partner:1,role:{$arrayElemAt:["$r.code",0]}}},{$sort:{role:1}}])
@@ -228,12 +329,12 @@ db.staffs.aggregate([{$match:{active:true}},{$lookup:{from:"roles",localField:"r
 
 | Bước | Ai | Làm gì | Kiểm tra |
 |---|---|---|---|
-| 1 | DISO | Deploy. Vai trò và quyền tự gieo lúc khởi động | Log `rbac-v1` đến `rbac-v5` không lỗi; admin cũ vẫn đăng nhập được |
+| 1 | DISO | Deploy. Vai trò và quyền tự gieo lúc khởi động | Log `rbac-v1` đến `rbac-v5` không lỗi; admin cũ vẫn đăng nhập được, vẫn 70 mã |
 | 2 | Root | Chạy `POST /migration/rbac-staff-scope` với `dryRun`, xem `GET /migration/jobs/:id`, rồi chạy thật | `db.staffs.countDocuments({isRoot:{$ne:true},partnerScope:{$in:[null,""]}})` bằng 0 |
-| 3 | Root | Trên màn Vai trò: chỉnh bộ quyền `ops_manager`; tạo vai trò Quản lý ADV theo mục 3.4 | Hai vai trò đúng bộ quyền đã chốt |
+| 3 | Root | Trên màn Vai trò: chỉnh bộ quyền `ops_manager`, tạo vai trò Quản lý ADV theo ma trận biz đã chốt | Hai vai trò đúng ma trận |
 | 4 | Root | Trên màn Nhân viên: chuyển từng người theo bảng gán. Admin có ADV sang Quản lý ADV; trưởng nhóm vận hành sang Quản lý vận hành | Chỉ còn người trong danh sách Admin giữ `admin` |
 | 5 | Root | Đổi Admin còn lại sang phạm vi Mọi ADV nếu chưa có | Đúng danh sách, đúng phạm vi |
-| 6 | Root | Tick đủ 19 mã còn thiếu vào `admin` | Admin có 89/89 mã |
+| 6 | DISO | Chạy `POST /migration/rbac-admin-full` với `dryRun`, đối chiếu danh sách, rồi chạy thật với `confirmEmails` | Admin có 89/89 mã |
 | 7 | Root | Các tài khoản root đích danh: bỏ cờ root, gán vai trò theo bảng | Chỉ còn tài khoản `isGenerate` có `isRoot` |
 | 8 | Admin | Đăng nhập, thử: tạo vai trò, mời người, sửa ADV, khoá rồi mở khoá một creator thử | Tất cả chạy được không cần root |
 | 9 | DISO | Đặt `ROOT_LOGIN_ENABLED=false`, khởi động lại | Root không đăng nhập được; việc nền vẫn chạy |
@@ -271,7 +372,7 @@ Dùng khi không còn Admin nào dùng được, hoặc cần gọi API ở mụ
 |---|---|---|---|
 | 1 | Phiên bản tháng 11 làm trong #312 hay PR riêng? | PR riêng ngay sau #312, để khỏi chạy lại toàn bộ QA của #312. Khi đó mục 6 áp cho bản PR riêng, còn bước 2 chạy sau khi #312 lên | Vinh |
 | 2 | Danh sách Admin | Ít người nhất có thể, đích danh, có người dự phòng | Biz, Vinh |
-| 3 | Bộ quyền hai vai trò quản lý (mục 3.4) | Như bảng | Biz |
+| 3 | Bộ quyền Quản lý vận hành và Quản lý ADV (mục 3.4) | Như cột đề xuất của ma trận | Biz |
 | 4 | Có bắt buộc MFA trước khi khoá root không? | Nên có. Admin toàn quyền mà hiện chỉ đăng nhập bằng mật khẩu. Không kịp thì làm ticket riêng ngay sau đó và ghi nhận rủi ro | Vinh |
 | 5 | Ai duyệt mở root khẩn cấp? | Một người ngoài nhóm Admin | Vinh, AT |
 | 6 | AT có đồng ý thay đổi không? PRD cũ ghi AT giữ root | Hỏi AT trước khi deploy | Vinh |
