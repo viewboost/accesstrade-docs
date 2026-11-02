@@ -2,7 +2,7 @@
 
 **Ngày:** 2026-11-02
 **Sản phẩm:** Ambassador, trang quản trị (admin)
-**Trạng thái:** nháp, chờ chốt các điểm ở mục 9
+**Trạng thái:** chờ review, còn các điểm cần chốt ở mục 9
 **Mã nguồn đã đối chiếu:** nhánh `release` commit `e24f4e73`; PR #312 head `7694f853` (chưa merge)
 **Quan hệ với tài liệu cũ:** bổ sung [PRD 05/10](prd-phan-quyen-he-thong-2026-10-05.md) và [vai-tro-va-quyen](vai-tro-va-quyen-2026-10-16.md). Chỗ nào khác nhau thì theo tài liệu này. Mục 10 liệt kê các đoạn cũ cần sửa.
 
