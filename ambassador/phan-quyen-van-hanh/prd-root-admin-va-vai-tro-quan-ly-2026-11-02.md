@@ -97,8 +97,8 @@ Các API này không có màn hình trên admin, nên không tạo mã quyền. 
 
 | Nhóm | API |
 |---|---|
-| Xác thực CCCD (màn hình đang bị comment) | `GET /identifications`, `GET /identifications/:id`, `PATCH /identifications/:id/status` |
-| Thưởng sự kiện | `POST /event-reward/change-status`, `DELETE /event-reward/:id`, `POST /events/reject-reward-event` |
+| Xác thực CCCD (trang còn trong code, nhưng route và menu đã bị comment nên không mở được) | `GET /identifications`, `GET /identifications/:id`, `PATCH /identifications/:id/status` |
+| Sửa trực tiếp bản ghi thưởng sự kiện (khác với từ chối mục trong Đối soát, việc đó đã có giao diện và có mã `reconciliation.cancel_item`) | `POST /event-reward/change-status`, `DELETE /event-reward/:id`, `POST /events/reject-reward-event` |
 | Hợp đồng, eKYC | `POST /users/contract/generate-by-user-id`, `PUT /users/update-ekyc` |
 | Xoá cứng nội dung | `DELETE /contents/:id` |
 | Công cụ chạy lại số liệu | `GET /events/migrate-category-ead`, `GET /events/rerun-reward-event-by-cad`, `GET /events/run-analytic-daily`, `GET /common/update-event-daily`, `GET /contents/update-status-data-contents`, `GET /contents/update-warning-tags-content` |
