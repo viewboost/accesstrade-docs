@@ -6,7 +6,7 @@
 **Mã nguồn đã đối chiếu:** nhánh `release` commit `e24f4e73`; PR #312 head `7694f853` (chưa merge)
 **Quan hệ với tài liệu cũ:** bổ sung [PRD 05/10](prd-phan-quyen-he-thong-2026-10-05.md) và [vai-tro-va-quyen](vai-tro-va-quyen-2026-10-16.md). Chỗ nào khác nhau thì theo tài liệu này. Mục 10 liệt kê các đoạn cũ cần sửa.
 
-**Vấn đề cần sửa:** hôm nay "admin" đang gộp ba loại người khác nhau, và việc quản lý người chỉ làm được bằng root. #312 thêm được bảng quyền nhưng giữ nguyên cả hai điểm đó: admin vẫn không quản lý được người, nên vẫn phải có người đăng nhập root.
+**Vấn đề cần sửa:** từ phiên bản trước tháng 10, "admin" đang gộp ba loại người khác nhau, và việc quản lý người chỉ làm được bằng root. Phiên bản hiện tại thêm được bảng quyền nhưng giữ nguyên cả hai điểm đó: admin vẫn không quản lý được người, nên vẫn phải có người đăng nhập root.
 
 ---
 
@@ -22,11 +22,11 @@
 
 ---
 
-## 2. Vai trò: trước, sau release và đợt này
+## 2. Vai trò qua từng phiên bản
 
-"Trước release" là nhánh `release`, đang coi là production. "Sau #312" là khi #312 đã deploy. "Đợt này" là kết quả của PRD này.
+**Phiên bản trước tháng 10** là nhánh `release`, đang coi là production. **Phiên bản hiện tại** là #312, chưa merge. **Phiên bản tháng 11** là kết quả của PRD này.
 
-| Vai trò | Trước release | Sau #312 | Đợt này |
+| Vai trò | Phiên bản trước tháng 10 | Phiên bản hiện tại | Phiên bản tháng 11 |
 |---|---|---|---|
 | **Root** | Cờ `isRoot` trong DB, có người đăng nhập | Giữ nguyên | Giữ cờ. **Không ai đăng nhập** |
 | **Admin hệ thống** | Vai trò `admin`, không ADV | `admin`, 70/75 quyền, không ADV | `admin`, đủ mọi mã, không ADV |
@@ -205,11 +205,11 @@ Tiếp nối đánh số của PRD 05/10.
 
 1. Chuyển người ra khỏi `admin` trước, rồi mới tick đủ quyền cho `admin`.
 2. Có Admin đích danh và thử xong, rồi mới khoá root.
-3. Các bước từ khi deploy đến khi gán xong nên làm trong cùng một ngày, vì trong khoảng đó admin không ADV sửa được site của mọi ADV (`release` đang chặn việc này).
+3. Các bước từ khi deploy đến khi gán xong nên làm trong cùng một ngày, vì trong khoảng đó admin không ADV sửa được site của mọi ADV (phiên bản trước tháng 10 đang chặn việc này).
 
 ---
 
-## 6. Thao tác sau khi release đợt này
+## 6. Thao tác khi lên phiên bản tháng 11
 
 **Chuẩn bị trước deploy**
 
@@ -256,7 +256,7 @@ Dùng khi không còn Admin nào dùng được, hoặc cần gọi API ở mụ
 
 ## 8. Ngoài phạm vi
 
-- Xem lại 6 vai trò còn lại (làm ở đợt sau).
+- Xem lại 6 vai trò còn lại (làm ở phiên bản sau).
 - Tạo màn hình và mã quyền cho các việc ở mục 3.3.
 - Tách khoá API ngoài; đổi danh tính API ngoài trong nhật ký.
 - File rút tiền bản che.
@@ -269,7 +269,7 @@ Dùng khi không còn Admin nào dùng được, hoặc cần gọi API ở mụ
 
 | # | Câu hỏi | Đề xuất | Ai chốt |
 |---|---|---|---|
-| 1 | Làm trong #312 hay PR riêng? | PR riêng ngay sau #312, để khỏi chạy lại toàn bộ QA của #312. Khi đó mục 6 áp cho bản PR riêng, còn bước 2 chạy sau khi #312 lên | Vinh |
+| 1 | Phiên bản tháng 11 làm trong #312 hay PR riêng? | PR riêng ngay sau #312, để khỏi chạy lại toàn bộ QA của #312. Khi đó mục 6 áp cho bản PR riêng, còn bước 2 chạy sau khi #312 lên | Vinh |
 | 2 | Danh sách Admin | Ít người nhất có thể, đích danh, có người dự phòng | Biz, Vinh |
 | 3 | Bộ quyền hai vai trò quản lý (mục 3.4) | Như bảng | Biz |
 | 4 | Có bắt buộc MFA trước khi khoá root không? | Nên có. Admin toàn quyền mà hiện chỉ đăng nhập bằng mật khẩu. Không kịp thì làm ticket riêng ngay sau đó và ghi nhận rủi ro | Vinh |
