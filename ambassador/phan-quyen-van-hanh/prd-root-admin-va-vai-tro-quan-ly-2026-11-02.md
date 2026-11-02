@@ -398,7 +398,7 @@ Không mở lại đăng nhập root. Nếu không còn Admin nào dùng đượ
 | 5 | Ai duyệt khôi phục Admin (mục 7)? | Một người ngoài nhóm Admin | Vinh, AT |
 | 6 | AT có đồng ý thay đổi không? PRD cũ ghi AT giữ root | Hỏi AT trước khi deploy | Vinh |
 | 7 | Có ai đang gọi các API ở mục 3.3 bằng tay không? | Team dev kiểm tra; nếu có thì chuyển sang cổng kỹ thuật (PQ-28) | Team dev |
-| 8 | Có xoá luôn 3 API `/identifications` phía backend không? Creator vẫn gửi giấy tờ ở trạng thái chờ, và mình chỉ thấy `PATCH /identifications/:id/status` chuyển sang hoàn tất hoặc từ chối | Chưa xoá. Team dev kiểm tra còn hồ sơ chờ không và luồng nào cần hồ sơ đã duyệt, rồi mới chốt | Vinh, Team dev |
+| 8 | Có xoá luôn 3 API `/identifications` phía backend không? Creator vẫn gửi giấy tờ ở trạng thái chờ, và theo code chỉ thấy `PATCH /identifications/:id/status` chuyển sang hoàn tất hoặc từ chối | Chưa xoá. Team dev kiểm tra còn hồ sơ chờ không và luồng nào cần hồ sơ đã duyệt, rồi mới chốt | Vinh, Team dev |
 
 ---
 
