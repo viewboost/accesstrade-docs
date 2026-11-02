@@ -32,7 +32,7 @@
 | **Admin hệ thống** | Vai trò `admin`, không ADV | `admin`, 70/75 quyền, không ADV | `admin`, đủ mọi mã, không ADV |
 | **Quản lý vận hành** | Vai trò `admin`, không ADV | Vẫn là `admin`, chưa tách khỏi Admin hệ thống | Vai trò `ops_manager`, root chỉnh bộ quyền và gán người |
 | **Quản lý ADV** | Vai trò `admin`, có ADV | Vẫn là `admin`, chưa tách khỏi hai vai trên | Vai trò mới, root tạo và gán người |
-| **Vận hành nội dung, Vận hành hiệu suất, Duyệt chi, Kỹ thuật hỗ trợ, Cấu hình ứng dụng, Cộng tác viên** | Chỉ Cấu hình ứng dụng và Cộng tác viên có sẵn | Theo `vai-tro-va-quyen` | **Chưa xem lại**, giữ theo `vai-tro-va-quyen` |
+| **Vận hành nội dung, Vận hành hiệu suất, Duyệt chi, Kỹ thuật hỗ trợ, Cấu hình ứng dụng, Cộng tác viên** | Chỉ Cấu hình ứng dụng và Cộng tác viên có sẵn | Theo `vai-tro-va-quyen` | **Giữ nguyên hiện trạng.** Admin tự rà soát và đánh giá thêm |
 
 ### Mục tiêu từng vai trò
 
@@ -256,7 +256,7 @@ Dùng khi không còn Admin nào dùng được, hoặc cần gọi API ở mụ
 
 ## 8. Ngoài phạm vi
 
-- Xem lại 6 vai trò còn lại (làm ở phiên bản sau).
+- Đổi 6 vai trò còn lại: giữ nguyên hiện trạng, Admin tự rà soát và chỉnh trên màn Vai trò khi cần.
 - Tạo màn hình và mã quyền cho các việc ở mục 3.3.
 - Tách khoá API ngoài; đổi danh tính API ngoài trong nhật ký.
 - File rút tiền bản che.
