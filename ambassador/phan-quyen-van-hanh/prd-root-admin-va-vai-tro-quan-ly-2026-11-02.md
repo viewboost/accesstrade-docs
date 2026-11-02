@@ -14,8 +14,8 @@
 
 | # | Mục tiêu | Đo bằng |
 |---|---|---|
-| 1 | **Root chỉ để hệ thống dùng**, không ai đăng nhập | Đăng nhập bằng root bị từ chối; việc nền và API ngoài vẫn chạy |
-| 2 | **Admin toàn quyền với mọi thao tác trên giao diện**, gắn với người đích danh | Admin làm được mọi nút trên admin mà không cần root |
+| 1 | **Root chỉ là danh tính của hệ thống**, dùng để việc nền chạy và ghi nhật ký. Không ai đăng nhập | Đăng nhập bằng root bị từ chối; việc nền và API ngoài vẫn chạy |
+| 2 | **Có trên giao diện thì phải có mã quyền, và Admin thao tác được hết**. Admin gắn với người đích danh | Không còn API nào giao diện gọi mà chỉ root dùng được |
 | 3 | **Được có nhiều Admin**, hệ thống luôn còn ít nhất 1 | Không tắt hay đổi vai trò được Admin cuối cùng |
 | 4 | **Mỗi loại người một vai trò riêng**: Admin hệ thống, Quản lý vận hành, Quản lý ADV | Mỗi tài khoản "admin" cũ được chuyển sang đúng vai |
 | 5 | **Quyền đều có mã, gán bằng cách tick trên màn Vai trò** | Đổi ai làm gì không cần deploy |
@@ -36,10 +36,10 @@
 
 ### Mục tiêu từng vai trò
 
-**Root: vai hệ thống**
-- Chạy các việc tự động dưới tài khoản `isGenerate`, ví dụ tự từ chối video, gắn tag cảnh báo, chạy file xuất.
-- Giữ 15 API không có màn hình và `/migration/*` (mục 3.3).
-- Chỉ mở đăng nhập theo quy trình khẩn cấp (mục 7).
+**Root: danh tính hệ thống**
+- Việc nền tìm tài khoản `isGenerate` để chạy và ghi nhật ký, ví dụ tự từ chối video, gắn tag cảnh báo, chạy file xuất.
+- Tài khoản này giữ nguyên cờ `isRoot`, vì việc nền dựa vào cờ đó để qua các bước kiểm quyền trong service.
+- Không dùng cho thao tác của con người, trừ giai đoạn chuyển đổi ở mục 6.
 
 **Admin: quản trị hệ thống**
 - Ai dùng: người chịu trách nhiệm hệ thống, đích danh. Được có nhiều người, nên giữ ít nhất có thể.
@@ -91,9 +91,9 @@ Việc này đi bằng **migration chạy tay** (PQ-27), root không phải tự
 
 Quản lý vận hành và Quản lý ADV **không có migration** trong PRD này. Biz chốt bộ quyền theo ma trận ở mục 3.4, rồi root cấu hình trên màn Vai trò.
 
-### 3.3 Giữ root, không tạo mã
+### 3.3 Không có trên giao diện: không tạo mã
 
-Các API này không có màn hình trên admin, nên không thuộc phạm vi "thao tác trên giao diện".
+Các API này không có màn hình trên admin, nên không tạo mã quyền. Nếu sau này có màn hình, ví dụ bật lại Xác thực CCCD, thì phải thêm mã quyền cùng lúc.
 
 | Nhóm | API |
 |---|---|
@@ -104,7 +104,7 @@ Các API này không có màn hình trên admin, nên không thuộc phạm vi "
 | Công cụ chạy lại số liệu | `GET /events/migrate-category-ead`, `GET /events/rerun-reward-event-by-cad`, `GET /events/run-analytic-daily`, `GET /common/update-event-daily`, `GET /contents/update-status-data-contents`, `GET /contents/update-warning-tags-content` |
 | Migration | `/migration/*` |
 
-Sau khi khoá root, muốn gọi các API này phải đi theo quy trình khẩn cấp (mục 7) hoặc chạy script phía server. Nếu sau này các việc này có màn hình thì thêm mã quyền lúc đó.
+Sau khi khoá root, không ai gọi được các API này qua đăng nhập. `/migration/*` và công cụ chạy lại số liệu đi qua cổng kỹ thuật ở PQ-28. Các API còn lại nếu vẫn cần dùng thì team dev chuyển sang cổng đó, không mở lại root.
 
 ### 3.4 Ma trận vai trò và quyền
 
@@ -228,7 +228,7 @@ Sáu vai trò còn lại không đổi quyền, xem `vai-tro-va-quyen` mục 3. 
 Tiếp nối đánh số của PRD 05/10.
 
 ### PQ-19: Khoá đăng nhập root
-- Thêm cờ cấu hình `ROOT_LOGIN_ENABLED`, mặc định `true`.
+- Thêm cờ cấu hình `ROOT_LOGIN_ENABLED`, mặc định `true`, chỉ để phục vụ giai đoạn chuyển đổi ở mục 6. Tắt rồi thì không bật lại để làm việc.
 - Khi `false`: đăng nhập bằng tài khoản `isRoot` bị từ chối; phiên root đang mở bị chặn ở request kế tiếp; ghi nhật ký mỗi lần thử.
 - Đổi mật khẩu qua email không mở được đường vào.
 - Không tắt tài khoản root (`active=false`). Việc nền và API ngoài không đổi, luật "còn ít nhất một root đang bật" giữ nguyên.
@@ -241,7 +241,7 @@ Tiếp nối đánh số của PRD 05/10.
 - Đổi các chỗ service kiểm tra root tương ứng sang kiểm tra mã, gồm `requireRoot` trong `role.go`, kiểm tra root ở `staff.go` và `canViewFullPII`.
 - Đổi menu Người dùng, ADV, Vai trò từ `isRootAccess` sang mã quyền. Menu Người dùng dùng `creator.view`.
 
-**Nghiệm thu:** mỗi mã mới có ca được phép và ca bị 403; ma trận route × vai trò cập nhật theo.
+**Nghiệm thu:** mỗi mã mới có ca được phép và ca bị 403; ma trận route × vai trò cập nhật theo; không còn API nào `admin/src` gọi mà route là `Root()`.
 
 ### PQ-21: Mã toàn hệ thống chỉ có tác dụng với phạm vi Mọi ADV
 - Áp cho: `role.*`, `staff.assign_all_scope`, `partner.*`, `creator.create`, `creator.ban`, `contract.*`, `audit.view_system`.
@@ -293,8 +293,16 @@ Tiếp nối đánh số của PRD 05/10.
 
 **Nghiệm thu:** dry-run không đổi dữ liệu; `confirmEmails` lệch thì bị từ chối; chạy xong Admin có 89/89, các vai trò khác không đổi.
 
+### PQ-28: Cổng kỹ thuật cho migration và công cụ
+- Đổi `/migration/*` và công cụ chạy lại số liệu từ đăng nhập root sang cổng kỹ thuật: khoá riêng lưu ở cấu hình server, ký request như API ngoài, không dùng chung khoá với API ngoài.
+- Không có giao diện, không có mã quyền, Admin không gọi được.
+- Thao tác ghi nhật ký dưới tài khoản `isGenerate`, kèm tên công cụ.
+- Runbook đang dùng `curl` với token root phải sửa theo.
+
+**Nghiệm thu:** gọi không có khoá hoặc bằng token nhân sự bị từ chối; gọi đúng khoá chạy được khi root đã khoá.
+
 ### Không đổi
-- Luật tiền vẫn giữ: sửa tiền của khoản đã duyệt thì khoản về "Chờ duyệt", kể cả với Admin. Ngoại lệ ở `checkBonusUpdate` vẫn chỉ cho root.
+- Luật tiền vẫn giữ: sửa tiền của khoản đã duyệt thì khoản về "Chờ duyệt", kể cả với Admin. Ngoại lệ dành cho root ở `checkBonusUpdate` không còn ai dùng sau khi khoá root.
 - Vẫn không bắt buộc tách người lập và người duyệt (chốt 29/10).
 - Một người một vai trò.
 
@@ -340,18 +348,17 @@ db.staffs.aggregate([{$match:{active:true}},{$lookup:{from:"roles",localField:"r
 | 9 | DISO | Đặt `ROOT_LOGIN_ENABLED=false`, khởi động lại | Root không đăng nhập được; việc nền vẫn chạy |
 | 10 | Admin | Theo dõi 7 ngày | Không có lần đăng nhập root nào; mọi việc vận hành làm được |
 
-**Nếu có sự cố trước bước 9:** root vẫn đăng nhập được, sửa tiếp trên giao diện. **Sau bước 9:** dùng mục 7.
+**Nếu có sự cố trước bước 9:** root vẫn đăng nhập được, sửa tiếp trên giao diện. **Sau bước 9:** không mở lại root; mất Admin thì dùng mục 7.
 
 ---
 
-## 7. Quy trình khẩn cấp với root
+## 7. Khôi phục khi không còn Admin
 
-Dùng khi không còn Admin nào dùng được, hoặc cần gọi API ở mục 3.3.
+Không mở lại đăng nhập root. Nếu không còn Admin nào dùng được:
 
 1. Người được chỉ định duyệt (mục 9) ghi lại lý do.
-2. DISO đặt `ROOT_LOGIN_ENABLED=true`, khởi động lại.
-3. Làm việc cần làm. Mỗi lần đăng nhập đã có dòng nhật ký.
-4. Đặt lại `false`, đổi mật khẩu root.
+2. DISO chạy lệnh phía server gán vai trò Admin cho người được duyệt.
+3. Ghi nhật ký, thông báo cho các bên liên quan.
 
 ---
 
@@ -374,9 +381,9 @@ Dùng khi không còn Admin nào dùng được, hoặc cần gọi API ở mụ
 | 2 | Danh sách Admin | Ít người nhất có thể, đích danh, có người dự phòng | Biz, Vinh |
 | 3 | Bộ quyền Quản lý vận hành và Quản lý ADV (mục 3.4) | Như cột đề xuất của ma trận | Biz |
 | 4 | Có bắt buộc MFA trước khi khoá root không? | Nên có. Admin toàn quyền mà hiện chỉ đăng nhập bằng mật khẩu. Không kịp thì làm ticket riêng ngay sau đó và ghi nhận rủi ro | Vinh |
-| 5 | Ai duyệt mở root khẩn cấp? | Một người ngoài nhóm Admin | Vinh, AT |
+| 5 | Ai duyệt khôi phục Admin (mục 7)? | Một người ngoài nhóm Admin | Vinh, AT |
 | 6 | AT có đồng ý thay đổi không? PRD cũ ghi AT giữ root | Hỏi AT trước khi deploy | Vinh |
-| 7 | Có ai đang gọi các API ở mục 3.3 bằng tay không? | Team dev kiểm tra; nếu có thì chuyển sang script | Team dev |
+| 7 | Có ai đang gọi các API ở mục 3.3 bằng tay không? | Team dev kiểm tra; nếu có thì chuyển sang cổng kỹ thuật (PQ-28) | Team dev |
 
 ---
 
