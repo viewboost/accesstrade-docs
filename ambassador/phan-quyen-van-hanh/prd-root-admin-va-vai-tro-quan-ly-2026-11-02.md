@@ -97,7 +97,7 @@ Các API này không có màn hình trên admin, nên không tạo mã quyền. 
 
 | Nhóm | API |
 |---|---|
-| Xác thực CCCD (trang còn trong code, nhưng route và menu đã bị comment nên không mở được) | `GET /identifications`, `GET /identifications/:id`, `PATCH /identifications/:id/status` |
+| Xác thực CCCD (route và menu đã bị comment, code giao diện sẽ xoá theo PQ-29) | `GET /identifications`, `GET /identifications/:id`, `PATCH /identifications/:id/status` |
 | Sửa trực tiếp bản ghi thưởng sự kiện (khác với từ chối mục trong Đối soát, việc đó đã có giao diện và có mã `reconciliation.cancel_item`) | `POST /event-reward/change-status`, `DELETE /event-reward/:id`, `POST /events/reject-reward-event` |
 | Hợp đồng, eKYC | `POST /users/contract/generate-by-user-id`, `PUT /users/update-ekyc` |
 | Xoá cứng nội dung | `DELETE /contents/:id` |
@@ -301,6 +301,20 @@ Tiếp nối đánh số của PRD 05/10.
 
 **Nghiệm thu:** gọi không có khoá hoặc bằng token nhân sự bị từ chối; gọi đúng khoá chạy được khi root đã khoá.
 
+### PQ-29: Xoá code giao diện Xác thực CCCD
+Màn hình này không mở được, nên xoá hẳn khỏi `admin/`:
+- Thư mục `src/pages/identification` (7 file).
+- `src/services/identification.ts` và dòng export trong `src/services/index.ts`.
+- Mục `identification` trong `src/configs/api.ts` và `src/configs/app.ts`.
+- Nhãn `menu.identification` trong `src/locales/vi-VN/menu.ts`.
+- Các dòng route đã comment trong `config/routes.ts`.
+
+Giữ `identificationNumber` trong `src/pages/user/type.d.ts`, vì đó là trường của người dùng, không thuộc màn hình này.
+
+Không đụng luồng creator gửi giấy tờ (`creator-app`, `pkg/public`). Ba API `/identifications` phía backend chờ câu 8 ở mục 9.
+
+**Nghiệm thu:** tìm `identification` trong `admin/src` chỉ còn `identificationNumber`; admin build được; không còn menu hay route nào liên quan.
+
 ### Không đổi
 - Luật tiền vẫn giữ: sửa tiền của khoản đã duyệt thì khoản về "Chờ duyệt", kể cả với Admin. Ngoại lệ dành cho root ở `checkBonusUpdate` không còn ai dùng sau khi khoá root.
 - Vẫn không bắt buộc tách người lập và người duyệt (chốt 29/10).
@@ -384,6 +398,7 @@ Không mở lại đăng nhập root. Nếu không còn Admin nào dùng đượ
 | 5 | Ai duyệt khôi phục Admin (mục 7)? | Một người ngoài nhóm Admin | Vinh, AT |
 | 6 | AT có đồng ý thay đổi không? PRD cũ ghi AT giữ root | Hỏi AT trước khi deploy | Vinh |
 | 7 | Có ai đang gọi các API ở mục 3.3 bằng tay không? | Team dev kiểm tra; nếu có thì chuyển sang cổng kỹ thuật (PQ-28) | Team dev |
+| 8 | Có xoá luôn 3 API `/identifications` phía backend không? Creator vẫn gửi giấy tờ ở trạng thái chờ, và mình chỉ thấy `PATCH /identifications/:id/status` chuyển sang hoàn tất hoặc từ chối | Chưa xoá. Team dev kiểm tra còn hồ sơ chờ không và luồng nào cần hồ sơ đã duyệt, rồi mới chốt | Vinh, Team dev |
 
 ---
 
