@@ -20,7 +20,7 @@ PRD cho phase 1 của MCN (công ty quản lý KOL/KOC) trên KOC Ambassador, th
 
 **Related Documents:**
 - Bản mẫu giao diện và tài liệu nghiệp vụ (có sơ đồ): https://claude.ai/artifact/BVwnmqnqNZhjnX6pbXDikV
-- Biên bản họp 03/11/2026 (bản ghi lời thoại, không đưa lên repo)
+- Biên bản họp 03/11/2026: [meeting-261103.md](./meeting-261103.md)
 - Sơ đồ tuần tự (bản đầy đủ, nhiều phần để sau): [08-Sequence.md](./08-Sequence.md)
 - Tech spec: [techspec-mcn-phase1-2026-11-04.md](./techspec-mcn-phase1-2026-11-04.md)
 
