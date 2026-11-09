@@ -350,7 +350,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 - **NFR-001 Không đổi hành vi cũ:** người không thuộc MCN, kỳ đối soát không có thành viên MCN, đợt chi không có MCN — kết quả giống hệt hiện nay.
 - **NFR-002 Đúng tiền:** với mỗi khoản, (phần KOL/KOC) + (phí MCN) = số tiền khoản, không lệch đồng nào. Không cộng hai lần khi chạy lại.
 - **NFR-003 Riêng tư:** MCN không tra cứu được user. MCN chỉ thấy dữ liệu thành viên của mình trong thời gian hợp tác; số liệu đối soát các kỳ đã hợp tác vẫn xem được sau khi rời (D22). Link mời không lộ thông tin MCN ngoài tên. Lời mời Hết hiệu lực không cho MCN biết KOL/KOC đã vào MCN nào.
-- **NFR-004 Lưu vết:** mọi thay đổi hồ sơ pháp lý, trạng thái MCN, trạng thái thành viên đều có người, giờ, lý do. Lý do Từ chối, Chấm dứt, Báo rời lưu vào lịch sử quan hệ; ai được xem: Q13.
+- **NFR-004 Lưu vết:** mọi thay đổi hồ sơ pháp lý, trạng thái MCN, trạng thái thành viên đều có người, giờ, lý do. Lý do Từ chối, Chấm dứt, Báo rời lưu vào lịch sử quan hệ, hiện trong thông báo gửi bên kia và ở tab Thành viên của Admin.
 - **NFR-005 Ngôn ngữ:** tiếng Việt.
 
 ---
@@ -402,7 +402,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Q10 | ~~MCN có thấy tên KOL/KOC đang Chờ ký không?~~ | **Đã chốt:** có, chỉ tên. MCN gửi link cho người mình đã biết. Thông tin khác chỉ hiện sau khi ký và đồng ý chia sẻ dữ liệu |
 | Q11 | Thưởng mốc đạt sau ngày ký nhưng nhờ video đăng trước ngày ký; thưởng thêm tạo sau ngày ký để bù khoảng trước ngày ký: có trích phí MCN không? | Đề xuất: có, tính theo ngày khoản được ghi nhận |
 | Q12 | MCN cá nhân có được dùng email của tài khoản creator đang có làm email đăng nhập MCN không? | Không, dùng email chưa có tài khoản như MCN công ty |
-| Q13 | Lý do Từ chối, Chấm dứt, Báo rời: bên kia (MCN hoặc KOL/KOC) có thấy không? | Đề xuất: bên kia thấy trong thông báo; Admin thấy ở tab Thành viên |
+| Q13 | ~~Lý do Từ chối, Chấm dứt, Báo rời có hiện cho bên kia không?~~ | **Đã chốt:** có, hiện trong thông báo gửi bên kia; Admin thấy ở tab Thành viên |
 
 ---
 
@@ -411,4 +411,4 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Version | Ngày | Thay đổi |
 |---|---|---|
 | 1.0 | 2026-11-04 | Bản đầu, theo scope chốt 03/11/2026 và bản mẫu giao diện v47. Vai MCN và thành viên dùng bảng quan hệ, không dùng loại tài khoản |
-| 1.1 | 2026-11-09 | Thêm D17–D24: MCN cá nhân, tỷ lệ 0–100%, Chờ ký chưa phải thành viên và được Chờ ký nhiều MCN, hết 12 tháng tự kết thúc, trích phí theo ngày phát sinh, thuế 5.000.000đ trên số sau phí, MCN xem kỳ cũ sau rời, eKYC/hợp đồng gốc ở trang có sẵn, đổi MCN trong kỳ. Đóng Q1, Q5, Q7; thêm Q9–Q13, đóng Q10. Đồng bộ với bản mẫu 09/11: file PDF/JPG/PNG, ô lý do khi Từ chối/Chấm dứt/Báo rời, Thông báo xử lý dữ liệu cá nhân ở màn ký (A5), thông báo khi KOL/KOC từ chối |
+| 1.1 | 2026-11-09 | Thêm D17–D24: MCN cá nhân, tỷ lệ 0–100%, Chờ ký chưa phải thành viên và được Chờ ký nhiều MCN, hết 12 tháng tự kết thúc, trích phí theo ngày phát sinh, thuế 5.000.000đ trên số sau phí, MCN xem kỳ cũ sau rời, eKYC/hợp đồng gốc ở trang có sẵn, đổi MCN trong kỳ. Đóng Q1, Q5, Q7; thêm Q9–Q13, đóng Q10, Q13. Đồng bộ với bản mẫu 09/11: file PDF/JPG/PNG, ô lý do khi Từ chối/Chấm dứt/Báo rời, Thông báo xử lý dữ liệu cá nhân ở màn ký (A5), thông báo khi KOL/KOC từ chối |
