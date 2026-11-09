@@ -155,7 +155,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 | Tài khoản ngân hàng | FR-004 |
 | Quy chế chương trình, Quy tắc ứng xử đã ký | Tải lên file đã ký số + ngày ký |
 
-- File: PDF, tối đa 20MB (Q3).
+- File: PDF, JPG hoặc PNG, tối đa 20MB (Q3). Ảnh dùng cho CCCD hai mặt của MCN cá nhân.
 - Mỗi điều kiện đã đạt có nút **Xem**: thông tin đã nhập, file, ngày giờ và người cập nhật, lịch sử thay đổi.
 - Cập nhật lần sau tạo bản mới; bản cũ vẫn trong lịch sử, không xóa.
 - Sau khi kích hoạt, tab đổi tên thành **Hồ sơ pháp lý**, vẫn cập nhật được như trên.
@@ -209,7 +209,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 
 #### FR-011: MCN chấm dứt thành viên
 
-- Xác nhận bằng modal. Hiệu lực ngay, kể cả khi thành viên đang báo rời.
+- Xác nhận bằng modal, có ô **Lý do** (không bắt buộc). Hiệu lực ngay, kể cả khi thành viên đang báo rời.
 - Thành viên nhận thông báo. Phí quản lý không trích từ kỳ đối soát lấy danh sách sau thời điểm đó (FR-016).
 
 ### Nhóm C — KOL/KOC: tham gia và rời MCN
@@ -230,14 +230,14 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 #### FR-013: Đồng ý lời mời
 
 - Lời mời ghi: tên MCN, tỷ lệ phí, thời hạn phụ lục 12 tháng, báo trước khi rời 15 ngày, ví dụ với thu nhập 3.000.000đ (phí, phần còn lại), câu "Thuế TNCN tính khi AccessTrade chi tiền, như hiện nay".
-- Phải tick **Tôi đã hiểu** mới bấm **Đồng ý** được. Có nút **Từ chối**.
+- Phải tick **Tôi đã hiểu** mới bấm **Đồng ý** được. Có nút **Từ chối**, kèm ô **Lý do** (không bắt buộc); MCN nhận thông báo.
 - Ví dụ ghi rõ số KOL/KOC còn nhận, kể cả tỷ lệ 0% và 100%.
 - Đồng ý: tạo dòng quan hệ trạng thái **Chờ ký phụ lục**, hạn ký 7 ngày; ghi tỷ lệ của link vào dòng này (tắt link sau đó không đổi tỷ lệ). Chờ ký **chưa phải thành viên** (D18).
 
 #### FR-014: Ký phụ lục
 
 - Chưa eKYC hoặc chưa ký hợp đồng gốc `B2C_AMBASSADOR`: chặn, dẫn sang trang **Hợp đồng điện tử** có sẵn. Làm xong quay lại ký tiếp (D23).
-- Tick riêng **Đồng ý chia sẻ dữ liệu cho MCN** (bắt buộc, lưu thời điểm).
+- Màn ký hiện **Thông báo xử lý dữ liệu cá nhân** (tải về được, A5). Tick riêng **Đồng ý chia sẻ dữ liệu cho MCN** (bắt buộc, lưu thời điểm).
 - Ký trên hợp đồng điện tử (loại phụ lục mới, Q4). Ký xong: thành viên **Đang hợp tác**, ngày bắt đầu = ngày ký, ngày kết thúc phụ lục = +12 tháng.
 - Ký xong một MCN: các lời mời Chờ ký của MCN khác chuyển **Hết hiệu lực**, không ký được nữa, kể cả khi kết quả ký về muộn (D18).
 - Quá 7 ngày chưa ký: **Quá hạn ký**, phải mở lại link để đồng ý lại.
@@ -246,7 +246,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 
 - Avatar › **MCN của tôi**: hiện cho người có lời mời đang Chờ ký (một hoặc nhiều MCN) hoặc đang là thành viên. Người không có quan hệ nào không thấy mục này.
 - Nội dung: tên MCN, tỷ lệ, ngày tham gia, ngày kết thúc phụ lục, trạng thái.
-- **Báo rời**: ngày rời có hiệu lực = ngày báo + 15 ngày, 00:00. Phí vẫn trích đến ngày đó.
+- **Báo rời**: ô **Lý do** (không bắt buộc). Ngày rời có hiệu lực = ngày báo + 15 ngày, 00:00. Phí vẫn trích đến ngày đó.
 - **Rút lại báo rời**: được trước ngày rời có hiệu lực.
 - Đến ngày rời có hiệu lực: **Đã kết thúc**, lý do "KOL/KOC rời". MCN nhận thông báo.
 - Hết 12 tháng phụ lục: **Đã kết thúc**, lý do "Hết hạn phụ lục", ngừng trích phí (D19). Phụ lục hết hạn trước ngày rời có hiệu lực thì kết thúc theo hết hạn.
@@ -317,6 +317,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 |---|---|---|
 | MCN được kích hoạt | Email đăng nhập MCN | Email |
 | KOL/KOC đồng ý lời mời | MCN | Thông báo web |
+| KOL/KOC từ chối lời mời | MCN | Thông báo web |
 | KOL/KOC ký xong, thành viên mới | MCN | Thông báo web |
 | Còn 2 ngày tới hạn ký | KOL/KOC | Thông báo web |
 | KOL/KOC báo rời / rút lại | MCN | Thông báo web |
@@ -348,7 +349,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 - **NFR-001 Không đổi hành vi cũ:** người không thuộc MCN, kỳ đối soát không có thành viên MCN, đợt chi không có MCN — kết quả giống hệt hiện nay.
 - **NFR-002 Đúng tiền:** với mỗi khoản, (phần KOL/KOC) + (phí MCN) = số tiền khoản, không lệch đồng nào. Không cộng hai lần khi chạy lại.
 - **NFR-003 Riêng tư:** MCN không tra cứu được user. MCN chỉ thấy dữ liệu thành viên của mình trong thời gian hợp tác; số liệu đối soát các kỳ đã hợp tác vẫn xem được sau khi rời (D22). Link mời không lộ thông tin MCN ngoài tên. Lời mời Hết hiệu lực không cho MCN biết KOL/KOC đã vào MCN nào.
-- **NFR-004 Lưu vết:** mọi thay đổi hồ sơ pháp lý, trạng thái MCN, trạng thái thành viên đều có người, giờ, lý do.
+- **NFR-004 Lưu vết:** mọi thay đổi hồ sơ pháp lý, trạng thái MCN, trạng thái thành viên đều có người, giờ, lý do. Lý do Từ chối, Chấm dứt, Báo rời lưu vào lịch sử quan hệ; ai được xem: Q13.
 - **NFR-005 Ngôn ngữ:** tiếng Việt.
 
 ---
@@ -361,6 +362,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | A2 | Mẫu email "MCN được kích hoạt" (template code) | AccessTrade |
 | A3 | Tra tên chủ tài khoản ngân hàng cho tài khoản của MCN (không có SSO user) | AccessTrade core |
 | A4 | Email đăng nhập MCN là tài khoản Google (Google Workspace hoặc Google account tạo bằng email đó) | MCN |
+| A5 | Văn bản Thông báo xử lý dữ liệu cá nhân cho KOL/KOC khi ký phụ lục (bản hiện hành) | AccessTrade, Legal |
 
 ---
 
@@ -389,7 +391,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 |---|---|---|
 | Q1 | ~~Ngưỡng thuế TNCN~~ | **Đã chốt:** 5.000.000đ, tính trên số chi sau phí MCN (D21) |
 | Q2 | Các trường form tạo MCN | Theo bảng FR-002 (bản mẫu 09/11), chờ AccessTrade xác nhận lần cuối |
-| Q3 | Định dạng, dung lượng file hồ sơ pháp lý | PDF, ≤ 20MB |
+| Q3 | Định dạng, dung lượng file hồ sơ pháp lý | PDF, JPG, PNG, ≤ 20MB (theo bản mẫu 09/11) |
 | Q4 | Loại hợp đồng phụ lục trên econtract: AccessTrade core cấp mã loại và mẫu khi nào? | Phụ thuộc A1, cần trước khi làm FR-014 |
 | Q5 | ~~Thời điểm xét tư cách thành viên~~ | **Đã chốt:** theo ngày phát sinh từng khoản; không trích khoản trước ngày ký (D20) |
 | Q6 | MCN chỉ áp dụng cho kỳ đối soát của partner Ambassador, hay mọi partner mà thành viên tham gia? | Chỉ Ambassador |
@@ -399,6 +401,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Q10 | MCN có thấy tên KOL/KOC đang Chờ ký không? Một KOL/KOC có thể Chờ ký nhiều MCN nên nếu cho phép thì các MCN đó đều thấy | Cần PO/Legal chốt |
 | Q11 | Thưởng mốc đạt sau ngày ký nhưng nhờ video đăng trước ngày ký; thưởng thêm tạo sau ngày ký để bù khoảng trước ngày ký: có trích phí MCN không? | Đề xuất: có, tính theo ngày khoản được ghi nhận |
 | Q12 | MCN cá nhân có được dùng email của tài khoản creator đang có làm email đăng nhập MCN không? | Không, dùng email chưa có tài khoản như MCN công ty |
+| Q13 | Lý do Từ chối, Chấm dứt, Báo rời: bên kia (MCN hoặc KOL/KOC) có thấy không? | Đề xuất: bên kia thấy trong thông báo; Admin thấy ở tab Thành viên |
 
 ---
 
@@ -407,4 +410,4 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Version | Ngày | Thay đổi |
 |---|---|---|
 | 1.0 | 2026-11-04 | Bản đầu, theo scope chốt 03/11/2026 và bản mẫu giao diện v47. Vai MCN và thành viên dùng bảng quan hệ, không dùng loại tài khoản |
-| 1.1 | 2026-11-09 | Thêm D17–D24: MCN cá nhân, tỷ lệ 0–100%, Chờ ký chưa phải thành viên và được Chờ ký nhiều MCN, hết 12 tháng tự kết thúc, trích phí theo ngày phát sinh, thuế 5.000.000đ trên số sau phí, MCN xem kỳ cũ sau rời, eKYC/hợp đồng gốc ở trang có sẵn, đổi MCN trong kỳ. Đóng Q1, Q5, Q7; thêm Q9–Q12 |
+| 1.1 | 2026-11-09 | Thêm D17–D24: MCN cá nhân, tỷ lệ 0–100%, Chờ ký chưa phải thành viên và được Chờ ký nhiều MCN, hết 12 tháng tự kết thúc, trích phí theo ngày phát sinh, thuế 5.000.000đ trên số sau phí, MCN xem kỳ cũ sau rời, eKYC/hợp đồng gốc ở trang có sẵn, đổi MCN trong kỳ. Đóng Q1, Q5, Q7; thêm Q9–Q13. Đồng bộ với bản mẫu 09/11: file PDF/JPG/PNG, ô lý do khi Từ chối/Chấm dứt/Báo rời, Thông báo xử lý dữ liệu cá nhân ở màn ký (A5), thông báo khi KOL/KOC từ chối |
