@@ -339,7 +339,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Báo rời, rút lại | — | — | Làm |
 | Duyệt đối soát | Làm | — | — |
 | Số đối soát | Xem tất cả | Phí của thành viên | Số của mình |
-| Lập đợt chi | Làm | Nhận về tài khoản công ty | Nhận như hiện nay |
+| Lập đợt chi | Làm | Nhận về tài khoản đứng tên MCN | Nhận như hiện nay |
 
 ---
 
