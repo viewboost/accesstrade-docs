@@ -139,11 +139,11 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 |---|---|---|---|
 | Tên (bắt buộc) | Tên pháp nhân | Họ và tên theo CCCD | Dùng để đối chiếu tên chủ tài khoản ngân hàng |
 | Mã định danh (bắt buộc) | Mã số thuế | Số CCCD (cũng là MST cá nhân) | Công ty 10 hoặc 13 số; cá nhân 12 số; không trùng MCN khác |
-| Email đăng nhập (bắt buộc) | | | Đúng định dạng; không trùng email của user đã có (đang xem lại, Q12); không trùng MCN khác |
+| Email đăng nhập (bắt buộc) | | | Đúng định dạng; không trùng MCN khác. Được trùng email của tài khoản creator đang có: tài khoản đó vừa quản lý MCN vừa đăng bài như creator (Q12). Không được là tài khoản đang là thành viên của một MCN |
 | Không bắt buộc | Địa chỉ trụ sở, Người đại diện theo pháp luật, Số điện thoại | Địa chỉ liên hệ, Số điện thoại | |
 
 - Tạo xong: trạng thái **Chờ kích hoạt**, mở trang chi tiết ở tab Điều kiện kích hoạt.
-- Email trùng: báo "Email đã được dùng cho một tài khoản khác".
+- Email đã thuộc tài khoản đang là thành viên của một MCN: báo "Tài khoản này đang là thành viên của một MCN". Email đã dùng cho MCN khác: báo "Email đã được dùng cho MCN khác".
 - Danh sách trường đang chờ chốt (Q2).
 
 #### FR-003: Hồ sơ pháp lý (5 điều kiện kích hoạt)
@@ -173,7 +173,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 - Nút **Kích hoạt** chỉ chạy khi đủ 5 điều kiện. Bấm khi còn thiếu: hiện danh sách điều kiện còn thiếu.
 - Kích hoạt xong:
   - Trạng thái **Hoạt động**, ghi người và giờ kích hoạt.
-  - Hệ thống tạo **dòng tài khoản MCN** gắn email đăng nhập với hồ sơ MCN (bảng quan hệ), chưa gắn user.
+  - Hệ thống tạo **dòng tài khoản MCN** gắn email đăng nhập với hồ sơ MCN (bảng quan hệ). Email đã có tài khoản (email đã xác thực) thì gắn luôn tài khoản đó; chưa có thì gắn ở lần đăng nhập đầu.
   - Gửi email tới email đăng nhập: MCN đã được kích hoạt, hướng dẫn đăng nhập web Ambassador bằng Google với đúng email này.
 - Lần đầu user đăng nhập bằng email đó (email đã xác thực), hệ thống gắn user vào dòng tài khoản MCN. Từ đó user thấy mục **Quản lý MCN**.
 - Không có thao tác Tạm dừng, Chấm dứt MCN (D12).
@@ -401,7 +401,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Q9 | Thuế TNCN của MCN cá nhân: chung ngưỡng và mức 10% như KOL/KOC? Chứng từ khấu trừ cấp thế nào? | Tạm làm như KOL/KOC, chứng từ ngoài hệ thống; họp 10/11/2026 chốt |
 | Q10 | ~~MCN có thấy tên KOL/KOC đang Chờ ký không?~~ | **Đã chốt:** có, chỉ tên. MCN gửi link cho người mình đã biết. Thông tin khác chỉ hiện sau khi ký và đồng ý chia sẻ dữ liệu |
 | Q11 | Thưởng mốc đạt sau ngày ký nhưng nhờ video đăng trước ngày ký; thưởng thêm tạo sau ngày ký để bù khoảng trước ngày ký: có trích phí MCN không? | Đề xuất: có, tính theo ngày khoản được ghi nhận |
-| Q12 | MCN (nhất là MCN cá nhân) đã có tài khoản creator: dùng chung tài khoản đó (cùng nick Google) để quản lý MCN được không? FR-002 đang chặn email trùng, mâu thuẫn với nguyên tắc 2 và D14 | Đề xuất: cho dùng chung. Kích hoạt thì gắn luôn tài khoản có sẵn; chỉ chặn khi tài khoản đó đang là thành viên của một MCN |
+| Q12 | ~~MCN đã có tài khoản creator có dùng chung tài khoản đó không?~~ | **Đã chốt:** dùng chung. MCN cá nhân và creator là một tài khoản, vẫn đăng bài như creator (nguyên tắc 2, D14). Chặn khi tài khoản đang là thành viên của một MCN |
 | Q13 | ~~Lý do Từ chối, Chấm dứt, Báo rời có hiện cho bên kia không?~~ | **Đã chốt:** có, hiện trong thông báo gửi bên kia; Admin thấy ở tab Thành viên |
 
 ---
@@ -411,4 +411,4 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Version | Ngày | Thay đổi |
 |---|---|---|
 | 1.0 | 2026-11-04 | Bản đầu, theo scope chốt 03/11/2026 và bản mẫu giao diện v47. Vai MCN và thành viên dùng bảng quan hệ, không dùng loại tài khoản |
-| 1.1 | 2026-11-09 | Thêm D17–D24: MCN cá nhân, tỷ lệ 0–100%, Chờ ký chưa phải thành viên và được Chờ ký nhiều MCN, hết 12 tháng tự kết thúc, trích phí theo ngày phát sinh, thuế 5.000.000đ trên số sau phí, MCN xem kỳ cũ sau rời, eKYC/hợp đồng gốc ở trang có sẵn, đổi MCN trong kỳ. Đóng Q1, Q5, Q7; thêm Q9–Q13, đóng Q10, Q13. Đồng bộ với bản mẫu 09/11: file PDF/JPG/PNG, ô lý do khi Từ chối/Chấm dứt/Báo rời, Thông báo xử lý dữ liệu cá nhân ở màn ký (A5), thông báo khi KOL/KOC từ chối |
+| 1.1 | 2026-11-09 | Thêm D17–D24: MCN cá nhân, tỷ lệ 0–100%, Chờ ký chưa phải thành viên và được Chờ ký nhiều MCN, hết 12 tháng tự kết thúc, trích phí theo ngày phát sinh, thuế 5.000.000đ trên số sau phí, MCN xem kỳ cũ sau rời, eKYC/hợp đồng gốc ở trang có sẵn, đổi MCN trong kỳ. Đóng Q1, Q5, Q7; thêm Q9–Q13, đóng Q10, Q12, Q13. Đồng bộ với bản mẫu 09/11: file PDF/JPG/PNG, ô lý do khi Từ chối/Chấm dứt/Báo rời, Thông báo xử lý dữ liệu cá nhân ở màn ký (A5), thông báo khi KOL/KOC từ chối |
