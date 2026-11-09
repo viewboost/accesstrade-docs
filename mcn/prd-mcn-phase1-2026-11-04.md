@@ -201,7 +201,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 
 - Bảng **Link mời**: Link, Tỷ lệ, Ngày tạo, Số người đã tham gia, Trạng thái (Đang dùng/Đã tắt), Sao chép, **Tắt link**.
 - Tắt link: không ai mở link đó được nữa (hiện "Link mời đã ngừng"). Người đã đồng ý nhưng chưa ký vẫn ký tiếp được trong hạn. Thành viên đã vào không ảnh hưởng. Không bật lại (tạo link mới).
-- Bảng **Người đã đồng ý**: người đã đồng ý nhưng chưa thành viên. Tên, Tỷ lệ, Ngày đồng ý, Trạng thái (Chờ ký phụ lục kèm hạn ký, Đã từ chối, Quá hạn ký, Hết hiệu lực — đã ký với MCN khác). Có hiện tên người Chờ ký hay không: xem Q10.
+- Bảng **Người đã đồng ý**: người đã đồng ý nhưng chưa thành viên. Tên, Tỷ lệ, Ngày đồng ý, Trạng thái (Chờ ký phụ lục kèm hạn ký, Đã từ chối, Quá hạn ký, Hết hiệu lực — đã ký với MCN khác). MCN thấy tên người Chờ ký (MCN gửi link cho người mình đã biết); thông tin khác chỉ hiện sau khi ký phụ lục và đồng ý chia sẻ dữ liệu.
 
 #### FR-010: Mục Thành viên (MCN)
 
@@ -399,7 +399,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Q7 | ~~Hết 12 tháng phụ lục~~ | **Đã chốt:** tự kết thúc (D19) |
 | Q8 | Thu nhập từ nội dung của chính tài khoản MCN công ty: khi chi, cả số dư được miễn khấu trừ TNCN? | Có — tài khoản MCN công ty chi không khấu trừ |
 | Q9 | Thuế TNCN của MCN cá nhân: chung ngưỡng và mức 10% như KOL/KOC? Chứng từ khấu trừ cấp thế nào? | Tạm làm như KOL/KOC, chứng từ ngoài hệ thống; họp 10/11/2026 chốt |
-| Q10 | MCN có thấy tên KOL/KOC đang Chờ ký không? Một KOL/KOC có thể Chờ ký nhiều MCN nên nếu cho phép thì các MCN đó đều thấy | Cần PO/Legal chốt |
+| Q10 | ~~MCN có thấy tên KOL/KOC đang Chờ ký không?~~ | **Đã chốt:** có, chỉ tên. MCN gửi link cho người mình đã biết. Thông tin khác chỉ hiện sau khi ký và đồng ý chia sẻ dữ liệu |
 | Q11 | Thưởng mốc đạt sau ngày ký nhưng nhờ video đăng trước ngày ký; thưởng thêm tạo sau ngày ký để bù khoảng trước ngày ký: có trích phí MCN không? | Đề xuất: có, tính theo ngày khoản được ghi nhận |
 | Q12 | MCN cá nhân có được dùng email của tài khoản creator đang có làm email đăng nhập MCN không? | Không, dùng email chưa có tài khoản như MCN công ty |
 | Q13 | Lý do Từ chối, Chấm dứt, Báo rời: bên kia (MCN hoặc KOL/KOC) có thấy không? | Đề xuất: bên kia thấy trong thông báo; Admin thấy ở tab Thành viên |
@@ -411,4 +411,4 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Version | Ngày | Thay đổi |
 |---|---|---|
 | 1.0 | 2026-11-04 | Bản đầu, theo scope chốt 03/11/2026 và bản mẫu giao diện v47. Vai MCN và thành viên dùng bảng quan hệ, không dùng loại tài khoản |
-| 1.1 | 2026-11-09 | Thêm D17–D24: MCN cá nhân, tỷ lệ 0–100%, Chờ ký chưa phải thành viên và được Chờ ký nhiều MCN, hết 12 tháng tự kết thúc, trích phí theo ngày phát sinh, thuế 5.000.000đ trên số sau phí, MCN xem kỳ cũ sau rời, eKYC/hợp đồng gốc ở trang có sẵn, đổi MCN trong kỳ. Đóng Q1, Q5, Q7; thêm Q9–Q13. Đồng bộ với bản mẫu 09/11: file PDF/JPG/PNG, ô lý do khi Từ chối/Chấm dứt/Báo rời, Thông báo xử lý dữ liệu cá nhân ở màn ký (A5), thông báo khi KOL/KOC từ chối |
+| 1.1 | 2026-11-09 | Thêm D17–D24: MCN cá nhân, tỷ lệ 0–100%, Chờ ký chưa phải thành viên và được Chờ ký nhiều MCN, hết 12 tháng tự kết thúc, trích phí theo ngày phát sinh, thuế 5.000.000đ trên số sau phí, MCN xem kỳ cũ sau rời, eKYC/hợp đồng gốc ở trang có sẵn, đổi MCN trong kỳ. Đóng Q1, Q5, Q7; thêm Q9–Q13, đóng Q10. Đồng bộ với bản mẫu 09/11: file PDF/JPG/PNG, ô lý do khi Từ chối/Chấm dứt/Báo rời, Thông báo xử lý dữ liệu cá nhân ở màn ký (A5), thông báo khi KOL/KOC từ chối |
