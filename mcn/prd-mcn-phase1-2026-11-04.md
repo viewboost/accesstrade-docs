@@ -23,6 +23,7 @@ PRD cho phase 1 của MCN (công ty quản lý KOL/KOC) trên KOC Ambassador, th
 - Biên bản họp 03/11/2026: [meeting-261103.md](./meeting-261103.md)
 - Sơ đồ tuần tự (bản đầy đủ, nhiều phần để sau): [08-Sequence.md](./08-Sequence.md)
 - Tech spec: [techspec-mcn-phase1-2026-11-04.md](./techspec-mcn-phase1-2026-11-04.md)
+- Plan code và tiến độ (55 đầu việc, mức sẵn sàng để code): https://claude.ai/artifact/AZHpoHEVTr3GiWy3YAWXh8
 
 > **Khác với 08-Sequence:** 08 tạo tài khoản MCN bằng `account_type=MCN` (SD-01). Phase 1 **không** làm vậy, xem nguyên tắc 2. 08 cũng có bảng kê tháng, hóa đơn, đợt chi riêng cho MCN, xác nhận/báo sai đối soát, công bố Quy chế phiên bản mới — đều để sau (mục 9).
 
