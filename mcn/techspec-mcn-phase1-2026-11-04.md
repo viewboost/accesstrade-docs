@@ -16,27 +16,28 @@
 
 ## Tóm tắt cho người review
 
-Code hiện tại dùng `users._id` cho bốn vai: người đăng nhập (principal), chủ sổ (ledger owner), người thụ hưởng (payee), người nộp thuế (taxpayer). Tech spec v1.0 giữ giả định đó cho MCN: phí quản lý cộng vào `cash-flows` của user vận hành, chi bằng cờ `TaxExempt` trên user đó. PRD Q12 cho user vận hành đồng thời làm creator, nên thu nhập nội dung và phí quản lý dồn vào một số dư, một lệnh chi, một quyết định thuế. Đây là rủi ro kiến trúc tech lead nêu ngày 10/11.
+Vấn đề. Code hiện tại dùng `users._id` cho mọi thứ: người đăng nhập, người có số dư, người nhận tiền, người chịu thuế. Tech spec v1.0 giữ cách đó cho MCN: cộng phí quản lý vào số dư (`cash-flows`) của user đăng nhập MCN rồi chi cho user đó. Khi người đứng MCN cũng làm creator (PRD Q12), phí của MCN và tiền làm nội dung của người đó dồn vào một số dư, không tách được khoản nào của ai, thuế tính theo ai. Đây là rủi ro tech lead nêu ngày 10/11.
 
-Quyết định chính:
+Cách làm:
 
-1. MCN là chủ thể pháp lý (bản ghi `mcns`), không phải user hay role. Danh tính giữ như v1.0: user đăng nhập nối với MCN qua bảng quan hệ `mcn-accounts`, không thêm loại tài khoản trên `users` (ADR-01).
-2. MCN là chủ sở hữu số dư phí quản lý, là payee và taxpayer của khoản phí. Phí ghi vào sổ riêng `mcn-cash-flows`, chi bằng lệnh riêng `mcn-payouts` trong cùng đợt chi (ADR-02, ADR-08).
-3. Một user được kiêm hai vai, vận hành MCN và creator (họp 10/11). Tài khoản nhà MCN, gồm tài khoản creator của chính người đứng MCN, tham gia MCN của mình với tỷ lệ 100%. Toàn bộ thu nhập nội dung của các tài khoản này vào sổ MCN, nên MCN có một số dư, một lệnh chi, một lần khấu trừ thuế theo loại MCN (ADR-12). Tài khoản vận hành chỉ được là thành viên của chính MCN mình, ở tỷ lệ 100% (INV-03, ADR-04).
-4. Phí snapshot lúc Lấy danh sách, theo ngày phát sinh của từng khoản, trên cửa sổ ngày suy ra từ dữ liệu phụ lục, không phụ thuộc job (ADR-06). Chỉ xét chiến dịch có `events.startAt` từ mốc áp dụng (01/12/2026 nếu go-live cuối tháng 11) (ADR-13).
-5. Duyệt ghi sổ mọi khoản qua một hàm `postItem` trong transaction, CAS khoản trước, kiểm tổng cuối kỳ. Lệch thì kỳ sang `run_failed` và chỉ được Duyệt lại (ADR-07).
-6. Thuế khấu trừ theo chính sách của từng payee. Mỗi lệnh lưu `taxpayerKey` để Kế toán tổng hợp (ADR-09).
-7. Lệnh chi MCN tách theo chiến dịch: mỗi (đợt chi, MCN, chiến dịch) một lệnh. Ngưỡng thuế xét trên tổng các lệnh của cùng MCN trong một đợt, để tách lệnh không làm lọt ngưỡng 5.000.000đ (ADR-14).
+1. MCN là một bản ghi riêng (`mcns`), là bên ký hợp đồng với AccessTrade, không phải user. User đăng nhập chỉ được gắn quyền quản lý MCN qua bảng `mcn-accounts`. Đổi người quản lý thì tiền của MCN không đổi chủ (ADR-01).
+2. Tiền của MCN nằm ở bảng dòng tiền riêng `mcn-cash-flows`, tách khỏi `cash-flows` của creator. Số dư MCN là tổng các dòng trong bảng này. MCN có lệnh chi riêng (`mcn-payouts`), chuyển vào tài khoản ngân hàng đứng tên MCN, trong cùng đợt chi với creator (ADR-02, ADR-08).
+3. Người đứng MCN vẫn làm creator trên cùng tài khoản (họp 10/11). Để chi một lần và tính thuế một lần, tài khoản đó tham gia chính MCN của mình với tỷ lệ 100%: toàn bộ thu nhập nội dung chuyển sang số dư MCN, số dư creator của tài khoản đó về 0 (ADR-12).
+4. Phí tính ở bước Lấy danh sách của đối soát: xét từng khoản thưởng theo ngày phát sinh, chỉ trong khoảng ngày KOL/KOC là thành viên, chỉ với chiến dịch bắt đầu từ 01/12/2026. Kết quả lưu lại, không tính lại về sau (ADR-06, ADR-13).
+5. Lúc Duyệt, mỗi khoản đi trong một transaction: cộng cho KOL/KOC, trừ phí, cộng phí cho MCN. Chạy lại không cộng trùng. Lỗi giữa chừng thì kỳ hiện "Duyệt lỗi" để Duyệt lại, không âm thầm thiếu tiền (ADR-07).
+6. Lệnh chi MCN tách theo chiến dịch. Thuế MCN cá nhân tính trên tổng các lệnh của MCN trong một đợt, để tách lệnh không làm lọt ngưỡng 5.000.000đ. MCN công ty không khấu trừ (ADR-09, ADR-14).
+
+Ví dụ một vòng tiền: KOL/KOC K thuộc MCN công ty A (15%), có thưởng 3.000.000 ở một chiến dịch tháng 12. Duyệt: số dư K `+3.000.000` rồi `−450.000`; số dư A `+450.000`. Đợt chi: K nhận 2.550.000 (dưới ngưỡng, không khấu trừ); A nhận 450.000 vào tài khoản công ty.
 
 Thay đổi so với v1.0:
 
-- Phí không cộng vào số dư user vận hành; bỏ `TaxExempt`, `IsPayableMcnUser`, `creditMcnFees` kiểu delta, dòng net.
-- Sổ KOL/KOC ghi `+G` và `−fee`; mỗi bút toán có `idemKey` unique; xét thành viên theo ngày phát sinh (D20).
+- Phí không cộng vào số dư user quản lý MCN; bỏ `TaxExempt`, `IsPayableMcnUser`, `creditMcnFees` kiểu delta, dòng net.
+- Số dư KOL/KOC ghi hai dòng: `+G` (thưởng) và `−fee` (phí MCN), thay vì một dòng đã trừ; mỗi dòng có `idemKey` unique để chạy lại không trùng; xét thành viên theo ngày phát sinh (D20).
 - Đổi cách ghi sổ trên đường tiền creator (Duyệt và Chuyển tiền trong transaction, `run_failed`, chặn đợt chi khi còn kỳ chưa hoàn tất), bật theo cờ partner `LedgerV2`. Kết quả tiền và thuế của creator không đổi; cách ghi thì đổi so với Nguyên tắc 2 của v1.0 (§11.1).
 
 Thay đổi v2.1 theo họp 10/11:
 
-- Bỏ phương án hai payee cho người vừa vận hành vừa làm creator (v2.0 ADR-03, §7.3 ca 6–7). Thay bằng tài khoản nhà 100% (ADR-12). Đóng OQ-02, OQ-03; OQ-01 chỉ còn chính sách thuế MCN cá nhân.
+- Bỏ phương án hai người nhận tiền (MCN và user) cho người vừa quản lý MCN vừa làm creator (v2.0 ADR-03, §7.3 ca 6–7). Thay bằng tài khoản nhà 100% (ADR-12). Đóng OQ-02, OQ-03; OQ-01 chỉ còn chính sách thuế MCN cá nhân.
 - Thêm mốc áp dụng theo chiến dịch (ADR-13), lệnh chi MCN theo chiến dịch (ADR-14).
 - Vào, ra, đổi MCN khi chiến dịch đang chạy không có luồng riêng ở phase 1 (NG-9). Công thức `FeeWindow` giữ nguyên, nên nếu xảy ra thì phí vẫn chia đúng theo ngày.
 
@@ -53,11 +54,11 @@ Cần chốt:
 | Câu hỏi | Trả lời | Ví dụ số | Chi tiết |
 |---|---|---|---|
 | Tài khoản MCN và tài khoản creator khác nhau thế nào? | MCN là chủ thể `mcns`. Tài khoản đăng nhập chỉ là user có quyền vận hành qua `mcn-accounts`, thu hồi được. Cùng một user có thể vừa vận hành vừa làm creator; khi làm nội dung, user đó là thành viên 100% của chính MCN mình | Đổi người vận hành U1 → U2: số dư MCN không đổi chủ, không di chuyển | ADR-01, ADR-03, ADR-12 |
-| Số dư MCN và số dư creator tách thế nào? | Hai sổ: `cash-flows` theo (user, partner), `mcn-cash-flows` theo `mcn`. Không bút toán nào ghi chéo | K có G 3.000.000, MCN 15%: sổ K `+3.000.000`, `−450.000`; sổ MCN `+450.000` | ADR-02, ADR-05 |
-| Thuế của MCN khi người vận hành cũng làm creator? | Một payee, một lần thuế (họp 10/11). Tài khoản nhà vào MCN với tỷ lệ 100%: sổ creator `+G`, `−G`, số dư 0; sổ MCN `+G`. Thu nhập nội dung và phí quản lý cùng vào sổ MCN, chi một mối, khấu trừ theo loại MCN trên tổng các lệnh của MCN trong đợt | P (cá nhân): phí 3.000.000 + nội dung 2.500.000 = 5.500.000, khấu trừ 550.000 (OQ-01). C (công ty): phí 8.000.000 + nội dung uC 6.000.000 = 14.000.000, khấu trừ 0 | ADR-12, ADR-09, §7.3 |
-| Chi theo chiến dịch làm thế nào? | Bút toán sổ MCN mang `event`; số dư tính theo (MCN, chiến dịch); mỗi (đợt chi, MCN, chiến dịch) một lệnh. Đường chi creator giữ nguyên (OQ-13) | MCN A có 3.000.000 từ chiến dịch E1 và 2.500.000 từ E2: hai lệnh 3.000.000 và 2.500.000; ngưỡng xét trên 5.500.000 | ADR-14 |
+| Số dư MCN và số dư creator tách thế nào? | Hai bảng dòng tiền riêng: `cash-flows` theo (user, partner) cho creator, `mcn-cash-flows` theo `mcn` cho MCN. Không dòng nào ghi sang bảng của bên kia | K có thưởng 3.000.000, MCN 15%: số dư K `+3.000.000`, `−450.000`; số dư MCN `+450.000` | ADR-02, ADR-05 |
+| Thuế của MCN khi người vận hành cũng làm creator? | Một người nhận tiền là MCN, một lần thuế (họp 10/11). Tài khoản nhà tham gia MCN với tỷ lệ 100%: số dư creator `+G` rồi `−G`, còn 0; số dư MCN `+G`. Thu nhập nội dung và phí quản lý cùng vào số dư MCN, chi một mối, khấu trừ theo loại MCN trên tổng các lệnh của MCN trong đợt | P (cá nhân): phí 3.000.000 + nội dung 2.500.000 = 5.500.000, khấu trừ 550.000 (OQ-01). C (công ty): phí 8.000.000 + nội dung uC 6.000.000 = 14.000.000, khấu trừ 0 | ADR-12, ADR-09, §7.3 |
+| Chi theo chiến dịch làm thế nào? | Mỗi dòng tiền của MCN ghi kèm chiến dịch (`event`); số dư tính theo (MCN, chiến dịch); mỗi (đợt chi, MCN, chiến dịch) một lệnh. Đường chi creator giữ nguyên (OQ-13) | MCN A có 3.000.000 từ chiến dịch E1 và 2.500.000 từ E2: hai lệnh 3.000.000 và 2.500.000; ngưỡng xét trên 5.500.000 | ADR-14 |
 | Thiết kế database thay đổi gì? | Thêm 2 collection: `mcn-cash-flows` (sổ MCN, append-only, `idemKey` unique) và `mcn-payouts` (lệnh chi MCN). Thêm trường: `reconciliation-items.mcnSplits`, `cash-flows.idemKey`, `mcn-members.feeFrom`, `isPending`, `annexInFlight`, `house`, `mcn-accounts.isCurrent`, `users.mcnGuardVer`, `mcn-cash-flows.event`, `mcn-payouts.event`. Không thêm loại tài khoản trên `users` | Item G 3.000.000, MCN 15%: một split; sổ K hai bút toán (`rc:<itemId>:credit`, `rc:<itemId>:fee:<relId>`); sổ MCN một bút toán cùng khóa phí | §6, ADR-02, ADR-08, ADR-14 |
-| MCN là đối tượng gì? | Chủ thể pháp lý (party) ký Hợp đồng ① với AccessTrade, bản ghi `mcns`, định danh bằng MST hoặc CCCD; không phải user hay role. Là chủ sổ, payee và taxpayer của phí quản lý và thu nhập nội dung của tài khoản nhà (ADR-12). Hai loại: Công ty (MST 10/13 số), Cá nhân (CCCD 12 số, cũng là MST); loại quyết định chính sách thuế của phí | Công ty 8.000.000: chi đủ. Cá nhân 6.000.000: khấu trừ 600.000 (tạm, OQ-01) | §0, ADR-02, ADR-09 |
+| MCN là đối tượng gì? | Bên ký Hợp đồng ① với AccessTrade, bản ghi `mcns`, định danh bằng MST hoặc CCCD; không phải user hay role. MCN sở hữu số dư, là người nhận tiền và người chịu thuế của phí quản lý và thu nhập tài khoản nhà (ADR-12). Hai loại: Công ty (MST 10/13 số), Cá nhân (CCCD 12 số, cũng là MST); loại quyết định chính sách thuế của phí | Công ty 8.000.000: chi đủ. Cá nhân 6.000.000: khấu trừ 600.000 (tạm, OQ-01) | §0, ADR-02, ADR-09 |
 | Chỗ dễ nhầm creator và MCN | Mỗi màn hình, thông báo, thống kê thuộc đúng một ngữ cảnh | Trang Số dư chỉ đọc `cash-flows`; Quản lý MCN chỉ đọc `mcn-cash-flows` | §8.3 |
 
 Sơ đồ đối tượng cho ba ca chuẩn:
@@ -105,9 +106,9 @@ Trình bày 15 phút:
 | Cửa sổ phí (fee window) | Khoảng ngày `[feeFrom, effTo)` giờ Asia/Ho_Chi_Minh của một dòng quan hệ, tính bằng `FeeWindow(m)` (§7.1) | Ranh giới ngày, không phải thời điểm `startAt/endAt` |
 | Ngày phát sinh (incurred date) | Thưởng view: ngày có view (`event-rewards.date`); thưởng mốc: ngày đạt mốc (`date`); Thưởng thêm: ngày Admin tạo (`event-bonus.createdAt`) | Không dùng `event-rewards.createdAt` (crawler ghi trễ) hay thời điểm Lấy danh sách |
 | G (gross) | Tổng hoa hồng của một khoản, `reconciliation-items.totalCash` | Trước phí quản lý |
-| Người thụ hưởng (payee) | Chủ thể nhận tiền trên lệnh chi: user (creator) hoặc `mcns` | Không suy ra từ người đăng nhập |
-| Người nộp thuế (taxpayer) | Chủ thể được ghi nhận khoản khấu trừ, khóa `taxpayerKey` = `cccd:<số>`, `mst:<số>` hoặc `user:<id>` | Hai payee có thể cùng một taxpayer (ca 2) |
-| Sổ cái (ledger account), bút toán (entry), số dư (balance) | `cash-flows` (creator), `mcn-cash-flows` (MCN); mỗi dòng là một bút toán có dấu. Số dư là Σ`value` của sổ theo chủ sổ | `statistic.cashRemaining` chỉ là cache hiển thị |
+| Người nhận tiền (payee) | Bên được chuyển tiền trên lệnh chi: user (creator) hoặc MCN (`mcns`) | Không suy ra từ người đăng nhập |
+| Người chịu thuế (taxpayer) | Bên được ghi nhận khoản khấu trừ thuế, khóa `taxpayerKey` = `cccd:<số>`, `mst:<số>` hoặc `user:<id>` | Hai payee có thể cùng một taxpayer (ca 2) |
+| Sổ (bảng dòng tiền), bút toán (dòng tiền), số dư | Sổ là bảng dòng tiền: `cash-flows` của creator, `mcn-cash-flows` của MCN. Mỗi dòng là một khoản cộng (+) hoặc trừ (−). Số dư = tổng `value` theo user (creator) hoặc theo MCN. "Sổ MCN" trong tài liệu là `mcn-cash-flows` | `statistic.cashRemaining` chỉ là cache hiển thị |
 | Đợt chi (payout batch), lệnh chi; Min, Max | `transfers`; lệnh creator `withdraws`, lệnh MCN `mcn-payouts`. Min = `minValueCashRemaining` (số dư tối thiểu để có lệnh), Max = `maxCashWithdraw` (trần số chi) | `backend/internal/model/mg/transfer.go:44-45` |
 | Thuế khấu trừ tại nguồn (withholding) | TNCN AccessTrade khấu trừ lúc chi (D10) | Không tính ở đối soát |
 | Snapshot | Giá trị chép tại một thời điểm, không cập nhật về sau | `rate` lúc đồng ý; `mcnSplits` lúc Lấy danh sách; `bank`, `payee`, `tax` lúc tạo lệnh |
@@ -358,7 +359,7 @@ Hệ quả
 Bối cảnh
 - Khác biệt thật giữa v1.0 và v2.0 nằm ở quyết định này. v1.0 đã có `mcns`, `mcn-accounts`, `WithdrawRaw.RecipientType/Mcn`, lấy MST từ `mcns` (v1.0 §2, §9). Nhưng số dư phí và lệnh chi treo trên `users._id` của người vận hành: `creditMcnFees` ghi `cash-flows` của `acc.User` (v1.0 §8.2), đợt chi tìm MCN qua `IsPayableMcnUser(user)` (v1.0 §9). Hệ quả ở §2.7.
 
-| Tiêu chí | A. `cash-flows` của user vận hành (v1.0) | B. User hệ thống riêng cho mỗi MCN làm chủ sổ | C. Sổ riêng `mcn-cash-flows` theo `mcns` | D. `cash-flows` thêm owner `mcn`, `user` rỗng |
+| Tiêu chí | A. `cash-flows` của user vận hành (v1.0) | B. Tạo một user giả cho mỗi MCN để đứng tên số dư | C. Sổ riêng `mcn-cash-flows` theo `mcns` | D. `cash-flows` thêm owner `mcn`, `user` rỗng |
 |---|---|---|---|---|
 | Chủ sở hữu đúng pháp lý | Không | Gián tiếp qua user giả | Có | Có |
 | Đổi người vận hành | Số dư nằm ở user cũ; cộng trùng khi chạy lại | Không ảnh hưởng | Không ảnh hưởng | Không ảnh hưởng |
@@ -367,7 +368,7 @@ Bối cảnh
 | Khối lượng | Thấp | Trung bình | Trung bình | Trung bình |
 
 Quyết định: C.
-- `mcns` là chủ sổ, payee và taxpayer của phí quản lý và của thu nhập tài khoản nhà. Thu nhập nội dung ghi có vào `cash-flows` của user làm nội dung; phần của tài khoản nhà chuyển sang sổ MCN bằng split 100% (ADR-12).
+- MCN (`mcns`) sở hữu số dư, là người nhận tiền và người chịu thuế của phí quản lý và thu nhập tài khoản nhà. Thu nhập nội dung ghi có vào `cash-flows` của user làm nội dung; phần của tài khoản nhà chuyển sang sổ MCN bằng split 100% (ADR-12).
 - `mcn-cash-flows` chỉ ghi thêm; `value int64` có dấu; `idemKey` unique; số dư `Balance(mcn) = Σ value`, không lưu `oldBalance/newBalance`, không có cache dùng để quyết định chi.
 - Ghi và đọc chỉ qua repository `McnLedger()` có hai hàm `Post(sc, entries...)` (trả lỗi thật) và `Balance(sc, mcn)`; repository không trả `IDatabase` ra ngoài (khuôn DAO hiện có cho `UpdateOne`, `DeleteOne`, `Collection()`).
 - Mọi đường ghi nợ (lệnh chi, điều chỉnh âm) chạy trong transaction có `$inc mcns.ledgerVer` để tuần tự hóa theo MCN. Ghi có (phí ở Duyệt) không cần, vì không làm giảm số dư.
@@ -693,7 +694,7 @@ Hệ quả
 
 | Trường | Kiểu | Ràng buộc | Ghi chú |
 |---|---|---|---|
-| `mcn` | ObjectID | Bắt buộc | Chủ sổ |
+| `mcn` | ObjectID | Bắt buộc | MCN sở hữu dòng tiền |
 | `partner` | ObjectID | Chép từ `mcns.partner` | Chỉ để lọc |
 | `event` | ObjectID | Bắt buộc với mọi action | Chiến dịch; số dư tính theo (mcn, event) (ADR-14) |
 | `action` | string | `mcn_fee` \| `withdraw` \| `tax` \| `withdraw_fee` \| `withdraw_reversal` \| `adjustment` | |
