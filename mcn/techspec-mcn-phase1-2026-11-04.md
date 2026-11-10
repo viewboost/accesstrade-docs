@@ -16,74 +16,91 @@
 
 ## Tóm tắt cho người review
 
-Vấn đề. Code hiện tại dùng `users._id` cho mọi thứ: người đăng nhập, người có số dư, người nhận tiền, người chịu thuế. Tech spec v1.0 giữ cách đó cho MCN: cộng phí quản lý vào số dư (`cash-flows`) của user đăng nhập MCN rồi chi cho user đó. Khi người đứng MCN cũng làm creator (PRD Q12), phí của MCN và tiền làm nội dung của người đó dồn vào một số dư, không tách được khoản nào của ai, thuế tính theo ai. Đây là rủi ro tech lead nêu ngày 10/11.
+### Vấn đề
 
-Cách làm:
+Hiện tại một user vừa là người đăng nhập, vừa có số dư, vừa nhận tiền, vừa chịu thuế. Làm MCN theo cách đó (v1.0) thì phí MCN cộng vào số dư của user quản lý MCN. Người đứng MCN mà cũng làm creator thì phí MCN và tiền làm nội dung lẫn vào nhau, không biết khoản nào của ai, thuế tính theo ai.
 
-1. MCN là một bản ghi riêng (`mcns`), là bên ký hợp đồng với AccessTrade, không phải user. User đăng nhập chỉ được gắn quyền quản lý MCN qua bảng `mcn-accounts`. Đổi người quản lý thì tiền của MCN không đổi chủ (ADR-01).
-2. Tiền của MCN nằm ở bảng dòng tiền riêng `mcn-cash-flows`, tách khỏi `cash-flows` của creator. Số dư MCN là tổng các dòng trong bảng này. MCN có lệnh chi riêng (`mcn-payouts`), chuyển vào tài khoản ngân hàng đứng tên MCN, trong cùng đợt chi với creator (ADR-02, ADR-08).
-3. Người đứng MCN vẫn làm creator trên cùng tài khoản (họp 10/11). Để chi một lần và tính thuế một lần, tài khoản đó tham gia chính MCN của mình với tỷ lệ 100%: toàn bộ thu nhập nội dung chuyển sang số dư MCN, số dư creator của tài khoản đó về 0 (ADR-12).
-4. Phí tính ở bước Lấy danh sách của đối soát: xét từng khoản thưởng theo ngày phát sinh, chỉ trong khoảng ngày KOL/KOC là thành viên, chỉ với chiến dịch bắt đầu từ 01/12/2026. Kết quả lưu lại, không tính lại về sau (ADR-06, ADR-13).
-5. Lúc Duyệt, mỗi khoản đi trong một transaction: cộng cho KOL/KOC, trừ phí, cộng phí cho MCN. Chạy lại không cộng trùng. Lỗi giữa chừng thì kỳ hiện "Duyệt lỗi" để Duyệt lại, không âm thầm thiếu tiền (ADR-07).
-6. Lệnh chi MCN tách theo chiến dịch. Thuế MCN cá nhân tính trên tổng các lệnh của MCN trong một đợt, để tách lệnh không làm lọt ngưỡng 5.000.000đ. MCN công ty không khấu trừ (ADR-09, ADR-14).
+### Cách làm
 
-Ví dụ một vòng tiền: KOL/KOC K thuộc MCN công ty A (15%), có thưởng 3.000.000 ở một chiến dịch tháng 12. Duyệt: số dư K `+3.000.000` rồi `−450.000`; số dư A `+450.000`. Đợt chi: K nhận 2.550.000 (dưới ngưỡng, không khấu trừ); A nhận 450.000 vào tài khoản công ty.
+1. MCN là một bản ghi riêng (`mcns`), không phải user. User chỉ được gắn quyền quản lý MCN.
+2. Tiền của MCN ghi ở bảng riêng `mcn-cash-flows`, chi bằng lệnh riêng `mcn-payouts`. Tiền creator vẫn ở `cash-flows` như cũ.
+3. Người đứng MCN làm creator thì tham gia chính MCN của mình với tỷ lệ 100%. Mọi thu nhập của họ về MCN, chi một lần, tính thuế một lần.
+4. Phí chỉ tính cho chiến dịch bắt đầu từ 01/12/2026, theo ngày phát sinh của từng khoản thưởng, trong thời gian KOL/KOC là thành viên.
+5. Duyệt đối soát ghi tiền trong transaction: chạy lại không cộng trùng, lỗi giữa chừng thì báo để Duyệt lại.
+6. Lệnh chi MCN tách theo chiến dịch. Thuế MCN cá nhân tính trên tổng tiền MCN nhận trong đợt. MCN công ty không khấu trừ.
 
-Thay đổi so với v1.0:
+Ví dụ: K thuộc MCN A, tỷ lệ 15%, có thưởng 3.000.000. K nhận 2.550.000, A nhận 450.000.
 
-- Phí không cộng vào số dư user quản lý MCN; bỏ `TaxExempt`, `IsPayableMcnUser`, `creditMcnFees` kiểu delta, dòng net.
-- Số dư KOL/KOC ghi hai dòng: `+G` (thưởng) và `−fee` (phí MCN), thay vì một dòng đã trừ; mỗi dòng có `idemKey` unique để chạy lại không trùng; xét thành viên theo ngày phát sinh (D20).
-- Đổi cách ghi sổ trên đường tiền creator (Duyệt và Chuyển tiền trong transaction, `run_failed`, chặn đợt chi khi còn kỳ chưa hoàn tất), bật theo cờ partner `LedgerV2`. Kết quả tiền và thuế của creator không đổi; cách ghi thì đổi so với Nguyên tắc 2 của v1.0 (§11.1).
+### So với các bản trước
 
-Thay đổi v2.1 theo họp 10/11:
+So với v1.0 (04/11):
+- Phí không cộng vào số dư user quản lý MCN; MCN có bảng tiền và lệnh chi riêng.
+- Số dư KOL/KOC ghi hai dòng (thưởng, trừ phí) thay vì một dòng đã trừ.
+- Duyệt và Chuyển tiền của creator chạy trong transaction, bật theo cờ partner `LedgerV2`. Số tiền và thuế của creator không đổi (§11.1).
 
-- Bỏ phương án hai người nhận tiền (MCN và user) cho người vừa quản lý MCN vừa làm creator (v2.0 ADR-03, §7.3 ca 6–7). Thay bằng tài khoản nhà 100% (ADR-12). Đóng OQ-02, OQ-03; OQ-01 chỉ còn chính sách thuế MCN cá nhân.
-- Thêm mốc áp dụng theo chiến dịch (ADR-13), lệnh chi MCN theo chiến dịch (ADR-14).
-- Vào, ra, đổi MCN khi chiến dịch đang chạy không có luồng riêng ở phase 1 (NG-9). Công thức `FeeWindow` giữ nguyên, nên nếu xảy ra thì phí vẫn chia đúng theo ngày.
+So với v2.0 (10/11), theo họp 10/11:
+- Người đứng MCN làm creator: dùng tỷ lệ 100% thay vì hai lệnh chi riêng (ADR-12).
+- Thêm mốc chiến dịch (ADR-13) và lệnh chi MCN theo chiến dịch (ADR-14).
+- Không làm luồng đổi MCN giữa chiến dịch, để phase 2 (NG-9).
 
-Cần chốt:
+### Còn chờ chốt
 
-- OQ-01 (Kế toán): phí MCN cá nhân khấu trừ 10% như KOL/KOC hay chính sách khác.
-- OQ-13 (PO, Kế toán): chi theo chiến dịch chỉ áp cho lệnh MCN (đề xuất) hay cho mọi lệnh creator.
-- OQ-14 (PO): KOL/KOC rời hoặc đổi MCN khi chiến dịch đang chạy: giữ chia theo ngày (đề xuất) hay chặn rời tới hết chiến dịch.
-- OQ-15 (PO, Legal): tài khoản vận hành bắt buộc ký phụ lục 100% với MCN của mình trước chiến dịch đầu tiên, hay để tự nguyện.
-- OQ-04 (AT): AT chi theo file xuất hay theo hồ sơ econtract.
+- OQ-01 (Kế toán): thuế MCN cá nhân có khấu trừ 10% như KOL/KOC không.
+- OQ-13 (PO, Kế toán): chi theo chiến dịch chỉ cho MCN, hay cho cả creator.
+- OQ-14 (PO): KOL/KOC rời MCN giữa chiến dịch thì tính phí thế nào.
+- OQ-15 (PO, Legal): người đứng MCN có bắt buộc ký tỷ lệ 100% không.
+- OQ-04 (AT): AT chi theo file xuất hay theo econtract.
 
 ## Trả lời các câu hỏi của tech lead
 
-| Câu hỏi | Trả lời | Ví dụ số | Chi tiết |
-|---|---|---|---|
-| Tài khoản MCN và tài khoản creator khác nhau thế nào? | MCN là chủ thể `mcns`. Tài khoản đăng nhập chỉ là user có quyền vận hành qua `mcn-accounts`, thu hồi được. Cùng một user có thể vừa vận hành vừa làm creator; khi làm nội dung, user đó là thành viên 100% của chính MCN mình | Đổi người vận hành U1 → U2: số dư MCN không đổi chủ, không di chuyển | ADR-01, ADR-03, ADR-12 |
-| Số dư MCN và số dư creator tách thế nào? | Hai bảng dòng tiền riêng: `cash-flows` theo (user, partner) cho creator, `mcn-cash-flows` theo `mcn` cho MCN. Không dòng nào ghi sang bảng của bên kia | K có thưởng 3.000.000, MCN 15%: số dư K `+3.000.000`, `−450.000`; số dư MCN `+450.000` | ADR-02, ADR-05 |
-| Thuế của MCN khi người vận hành cũng làm creator? | Một người nhận tiền là MCN, một lần thuế (họp 10/11). Tài khoản nhà tham gia MCN với tỷ lệ 100%: số dư creator `+G` rồi `−G`, còn 0; số dư MCN `+G`. Thu nhập nội dung và phí quản lý cùng vào số dư MCN, chi một mối, khấu trừ theo loại MCN trên tổng các lệnh của MCN trong đợt | P (cá nhân): phí 3.000.000 + nội dung 2.500.000 = 5.500.000, khấu trừ 550.000 (OQ-01). C (công ty): phí 8.000.000 + nội dung uC 6.000.000 = 14.000.000, khấu trừ 0 | ADR-12, ADR-09, §7.3 |
-| Chi theo chiến dịch làm thế nào? | Mỗi dòng tiền của MCN ghi kèm chiến dịch (`event`); số dư tính theo (MCN, chiến dịch); mỗi (đợt chi, MCN, chiến dịch) một lệnh. Đường chi creator giữ nguyên (OQ-13) | MCN A có 3.000.000 từ chiến dịch E1 và 2.500.000 từ E2: hai lệnh 3.000.000 và 2.500.000; ngưỡng xét trên 5.500.000 | ADR-14 |
-| Thiết kế database thay đổi gì? | Thêm 2 collection: `mcn-cash-flows` (sổ MCN, append-only, `idemKey` unique) và `mcn-payouts` (lệnh chi MCN). Thêm trường: `reconciliation-items.mcnSplits`, `cash-flows.idemKey`, `mcn-members.feeFrom`, `isPending`, `annexInFlight`, `house`, `mcn-accounts.isCurrent`, `users.mcnGuardVer`, `mcn-cash-flows.event`, `mcn-payouts.event`. Không thêm loại tài khoản trên `users` | Item G 3.000.000, MCN 15%: một split; sổ K hai bút toán (`rc:<itemId>:credit`, `rc:<itemId>:fee:<relId>`); sổ MCN một bút toán cùng khóa phí | §6, ADR-02, ADR-08, ADR-14 |
-| MCN là đối tượng gì? | Bên ký Hợp đồng ① với AccessTrade, bản ghi `mcns`, định danh bằng MST hoặc CCCD; không phải user hay role. MCN sở hữu số dư, là người nhận tiền và người chịu thuế của phí quản lý và thu nhập tài khoản nhà (ADR-12). Hai loại: Công ty (MST 10/13 số), Cá nhân (CCCD 12 số, cũng là MST); loại quyết định chính sách thuế của phí | Công ty 8.000.000: chi đủ. Cá nhân 6.000.000: khấu trừ 600.000 (tạm, OQ-01) | §0, ADR-02, ADR-09 |
-| Chỗ dễ nhầm creator và MCN | Mỗi màn hình, thông báo, thống kê thuộc đúng một ngữ cảnh | Trang Số dư chỉ đọc `cash-flows`; Quản lý MCN chỉ đọc `mcn-cash-flows` | §8.3 |
+1. Tài khoản MCN khác tài khoản creator thế nào?
+   MCN là bản ghi `mcns`. Tài khoản đăng nhập chỉ có quyền quản lý MCN, qua bảng `mcn-accounts`. Đổi người quản lý thì tiền của MCN không đổi chủ. Chi tiết: ADR-01, ADR-03.
 
-Sơ đồ đối tượng cho ba ca chuẩn:
+2. Số dư MCN và số dư creator tách thế nào?
+   Hai bảng riêng: creator ở `cash-flows`, MCN ở `mcn-cash-flows`. Ví dụ K có thưởng 3.000.000, MCN 15%: bảng của K ghi `+3.000.000` và `−450.000`; bảng của MCN ghi `+450.000`. Chi tiết: ADR-02, ADR-05.
+
+3. Thuế của MCN khi người đứng MCN cũng làm creator?
+   Tài khoản của họ tham gia MCN với tỷ lệ 100%, nên mọi thu nhập về MCN và chỉ tính thuế một lần.
+   - MCN cá nhân P: phí 3.000.000 + nội dung 2.500.000 = 5.500.000, khấu trừ 10% là 550.000.
+   - MCN công ty C: phí 8.000.000 + nội dung 6.000.000 = 14.000.000, không khấu trừ.
+
+   Chi tiết: ADR-12, ADR-09, §7.3.
+
+4. Database thay đổi gì?
+   Thêm 2 bảng: `mcn-cash-flows` (dòng tiền MCN) và `mcn-payouts` (lệnh chi MCN). Thêm một số trường vào bảng có sẵn. Không thêm loại tài khoản vào `users`. Chi tiết: §6.
+
+5. MCN là đối tượng gì?
+   Công ty hoặc cá nhân ký hợp đồng với AccessTrade, định danh bằng MST hoặc CCCD. MCN sở hữu số dư, nhận tiền và chịu thuế. Công ty: không khấu trừ. Cá nhân: khấu trừ 10% (chờ Kế toán chốt). Chi tiết: §0, ADR-02.
+
+6. Chi theo chiến dịch thế nào?
+   Mỗi dòng tiền của MCN ghi kèm chiến dịch, mỗi chiến dịch một lệnh chi. Ví dụ MCN A có 3.000.000 từ chiến dịch E1 và 2.500.000 từ E2: hai lệnh, thuế tính trên tổng 5.500.000. Chi tiết: ADR-14.
+
+7. Chỗ nào dễ nhầm creator với MCN?
+   Mỗi màn hình chỉ đọc một bảng: trang Số dư của creator đọc `cash-flows`, trang Quản lý MCN đọc `mcn-cash-flows`. Chi tiết: §8.3.
+
+Ba trường hợp thường gặp:
 
 ```mermaid
 flowchart LR
-  subgraph CA1["Ca 1. MCN công ty C, nhân viên E vận hành"]
-    E1["Người E"] --> UE["user uE"] -- "mcn-accounts hiện hành" --> C1["mcns C, mst:C"] --> L1["mcn-cash-flows C"] --> P1["mcn-payouts, TK công ty"]
+  subgraph CA1["Ca 1. MCN công ty C, nhân viên E quản lý"]
+    UE["user của E"] -- "quản lý" --> C1["MCN C"] --> L1["Bảng tiền MCN C"] --> P1["Chi vào TK công ty"]
   end
-  subgraph CA2["Ca 2. MCN cá nhân P, P cũng là creator"]
-    P2["Người P, CCCD X"] --> UP["user uP"] -- "mcn-accounts" --> M2["mcns P, cccd:X"] --> L2["mcn-cash-flows P"] --> P2O["mcn-payouts, cccd:X, một lần thuế"]
-    UP -- "nội dung, thành viên nhà 100%" --> MB2["mcn-members uP→P, rate 100"] --> L2
+  subgraph CA2["Ca 2. MCN cá nhân P, P cũng làm creator"]
+    UP["user của P"] -- "quản lý" --> M2["MCN P"] --> L2["Bảng tiền MCN P"] --> P2O["Chi một lần, thuế một lần"]
+    UP -- "làm nội dung, tỷ lệ 100%" --> L2
   end
-  subgraph CA3["Ca 3. Tài khoản vận hành uC của C tự làm nội dung"]
-    UC["user uC"] -- "mcn-accounts" --> C3["mcns C"] --> L3["mcn-cash-flows C"] --> P3O["mcn-payouts, mst:C, không khấu trừ"]
-    UC -- "nội dung, thành viên nhà 100%" --> MB3["mcn-members uC→C, rate 100"] --> L3
+  subgraph CA3["Ca 3. Người quản lý C tự làm nội dung"]
+    UC["user của người quản lý"] -- "quản lý" --> C3["MCN C"] --> L3["Bảng tiền MCN C"] --> P3O["Chi vào TK công ty, không khấu trừ"]
+    UC -- "làm nội dung, tỷ lệ 100%" --> L3
   end
 ```
 
-Ca 2 và ca 3: sổ `cash-flows` của uP, uC vẫn ghi `+G` rồi `−G`, số dư 0, nên không sinh lệnh creator. Một người một user theo PRD Q12 và họp 10/11 (MCN kiêm creator trên cùng portal).
+Ca 2 và ca 3: tiền làm nội dung chuyển hết sang MCN, số dư creator của người đó về 0, nên không có lệnh chi creator riêng.
 
 Trình bày 15 phút:
 
 1. Bài toán và bảng §2.7 (2 phút).
-2. Mô hình chủ thể, hai sổ, sơ đồ trên (5 phút).
+2. MCN tách khỏi user, hai bảng tiền, sơ đồ trên (5 phút).
 3. Một kỳ đối soát và một đợt chi với ví dụ 3.000.000đ, §7.1–7.2 (4 phút).
 4. Thuế và tài khoản nhà 100%, §7.3, ADR-12 (2 phút).
 5. Chiến dịch: mốc áp dụng và lệnh chi theo chiến dịch, ADR-13, ADR-14 (2 phút).
