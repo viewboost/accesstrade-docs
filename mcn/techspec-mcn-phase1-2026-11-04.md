@@ -3,11 +3,11 @@
 | Mục | Giá trị |
 |---|---|
 | Project | KOC Ambassador — module MCN (Multi-Channel Network) |
-| Date | 2026-11-10 |
+| Date | 2026-11-11 |
 | Author | Nguyễn Đăng Định |
 | Reviewer | Thành Trung, Vinh Nguyễn |
-| Version | 2.0 |
-| Status | Draft — chờ review kiến trúc |
+| Version | 2.1 |
+| Status | Draft — chờ review kiến trúc. v2.1 cập nhật theo họp 10/11 (§16) |
 | PRD | [prd-mcn-phase1-2026-11-04.md](./prd-mcn-phase1-2026-11-04.md) (v1.1 ở PR #41, nhánh [`docs/mcn-phase1-prd-decisions-261109`](https://github.com/viewboost/accesstrade-docs/blob/docs/mcn-phase1-prd-decisions-261109/mcn/prd-mcn-phase1-2026-11-04.md)). Bản trên `main` là v1.0, chưa có D17–D24, Q8–Q13; cần merge PR #41 trước hoặc cùng PR này |
 | Repo | `ambassador/`: `backend/` (Go, module `viewboost`, MongoDB replica set), `frontend/` (Umi 3 + dva), `admin/` (Umi + antd) |
 | Nhánh code | `feat/mcn-phase1` (head `b40af650b`) |
@@ -22,10 +22,11 @@ Quyết định chính:
 
 1. MCN là chủ thể pháp lý (bản ghi `mcns`), không phải user hay role. Danh tính giữ như v1.0: user đăng nhập nối với MCN qua bảng quan hệ `mcn-accounts`, không thêm loại tài khoản trên `users` (ADR-01).
 2. MCN là chủ sở hữu số dư phí quản lý, là payee và taxpayer của khoản phí. Phí ghi vào sổ riêng `mcn-cash-flows`, chi bằng lệnh riêng `mcn-payouts` trong cùng đợt chi (ADR-02, ADR-08).
-3. Một user được kiêm hai vai, vận hành MCN và creator. Hai vai có hai sổ, hai lệnh chi, hai ngữ cảnh hiển thị. Bất biến duy nhất về vai: user vận hành không là thành viên MCN (ADR-03, ADR-04).
-4. Phí snapshot lúc Lấy danh sách, theo ngày phát sinh của từng khoản, trên cửa sổ ngày suy ra từ dữ liệu phụ lục, không phụ thuộc job (ADR-06).
+3. Một user được kiêm hai vai, vận hành MCN và creator (họp 10/11). Tài khoản nhà MCN, gồm tài khoản creator của chính người đứng MCN, tham gia MCN của mình với tỷ lệ 100%. Toàn bộ thu nhập nội dung của các tài khoản này vào sổ MCN, nên MCN có một số dư, một lệnh chi, một lần khấu trừ thuế theo loại MCN (ADR-12). Tài khoản vận hành chỉ được là thành viên của chính MCN mình, ở tỷ lệ 100% (INV-03, ADR-04).
+4. Phí snapshot lúc Lấy danh sách, theo ngày phát sinh của từng khoản, trên cửa sổ ngày suy ra từ dữ liệu phụ lục, không phụ thuộc job (ADR-06). Chỉ xét chiến dịch có `events.startAt` từ mốc áp dụng (01/12/2026 nếu go-live cuối tháng 11) (ADR-13).
 5. Duyệt ghi sổ mọi khoản qua một hàm `postItem` trong transaction, CAS khoản trước, kiểm tổng cuối kỳ. Lệch thì kỳ sang `run_failed` và chỉ được Duyệt lại (ADR-07).
-6. Thuế khấu trừ theo chính sách của từng payee. Phase 1 không gộp ngưỡng theo CCCD; mỗi lệnh lưu `taxpayerKey` để Kế toán tổng hợp (ADR-09).
+6. Thuế khấu trừ theo chính sách của từng payee. Mỗi lệnh lưu `taxpayerKey` để Kế toán tổng hợp (ADR-09).
+7. Lệnh chi MCN tách theo chiến dịch: mỗi (đợt chi, MCN, chiến dịch) một lệnh. Ngưỡng thuế xét trên tổng các lệnh của cùng MCN trong một đợt, để tách lệnh không làm lọt ngưỡng 5.000.000đ (ADR-14).
 
 Thay đổi so với v1.0:
 
@@ -33,22 +34,30 @@ Thay đổi so với v1.0:
 - Sổ KOL/KOC ghi `+G` và `−fee`; mỗi bút toán có `idemKey` unique; xét thành viên theo ngày phát sinh (D20).
 - Đổi cách ghi sổ trên đường tiền creator (Duyệt và Chuyển tiền trong transaction, `run_failed`, chặn đợt chi khi còn kỳ chưa hoàn tất), bật theo cờ partner `LedgerV2`. Kết quả tiền và thuế của creator không đổi; cách ghi thì đổi so với Nguyên tắc 2 của v1.0 (§11.1).
 
+Thay đổi v2.1 theo họp 10/11:
+
+- Bỏ phương án hai payee cho người vừa vận hành vừa làm creator (v2.0 ADR-03, §7.3 ca 6–7). Thay bằng tài khoản nhà 100% (ADR-12). Đóng OQ-02, OQ-03; OQ-01 chỉ còn chính sách thuế MCN cá nhân.
+- Thêm mốc áp dụng theo chiến dịch (ADR-13), lệnh chi MCN theo chiến dịch (ADR-14).
+- Vào, ra, đổi MCN khi chiến dịch đang chạy không có luồng riêng ở phase 1 (NG-9). Công thức `FeeWindow` giữ nguyên, nên nếu xảy ra thì phí vẫn chia đúng theo ngày.
+
 Cần chốt:
 
-- OQ-01 (Kế toán): phí MCN cá nhân khấu trừ thế nào; có gộp ngưỡng với thu nhập creator cùng CCCD không.
-- OQ-02 (PO, BA): email MCN được trùng tài khoản creator (PRD Q12) hay không (bản mẫu BA-01).
-- OQ-03 (PO, Legal): thu nhập nội dung của tài khoản vận hành MCN công ty là thu nhập cá nhân (đề xuất v2.0) hay của pháp nhân (PRD Q8).
+- OQ-01 (Kế toán): phí MCN cá nhân khấu trừ 10% như KOL/KOC hay chính sách khác.
+- OQ-13 (PO, Kế toán): chi theo chiến dịch chỉ áp cho lệnh MCN (đề xuất) hay cho mọi lệnh creator.
+- OQ-14 (PO): KOL/KOC rời hoặc đổi MCN khi chiến dịch đang chạy: giữ chia theo ngày (đề xuất) hay chặn rời tới hết chiến dịch.
+- OQ-15 (PO, Legal): tài khoản vận hành bắt buộc ký phụ lục 100% với MCN của mình trước chiến dịch đầu tiên, hay để tự nguyện.
 - OQ-04 (AT): AT chi theo file xuất hay theo hồ sơ econtract.
 
 ## Trả lời các câu hỏi của tech lead
 
 | Câu hỏi | Trả lời | Ví dụ số | Chi tiết |
 |---|---|---|---|
-| Tài khoản MCN và tài khoản creator khác nhau thế nào? | MCN là chủ thể `mcns`. Tài khoản đăng nhập chỉ là user có quyền vận hành qua `mcn-accounts`, thu hồi được. Cùng một user có thể vừa vận hành vừa làm creator | Đổi người vận hành U1 → U2: số dư MCN không đổi chủ, không di chuyển | ADR-01, ADR-03 |
+| Tài khoản MCN và tài khoản creator khác nhau thế nào? | MCN là chủ thể `mcns`. Tài khoản đăng nhập chỉ là user có quyền vận hành qua `mcn-accounts`, thu hồi được. Cùng một user có thể vừa vận hành vừa làm creator; khi làm nội dung, user đó là thành viên 100% của chính MCN mình | Đổi người vận hành U1 → U2: số dư MCN không đổi chủ, không di chuyển | ADR-01, ADR-03, ADR-12 |
 | Số dư MCN và số dư creator tách thế nào? | Hai sổ: `cash-flows` theo (user, partner), `mcn-cash-flows` theo `mcn`. Không bút toán nào ghi chéo | K có G 3.000.000, MCN 15%: sổ K `+3.000.000`, `−450.000`; sổ MCN `+450.000` | ADR-02, ADR-05 |
-| Thuế của MCN khi người vận hành cũng làm creator? | Hai lệnh chi, hai loại thu nhập. Mỗi lệnh khấu trừ theo chính sách payee. MCN cá nhân: gộp ngưỡng theo CCCD hay không do Kế toán chốt. MCN công ty: phí không khấu trừ; thu nhập nội dung của tài khoản vận hành khấu trừ như creator (đề xuất) | P: phí 3.000.000, creator 2.500.000; không gộp 0 + 0, gộp 300.000 + 250.000. C: phí 8.000.000 thuế 0; uC nội dung 6.000.000 thuế 600.000 | §7.3, ADR-09, OQ-01, OQ-03 |
-| Thiết kế database thay đổi gì? | Thêm 2 collection: `mcn-cash-flows` (sổ MCN, append-only, `idemKey` unique) và `mcn-payouts` (lệnh chi MCN). Thêm trường: `reconciliation-items.mcnSplits`, `cash-flows.idemKey`, `mcn-members.feeFrom`, `isPending`, `annexInFlight`, `mcn-accounts.isCurrent`, `users.mcnGuardVer`. Không thêm loại tài khoản trên `users` | Item G 3.000.000, MCN 15%: một split; sổ K hai bút toán (`rc:<itemId>:credit`, `rc:<itemId>:fee:<relId>`); sổ MCN một bút toán cùng khóa phí | §6, ADR-02, ADR-08 |
-| MCN là đối tượng gì? | Chủ thể pháp lý (party) ký Hợp đồng ① với AccessTrade, bản ghi `mcns`, định danh bằng MST hoặc CCCD; không phải user hay role. Là chủ sổ, payee và taxpayer của phí quản lý. Hai loại: Công ty (MST 10/13 số), Cá nhân (CCCD 12 số, cũng là MST); loại quyết định chính sách thuế của phí | Công ty 8.000.000: chi đủ. Cá nhân 6.000.000: khấu trừ 600.000 (tạm, OQ-01) | §0, ADR-02, ADR-09 |
+| Thuế của MCN khi người vận hành cũng làm creator? | Một payee, một lần thuế (họp 10/11). Tài khoản nhà vào MCN với tỷ lệ 100%: sổ creator `+G`, `−G`, số dư 0; sổ MCN `+G`. Thu nhập nội dung và phí quản lý cùng vào sổ MCN, chi một mối, khấu trừ theo loại MCN trên tổng các lệnh của MCN trong đợt | P (cá nhân): phí 3.000.000 + nội dung 2.500.000 = 5.500.000, khấu trừ 550.000 (OQ-01). C (công ty): phí 8.000.000 + nội dung uC 6.000.000 = 14.000.000, khấu trừ 0 | ADR-12, ADR-09, §7.3 |
+| Chi theo chiến dịch làm thế nào? | Bút toán sổ MCN mang `event`; số dư tính theo (MCN, chiến dịch); mỗi (đợt chi, MCN, chiến dịch) một lệnh. Đường chi creator giữ nguyên (OQ-13) | MCN A có 3.000.000 từ chiến dịch E1 và 2.500.000 từ E2: hai lệnh 3.000.000 và 2.500.000; ngưỡng xét trên 5.500.000 | ADR-14 |
+| Thiết kế database thay đổi gì? | Thêm 2 collection: `mcn-cash-flows` (sổ MCN, append-only, `idemKey` unique) và `mcn-payouts` (lệnh chi MCN). Thêm trường: `reconciliation-items.mcnSplits`, `cash-flows.idemKey`, `mcn-members.feeFrom`, `isPending`, `annexInFlight`, `house`, `mcn-accounts.isCurrent`, `users.mcnGuardVer`, `mcn-cash-flows.event`, `mcn-payouts.event`. Không thêm loại tài khoản trên `users` | Item G 3.000.000, MCN 15%: một split; sổ K hai bút toán (`rc:<itemId>:credit`, `rc:<itemId>:fee:<relId>`); sổ MCN một bút toán cùng khóa phí | §6, ADR-02, ADR-08, ADR-14 |
+| MCN là đối tượng gì? | Chủ thể pháp lý (party) ký Hợp đồng ① với AccessTrade, bản ghi `mcns`, định danh bằng MST hoặc CCCD; không phải user hay role. Là chủ sổ, payee và taxpayer của phí quản lý và thu nhập nội dung của tài khoản nhà (ADR-12). Hai loại: Công ty (MST 10/13 số), Cá nhân (CCCD 12 số, cũng là MST); loại quyết định chính sách thuế của phí | Công ty 8.000.000: chi đủ. Cá nhân 6.000.000: khấu trừ 600.000 (tạm, OQ-01) | §0, ADR-02, ADR-09 |
 | Chỗ dễ nhầm creator và MCN | Mỗi màn hình, thông báo, thống kê thuộc đúng một ngữ cảnh | Trang Số dư chỉ đọc `cash-flows`; Quản lý MCN chỉ đọc `mcn-cash-flows` | §8.3 |
 
 Sơ đồ đối tượng cho ba ca chuẩn:
@@ -59,24 +68,25 @@ flowchart LR
     E1["Người E"] --> UE["user uE"] -- "mcn-accounts hiện hành" --> C1["mcns C, mst:C"] --> L1["mcn-cash-flows C"] --> P1["mcn-payouts, TK công ty"]
   end
   subgraph CA2["Ca 2. MCN cá nhân P, P cũng là creator"]
-    P2["Người P, CCCD X"] --> UP["user uP"] -- "mcn-accounts" --> M2["mcns P, cccd:X"] --> L2["mcn-cash-flows P"] --> P2O["mcn-payouts, cccd:X, mcn_management_fee"]
-    UP -- "nội dung" --> CF2["cash-flows uP"] --> W2["withdraws, cccd:X, creator_reward"]
+    P2["Người P, CCCD X"] --> UP["user uP"] -- "mcn-accounts" --> M2["mcns P, cccd:X"] --> L2["mcn-cash-flows P"] --> P2O["mcn-payouts, cccd:X, một lần thuế"]
+    UP -- "nội dung, thành viên nhà 100%" --> MB2["mcn-members uP→P, rate 100"] --> L2
   end
   subgraph CA3["Ca 3. Tài khoản vận hành uC của C tự làm nội dung"]
-    UC["user uC"] -- "mcn-accounts" --> C3["mcns C"] --> L3["mcn-cash-flows C"]
-    UC -- "nội dung" --> CF3["cash-flows uC"] --> W3["withdraws uC, theo OQ-03"]
+    UC["user uC"] -- "mcn-accounts" --> C3["mcns C"] --> L3["mcn-cash-flows C"] --> P3O["mcn-payouts, mst:C, không khấu trừ"]
+    UC -- "nội dung, thành viên nhà 100%" --> MB3["mcn-members uC→C, rate 100"] --> L3
   end
 ```
 
-Ca 2 vẽ theo PRD Q12 (một user). Nếu OQ-02 chọn phương án của bản mẫu BA, P có hai user; sổ, lệnh chi và `taxpayerKey` không đổi.
+Ca 2 và ca 3: sổ `cash-flows` của uP, uC vẫn ghi `+G` rồi `−G`, số dư 0, nên không sinh lệnh creator. Một người một user theo PRD Q12 và họp 10/11 (MCN kiêm creator trên cùng portal).
 
 Trình bày 15 phút:
 
 1. Bài toán và bảng §2.7 (2 phút).
 2. Mô hình chủ thể, hai sổ, sơ đồ trên (5 phút).
 3. Một kỳ đối soát và một đợt chi với ví dụ 3.000.000đ, §7.1–7.2 (4 phút).
-4. Thuế, §7.3 (2 phút).
-5. Câu hỏi cần chốt, §15.2 (2 phút).
+4. Thuế và tài khoản nhà 100%, §7.3, ADR-12 (2 phút).
+5. Chiến dịch: mốc áp dụng và lệnh chi theo chiến dịch, ADR-13, ADR-14 (2 phút).
+6. Câu hỏi cần chốt, §15.2 (2 phút).
 
 ## 0. Thuật ngữ
 
@@ -85,6 +95,9 @@ Trình bày 15 phút:
 | MCN (chủ thể, party) | Công ty hoặc cá nhân ký Hợp đồng khung ① với AccessTrade. Bản ghi `mcns`, định danh bằng MST hoặc CCCD | Không phải user. Đổi người đăng nhập không đổi MCN |
 | Tài khoản vận hành MCN | User có dòng `mcn-accounts` hiện hành (`isCurrent`). Chỉ mang quyền thao tác | Không sở hữu số dư MCN. "Tài khoản MCN" trong PRD và bản mẫu BA là khái niệm này |
 | Creator, KOL/KOC | User tạo nội dung, có thu nhập ghi vào `cash-flows` | Tài khoản vận hành cũng có thể là creator (ADR-03) |
+| Tài khoản nhà MCN (house account) | User làm nội dung cho chính MCN, tham gia MCN đó với tỷ lệ 100%; dòng quan hệ có `house = true`. Gồm tài khoản vận hành và tài khoản cùng CCCD với MCN cá nhân | Không phải loại tài khoản mới; vẫn là `users` + `mcn-members` (ADR-12) |
+| Chiến dịch (campaign) | Bản ghi `events`. "Campaign" trong biên bản họp 10/11 là chiến dịch, không phải ADV (chốt 11/11) | Khác partner (ADV) |
+| Mốc áp dụng | `MCN_FEE_EVENT_START_FROM`: chỉ chiến dịch có `events.startAt` từ mốc này mới bị trích phí MCN (ADR-13) | Không phải ngày ký phụ lục |
 | Ngữ cảnh (context) | Phạm vi dữ liệu của một vai: creator hoặc MCN. Một principal có thể có cả hai | Không gộp số của hai ngữ cảnh trên một màn hình |
 | Dòng quan hệ | Một bản ghi `mcn-members`, mọi trạng thái (`agreed`, `active`, `leaving`, `ended`, `declined`, `sign_expired`, `superseded`) | Không đồng nghĩa với thành viên |
 | Thành viên | Dòng quan hệ có `isMember = true` (`active`, `leaving`) | `agreed` (Chờ ký) chưa là thành viên (D18) |
@@ -118,6 +131,7 @@ Thao tác trên UI và bước chuyển trạng thái:
 | BA Cần chốt, BA Đã chốt | Mục cuối bản mẫu BA |
 | v1.0 | Tech spec này, bản 04/11 của Vinh Nguyễn, commit [`00aa629`](https://github.com/viewboost/accesstrade-docs/blob/00aa629bef56ed3d89c29b51615641fd3a31200c/mcn/techspec-mcn-phase1-2026-11-04.md). Mục v1.0 §n trong tài liệu này trỏ tới bản đó |
 | Họp 03/11 | [meeting-261103.md](./meeting-261103.md) |
+| Họp 10/11 | Biên bản họp sáng 10/11/2026 (chưa đưa lên repo): phạm vi phase 1, mốc áp dụng, cấu trúc hợp đồng trên FPT e-contract, MCN kiêm creator, tài khoản nhà 100%, chi theo chiến dịch. Mã `[seg-…]` trỏ tới đoạn trong biên bản |
 
 ## 1. Bối cảnh và phạm vi
 
@@ -148,9 +162,12 @@ PRD và bản mẫu BA mô tả hành vi (mời, ký, trích phí, chi), không 
 - NG-3. MCN tự rút tiền; bảng kê, hóa đơn GTGT, chứng từ khấu trừ trong hệ thống (D13).
 - NG-4. UI điều chỉnh bút toán; clawback tự động.
 - NG-5. Maker-checker khi đổi tài khoản ngân hàng MCN.
-- NG-6. Gộp ngưỡng thuế theo người nộp thuế; lũy kế ngưỡng theo tháng hoặc năm (chờ OQ-01).
+- NG-6. Gộp ngưỡng thuế theo CCCD giữa lệnh MCN và lệnh creator; lũy kế ngưỡng theo tháng hoặc năm. Phase 1 chỉ gộp các lệnh của cùng một MCN trong đợt (ADR-09).
 - NG-7. Viết lại đường tiền creator ngoài các điểm liệt kê ở §11.1. Các điểm đó bật theo cờ partner.
 - NG-8. MCN cho partner khác Ambassador (Q6).
+- NG-9. Luồng riêng cho KOL/KOC rời, vào lại hoặc đổi MCN khi chiến dịch đang chạy; đổi MCN theo yêu cầu từng tháng (họp 10/11 [seg-007, seg-039-047], để P2). Phase 1 không chặn và không có UX riêng; nếu xảy ra, `FeeWindow` chia phí theo ngày (§7.1).
+- NG-10. Chi theo chiến dịch cho lệnh creator (OQ-13). Phase 1 chỉ tách lệnh MCN.
+- NG-11. Rà soát pháp lý, thuế cho MCN kiêm creator ngoài quy tắc 100% (họp 10/11 [seg-081-089], để P2).
 
 ### 1.4 Ràng buộc
 
@@ -234,10 +251,10 @@ Các chênh lệch khác của code MCN trên nhánh (StartSign, Agree, hết h�
 
 v1.0 cộng `mcn_fee` vào `cash-flows` của user vận hành (v1.0 §8.2) và chi bằng `IsPayableMcnUser` + `TaxExempt=true` (v1.0 §9). Kết hợp với PRD Q12 (dùng chung tài khoản creator):
 
-| # | Tình huống | Theo v1.0 | Theo v2.0 | Sai lệch của v1.0 |
+| # | Tình huống | Theo v1.0 | Theo v2.1 | Sai lệch của v1.0 |
 |---|---|---|---|---|
-| 1 | MCN cá nhân P dùng chung tài khoản creator. Trong đợt: thu nhập creator 2.500.000, phí 3.000.000 | Một lệnh 5.500.000, `TaxExempt` nên thuế 0 | Lệnh creator 2.500.000 và lệnh MCN 3.000.000, mỗi lệnh theo chính sách payee; gộp hay không theo OQ-01 | Miễn khấu trừ cả phí MCN cá nhân lẫn thu nhập creator, trái BA-04 và FR-019 (MCN cá nhân khấu trừ như KOL/KOC). Chứng từ không tách được loại thu nhập |
-| 2 | MCN công ty C, tài khoản vận hành uC có thu nhập nội dung 6.000.000, phí 3.000.000 | Một lệnh 9.000.000, thuế 0, chi vào TK công ty | Lệnh MCN 3.000.000, thuế 0. Thu nhập nội dung xử lý theo OQ-03 | Thuế của thu nhập nội dung là hệ quả của cờ trên tài khoản, không phải quyết định nghiệp vụ. PRD Q8 đề xuất miễn; nếu Legal chốt khác, v1.0 không biểu diễn được |
+| 1 | MCN cá nhân P dùng chung tài khoản creator. Trong đợt: thu nhập creator 2.500.000, phí 3.000.000 | Một lệnh 5.500.000, `TaxExempt` nên thuế 0 | uP là tài khoản nhà 100% của P: cả 5.500.000 vào sổ P, lệnh MCN theo chiến dịch, khấu trừ 550.000 trên `groupBase` (ADR-12, ADR-09) | Miễn khấu trừ cả phí MCN cá nhân lẫn thu nhập creator, trái BA-04 và FR-019 (MCN cá nhân khấu trừ như KOL/KOC). Chứng từ không tách được loại thu nhập |
+| 2 | MCN công ty C, tài khoản vận hành uC có thu nhập nội dung 6.000.000, phí 3.000.000 | Một lệnh 9.000.000, thuế 0, chi vào TK công ty | uC là tài khoản nhà 100% của C: lệnh MCN 9.000.000, thuế 0, TK công ty. Căn cứ là phụ lục 100%, không phải cờ trên tài khoản (ADR-12) | Thuế của thu nhập nội dung là hệ quả của cờ trên tài khoản, không phải quyết định nghiệp vụ. PRD Q8 đề xuất miễn; nếu Legal chốt khác, v1.0 không biểu diễn được |
 | 3 | Đổi người vận hành U1 → U2 sau kỳ K, rồi chạy lại K | 3.000.000 nằm ở U1. Khóa delta `{user, mcn_fee, reconciliation}` của U2 bằng 0 nên cộng thêm 3.000.000 cho U2 | Số dư thuộc `mcns`; khóa theo (item, dòng quan hệ) | Cộng trùng (double credit) 3.000.000 |
 | 4 | uC bị `banned` vì vi phạm với tư cách creator | Đợt chi lọc `banned:false` (`backend/pkg/admin/service/transfer_processing.go:22-26`): phí của C không được chi | Điều kiện chi MCN dựa trên ① và TK ngân hàng | Giữ tiền của pháp nhân vì lỗi của cá nhân |
 | 5 | Thống kê creator của uC | `cashRemaining` tăng 3.000.000, `CashTotal` không đổi (`backend/internal/service/user.go:160, 270`) | Thống kê creator không chứa phí | Màn số dư creator lệch; lịch sử lẫn phí MCN |
@@ -250,7 +267,7 @@ Kết luận: số dư phí quản lý phải thuộc một chủ thể khác us
 |---|---|---|---|
 | INV-01 | Một KOL/KOC có tối đa một dòng quan hệ `isMember` | Partial unique `user` `{isMember:true}` (`backend/internal/module/database/mongodb/index.go:469`) | Test đồng thời (đã có) |
 | INV-02 | Mỗi (user, MCN) tối đa một dòng `agreed` | Partial unique `(user, mcn)` `{isPending:true}` | Test Agree đồng thời |
-| INV-03 | User có `mcn-accounts` hiện hành không có dòng quan hệ ở `agreed`, `active`, `leaving`, và ngược lại | `RunInTransaction` + `$inc users.mcnGuardVer` ở mọi bước chuyển vai (ADR-04) | Test bind giữa lúc Chờ ký rồi ký |
+| INV-03 | User có `mcn-accounts` hiện hành chỉ có dòng quan hệ `agreed`, `active`, `leaving` với chính MCN đó, `rate = 100`, `house = true`; và ngược lại, user đang có dòng như vậy với MCN khác thì không được gắn làm tài khoản vận hành | `RunInTransaction` + `$inc users.mcnGuardVer` ở mọi bước chuyển vai (ADR-04) | Test bind giữa lúc Chờ ký MCN khác rồi ký; test tài khoản vận hành nhận link 15% của chính MCN |
 | INV-04 | Mỗi MCN tối đa một tài khoản hiện hành; mỗi user vận hành tối đa một MCN | Partial unique `mcn` và `user` `{isCurrent:true}` | Test index |
 | INV-05 | Mỗi user tối đa một phụ lục đang mở ký | Partial unique `user` `{annexInFlight:true}` trên `mcn-members` | Test StartSign hai MCN đồng thời |
 | INV-06 | `rate ∈ [0,100]`, không đổi; `feeFrom` ghi một lần; cận trên cửa sổ là hàm `FeeWindow(m)` của các mốc đã lưu, không đọc trạng thái do job ghi | Không có API sửa; filter `{feeFrom:{$exists:false}}` | Test Lấy danh sách khi job chưa chạy |
@@ -259,13 +276,15 @@ Kết luận: số dư phí quản lý phải thuộc một chủ thể khác us
 | INV-09 | Kỳ chỉ sang `processed` khi `mcnSnapshot.status = done`; `mcnSplits` không đổi sau `processed` | CAS điều kiện; chỉ `applyMcnFees` ghi | Test lỗi snapshot |
 | INV-10 | Item `completed` khi và chỉ khi có đủ bút toán `rc:<itemId>:*`; item khác `completed` không có bút toán nào mang khóa đó | `postItem` trong transaction, CAS item đầu tiên; E1–E4 | `verifyRunTotals`, job đối chiếu |
 | INV-11 | Bảo toàn theo item: `−Σ cash-flows(mcn_fee) = Σ mcn-cash-flows(mcn_fee) = mcnFee` | Cùng transaction | E2 |
-| INV-12 | Mỗi `idemKey` một bút toán trên mỗi sổ; `idemKey` không bao giờ là chuỗi rỗng; mỗi (transfer, mcn) một lệnh | `uniq(idemKey)`; `omitempty`; `uniq(transfer, mcn)` | Test chạy lại; test mức nguồn |
+| INV-12 | Mỗi `idemKey` một bút toán trên mỗi sổ; `idemKey` không bao giờ là chuỗi rỗng; mỗi (transfer, mcn, event) một lệnh | `uniq(idemKey)`; `omitempty`; `uniq(transfer, mcn, event)` | Test chạy lại; test mức nguồn |
 | INV-13 | `mcn-cash-flows` chỉ ghi thêm (append-only), chỉ qua `McnLedger().Post` | Repository riêng không trả `IDatabase` | Rà mức nguồn trong CI |
-| INV-14 | Lệnh MCN chỉ ghi nợ sổ khi `Balance(mcn) ≥ cash`, đọc trong cùng transaction có `$inc mcns.ledgerVer` | ADR-08 | Test hai đợt đồng thời |
+| INV-14 | Lệnh MCN chỉ ghi nợ sổ khi `Balance(mcn, event) ≥ cash`, đọc trong cùng transaction có `$inc mcns.ledgerVer` | ADR-08, ADR-14 | Test hai đợt đồng thời |
 | INV-15 | Đợt chi của partner bật `LedgerV2` không sang `processing` khi partner có kỳ `running` hoặc `run_failed` | Kiểm ở bước Lấy danh sách đợt chi | Test |
 | INV-16 | Kỳ `run_failed` chỉ chuyển sang `running`, không sang `rejected` | `isValidStatus` | Test |
 | INV-17 | Snapshot `bank`, `payee`, `tax` của lệnh không đổi sau `draft`; `identityNumber`, `type` của MCN không đổi sau `active` | Không có đường cập nhật | Rà route |
 | INV-18 | MCN chỉ đọc dữ liệu của chính mình | `mcnID` từ context; lọc `mcnSplits.mcn`, `mcn` | Test IDOR |
+| INV-19 | Dòng quan hệ `house = true` có `rate = 100` | Kiểm ở Agree trong transaction; không có API sửa `rate` | Test Agree link dưới 100% khi là tài khoản nhà |
+| INV-20 | Phí chỉ trích trên khoản của chiến dịch có `events.startAt ≥ MCN_FEE_EVENT_START_FROM` | Lọc trong `applyMcnFees`; mốc snapshot lên `reconciliations.mcnSnapshot.eventStartFrom` | Test chiến dịch bắt đầu 30/11 và 01/12 |
 
 ## 4. Kiến trúc tổng thể
 
@@ -348,7 +367,7 @@ Bối cảnh
 | Khối lượng | Thấp | Trung bình | Trung bình | Trung bình |
 
 Quyết định: C.
-- `mcns` là chủ sổ, payee và taxpayer của phí quản lý. Thu nhập nội dung của mọi user, kể cả user vận hành, ghi vào `cash-flows` của chính user đó (theo đề xuất OQ-03).
+- `mcns` là chủ sổ, payee và taxpayer của phí quản lý và của thu nhập tài khoản nhà. Thu nhập nội dung ghi có vào `cash-flows` của user làm nội dung; phần của tài khoản nhà chuyển sang sổ MCN bằng split 100% (ADR-12).
 - `mcn-cash-flows` chỉ ghi thêm; `value int64` có dấu; `idemKey` unique; số dư `Balance(mcn) = Σ value`, không lưu `oldBalance/newBalance`, không có cache dùng để quyết định chi.
 - Ghi và đọc chỉ qua repository `McnLedger()` có hai hàm `Post(sc, entries...)` (trả lỗi thật) và `Balance(sc, mcn)`; repository không trả `IDatabase` ra ngoài (khuôn DAO hiện có cho `UpdateOne`, `DeleteOne`, `Collection()`).
 - Mọi đường ghi nợ (lệnh chi, điều chỉnh âm) chạy trong transaction có `$inc mcns.ledgerVer` để tuần tự hóa theo MCN. Ghi có (phí ở Duyệt) không cần, vì không làm giảm số dư.
@@ -363,7 +382,8 @@ Bối cảnh
 - D14 và BA Đã chốt: thu nhập từ nội dung do chính tài khoản MCN làm tính như creator bình thường. Sau khi gắn, tài khoản vận hành vẫn đăng bài trên chính tài khoản đó, nên trạng thái kiêm vai là trạng thái hệ thống bắt buộc hỗ trợ, bất kể quy tắc email lúc tạo.
 - PRD Q12 (đã chốt): dùng chung email creator, chặn khi tài khoản đang là thành viên. Code làm theo (`backend/pkg/admin/service/mcn_validate.go:71-81`).
 - BA-01 ghi "Không trùng với tài khoản đã có"; BA Cần chốt #3 để "Không". Hai nguồn lệch nhau.
-- Sau ADR-02, lựa chọn này không ảnh hưởng tiền và thuế. Đây là quyết định trải nghiệm và vận hành, không phải điều kiện để tiền đúng. Phương án "chặn email của user đã có dữ liệu creator" bị loại: chỉ kiểm tại lúc gắn nên không giữ được ranh giới, mà vẫn chặn MCN cá nhân đã là creator.
+- Họp 10/11 chốt: người đứng MCN được đồng thời là creator trên cùng portal [seg-056-060]. Đóng lệch trên theo PRD Q12.
+- Sau ADR-02 và ADR-12, lựa chọn này không ảnh hưởng tiền và thuế. Đây là quyết định trải nghiệm và vận hành, không phải điều kiện để tiền đúng. Phương án "chặn email của user đã có dữ liệu creator" bị loại: chỉ kiểm tại lúc gắn nên không giữ được ranh giới, mà vẫn chặn MCN cá nhân đã là creator.
 
 | Tiêu chí | A. Dùng chung (PRD Q12, code hiện tại) | B. Email chưa thuộc user nào lúc tạo và kích hoạt (BA-01) |
 |---|---|---|
@@ -373,11 +393,11 @@ Bối cảnh
 | Chi phí kỹ thuật | Đã có | Thêm kiểm ở 4 điểm; xử lý user tạo sau kích hoạt, trước khi gắn |
 | Ảnh hưởng tiền, thuế | Không | Không |
 
-Quyết định: A làm mặc định, theo PRD Q12. B là lựa chọn của BA tại OQ-02; kiến trúc tiền và thuế đúng với cả hai. Bất biến về vai chỉ có INV-03. Mỗi màn hình, thông báo, thống kê thuộc đúng một ngữ cảnh (bảng §8.3). Bỏ `EnsureUserPartner` cho user vận hành, để user đó chỉ được đếm là creator khi tự onboarding.
+Quyết định: A, theo PRD Q12 và họp 10/11 (đóng OQ-02). Bất biến về vai: INV-03, INV-19. Thu nhập nội dung của tài khoản vận hành đi theo ADR-12 (thành viên nhà 100%). Mỗi màn hình, thông báo, thống kê thuộc đúng một ngữ cảnh (bảng §8.3). Bỏ `EnsureUserPartner` cho user vận hành, để user đó chỉ được đếm là creator khi tự onboarding.
 
 Hệ quả
 - (+) Không chặn MCN cá nhân đã là creator, ca phổ biến theo BA Cần chốt #3. Một người một user nên `taxpayerKey` nhất quán.
-- (−) UI phải tách ngữ cảnh rõ. Lệch bản mẫu BA-01 nếu BA giữ "Không".
+- (−) UI phải tách ngữ cảnh rõ. Bản mẫu BA-01 phải bỏ câu "Không trùng với tài khoản đã có".
 
 ### ADR-04. Bất biến vai và xử lý đồng thời
 
@@ -398,11 +418,11 @@ Quyết định: C.
 
 | Phía | Bước | Điều kiện kiểm trong transaction |
 |---|---|---|
-| Thành viên | Agree, StartSign, SyncSign, ActivateMember, `McnSyncAnnex` | User không có `mcn-accounts` hiện hành |
-| Người vận hành | Admin Activate (khi gắn ngay), `BindAccountOnLogin` | User không có dòng quan hệ `isPending` hoặc `isMember` |
+| Thành viên | Agree, StartSign, SyncSign, ActivateMember, `McnSyncAnnex` | User không có `mcn-accounts` hiện hành; hoặc có, với `mcn-accounts.mcn = link.mcn` và `link.rate = 100` (dòng ghi `house = true`) |
+| Người vận hành | Admin Activate (khi gắn ngay), `BindAccountOnLogin` | User không có dòng quan hệ `isPending` hoặc `isMember` với MCN khác; dòng với chính MCN này phải `rate = 100` |
 
 - Bind tìm thấy hơn một user có cùng email đã xác thực thì không gắn, gửi Telegram (`users` không có unique index theo email).
-- StartSign từ chối `MCN_SELF_MEMBERSHIP` khi MCN là cá nhân và `users.contract.identificationNumber` của KOL/KOC (chuẩn hóa) bằng `mcns.identityNumber`. Không xác định được CCCD thì cho ký và ghi `selfCheck: unresolved` lên dòng quan hệ.
+- Agree đánh `house = true` khi user là tài khoản vận hành của MCN, hoặc MCN là cá nhân và `users.contract.identificationNumber` của user (chuẩn hóa) bằng `mcns.identityNumber`. Dòng `house` mà link dưới 100% thì từ chối `MCN_HOUSE_RATE_REQUIRED` (INV-19). Không xác định được CCCD thì cho đồng ý và ghi `selfCheck: unresolved`; StartSign kiểm lại trước khi tạo phụ lục. v2.0 dùng mã `MCN_SELF_MEMBERSHIP` để chặn hẳn tự tham gia; v2.1 bỏ, vì họp 10/11 yêu cầu ngược lại (ADR-12).
 - Agree yêu cầu KOL/KOC đã tham gia partner của MCN (`user-partners{isJoined:true}`).
 - Lời gọi econtract (`CreateAnnex`) nằm ngoài transaction (§6.8).
 
@@ -515,7 +535,8 @@ Hệ quả
 Bối cảnh
 - Khấu trừ chỉ ở `backend/internal/service/withdraw.go:136-139`, theo từng lệnh, không có loại người nộp thuế hay loại thu nhập.
 - Đã chốt (D21, 05/11): 10% trên số chi sau phí, ngưỡng 5.000.000đ mỗi đợt; MCN công ty không khấu trừ. MCN cá nhân tạm khấu trừ như KOL/KOC (Q9, chờ Kế toán).
-- Tách sổ làm kết quả thuế khác mô hình một tài khoản của PRD Q12. MCN cá nhân P có phí 3.000.000 và thu nhập creator 2.500.000: một tài khoản không `TaxExempt` cho một lệnh 5.500.000, khấu trừ 550.000; hai lệnh theo payee khấu trừ 0 + 0.
+- v2.0: tách sổ làm kết quả thuế khác mô hình một tài khoản của PRD Q12. MCN cá nhân P có phí 3.000.000 và thu nhập creator 2.500.000: một lệnh 5.500.000 khấu trừ 550.000; hai lệnh theo payee khấu trừ 0 + 0. Họp 10/11 gọi đúng rủi ro này là chia nhỏ dưới 5.000.000đ để lách TNCN [seg-065-073, seg-079-089] và chốt gộp một lần qua tài khoản nhà 100% (ADR-12).
+- Lệnh MCN tách theo chiến dịch (ADR-14) lại sinh nhiều lệnh nhỏ cho cùng một payee trong một đợt.
 
 | Tiêu chí | A. Theo user + `TaxExempt` (v1.0) | B. Theo payee, ngưỡng từng lệnh | C. Theo người nộp thuế, gộp ngưỡng trong đợt | D. Lũy kế theo tháng |
 |---|---|---|---|---|
@@ -525,15 +546,18 @@ Bối cảnh
 | Phụ thuộc chất lượng CCCD | Không | Không | Có (`users.contract` tự khai; eKYC của AT chưa có API) | Có |
 | Khối lượng | Thấp | Thấp | Trung bình: gom nhóm, tính lại khi loại lệnh, phân bổ làm tròn | Cao |
 
-Quyết định: B cho phase 1.
+Quyết định: B cho lệnh creator; với lệnh MCN, ngưỡng xét theo payee trong đợt (C thu hẹp về một MCN).
 - `TaxPolicyFor(payee)` thay đoạn inline; kết quả với creator giống hệt code cũ (test hồi quy).
 - Mỗi lệnh snapshot `taxpayerKey`, `incomeType`, `policy`, `base`, `rate`, `threshold`, `amount`, `ruleVersion`. File ngân hàng có cột `taxpayerKey` để Kế toán tự tổng hợp.
-- Thu nhập nội dung của tài khoản vận hành MCN công ty: payee là user, `creator_reward`, `pit_10`, cùng điều kiện chi của creator (đề xuất, OQ-03, §7.3).
-- C chỉ làm khi Kế toán chốt OQ-01, với lý do trung lập thuế so với PRD Q12. Khi đó cần thêm: gom nhóm trước Chuyển tiền; chặn loại lệnh creator thuộc nhóm từ 2 lệnh sau Chuyển tiền, hoặc ghi `tax_refund` khi nhóm đổi; tính thuế cả nhóm rồi phân bổ về từng lệnh theo largest remainder.
+- Thu nhập nội dung của tài khoản nhà: payee là MCN, ghi vào sổ MCN như phí, khấu trừ theo loại MCN (ADR-12). Bỏ phương án payee là user của v2.0.
+- Lệnh MCN cá nhân: ngưỡng và thuế tính trên tổng `cash` các lệnh của cùng MCN trong đợt, phân bổ về từng lệnh theo largest remainder (§7.3). Gom nhóm chỉ trong một `mcns`, không theo CCCD, nên không chạm creator.
+- Gộp ngưỡng theo CCCD giữa lệnh MCN và lệnh creator (C đầy đủ) không làm ở phase 1: tài khoản nhà không còn lệnh creator, nên ca P của v2.0 không còn.
 
 Hệ quả
 - (+) Creator không thuộc MCN không đổi kết quả thuế (G-6). Không phụ thuộc CCCD tự khai.
-- (−) Ca P bị khấu trừ ít hơn mô hình một tài khoản cho tới khi OQ-01 chốt.
+- (+) Một MCN một lần quyết định thuế trong đợt, dù tách lệnh theo chiến dịch.
+- (−) Loại một lệnh MCN thì nhóm đổi. Trước Chuyển tiền: tính lại thuế cả nhóm. Sau Chuyển tiền (ngân hàng trả về): đảo lệnh đó gồm cả phần thuế đã phân bổ; thuế các lệnh còn lại giữ nguyên, lệnh ghi `taxGroupBroken` để Kế toán xử lý tay (§7.2 bước 6).
+- (−) Thu nhập của tài khoản nhà phát sinh trước ngày ký phụ lục 100% vẫn đi lệnh creator, thuế riêng.
 
 ### ADR-10. Phạm vi cờ `PartnerOpts.McnEnabled`
 
@@ -545,7 +569,7 @@ Hệ quả
 
 Quyết định: C. `Mcn().EnabledFor(partner)` kiểm ở tạo, sửa hồ sơ, kích hoạt, tạo link, xem lời mời, Agree, StartSign, Bind. Không kiểm ở `applyMcnFees` (phụ lục đã ký đang có hiệu lực), `generateMcnPayouts` và các màn xem. Lệch câu "chỉ áp dụng cho partner bật MCN" của FR-016 (§14.3).
 
-Hệ quả: tắt cờ chỉ dừng onboarding; muốn dừng thu phí phải chấm dứt phụ lục. Không bật cờ trên prod trước khi phase 5 và 6 cùng lên.
+Hệ quả: tắt cờ chỉ dừng onboarding; muốn dừng thu phí phải chấm dứt phụ lục. Bật cờ trên prod trước khi phase 5 và 6 lên là an toàn khi `MCN_FEE_EVENT_START_FROM` còn trống, vì `applyMcnFees` không tạo split nào (ADR-13, §11.4).
 
 ### ADR-11. Điều chỉnh, bù thiếu, số dư âm
 
@@ -560,6 +584,83 @@ Quyết định: B.
 - Thưởng thêm chỉ dùng để bù thu nhập gốc; bị trích phí theo dòng quan hệ tại ngày tạo. Dùng Thưởng thêm để hoàn phí trích thừa sẽ bị trích phí lần nữa (hoàn 450.000 với tỷ lệ 15% thì KOL/KOC chỉ nhận 382.500).
 - Phí trích sai xử lý bằng script `cmd/mcn-adjust` (runbook, không có UI): bắt buộc `ticket`, `reason`, `createdBy`, người duyệt, chế độ dry-run. Đây là năng lực ngoài D7, cần PO đồng ý (§14.3).
 - Số dư MCN âm sau điều chỉnh mang sang kỳ sau; đợt chi không tạo lệnh vì điều kiện `Balance > 0`.
+
+### ADR-12. Tài khoản nhà MCN và thu nhập nội dung của người đứng MCN
+
+Bối cảnh
+- Họp 10/11: người đứng MCN được làm creator trên cùng portal; "gộp thanh toán và tính thuế một lần, không tách riêng hai vai trò"; account nhà MCN đặt share 100% cho MCN để dồn chi về một mối, tránh hai lần chuyển dưới 5.000.000đ lách TNCN [seg-056-060, seg-065-073, seg-079-089].
+- v2.0 làm ngược lại: thu nhập nội dung luôn thuộc user làm nội dung và đi lệnh creator (ADR-02, §7.3 ca 6–7); tài khoản vận hành không được là thành viên (INV-03, `MCN_SELF_MEMBERSHIP`). Người đứng MCN có hai lệnh, hai lần xét ngưỡng, đúng tình huống họp muốn bỏ.
+- Code nhánh chặn ở ba chỗ: trang mời trả `is_mcn_account` (`backend/pkg/public/service/mcn_invite.go:144, 174, 281`); tạo và kích hoạt MCN từ chối email của thành viên (`backend/pkg/admin/service/mcn_validate.go:71-81`); gắn tài khoản bỏ qua user đang là thành viên (`backend/internal/service/mcn.go:172-176`).
+
+| Tiêu chí | A. Hai payee (v2.0) | B. Thành viên nhà 100% qua link và phụ lục | C. Ghi có thẳng sổ MCN theo vai đăng nhập (`mcn_self_content`, PRD Q8) |
+|---|---|---|---|
+| Khớp họp 10/11 | Không: hai lệnh, hai lần xét ngưỡng | Có | Có |
+| Căn cứ chi thu nhập nội dung cho MCN | – | Phụ lục chỉ định thanh toán 100% gắn với ②, cùng mẫu với KOL/KOC | Không có văn bản riêng, dựa vào vai đăng nhập |
+| Thay đổi sổ, đối soát | Không | Không: `applyMcnFees` tạo split tỷ lệ 100% như mọi split | `postItem` rẽ ghi có theo vai của `item.User` tại ngày phát sinh |
+| Đổi người vận hành giữa kỳ | Không ảnh hưởng | Không ảnh hưởng: quan hệ gắn với user làm nội dung, không với vai vận hành | Phải chia khoản theo ngày đổi vai |
+| Kênh khác do MCN sở hữu | Không xử lý | Cùng cơ chế (link 100%) | Không xử lý |
+| Thay đổi code | – | Nới ba điểm chặn, thêm `house`, INV-19 | Rẽ nhánh ở lõi ghi sổ |
+
+Quyết định: B.
+- Tài khoản nhà là dòng `mcn-members` bình thường, `rate = 100`, `house = true`. Đi đúng luồng Agree → ký phụ lục → `active`. `applyMcnFees` tạo split 100%: sổ creator `+G`, `−G`; sổ MCN `+G`. Không thêm action ghi sổ.
+- `house` đặt ở Agree (ADR-04): user là tài khoản vận hành của chính MCN, hoặc trùng CCCD với MCN cá nhân. Kênh khác do MCN sở hữu vào qua link 100% như KOL/KOC, `house = false`, kết quả tiền như nhau.
+- Tài khoản vận hành chỉ được là thành viên của chính MCN mình (INV-03). Phụ lục 100% vẫn yêu cầu eKYC và ② của người đứng sau tài khoản (OQ-08).
+- Thu nhập phát sinh trước ngày ký phụ lục 100%, hoặc thuộc chiến dịch trước mốc áp dụng (ADR-13), đi lệnh creator như hiện nay.
+- Có bắt buộc tài khoản vận hành ký phụ lục 100% trước chiến dịch đầu tiên không: OQ-15. Đề xuất: hệ thống không chặn; báo cáo vận hành liệt kê MCN có tài khoản vận hành phát sinh thu nhập creator mà chưa là thành viên nhà.
+
+Hệ quả
+- (+) Một payee, một số dư, một lần quyết định thuế cho MCN kiêm creator; hết ca tách hai lệnh dưới ngưỡng giữa hai vai.
+- (+) Không thêm nhánh ghi sổ; đúng cho cả MCN công ty và cá nhân.
+- (−) Với MCN công ty, thu nhập nội dung của người vận hành thành doanh thu của pháp nhân, không khấu trừ TNCN. Legal xác nhận phụ lục 100% đủ căn cứ (OQ-08); rà soát sâu để P2 theo họp 10/11 (NG-11).
+- (−) Tài khoản nhà hiện trong danh sách thành viên của MCN; UI gắn nhãn "Tài khoản nhà".
+
+### ADR-13. Mốc áp dụng theo chiến dịch
+
+Bối cảnh
+- Họp 10/11 [seg-024-031]: MCN chỉ áp cho chiến dịch mới, từ tháng sau go-live; go-live cuối tháng 11 thì từ tháng 12. "Campaign" là chiến dịch (`events`), chốt 11/11.
+- Mọi khoản đối soát xác định được chiến dịch: `event-rewards.event` (`backend/internal/model/mg/event_reward.go:23`), `event-bonus.event` (`backend/internal/model/mg/event_bonus.go:14`). Ngày bắt đầu chiến dịch là `events.startAt` (`backend/internal/model/mg/event.go:33`).
+
+| Tiêu chí | A. `events.startAt ≥ mốc`, mốc là cấu hình | B. Cờ `events.mcnApplicable`, Admin bật từng chiến dịch | C. Ngày phát sinh ≥ mốc |
+|---|---|---|---|
+| Khớp "chỉ chiến dịch mới" | Có | Có | Không: chiến dịch đang chạy qua mốc vẫn bị trích |
+| Vận hành | Không thao tác | Bật từng chiến dịch; quên bật là mất phí | Không thao tác |
+| Đổi điều kiện chiến dịch đang chạy | Không thể | Bật, tắt giữa chừng được | – |
+| Code | Lọc một chỗ | Thêm trường, UI admin | Lọc một chỗ |
+
+Quyết định: A.
+- ENV `MCN_FEE_EVENT_START_FROM` (ngày, giờ Asia/Ho_Chi_Minh). Trống nghĩa là chưa áp dụng: `applyMcnFees` không tạo split nào.
+- `applyMcnFees` bỏ qua item thuộc chiến dịch có `startAt` trước mốc; mốc snapshot lên `mcnSnapshot.eventStartFrom` (INV-20). Đổi ENV sau đó không đổi kỳ đã `processed`.
+- Mốc áp dụng chung cho cả tài khoản nhà (ADR-12).
+
+Hệ quả
+- (+) Chiến dịch đang chạy lúc go-live giữ nguyên điều khoản với KOL/KOC.
+- (−) KOL/KOC đã ký nhưng chỉ có thu nhập từ chiến dịch cũ thì MCN chưa có phí. Màn mời và màn MCN ghi rõ "Phí áp dụng cho chiến dịch bắt đầu từ 01/12/2026".
+
+### ADR-14. Lệnh chi MCN theo chiến dịch
+
+Bối cảnh
+- Họp 10/11 [seg-091-101]: Kế toán chi theo từng chiến dịch, không gộp nhiều chiến dịch vào một lần chi.
+- Hiện trạng: đợt chi `transfers` lọc theo partner và khoảng ngày (`backend/internal/model/mg/transfer.go:41-46`), rút cả số dư. Số dư creator cộng dồn mọi chiến dịch. Bút toán ghi có mang `options.event` (`backend/internal/model/mg/cash_flow.go:33`); bút toán chi `withdraw` không mang.
+
+| Tiêu chí | A. Chỉ lệnh MCN theo chiến dịch | B. Mọi lệnh, creator và MCN, theo chiến dịch | C. Một lệnh mỗi MCN mỗi đợt (v2.0) |
+|---|---|---|---|
+| Khớp họp 10/11 | Cho MCN | Đủ | Không |
+| Ảnh hưởng creator không thuộc MCN | Không (G-6) | Có: `withdraws`, FIFO theo chiến dịch, file ngân hàng, thuế | Không |
+| Sổ | `mcn-cash-flows.event` bắt buộc; `Balance(mcn, event)` | Thêm `event` cho bút toán chi creator; số dư theo (user, chiến dịch) | Như v2.0 |
+| Ngưỡng thuế | Tổng lệnh của MCN trong đợt (ADR-09) | Gộp theo payee trong đợt cho mọi creator | Một lệnh |
+| Khối lượng | Thấp, sổ MCN là sổ mới | Cao, ngoài phase 1 | Không |
+
+Quyết định: A (OQ-13).
+- Mọi bút toán `mcn-cash-flows` có `event`: phí lấy chiến dịch của item; chi lấy chiến dịch của lệnh; điều chỉnh bắt buộc chỉ định. `Balance(mcn, event) = Σ value` theo (MCN, chiến dịch); `Balance(mcn)` là tổng mọi chiến dịch.
+- `generateMcnPayouts` tạo một lệnh draft cho mỗi (transfer, mcn, event) có `Balance(mcn, event) > 0`. Unique `(transfer, mcn, event)` thay cho `(transfer, mcn)` (INV-12).
+- Min xét trên `Balance(mcn)`. Max cắt trên tổng số chi của MCN, lấy lần lượt chiến dịch có `startAt` sớm hơn.
+- INV-14 kiểm `Balance(mcn, event) ≥ cash` trong transaction, vẫn khóa bằng `$inc mcns.ledgerVer`.
+- Chiến dịch có số dư âm sau điều chỉnh không bù bằng chiến dịch khác; chỉ tạo lệnh cho chiến dịch có số dư dương.
+
+Hệ quả
+- (+) Kế toán đối chiếu từng chiến dịch với ADV; creator không đổi.
+- (−) Nhiều lệnh nhỏ cho cùng một TK MCN: phí chuyển khoản tính theo lệnh, file ngân hàng thêm cột chiến dịch. Kế toán xác nhận chấp nhận (OQ-13).
+- (−) Ngưỡng thuế phải xét theo nhóm lệnh (ADR-09), thêm bước tính thuế nhóm trước Chuyển tiền.
 
 ## 6. Mô hình dữ liệu
 
@@ -586,6 +687,7 @@ Quyết định: B.
 | `activatedAt`, `feeFrom` | Date | Ghi một lần khi `agreed → active`; `feeFrom = startOfDayHCM(activatedAt)` | Mới |
 | `leaveEffectiveAt`, `endedAt`, `endReason` | Date, Date, string | Có sẵn (`backend/pkg/public/service/mcn_leave.go:68, 121-140`; `backend/pkg/public/service/mcn_member.go:165-166`) | Nguồn của `FeeWindow` |
 | `signedAfterClose`, `selfCheck` | bool, string | `signedAfterClose`: phụ lục SIGNED khi dòng đã `declined`, `sign_expired`, `superseded`. `selfCheck`: ok \| unresolved (ADR-04) | Mới |
+| `house` | bool | Đặt ở Agree, không đổi; `house ⇒ rate = 100` (INV-19) | Mới, ADR-12. Tài khoản vận hành hoặc trùng CCCD với MCN cá nhân |
 
 ### 6.3 `mcn-cash-flows` (mới, append-only)
 
@@ -593,6 +695,7 @@ Quyết định: B.
 |---|---|---|---|
 | `mcn` | ObjectID | Bắt buộc | Chủ sổ |
 | `partner` | ObjectID | Chép từ `mcns.partner` | Chỉ để lọc |
+| `event` | ObjectID | Bắt buộc với mọi action | Chiến dịch; số dư tính theo (mcn, event) (ADR-14) |
 | `action` | string | `mcn_fee` \| `withdraw` \| `tax` \| `withdraw_fee` \| `withdraw_reversal` \| `adjustment` | |
 | `reversalOf` | string | Chỉ với `withdraw_reversal`: `withdraw` \| `tax` \| `withdraw_fee` | Thuế khấu trừ ròng = Σ`tax` + Σ`withdraw_reversal{reversalOf: tax}` |
 | `value` | int64 | Khác 0; dấu khớp action | Dương là ghi có, âm là ghi nợ |
@@ -605,13 +708,13 @@ Quyết định: B.
 
 | Trường | Kiểu | Ràng buộc | Ghi chú |
 |---|---|---|---|
-| `transfer`, `partner`, `mcn` | ObjectID | `uniq(transfer, mcn)` | |
+| `transfer`, `partner`, `mcn`, `event` | ObjectID | `uniq(transfer, mcn, event)` | Một lệnh mỗi chiến dịch (ADR-14) |
 | `cash`, `cashTax`, `bankFee`, `actualCash` | int64 | `cash > 0`; `actualCash = cash − cashTax − bankFee ≥ 0` | |
 | `status` | string | draft \| transferring \| completed \| rejected (§6.7) | |
 | `declined`, `declinedReason`, `rejectReason` | bool, string, string | `rejectReason`: `transfer_rejected` \| `insufficient_balance` \| `transfer_failed` \| `declined_after_transfer` | |
 | `bank` | object | Snapshot | `{document, bankId, bankName, accountNumber, holderName, match, mismatchReason}` |
 | `payee` | object | Snapshot | `{type: company \| individual, name, identityNumber, phone, contractSignedAt}` |
-| `tax` | object | Snapshot | `{policy, incomeType, taxpayerType, taxpayerKey, base, rate, threshold, amount, ruleVersion, computedAt}` |
+| `tax` | object | Snapshot | `{policy, incomeType, taxpayerType, taxpayerKey, base, groupBase, rate, threshold, amount, ruleVersion, computedAt, taxGroupBroken}`. `groupBase`: tổng `cash` các lệnh cùng MCN trong đợt (ADR-09) |
 | `history[]`, `createdAt`, `updatedAt` | array, Date | | `history`: `{status, at, byType, by, note}` |
 
 ### 6.5 Collection hiện có được sửa
@@ -619,7 +722,7 @@ Quyết định: B.
 | Collection | Thêm hoặc đổi | Ràng buộc |
 |---|---|---|
 | `users` | `mcnGuardVer int64`, chỉ `$inc` | – |
-| `reconciliations` | `completedAt`; `mcnSnapshot{status: pending \| done \| failed, items, splits, totalFee, at}` | `completedAt` ghi cùng CAS `running → completed` |
+| `reconciliations` | `completedAt`; `mcnSnapshot{status: pending \| done \| failed, items, splits, totalFee, eventStartFrom, at}` | `completedAt` ghi cùng CAS `running → completed` |
 | `reconciliation-items` | `mcnSplits[]{member, mcn, rate int32, baseCash int64, fee int64, windowFrom, windowTo, rewardCount}`; `mcnFee int64`; `netCash float64`; `mcnEvaluatedAt`; `postedAt`; `referral{state: pending \| sent, base, sentAt}` | Split không đổi sau `processed`; `totalCash = netCash + mcnFee` |
 | `cash-flows` | `idemKey string` với `bson:"idemKey,omitempty"`; action `mcn_fee`, `mcn_fee_adjustment`; `options.{mcn, mcnMember, rate}` | Mỗi khóa ghi một lần; không có chuỗi rỗng |
 | `withdraws` | `tax` (snapshot), `incomeType` (mặc định `creator_reward`); giữ `cashTax` | Snapshot không đổi sau draft |
@@ -632,8 +735,8 @@ Số dư creator luôn là `cashRemaining = Σ value(cash-flows)` theo user. Tes
 
 | Collection | Index | Mục đích |
 |---|---|---|
-| `mcn-cash-flows` | `uniq(idemKey)`; `(mcn, createdAt)`; `(source.reconciliation, mcn)`; `(payout)` | INV-12; số dư, lịch sử; đối chiếu kỳ; đối chiếu lệnh |
-| `mcn-payouts` | `uniq(transfer, mcn)`; `(mcn, -createdAt)`; `(transfer, status)` | Một lệnh mỗi MCN mỗi đợt |
+| `mcn-cash-flows` | `uniq(idemKey)`; `(mcn, event, createdAt)`; `(source.reconciliation, mcn)`; `(payout)` | INV-12; số dư theo chiến dịch, lịch sử; đối chiếu kỳ; đối chiếu lệnh |
+| `mcn-payouts` | `uniq(transfer, mcn, event)`; `(mcn, -createdAt)`; `(transfer, status)` | Một lệnh mỗi (MCN, chiến dịch) mỗi đợt |
 | `cash-flows` | `uniq(idemKey)` partial `{idemKey:{$exists:true}}` | Không vướng dữ liệu cũ |
 | `reconciliation-items` | `(mcnSplits.mcn, reconciliation)` multikey | Màn đối soát MCN |
 | `mcn-members` | Mới: `uniq(user, mcn)` partial `{isPending:true}`; `uniq(user)` partial `{annexInFlight:true}`; `uniq(user, link)` partial `{declinedByCode:true}` (chỉ dòng từ chối theo mã, để bước `agreed → declined` không va index). Giữ: `uniq(user)` partial `{isMember:true}` và 5 index thường (2 tra cứu, 3 theo hạn) ở `backend/internal/module/database/mongodb/index.go:469-474` | INV-01, INV-02, INV-05; từ chối theo mã là upsert |
@@ -746,7 +849,7 @@ Phía người vận hành, Admin Activate (khi gắn ngay) và `BindAccountOnLo
 
 ### 7.1 Đối soát
 
-`applyMcnFees` chạy ở bước Lấy danh sách, ghi `mcnSplits`, `mcnFee`, `netCash`, `mcnEvaluatedAt` lên item `pending`, rồi `mcnSnapshot.status = done`. Sau `processed` không ghi lại.
+`applyMcnFees` chạy ở bước Lấy danh sách, ghi `mcnSplits`, `mcnFee`, `netCash`, `mcnEvaluatedAt` lên item `pending`, rồi `mcnSnapshot.status = done`. Sau `processed` không ghi lại. Item thuộc chiến dịch có `events.startAt` trước `MCN_FEE_EVENT_START_FROM` (hoặc mốc trống) chỉ ghi `mcnEvaluatedAt`, không có split (ADR-13, INV-20).
 
 Cửa sổ phí của dòng quan hệ m, giờ Asia/Ho_Chi_Minh, nửa mở `[feeFrom, effTo)`:
 
@@ -807,13 +910,14 @@ Hoa hồng người giới thiệu chỉ gửi sau khi kỳ `completed`: mỗi u
 Ví dụ:
 - K ký với MCN A (15%) lúc 14:00 ngày 05/11, kích hoạt cùng ngày. Item content có thưởng view 300.000/ngày từ 01/11 đến 10/11, `G = 3.000.000`. Cửa sổ `[05/11, 05/11 năm sau)`: 6 khoản trong cửa sổ, mỗi khoản `fee_r = 45.000`, `fee = 270.000`, `net = 2.730.000`. Sổ K: `+3.000.000`, `−270.000`. Sổ A: `+270.000`.
 - Ví dụ BA: `G = 3.000.000`, cả kỳ trong cửa sổ, 15%: `fee = 450.000`, KOL/KOC nhận 2.550.000 vào số dư.
-- Cùng item trên, A chấm dứt K lúc 10:00 ngày 07/11; K ký B (10%) lúc 09:00 ngày 08/11. Split A: `[05/11, 07/11)` 2 ngày, 600.000 × 15% = 90.000. Split B: `[08/11, …)` 3 ngày, 900.000 × 10% = 90.000. Ngày 07/11 không thuộc cửa sổ nào. `net = 2.820.000`.
+- Tài khoản nhà uP của MCN cá nhân P (100%), item G = 2.500.000 cả kỳ trong cửa sổ: `fee = 2.500.000`, `net = 0`. Sổ uP: `+2.500.000`, `−2.500.000`. Sổ P: `+2.500.000` (ADR-12).
+- Phase 1 không có luồng đổi MCN giữa chiến dịch (NG-9); nếu xảy ra, công thức vẫn chia theo ngày. Cùng item ở ví dụ đầu, A chấm dứt K lúc 10:00 ngày 07/11; K ký B (10%) lúc 09:00 ngày 08/11. Split A: `[05/11, 07/11)` 2 ngày, 600.000 × 15% = 90.000. Split B: `[08/11, …)` 3 ngày, 900.000 × 10% = 90.000. Ngày 07/11 không thuộc cửa sổ nào. `net = 2.820.000`.
 
 ### 7.2 Đợt chi
 
 | Bước | Creator | MCN |
 |---|---|---|
-| Lấy danh sách | Vòng hiện có; thuế qua `TaxPolicyFor` | `generateMcnPayouts`: một lệnh draft mỗi MCN đủ điều kiện |
+| Lấy danh sách | Vòng hiện có; thuế qua `TaxPolicyFor` | `generateMcnPayouts`: một lệnh draft mỗi (MCN, chiến dịch) có số dư dương; thuế tính theo nhóm lệnh của MCN |
 | Loại, bỏ loại | `ChangeDeclined` hiện có | CAS trên chính lệnh MCN |
 | Hủy đợt | `draft → rejected` | `draft → rejected`, chưa có bút toán |
 | Chuyển tiền | Mỗi lệnh một transaction: CAS `draft → transferring` và bút toán `wd:<withdrawId>:<action>` qua `AppendStrict` (cờ `LedgerV2`; tắt cờ như hiện nay) | Mỗi lệnh một transaction: kiểm số dư, ghi nợ |
@@ -823,13 +927,14 @@ Chi tiết phía MCN:
 
 1. Chặn chung: partner bật `LedgerV2` có kỳ `running` hoặc `run_failed` thì đợt không sang `processing` (INV-15).
 2. Vị trí gọi: `generateMcnPayouts` chạy trước vòng user, không phụ thuộc `return` sớm ở `backend/pkg/admin/service/transfer_processing.go:41-44`.
-3. Điều kiện chọn: `mcns.partner = transfer.partner`, `status = active`; có Hợp đồng ① hiện hành; TK ngân hàng hiện hành `match = ok` hoặc có `mismatchReason`; `Balance > 0 ∧ Balance ≥ Min`. Không xét SSO, eKYC, ②, `banned` của user vận hành (FR-019).
-4. Số chi: `cash = Max > 0 ? min(Balance, Max) : Balance`. MCN có số dư trên Max bị cắt số chi, không bị loại như hành vi hiện tại với creator (OQ-10).
-5. Insert draft kèm snapshot `bank`, `payee`, `tax`. Trùng `(transfer, mcn)` thì bỏ qua (chạy lại an toàn).
-6. Loại lệnh: CAS `{_id, transfer, status: draft}` khi đợt ở `processed`; CAS `{_id, transfer, status: transferring}` khi đợt ở `transferred` (ngân hàng trả về, TK sai). Cùng document với bước Chuyển tiền nên không có race.
-7. Chuyển tiền, mỗi lệnh `draft` không bị loại, một `RunInTransaction`: `$inc mcns.ledgerVer`; đọc `Balance(mcn)` trong session; `Balance < cash` thì abort, ngoài transaction CAS `draft → rejected` với `insufficient_balance` và gửi Telegram. Đủ thì CAS `draft → transferring` và ghi `withdraw −actualCash` (`po:<id>:withdraw`), `tax −cashTax` (`po:<id>:tax`, khi > 0), `withdraw_fee −bankFee` (`po:<id>:withdraw_fee`, khi > 0). Lỗi khác: lệnh giữ `draft`, Telegram.
-8. Thống kê đợt (`GetStatistic`, `backend/pkg/admin/service/transfer.go:678-704`) cộng thêm aggregate `mcn-payouts`.
-9. Hoàn tất, mỗi lệnh một `RunInTransaction`. Lệnh `transferring` không bị loại → `completed`. Lệnh `transferring` bị loại → `rejected` (`declined_after_transfer`), ghi `withdraw_reversal` dương cho mỗi bút toán đã ghi nợ (`reversalOf` theo action, khóa `po:<id>:reversal:<action>`). Lệnh còn `draft` → `rejected` (`transfer_failed`). Bấm Hoàn tất lại chỉ xử lý lệnh còn `transferring`. Không đóng dấu `transferId` FIFO cho sổ MCN.
+3. Điều kiện chọn: `mcns.partner = transfer.partner`, `status = active`; có Hợp đồng ① hiện hành; TK ngân hàng hiện hành `match = ok` hoặc có `mismatchReason`; `Balance(mcn) > 0 ∧ Balance(mcn) ≥ Min`. Không xét SSO, eKYC, ②, `banned` của user vận hành (FR-019). Mỗi chiến dịch có `Balance(mcn, event) > 0` thành một lệnh (ADR-14).
+4. Số chi: mỗi lệnh `cash = Balance(mcn, event)`. Có Max thì tổng số chi của MCN bị cắt ở Max, lấy lần lượt chiến dịch có `events.startAt` sớm hơn. MCN có số dư trên Max bị cắt số chi, không bị loại như hành vi hiện tại với creator (OQ-10).
+5. Insert draft kèm snapshot `bank`, `payee`. Trùng `(transfer, mcn, event)` thì bỏ qua (chạy lại an toàn).
+6. Thuế nhóm: sau khi tạo xong lệnh của một MCN, `groupBase = Σ cash` các lệnh draft không bị loại; `TaxPolicyFor(mcn)` tính thuế trên `groupBase`, phân bổ về từng lệnh theo largest remainder, snapshot `tax` (ADR-09). MCN công ty: `amount = 0`.
+7. Loại lệnh: CAS `{_id, transfer, status: draft}` khi đợt ở `processed`, rồi tính lại thuế nhóm (bước 6). CAS `{_id, transfer, status: transferring}` khi đợt ở `transferred` (ngân hàng trả về, TK sai): thuế các lệnh còn lại giữ nguyên, ghi `tax.taxGroupBroken = true` lên các lệnh cùng nhóm để Kế toán xử lý. Cùng document với bước Chuyển tiền nên không có race.
+8. Chuyển tiền, mỗi lệnh `draft` không bị loại, một `RunInTransaction`: `$inc mcns.ledgerVer`; đọc `Balance(mcn, event)` trong session; `Balance(mcn, event) < cash` thì abort, ngoài transaction CAS `draft → rejected` với `insufficient_balance` và gửi Telegram. Đủ thì CAS `draft → transferring` và ghi `withdraw −actualCash` (`po:<id>:withdraw`), `tax −cashTax` (`po:<id>:tax`, khi > 0), `withdraw_fee −bankFee` (`po:<id>:withdraw_fee`, khi > 0). Lỗi khác: lệnh giữ `draft`, Telegram.
+9. Thống kê đợt (`GetStatistic`, `backend/pkg/admin/service/transfer.go:678-704`) cộng thêm aggregate `mcn-payouts`.
+10. Hoàn tất, mỗi lệnh một `RunInTransaction`. Lệnh `transferring` không bị loại → `completed`. Lệnh `transferring` bị loại → `rejected` (`declined_after_transfer`), ghi `withdraw_reversal` dương cho mỗi bút toán đã ghi nợ (`reversalOf` theo action, khóa `po:<id>:reversal:<action>`). Lệnh còn `draft` → `rejected` (`transfer_failed`). Bấm Hoàn tất lại chỉ xử lý lệnh còn `transferring`. Không đóng dấu `transferId` FIFO cho sổ MCN.
 
 ### 7.3 Thuế
 
@@ -837,9 +942,9 @@ Chi tiết phía MCN:
 
 | Payee | `incomeType` | `policy` | Cơ sở | Ngưỡng |
 |---|---|---|---|---|
-| KOL/KOC, gồm cả tài khoản vận hành tự làm nội dung | `creator_reward` | `pit_10` | Số chi của lệnh (sổ đã trừ phí, D21) | `TAX_PIT_THRESHOLD` = 5.000.000đ |
-| MCN công ty | `mcn_management_fee` | `none` | – | – |
-| MCN cá nhân | `mcn_management_fee` | `MCN_INDIVIDUAL_TAX_POLICY`, mặc định `pit_10` (Q9, OQ-01) | Số chi | Như trên |
+| KOL/KOC. Tài khoản nhà chỉ còn lệnh creator cho thu nhập trước ngày ký phụ lục 100% hoặc thuộc chiến dịch trước mốc | `creator_reward` | `pit_10` | Số chi của lệnh (sổ đã trừ phí, D21) | `TAX_PIT_THRESHOLD` = 5.000.000đ |
+| MCN công ty | `mcn_income` (phí quản lý và thu nhập nội dung của tài khoản nhà) | `none` | – | – |
+| MCN cá nhân | `mcn_income` | `MCN_INDIVIDUAL_TAX_POLICY`, mặc định `pit_10` (Q9, OQ-01) | `groupBase`: tổng số chi các lệnh của MCN trong đợt | Như trên, xét trên `groupBase` |
 
 `taxpayerKey`: MCN công ty `mst:<identityNumber>`; MCN cá nhân `cccd:<identityNumber>`; creator `cccd:<users.contract.identificationNumber>` chuẩn hóa chỉ giữ chữ số, không có thì `user:<id>` kèm `taxIdUnresolved`.
 
@@ -852,23 +957,12 @@ Bảng tình huống (ngưỡng 5.000.000, suất 10%, phí ngân hàng 0):
 | 3 | KOL/KOC có MCN 15%, G = 3.000.000 (ví dụ BA) | Creator 2.550.000 | 0 | 2.550.000 |
 | 4 | MCN công ty C, số dư 8.000.000 | MCN 8.000.000, `mst:C` | 0 | 8.000.000 (HĐ GTGT ngoài hệ thống, OQ-06) |
 | 5 | MCN cá nhân P (CCCD X), số dư 6.000.000 | MCN 6.000.000, `cccd:X` | 600.000 | 5.400.000 |
-| 6 | MCN cá nhân P (CCCD X) số dư 3.000.000; tài khoản creator của P số dư 2.500.000 | MCN 3.000.000 và creator 2.500.000, cùng `cccd:X` | Mặc định 0 + 0. Nếu Kế toán chọn gộp (OQ-01): 300.000 + 250.000 | 3.000.000 và 2.500.000; gộp: 2.700.000 và 2.250.000 |
-| 7 | Tài khoản vận hành uC của MCN công ty C tự làm nội dung 6.000.000; C số dư 8.000.000 | Theo đề xuất v2.0, khác PRD Q8: creator uC 6.000.000 (cần SSO, eKYC, ②) và MCN C 8.000.000 | 600.000 (uC); 0 (C) | 5.400.000 và 8.000.000 |
+| 6 | MCN cá nhân P (CCCD X): phí 3.000.000 từ chiến dịch E1; tài khoản nhà uP (100%) có nội dung 2.500.000 ở E2 | Hai lệnh MCN P: E1 3.000.000, E2 2.500.000; `groupBase` 5.500.000, `cccd:X` | 550.000, phân bổ 300.000 + 250.000 | 2.700.000 và 2.250.000 |
+| 7 | MCN công ty C: phí 8.000.000; tài khoản nhà uC (100%) có nội dung 6.000.000 | Lệnh MCN C theo chiến dịch, tổng 14.000.000, `mst:C` | 0 | 14.000.000 (HĐ GTGT ngoài hệ thống, OQ-06) |
 
-Hai mô hình cho thu nhập nội dung của tài khoản vận hành MCN công ty (OQ-03):
+Ca 6 nếu xét ngưỡng từng lệnh: hai lệnh đều dưới 5.000.000, khấu trừ 0. Đây là ca tách lệnh lọt ngưỡng mà họp 10/11 muốn chặn; vì vậy lệnh MCN xét ngưỡng trên `groupBase` (ADR-09).
 
-| Tiêu chí | Cá nhân (đề xuất v2.0) | Pháp nhân (PRD Q8, SD-04) |
-|---|---|---|
-| Nguồn ủng hộ | D14 "tính như creator bình thường"; nội dung do một người thật đăng nhập và ký ② làm | PRD Q8 (đề xuất miễn khấu trừ); SD-04 "người nhận là tài khoản MCN: không trích, không TNCN"; BA-04 "MCN công ty không khấu trừ" |
-| Payee | user uC | `mcns` C |
-| Sổ ghi có | `cash-flows` của uC | `mcn-cash-flows` của C, action mới `mcn_self_content` |
-| Chứng từ, căn cứ | Khấu trừ TNCN; hợp đồng ② | HĐ GTGT của C; Hợp đồng ① |
-| Thuế | 10% từ 5.000.000/lệnh | Không khấu trừ |
-| Điều kiện chi | SSO, eKYC, ② của người đứng sau uC | ①, TK công ty |
-| Tác động sổ | Không đổi | `postItem` phải rẽ ghi có theo vai của `item.User` tại ngày phát sinh; đổi người vận hành giữa kỳ phải chia khoản |
-| Rủi ro | Thu nhập thực chất của công ty bị khấu trừ như cá nhân, hoàn khi quyết toán | Miễn khấu trừ nhầm thu nhập cá nhân nếu người đăng bài không phải công ty |
-
-Lý do đề xuất "Cá nhân": an toàn tuân thủ hơn (khấu trừ thừa hoàn được, khấu trừ thiếu là vi phạm nghĩa vụ khấu trừ), không thêm nhánh ghi sổ. Cần PO và Legal chốt trước phase 5.
+v2.0 có bảng so sánh hai mô hình cho thu nhập nội dung của tài khoản vận hành MCN công ty: thu nhập cá nhân hay của pháp nhân (OQ-03). Họp 10/11 chọn dồn về MCN qua tài khoản nhà 100% (ADR-12), nên OQ-03 đóng và bảng đó bỏ.
 
 ### 7.4 File ngân hàng
 
@@ -880,9 +974,10 @@ Lý do đề xuất "Cá nhân": an toàn tuân thủ hơn (khấu trừ thừa 
 | Số tiền trước thuế, thuế, số chuyển | `cash`, `cashTax`, `actualWithdrawCash` | `cash`, `cashTax`, `actualCash` |
 | TK hưởng, tên người hưởng, ngân hàng | Như hiện nay (đang rỗng, OQ-04) | Từ snapshot `bank` |
 | MST, CCCD | `users.contract.taxNumber`, `identificationNumber` | MST: `identityNumber` (cá nhân: CCCD là MST cá nhân). CCCD: cá nhân `identityNumber`, công ty rỗng |
-| Nội dung, Số điện thoại, Ngày ký TOS | Như hiện nay | Phí quản lý kèm mã đợt; `mcns.phone`; ngày ký Hợp đồng ① |
+| Nội dung, Số điện thoại, Ngày ký TOS | Như hiện nay | Chi MCN kèm mã đợt và tên chiến dịch; `mcns.phone`; ngày ký Hợp đồng ① |
+| Chiến dịch (mới, ADR-14) | Rỗng | `events.name` của lệnh |
 | Loại người nhận (mới, FR-019) | KOL/KOC | MCN |
-| Loại đối tượng, Loại thu nhập, `taxpayerKey` (mới) | Cá nhân; `creator_reward`; snapshot | Công ty hoặc Cá nhân; `mcn_management_fee`; snapshot |
+| Loại đối tượng, Loại thu nhập, `taxpayerKey` (mới) | Cá nhân; `creator_reward`; snapshot | Công ty hoặc Cá nhân; `mcn_income`; snapshot. Thêm cột `groupBase` để Kế toán thấy cơ sở thuế của nhóm |
 
 Hai loại dòng dùng một quy tắc lọc: loại lệnh bị loại và lệnh `rejected`. File thêm dòng tổng. Khuyến nghị Kế toán xuất file sau Chuyển tiền; xuất ở `processed` thì file gồm cả lệnh có thể bị `insufficient_balance`. Job đối chiếu kiểm Σ cột "Số tiền chuyển" của lệnh `transferring`, `completed` bằng Σ bút toán `withdraw` của đợt trên hai sổ.
 
@@ -984,7 +1079,7 @@ KOL/KOC (`backend/pkg/public/router/mcn_invite.go:12-29`):
 
 Route web đã có: `frontend/config/routes.ts:119-150`; admin `admin/config/routes.ts:205-217`.
 
-Mã lỗi: frontend phân biệt theo mã trong body (dải 2400), không theo HTTP status (`backend/pkg/public/handler/mcn_invite.go:30-31`). Mã mới: `MCN_MEMBER_STATE_CHANGED`, `MCN_EMAIL_IN_USE` (chỉ dùng nếu OQ-02 chọn B), `MCN_ANNEX_IN_FLIGHT`, `MCN_SELF_MEMBERSHIP`. HTTP 409 cho xung đột trạng thái cần thêm `Response409` vào `backend/internal/echo/echo.go` (hiện chỉ có 200, 400, 401, 403, 404 ở :262-345).
+Mã lỗi: frontend phân biệt theo mã trong body (dải 2400), không theo HTTP status (`backend/pkg/public/handler/mcn_invite.go:30-31`). Mã mới: `MCN_MEMBER_STATE_CHANGED`, `MCN_ANNEX_IN_FLIGHT`, `MCN_HOUSE_RATE_REQUIRED` (tài khoản nhà nhận link dưới 100%). Bỏ `MCN_EMAIL_IN_USE` và `MCN_SELF_MEMBERSHIP` của v2.0 (họp 10/11). HTTP 409 cho xung đột trạng thái cần thêm `Response409` vào `backend/internal/echo/echo.go` (hiện chỉ có 200, 400, 401, 403, 404 ở :262-345).
 
 ### 8.3 Ánh xạ màn hình với ngữ cảnh và nguồn số
 
@@ -1069,15 +1164,22 @@ MCN chưa lên prod, nên migration chỉ chạy trên dev và QA. M1: tạo ind
 | `MCN_INDIVIDUAL_TAX_POLICY` | `pit_10` | Phí MCN cá nhân (OQ-01) |
 | `TAX_GROUP_BY_TAXPAYER` | false, chưa cài ở phase 1 | Chờ OQ-01 |
 | `MCN_JOB_ENABLED` | bật | Job MCN (`backend/internal/config/env.go:27-29`). Tắt job không làm sai phí (G-4) |
+| `MCN_FEE_EVENT_START_FROM` | trống: chưa trích phí; prod đặt `2026-12-01` khi phase 5–6 đã lên | ADR-13 |
+| `MCN_ANNEX_CONTRACT_TYPE` | trống: StartSign báo chưa cấu hình | Mã mẫu phụ lục trên FPT e-contract. Nếu AT tách mẫu theo loại MCN (họp 10/11: bản cá nhân và bản công ty), thay bằng `MCN_ANNEX_CONTRACT_TYPE_COMPANY` và `MCN_ANNEX_CONTRACT_TYPE_INDIVIDUAL` |
 
 ### 11.4 Rollout và rollback
 
-1. Sửa nhóm "Sửa ngay" ở §14.1 trên `feat/mcn-phase1`.
-2. Phase 5 (ADR-05 đến 07) và phase 6 (ADR-08, 09) lên cùng một bản phát hành; phí không được vào sổ khi chưa có đường chi.
-3. Deploy prod với `McnEnabled=false`, `LedgerV2=false`. Chạy hồi quy trên bản sao dữ liệu: một kỳ đối soát và một đợt chi của một partner không có MCN (FEC, HDBank hoặc VPBank), bật `LedgerV2=true`. So `cash-flows` của kỳ (trừ `idemKey`) và `cashTax` từng lệnh với bản trước tính năng.
-4. Bật `LedgerV2` cho Ambassador; theo dõi một kỳ và một đợt chi: E1–E4 đạt, thuế không đổi.
-5. Bật `McnEnabled` cho Ambassador; tạo MCN thật; theo dõi kỳ đầu có phí bằng job đối chiếu.
-6. Phase 7 (màn xem), phase 8 (thông báo).
+Mốc theo họp 10/11: mẫu hợp đồng chốt trong tuần, ký 17/11 (team My); demo tuần 16–20/11; go-live cuối tháng 11; phí áp dụng cho chiến dịch bắt đầu từ 01/12/2026; nghiệm thu theo tuần với Hà Lê; màn mới làm mockup cho duyệt trước khi code.
+
+Go-live cuối tháng 11 chỉ cần phần onboarding. Phí và chi trả phải lên trước kỳ đối soát đầu tiên có chiến dịch bắt đầu từ 01/12, không cần cùng ngày go-live.
+
+1. Trước demo 16–20/11: sửa nhóm "Sửa ngay" ở §14.1, gồm nới chặn tài khoản nhà (#22). Demo luồng hồ sơ, mời, ký, thành viên; chưa có phần tiền.
+2. Cuối tháng 11: deploy prod, `McnEnabled=true` cho Ambassador, `MCN_FEE_EVENT_START_FROM` trống, `LedgerV2=false`. MCN được tạo, mời, ký phụ lục; chưa có khoản phí nào.
+3. Phase 5 (ADR-05, 06, 07, 13) và phase 6 (ADR-08, 09, 14) lên cùng một bản phát hành; phí không được vào sổ khi chưa có đường chi.
+4. Chạy hồi quy trên bản sao dữ liệu: một kỳ đối soát và một đợt chi của một partner không có MCN (FEC, HDBank hoặc VPBank), bật `LedgerV2=true`. So `cash-flows` của kỳ (trừ `idemKey`) và `cashTax` từng lệnh với bản trước tính năng.
+5. Bật `LedgerV2` cho Ambassador; theo dõi một kỳ và một đợt chi: E1–E4 đạt, thuế không đổi.
+6. Đặt `MCN_FEE_EVENT_START_FROM=2026-12-01` trước kỳ đối soát đầu tiên chứa chiến dịch tháng 12; theo dõi kỳ đầu có phí bằng job đối chiếu.
+7. Phase 7 (màn xem), phase 8 (thông báo).
 
 Rollback
 - Code: an toàn vì trường và collection mới là bổ sung. Phí đã vào `mcn-cash-flows` giữ nguyên, chưa chi cho tới khi deploy lại.
@@ -1100,7 +1202,7 @@ Rollback
 |---|---|---|
 | Unit | `FeeWindow`, công thức phí, `TaxPolicyFor`, chuẩn hóa CCCD | `fee_r` với `cash_r` lẻ; tỷ lệ 0 và 100; kích hoạt 23:59 và 00:00 giờ VN; `feeFrom = effTo`; hai split cùng item; `leaving` có `endAt` trước `leaveEffectiveAt`; ngưỡng đúng 5.000.000 và 4.999.999; creator cho kết quả như code cũ |
 | Integration Mongo thật (`-tags integration`, port 27099) | Transaction, partial unique, CAS | Agree đồng thời (INV-02); bind giữa lúc Chờ ký rồi ký (INV-03); StartSign hai MCN đồng thời (INV-05); ký trước hạn, đồng bộ sau hạn không có `signed_at`; kích hoạt sau `processed` với ngày ký ≤ `toAt`; Lấy danh sách khi job end-members chưa chạy; `applyMcnFees` lỗi giữa chừng; `postItem` chạy hai lần và hai runner đồng thời; `WriteConflict` do ghi reward đồng thời; Duyệt dừng giữa chừng rồi Duyệt lại từ `run_failed`; Hủy kỳ `run_failed` bị chặn; referral sau Duyệt lại; hai đợt chi đồng thời cùng MCN; điều chỉnh âm giữa Lấy danh sách và Chuyển tiền; loại lệnh MCN sau Chuyển tiền rồi Hoàn tất; hai bút toán đường cũ liên tiếp không có `idemKey` đều được ghi; lỗi insert ở Chuyển tiền creator giữ lệnh ở `draft` |
-| Ca biên tiền và thuế | §7.1, §7.3 | Mọi dòng bảng §7.3; KOL/KOC đổi MCN giữa item; Thưởng thêm tạo sau khi rời MCN; số dư MCN âm; Max cắt số chi MCN; `Balance = 0` không tạo lệnh |
+| Ca biên tiền và thuế | §7.1, §7.3 | Mọi dòng bảng §7.3; KOL/KOC đổi MCN giữa item; Thưởng thêm tạo sau khi rời MCN; số dư MCN âm; Max cắt số chi MCN; `Balance = 0` không tạo lệnh; chiến dịch bắt đầu 30/11 và 01/12 với mốc 01/12; mốc trống; tài khoản nhà 100% (`net = 0`, không có lệnh creator); tài khoản vận hành nhận link 15% của chính MCN bị từ chối; hai lệnh MCN theo chiến dịch cùng dưới 5.000.000 nhưng tổng từ 5.000.000 thì bị khấu trừ; loại một lệnh trong nhóm trước và sau Chuyển tiền |
 | Hồi quy creator | Đường cũ và cờ `LedgerV2` | Kỳ không có MCN: `cash-flows` của kỳ giống bản trước tính năng (trừ `idemKey`); `cashTax` từng lệnh giống code cũ; partner tắt cờ chạy đúng code cũ |
 | Đối chiếu số | Sau mỗi test tích hợp tiền | E1–E4; INV-11 theo item; Σ sổ MCN = Σ phí − Σ chi; đẳng thức theo action ở §6.5 |
 | Rà mức nguồn (CI) | grep, test AST | Chỉ file của `McnLedger` tham chiếu `CollectionMcnCashFlow`; `CashFlowRaw.IdemKey` có `omitempty`; không gọi `AddCashFlow` với `SessionContext`; không route `/mcn/*` đọc `CollectionCashFlow`; `mcn_fee` không thuộc `ActionMustTaxReward`; không có `TaxExempt` |
@@ -1131,8 +1233,11 @@ Rollback
 | 17 | Màn MCN | `/mcn/reconciliations` là stub (`backend/pkg/public/handler/mcn.go:119-124`) | Đối soát, số dư, sổ, lệnh chi MCN; tab Người nhận | Phase 7 |
 | 18 | Plan | phase-05: `creditMcnFees` delta, ghi net; phase-06: `PayableMcnOf` + `TaxExempt` | Viết lại theo ADR-05 đến 09 | Trước code phase 5 |
 | 19 | IDOR eKYC, hợp đồng ② | SSO từ client (§2.5) | Dùng SSO của phiên | Trước go-live |
-| 20 | `CreateAnnex` | Chỉ gửi email, SĐT (`backend/pkg/public/service/mcn_annex.go:58-78`) | Tên MCN, MST, tỷ lệ, ngày khi AT cấp mẫu (A1) | Chờ AT |
+| 20 | `CreateAnnex` | Chỉ gửi email, SĐT (`backend/pkg/public/service/mcn_annex.go:58-78`); một mã loại phụ lục | Tên MCN, MST, tỷ lệ, ngày; chọn mã mẫu theo loại MCN nếu AT tách mẫu (§11.3). Mẫu ký 17/11 (họp 10/11) | Chờ AT |
 | 21 | `cmd/mcn-adjust`, `cmd/mcn-rebind` | Chưa có | Runbook không có UI, dry-run, ticket; `mcn-adjust` cần PO đồng ý (ngoài D7) | Trước go-live |
+| 22 | Chặn tài khoản nhà | Trang mời trả `is_mcn_account`, Agree và từ chối theo mã báo lỗi (`backend/pkg/public/service/mcn_invite.go:144, 174, 281`); tạo, kích hoạt MCN chặn email của thành viên (`backend/pkg/admin/service/mcn_validate.go:71-81`); gắn bỏ qua thành viên (`backend/internal/service/mcn.go:172-176`) | Cho tài khoản vận hành nhận link 100% của chính MCN, đặt `house`; chặn link dưới 100% (`MCN_HOUSE_RATE_REQUIRED`); vẫn chặn link của MCN khác; chặn ở tạo, kích hoạt, gắn chỉ khi là thành viên MCN khác (INV-03, INV-19) | Sửa ngay |
+| 23 | Nhãn tài khoản nhà | Bảng thành viên của MCN, tab Thành viên ở admin chưa phân biệt | Nhãn "Tài khoản nhà" theo `house` | Phase 4 |
+| 24 | Mốc chiến dịch, lệnh theo chiến dịch | Chưa có | `MCN_FEE_EVENT_START_FROM` trong `applyMcnFees`; `event` trên `mcn-cash-flows`, `mcn-payouts`; thuế nhóm; cột chiến dịch ở file ngân hàng và màn đối soát MCN | Phase 5–6 |
 
 Giữ nguyên vì đã đúng: các collection `mcns`, `mcn-documents`, `mcn-invite-links`, `mcn-members`; index `isMember`; CAS theo trạng thái nguồn; Q10, Q13; tỷ lệ 0..100; hai loại MCN; route web và admin; test e2e hiện có (`backend/pkg/admin/service/mcn_e2e_test.go`, `backend/pkg/public/service/mcn_invite_e2e_test.go`, `backend/pkg/public/service/mcn_bind_e2e_test.go`, `backend/pkg/public/router/mcn_*_e2e_test.go`).
 
@@ -1145,7 +1250,7 @@ Giữ nguyên vì đã đúng: các collection `mcns`, `mcn-documents`, `mcn-inv
 | §1 Nguyên tắc 4; §3.3, §8.2, §9 | Mọi dòng tiền MCN qua `AddCashFlow`, khóa theo kỳ; phí vào `cash-flows` của `acc.User`; `IsPayableMcnUser` + `TaxExempt` | `McnLedger().Post`, `AppendStrict`, khóa theo (item, dòng quan hệ); sổ `mcn-cash-flows`, lệnh `mcn-payouts`, `TaxPolicyFor` theo payee |
 | §2.4, §2.5 | Tỷ lệ 1..99; cờ `open` unique theo user | 0..100; `isMember` theo user + `isPending` theo (user, MCN) + `annexInFlight` theo user |
 | §2.6, §8.1, §8.2 | Một `ReconciliationItemMcn` mỗi item, xét thành viên lúc Lấy danh sách; ghi net vì `ActionMustTaxReward` | `mcnSplits[]` theo dòng quan hệ và ngày phát sinh; `+G` và `−fee` |
-| §4, §12 | `MCN_EMAIL_IN_USE` khi email đã có user; 5 job | Dùng chung theo PRD Q12 (OQ-02); thêm 3 job (§14.1 #16) |
+| §4, §12 | `MCN_EMAIL_IN_USE` khi email đã có user; 5 job | Dùng chung theo PRD Q12 và họp 10/11; thêm 3 job (§14.1 #16) |
 
 ### 14.3 Chỗ lệch PRD và bản mẫu BA
 
@@ -1158,8 +1263,11 @@ Giữ nguyên vì đã đúng: các collection `mcns`, `mcn-documents`, `mcn-inv
 | 5 | Đợt chi khi còn kỳ chưa hoàn tất | Không quy định | Chặn Lấy danh sách đợt chi | Không chi khoản đang điều tra | PO, Kế toán |
 | 6 | Mở ký phụ lục | D18: Chờ ký nhiều MCN | Vẫn Chờ ký nhiều MCN; chỉ mở ký một phụ lục tại một thời điểm | Tránh hai phụ lục SIGNED | PO, BA |
 | 7 | Điều chỉnh phí | D7: chỉ bù bằng Thưởng thêm | Thêm runbook `mcn-adjust` cho phí trích sai | Thưởng thêm bị trích phí lần nữa | PO |
-| 8 | Thuế thu nhập nội dung của tài khoản MCN công ty | Q8 đề xuất miễn khấu trừ | Đề xuất khấu trừ như creator | §7.3, OQ-03 | PO, Legal |
-| 9 | Email MCN trùng tài khoản creator | PRD Q12: dùng chung; BA-01: không | Theo PRD Q12 | ADR-03, OQ-02 | PO, BA |
+| 8 | Thu nhập nội dung của tài khoản vận hành MCN | D14: tính như creator bình thường; Q8: đề xuất miễn khấu trừ | Tài khoản nhà vào MCN 100%, thu nhập vào sổ MCN, thuế theo loại MCN | Họp 10/11, ADR-12. PRD sửa D14, FR-002, FR-012 | PO |
+| 9 | Email MCN trùng tài khoản creator | PRD Q12: dùng chung; BA-01: không | Theo PRD Q12 và họp 10/11 | ADR-03. BA sửa BA-01 | BA |
+| 10 | Đổi MCN giữa kỳ | D24: chia theo thời gian | Giữ công thức, không có luồng riêng ở phase 1 | Họp 10/11 để P2 (NG-9), OQ-14 | PO |
+| 11 | Chi trả MCN | FR-019: đợt chi chung, chi toàn bộ số dư | Lệnh MCN theo chiến dịch, ngưỡng thuế theo nhóm | Họp 10/11, ADR-14, ADR-09 | PO, Kế toán |
+| 12 | Phạm vi trích phí | FR-016 không giới hạn chiến dịch | Chỉ chiến dịch bắt đầu từ mốc áp dụng | Họp 10/11, ADR-13 | PO |
 
 ## 15. Câu hỏi và rủi ro
 
@@ -1170,7 +1278,12 @@ Giữ nguyên vì đã đúng: các collection `mcns`, `mcn-documents`, `mcn-inv
 | Thuế KOL/KOC 10% trên số chi sau phí, ngưỡng 5.000.000đ mỗi đợt; MCN công ty không khấu trừ | D21 (05/11), D9 | `TaxPolicyFor`; lệch SD-04 ghi ở R-01 |
 | Ngày ký có tính phí; từ ngày kết thúc không trích | D20, BA-03 | `FeeWindow` |
 | Ngày phát sinh: view là ngày có view, mốc là ngày đạt mốc, Thưởng thêm là ngày Admin tạo | PRD §0 | `D(r)` |
-| Thu nhập nội dung của tài khoản MCN tính như creator bình thường, không trích phí | D14, BA Đã chốt | INV-18; thuế xem OQ-03 |
+| MCN kiêm creator trên cùng portal, dùng chung tài khoản; gộp chi và thuế một lần: tài khoản nhà MCN đặt 100% cho MCN | Họp 10/11 [seg-056-073, seg-079-089]; thay D14 | ADR-03, ADR-12, INV-03, INV-19; đóng OQ-02, OQ-03 |
+| MCN chỉ áp cho chiến dịch mới, từ tháng sau go-live | Họp 10/11 [seg-024-031] | ADR-13, INV-20 |
+| "Campaign" là chiến dịch (`events`), không phải ADV | Chốt 11/11 | ADR-13, ADR-14 |
+| Kế toán chi theo từng chiến dịch, không gộp | Họp 10/11 [seg-091-101] | ADR-14 |
+| Không làm luồng rời, vào lại, đổi MCN giữa chiến dịch ở phase 1 | Họp 10/11 [seg-007, seg-032, seg-052] | NG-9 |
+| Hợp đồng MCN–AT riêng; KOL/KOC–AT riêng, phụ lục ghi tỷ lệ; ký trên FPT e-contract, bản cá nhân và công ty; ký 17/11 | Họp 10/11 [seg-012-018, seg-239-249] | §11.3, §14.1 #20 |
 | Chờ ký nhiều MCN; ký một MCN thì lời mời khác Hết hiệu lực | D18 | `superseded` |
 | Hết 12 tháng tự kết thúc; báo rời trước 15 ngày; MCN chấm dứt có hiệu lực ngay | D19, D15, FR-011 | `FeeWindow` |
 | MCN xem kỳ đã hợp tác sau khi thành viên rời | D22 | Xét cả dòng `ended` |
@@ -1180,18 +1293,19 @@ Giữ nguyên vì đã đúng: các collection `mcns`, `mcn-documents`, `mcn-inv
 
 | ID | Câu hỏi | Đề xuất mặc định | Tác động nếu khác | Người chốt | Hạn |
 |---|---|---|---|---|---|
-| OQ-01 | Phí MCN cá nhân khấu trừ 10% như KOL/KOC hay là thu nhập kinh doanh? Có gộp ngưỡng với thu nhập creator cùng CCCD trong đợt để trung lập thuế với PRD Q12 không? | `pit_10`, không gộp | Gộp: cài bước gộp (ADR-09), thêm ràng buộc loại lệnh; policy khác: thêm policy | Kế toán (họp 10/11) | Trước phase 6 |
-| OQ-02 | Email đăng nhập MCN được trùng tài khoản creator (PRD Q12) hay không (BA-01, BA Cần chốt #3)? | Dùng chung (ADR-03) | Thêm kiểm email ở 4 điểm; không ảnh hưởng tiền | PO, BA | Trước sửa §14.1 #3 |
-| OQ-03 | Thu nhập nội dung của tài khoản vận hành MCN công ty: cá nhân hay pháp nhân (PRD Q8, SD-04)? | Cá nhân (§7.3) | Thêm `mcn_self_content`, rẽ ghi có ở `postItem` | PO, Legal | Trước phase 5 |
+| OQ-01 | Thu nhập của MCN cá nhân (phí và nội dung tài khoản nhà) khấu trừ 10% như KOL/KOC hay là thu nhập kinh doanh? Biên bản họp 10/11 chưa ghi | `pit_10` trên `groupBase` | Policy khác: thêm policy, cấu trúc giữ nguyên | Kế toán | Trước phase 6 |
 | OQ-04 | AT chi theo file xuất (cột TK đang rỗng) hay theo hồ sơ econtract theo SSO? | Dòng MCN có đủ TK trong file | MCN cần kênh chi riêng | AT, vận hành | Trước phase 6 |
 | OQ-05 | Econtract có trả `signed_at` của phụ lục? Có API tra CCCD eKYC theo SSO? AT core có gửi sự kiện SIGNED qua webhook HMAC (khuôn `backend/pkg/public/router/routeauth/auth.go:95-130`)? | Giờ đồng bộ; CCCD từ `users.contract`; polling | Thay nguồn, cấu trúc giữ nguyên; webhook giảm R-06 | AT core | Trước phase 5 |
 | OQ-06 | Phí quản lý trong phụ lục đã gồm VAT chưa? Kế toán có yêu cầu nhận hóa đơn của MCN công ty trước khi chi? | Đã gồm VAT; không chặn chi theo hóa đơn | Chưa gồm VAT: số trên file khác số trên sổ; chặn theo hóa đơn: thêm `invoiceReceived` lên lệnh | Kế toán | Trước phase 6 |
 | OQ-07 | Phụ lục SIGNED sau khi dòng đã Từ chối, Quá hạn, Hết hiệu lực: ai thanh lý trên econtract? | `signedAfterClose`, không trích phí, báo vận hành | – | Legal, AT | Trước go-live |
-| OQ-08 | Tỷ lệ 100%: phụ lục hợp lệ? KOL/KOC nhận 0đ có vẫn bắt buộc eKYC, ②? | Cho phép, vẫn bắt buộc | Chặn ở tạo link | Legal | Trước go-live |
+| OQ-08 | Phụ lục 100% có đủ căn cứ chi thu nhập nội dung của tài khoản nhà cho MCN (với MCN công ty: thành doanh thu pháp nhân)? Người nhận 0đ có vẫn bắt buộc eKYC, ②? | Đủ, vẫn bắt buộc | Không đủ: cần mẫu phụ lục riêng cho tài khoản nhà | Legal, team My | Trước 17/11 |
 | OQ-09 | Thời hạn lưu dữ liệu đối soát MCN xem sau khi thành viên rời; DPA có bao phủ (NĐ 13/2023)? | Theo thời hạn chứng từ kế toán | Thêm bộ lọc thời hạn | Legal | Trước phase 7 |
 | OQ-10 | Max loại creator có số dư dưới Max (`backend/pkg/admin/service/transfer_processing.go:96-104`) là cố ý? | Giữ cho creator; MCN cắt số chi | – | PO | Trước phase 6 |
 | OQ-11 | Hoa hồng người giới thiệu tính trên G hay sau phí? | G, như hiện nay | Đổi `base` của outbox | PO | Trước phase 5 |
 | OQ-12 | Đổi TK ngân hàng MCN có cần maker-checker ngay phase 1? | Audit + Telegram | Thêm `verifiedBy`, chặn chi tới khi duyệt | PO, Kế toán | Trước go-live |
+| OQ-13 | Chi theo chiến dịch áp cho lệnh MCN hay cho mọi lệnh creator? Nhiều lệnh nhỏ cho cùng TK MCN, mỗi lệnh một phí chuyển khoản: Kế toán chấp nhận? | Chỉ lệnh MCN (ADR-14) | Mọi lệnh: đổi đường chi creator, ngoài phase 1 | PO, Kế toán | Trước phase 6 |
+| OQ-14 | KOL/KOC rời hoặc đổi MCN khi chiến dịch đang chạy: phí của chiến dịch tính thế nào ở phase 1? | Giữ chia theo ngày (`FeeWindow`), không chặn | Chặn rời tới hết chiến dịch: sửa báo rời, chấm dứt, job hết 12 tháng | PO | Trước phase 5 |
+| OQ-15 | Tài khoản vận hành bắt buộc ký phụ lục 100% với MCN của mình trước chiến dịch đầu tiên? | Không chặn bằng hệ thống; báo cáo vận hành | Bắt buộc: chặn đăng ký chiến dịch của tài khoản vận hành chưa là thành viên nhà | PO, Legal | Trước go-live |
 
 ### 15.3 Rủi ro
 
@@ -1204,9 +1318,11 @@ Giữ nguyên vì đã đúng: các collection `mcns`, `mcn-documents`, `mcn-inv
 | R-05 | AT chi theo econtract, không theo file xuất (OQ-04) | Trung bình | MCN không nhận tiền qua đợt chi | Chốt trước phase 6 |
 | R-06 | Không có webhook, đồng bộ phụ lục trễ | Trung bình | Thành viên kích hoạt muộn, MCN mất phí của các ngày trước kích hoạt | `SyncSign` khi KOL/KOC quay về; job 15 phút; webhook (OQ-05) |
 | R-07 | Đổi TK ngân hàng MCN do tài khoản admin bị chiếm | Thấp | Chi sai người | Audit + Telegram; maker-checker phase sau (OQ-12) |
-| R-08 | Bật `McnEnabled` khi phase 6 chưa lên | Thấp | Phí vào sổ MCN không có đường chi | Rollout §11.4; `EnabledFor` từ chối partner chưa bật `LedgerV2` |
+| R-08 | Đặt mốc áp dụng khi phase 6 chưa lên; hoặc đặt mốc sau khi đã chạy kỳ đối soát có chiến dịch tháng 12 | Trung bình | Phí vào sổ MCN không có đường chi; hoặc kỳ đã chạy không có phí, MCN mất phí của kỳ đó | Rollout §11.4 bước 6; checklist trước mỗi kỳ tháng 12; `applyMcnFees` từ chối partner chưa bật `LedgerV2` |
 | R-09 | Màn hình hiển thị phí khác `ΣG × tỷ lệ` (cách tính BA-03) | Cao | Vài đồng chênh, khiếu nại | Màn hình đọc sổ; BA sửa công thức hiển thị (§14.3 #2) |
-| R-10 | Ca P (OQ-01) khấu trừ thấp hơn mô hình một tài khoản | Trung bình | Thiếu khấu trừ so với ý định ban đầu | `taxpayerKey` trên file để Kế toán tổng hợp; bật gộp khi chốt |
+| R-10 | Tài khoản vận hành không ký phụ lục 100%, vẫn nhận thu nhập nội dung qua lệnh creator riêng | Trung bình | Lại có hai lệnh, hai lần xét ngưỡng cho cùng người (điều họp 10/11 muốn tránh) | OQ-15; báo cáo vận hành; `taxpayerKey` trên file để Kế toán tổng hợp |
+| R-11 | Kênh nhà khác (không phải tài khoản vận hành, không trùng CCCD) để tỷ lệ dưới 100% | Trung bình | Thu nhập chia hai lệnh dưới ngưỡng | Hệ thống không nhận diện được; quy định trong Hợp đồng ①, Kế toán rà theo `taxpayerKey` |
+| R-12 | Phase 5–6 (sổ, chi, `LedgerV2`) chưa xong trước kỳ đối soát đầu của chiến dịch tháng 12 | Trung bình | Lùi mốc áp dụng, MCN mất phí tháng đầu | Tách go-live onboarding khỏi phase 5–6 (§11.4); demo theo tuần với Hà Lê để chốt sớm |
 
 ## 16. Lịch sử thay đổi
 
@@ -1214,3 +1330,4 @@ Giữ nguyên vì đã đúng: các collection `mcns`, `mcn-documents`, `mcn-inv
 |---|---|---|---|
 | 1.0 | 2026-11-04 | Vinh Nguyễn | Bản đầu. Vai MCN qua `mcn-accounts`, thành viên qua `mcn-members`; không thêm loại tài khoản trên `users` |
 | 2.0 | 2026-11-10 | Nguyễn Đăng Định | Viết lại kiến trúc tài khoản, sổ cái, chi trả, thuế: MCN là chủ sở hữu phí; sổ `mcn-cash-flows`; lệnh `mcn-payouts`; thuế theo payee; kiêm vai theo PRD Q12; phí theo ngày phát sinh với cửa sổ không phụ thuộc job; `postItem` trong transaction cho mọi khoản theo cờ partner; bất biến vai mức DB; đối chiếu với code nhánh `feat/mcn-phase1` |
+| 2.1 | 2026-11-11 | Nguyễn Đăng Định | Cập nhật theo họp 10/11: tài khoản nhà MCN 100%, một lần chi và một lần thuế cho MCN kiêm creator (ADR-12, thay ADR-03 phần thu nhập, INV-03, INV-19); mốc áp dụng theo chiến dịch (ADR-13); lệnh chi MCN theo chiến dịch và ngưỡng thuế theo nhóm (ADR-14, ADR-09); NG-9 đến NG-11; rollout theo mốc thời gian; đóng OQ-02, OQ-03; thêm OQ-13 đến OQ-15, R-10 đến R-12 |
