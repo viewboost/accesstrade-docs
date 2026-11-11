@@ -510,14 +510,21 @@ Lúc Lấy danh sách (hàm `applyMcnFees`), với item i, gom các khoản đã
 
 ```
 R_ij     = các khoản pending của item i có mcnMember = j
-fee_r    = min( làm tròn half-up(cash_r × mcnRate_r / 100), floor(cash_r) )   // làm tròn từng khoản (PRD FR-016)
 base_j   = Σ cash_r  với r ∈ R_ij
-fee_j    = Σ fee_r   với r ∈ R_ij
+fee_j    = min( làm tròn half-up(base_j × rate_j / 100), floor(base_j) )   // làm tròn một lần cho mỗi phần phí
 mcnFee_i = Σ fee_j
 netCash_i = totalCash_i − mcnFee_i
 ```
 
-Kết quả lưu vào `mcnSplits`. Sau `processed` không tính lại; đổi ENV sau đó không ảnh hưởng kỳ đã chốt. Làm tròn từng khoản theo PRD FR-016, nên tổng phí có thể lệch `base × tỷ lệ` vài đồng. Tỷ lệ 0% vẫn lưu phần phí để MCN thấy, nhưng không sinh dòng tiền.
+Kết quả lưu vào `mcnSplits`. Sau `processed` không tính lại; đổi ENV sau đó không ảnh hưởng kỳ đã chốt. Tỷ lệ 0% vẫn lưu phần phí để MCN thấy, nhưng không sinh dòng tiền.
+
+Làm tròn một lần trên tổng của mỗi phần phí (một KOL/KOC, một dòng quan hệ, một kỳ), không làm tròn từng khoản như PRD FR-016 (chờ PO chốt, §12.2):
+
+- Khớp phụ lục "MCN nhận x% thu nhập": ai bấm máy `tổng hoa hồng × tỷ lệ` cũng ra đúng số trên màn hình và trong số dư.
+- Sai số tối đa 0,5đ mỗi phần phí. Làm tròn từng khoản cộng dồn sai số theo số khoản: 30 khoản thưởng view trong kỳ có thể lệch tới khoảng 15đ.
+- Làm tròn từng khoản không giúp truy vết thêm: tiền vào số dư theo item, `mcnSplits` lưu phí theo item.
+
+Ví dụ 3 khoản 10.003đ, 15%: trên tổng 30.009 × 15% = 4.501,35 → 4.501đ; từng khoản 1.500 × 3 = 4.500đ. Tổng phí cả kỳ của một MCN là tổng các phần đã làm tròn theo từng KOL/KOC, có thể lệch vài đồng so với `tổng hoa hồng mọi KOL/KOC × tỷ lệ`; chấp nhận vì mỗi người có tỷ lệ và phụ lục riêng.
 
 `applyMcnFees` lỗi sau 3 lần thử thì kỳ giữ `processing` và gửi Telegram; Admin Hủy kỳ rồi lập lại. Kỳ không sang `processed` khi phí chưa tính xong.
 
@@ -807,7 +814,7 @@ Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt c�
 
 | Lớp | Ca chính |
 |---|---|
-| Unit | Cửa sổ phí (kích hoạt 23:59 và 00:00), công thức phí (số lẻ, tỷ lệ 0 và 100), thuế (đúng 5.000.000 và 4.999.999), chia thuế nhóm, chuẩn hóa CCCD |
+| Unit | Cửa sổ phí (kích hoạt 23:59 và 00:00), công thức phí (làm tròn trên tổng, số lẻ, tỷ lệ 0 và 100), thuế (đúng 5.000.000 và 4.999.999), chia thuế nhóm, chuẩn hóa CCCD |
 | Integration, Mongo thật (`-tags integration`, cổng 27099) | Đồng ý đồng thời; gắn tài khoản khi đang Chờ ký MCN khác; tài khoản nhà; mở ký hai MCN; ký trước hạn đồng bộ sau hạn; Duyệt hai lần; Duyệt dừng giữa chừng rồi Duyệt lại; hai đợt chi cùng MCN; loại lệnh sau Chuyển tiền |
 | Tiền và thuế | Mọi dòng bảng §8.2; đổi MCN giữa item; chiến dịch bắt đầu 30/11 và 01/12 với mốc 01/12; mốc trống; MCN có chiến dịch âm; Max cắt số chi |
 | Hồi quy creator | Kỳ và đợt chi không có MCN: dòng tiền và thuế giống bản cũ; partner tắt `LedgerV2` chạy code cũ |
@@ -853,7 +860,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | ADR-03 | Email MCN được trùng tài khoản creator; người vận hành vẫn là creator | Bắt email mới: MCN cá nhân phải có hai user cùng CCCD |
 | ADR-04 | Guard vai bằng transaction, `$inc users.mcnGuardVer` và partial unique | Collection guard riêng: mọi đường kết thúc phải nhớ xóa dòng guard, dễ lệch |
 | ADR-05 | Bên creator ghi `+G` và `−fee` | Một dòng đã trừ phí: mất dấu phí, trái FR-018 |
-| ADR-06 | Phí theo ngày phát sinh từng khoản; `feeFrom` từ ngày kích hoạt; làm tròn từng khoản; tính phí lỗi thì kỳ dừng | Xét thành viên tại lúc Lấy danh sách: trái D20. Lấy theo giờ ký thật: hồi tố kỳ đã chốt |
+| ADR-06 | Phí theo ngày phát sinh từng khoản; `feeFrom` từ ngày kích hoạt; làm tròn một lần trên tổng mỗi phần phí; tính phí lỗi thì kỳ dừng | Xét thành viên tại lúc Lấy danh sách: trái D20. Lấy theo giờ ký thật: hồi tố kỳ đã chốt |
 | ADR-07 | Mỗi item ghi trong một transaction, bật theo `LedgerV2` | Giữ đường cũ, chỉ thêm bước kiểm: phát hiện được lỗi nhưng không sửa được, kỳ không hoàn tất được |
 | ADR-08 | Lệnh MCN riêng `mcn-payouts`; trừ tiền lúc Chuyển tiền, kiểm số dư trong transaction | Dùng chung `withdraws` với `payeeType = mcn`: mọi chỗ đọc `withdraws` phải xử lý thêm loại người nhận MCN |
 | ADR-09 | Thuế theo loại người nhận; MCN cá nhân xét ngưỡng trên tổng các lệnh trong đợt | Xét từng lệnh: chia nhỏ để không bị khấu trừ. Gộp theo CCCD với creator: phụ thuộc CCCD tự khai, để phase 2 |
@@ -868,7 +875,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | # | Nội dung | PRD, BA | Tài liệu này | Người duyệt |
 |---|---|---|---|---|
 | 1 | Ngày bắt đầu tính phí | Ngày ký (FR-014) | Ngày hệ thống kích hoạt; lệch khi đồng bộ qua nửa đêm hoặc econtract trễ | PO |
-| 2 | Làm tròn | FR-016 từng khoản; BA-03 trên tổng kỳ | Từng khoản; BA sửa cách hiển thị | PO, BA |
+| 2 | Làm tròn | FR-016 từng khoản; BA-03 trên tổng kỳ | Đề xuất làm tròn một lần trên tổng mỗi phần phí (khớp BA-03, khớp phép tính tay); chờ PO chốt, PRD sửa FR-016 | PO |
 | 3 | Tắt cờ MCN | FR-016: chỉ partner bật MCN | Tắt cờ không dừng thu phí theo phụ lục đã ký | PO |
 | 4 | Trạng thái kỳ | D8: giữ trạng thái hiện có | Thêm "Duyệt lỗi" (`run_failed`) | PO, BA |
 | 5 | Đợt chi khi có kỳ đang Duyệt | Không quy định | Chặn | PO, Kế toán |
@@ -924,7 +931,7 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | R-04 | Không có webhook, kích hoạt thành viên trễ, MCN mất phí các ngày trước kích hoạt | Đồng bộ khi KOL/KOC quay lại trang; job 15 phút; webhook nếu AT có (OQ-05) |
 | R-05 | Tài khoản admin bị chiếm, đổi TK ngân hàng MCN | Audit, Telegram; duyệt hai người ở phase sau |
 | R-06 | Đặt mốc khi chưa có đường chi, hoặc đặt mốc trễ sau kỳ có chiến dịch tháng 12 | Phase 5 và 6 lên cùng bản; thiếu `LedgerV2` thì tính phí báo lỗi; checklist trước mỗi kỳ tháng 12 |
-| R-07 | Màn hình hiển thị phí lệch `ΣG × tỷ lệ` vài đồng, gây khiếu nại | Màn hình đọc từ bảng tiền; BA sửa công thức hiển thị |
+| R-07 | Tổng phí cả kỳ của MCN lệch `tổng hoa hồng mọi KOL/KOC × tỷ lệ` vài đồng | Làm tròn trên tổng mỗi phần phí nên từng KOL/KOC khớp phép tính tay; màn hình đọc phí đã lưu, không tự nhân |
 | R-08 | Người đứng MCN chưa ký phụ lục 100%, thu nhập nội dung vẫn đi lệnh creator | Báo cáo vận hành nhắc ký; `taxpayerKey` trên file để Kế toán gộp |
 | R-09 | Kênh khác của MCN vào bằng link dưới 100% | Hệ thống không nhận diện được; ghi trong hợp đồng MCN; Kế toán rà theo `taxpayerKey` |
 | R-10 | Phase 5–6 chưa xong trước kỳ đầu của chiến dịch tháng 12 | Tách go-live onboarding khỏi phần tiền; demo theo tuần |
@@ -937,3 +944,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 2.0, 2.1 | 2026-11-10, 2026-11-11 | Nguyễn Đăng Định | MCN sở hữu số dư, bảng tiền và lệnh chi riêng; cập nhật theo họp 10/11 |
 | 3.0 | 2026-11-11 | Nguyễn Đăng Định | Gộp các bản thành một, viết gọn; mở đầu bằng phần giới thiệu MCN phase 1 và sơ đồ luồng tiền; thiết kế chính viết dạng hỏi–đáp; thêm bảng vị trí code; cập nhật việc còn lại theo code tại `9a599f27c` |
 | 3.1 | 2026-11-11 | Nguyễn Đăng Định | Gắn MCN, dòng quan hệ, tỷ lệ lên khoản thưởng lúc tạo (`tagMcn`), không gỡ khi rời; đối soát cộng theo dòng quan hệ thay vì xét cửa sổ lúc Lấy danh sách (§7.1, §7.2); màn Đối soát MCN và thống kê chi tiết MCN đọc khoản đã gắn, tách Tạm tính và Đã đối soát (§9.3), index `(mcn, status, date)` (§6.5); thêm `mcns.statistic` giống `users.statistic` (§6.4.1) |
+| 3.2 | 2026-11-11 | Nguyễn Đăng Định | Đề xuất làm tròn một lần trên tổng mỗi phần phí thay vì từng khoản (§7.2, §12.2 điểm 2, chờ PO) |
