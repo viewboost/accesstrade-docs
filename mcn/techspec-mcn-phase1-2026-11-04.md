@@ -368,7 +368,7 @@ Số cache để hiện ở màn Đối soát, Số dư của MCN và chi tiết
 | `totalMember`, `totalLink` | Đang có | `mcn-members`, `mcn-invite-links` |
 | `totalMemberActive` | Thành viên đang hợp tác hoặc đang báo rời | `mcn-members` |
 | `totalMemberCash` | Tổng thu nhập thành viên tạo ra trong thời gian hợp tác | Σ `cash` khoản thưởng có `mcn` = MCN, không tính khoản bị từ chối |
-| `totalFeePending` | Phí tạm tính, chưa đối soát | Khoản `status = pending`: Σ làm tròn(`cash × mcnRate`) |
+| `totalFeePending` | Phí tạm tính, chưa đối soát | Khoản `status = pending`: làm tròn(`Σ cash × mcnRate`) theo từng dòng quan hệ |
 | `totalFeeCompleted` | Phí đã đối soát, đã vào số dư | Σ dòng `mcn_fee` của `mcn-cash-flows` |
 | `cashRemaining` | Số dư hiện tại | Σ `value` của `mcn-cash-flows` |
 | `withdrawTotal`, `withdrawPending`, `withdrawSuccess`, `withdrawRejected` | Số lệnh chi | `mcn-payouts` theo trạng thái |
@@ -692,7 +692,7 @@ KOL/KOC:
 | Số dư, Lịch sử dòng tiền (`frontend/src/pages/bank`) | Creator | `cash-flows` của user |
 | Avatar › Đối soát, MCN của tôi | Creator | `reconciliation-items` và `mcn-members` của user |
 | Quản lý MCN › Số dư | MCN | `mcn-cash-flows` |
-| Quản lý MCN › Đối soát; Admin › chi tiết MCN › thống kê | MCN, Admin | Tạm tính: khoản `event-rewards`, `event-bonus` có `mcn` = MCN đó, `status = pending`, phí = Σ làm tròn(`cash × mcnRate`). Đã đối soát: `reconciliation-items.mcnSplits` của kỳ đã xử lý. Gom được theo thành viên (`mcnMember`, kể cả đã rời, D22), chiến dịch (`event`), khoảng ngày phát sinh (`date`) |
+| Quản lý MCN › Đối soát; Admin › chi tiết MCN › thống kê | MCN, Admin | Tạm tính: khoản `event-rewards`, `event-bonus` có `mcn` = MCN đó, `status = pending`, phí = làm tròn(`Σ cash × mcnRate`) theo từng dòng quan hệ. Đã đối soát: `reconciliation-items.mcnSplits` của kỳ đã xử lý. Gom được theo thành viên (`mcnMember`, kể cả đã rời, D22), chiến dịch (`event`), khoảng ngày phát sinh (`date`) |
 | Quản lý MCN › Thành viên, Lời mời | MCN | `mcn-members`, `mcn-invite-links` |
 | Thông báo MCN | MCN | Gửi tài khoản vận hành hiện hành tại lúc gửi |
 | Đợt chi creator | Creator | Người vận hành được xét như mọi creator |
