@@ -685,7 +685,7 @@ Frontend phân biệt lỗi theo mã trong body (dải 2400–2599, `backend/int
 | IDOR | Mọi truy vấn phía MCN lọc theo `mcnID` của phiên. API đối soát chỉ trả phần phí của MCN đó |
 | IDOR eKYC, ký hợp đồng creator | Ba route lưu eKYC, ký và tra hợp đồng creator đang nhận SSO id từ client (`backend/pkg/public/handler/user.go`). Sửa sang SSO của phiên, trước go-live |
 | Người Chờ ký | MCN thấy tên, không thấy email, SĐT; ảnh chỉ hiện khi đã là thành viên |
-| Dữ liệu cá nhân | Hồ sơ ở bucket riêng tư, tải bằng presigned URL ngắn hạn. Log che số TK, CCCD (giữ 4 số cuối) |
+| Dữ liệu cá nhân | Hồ sơ ở thư mục `mcn-documents/` của bucket riêng tư `BUCKET_PRIVATE_FILE` (bucket đang chứa ảnh CCCD, nằm ở gốc), tải bằng presigned URL 10 phút. Log che số TK, CCCD (giữ 4 số cuối) |
 | TK ngân hàng MCN | Chỉ admin sửa. Mỗi lần đổi tạo phiên bản mới, ghi audit, gửi Telegram. Lệnh chi dùng bản đã chép |
 | Audit | Dòng tiền MCN có `createdBy`; mọi bước chuyển của `mcn-members`, `mcn-accounts`, `mcn-payouts` ghi `history` |
 
