@@ -92,18 +92,11 @@ Câu 1–5 là câu hỏi của tech lead. Câu 6–9 là các điểm còn lạ
 9. Làm sao không nhầm số của creator và MCN trên màn hình?
    Mỗi màn hình chỉ đọc một bảng. Trang Số dư của creator đọc `cash-flows`; trang Quản lý MCN đọc `mcn-cash-flows`. Không màn hình nào cộng hai số. Xem §9.3.
 
-### 1.4 Còn chờ chốt
+### 1.4 Câu hỏi còn mở
 
-Năm câu để mở ở bản trước (OQ-01, 13, 14, 15, 16) đã có câu trả lời ở họp 10/11, ghi ở §12.3. Còn lại các câu cần trả lời trước khi code phần tiền:
+Không còn câu hỏi chặn code. Các câu ở bản trước đã đóng theo họp 10/11 (§12.3). Với những điểm PRD và biên bản họp chưa nói, tài liệu chọn sẵn cách làm, phần lớn giữ như hệ thống hiện nay (§12.4). Ai muốn khác thì báo khi review.
 
-- OQ-04 (AT, vận hành): AT chi theo file xuất hay theo hồ sơ econtract.
-- OQ-05 (AT core): econtract có trả giờ ký phụ lục, có webhook không.
-- OQ-06 (Kế toán): phí trong phụ lục đã gồm VAT chưa; có chặn chi khi MCN công ty chưa gửi hóa đơn không.
-- OQ-07 (Legal, AT): phụ lục ký sau khi lời mời đã đóng thì ai thanh lý.
-- OQ-10 (PO): đợt chi bỏ qua creator có số dư dưới Max, có cố ý không.
-- OQ-11 (PO): hoa hồng người giới thiệu tính trên G hay trên số sau phí.
-
-Danh sách đủ ở §12.4.
+Chỉ còn chờ AT gửi mã mẫu phụ lục (dự kiến ký 17/11).
 
 ## 2. Thuật ngữ
 
@@ -811,7 +804,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `9a599f27c`.
 | 18 | `CreateAnnex` gửi tên MCN, MST, tỷ lệ, ngày; chọn mẫu theo loại MCN (hai biến ở §11.1) | Chờ AT (17/11) |
 | 19 | Viết lại plan code phase 5, 6 theo tài liệu này (plan cũ còn ghi phí vào số dư người vận hành) | Trước khi code phase 5 |
 
-## 12. Quyết định, câu hỏi, rủi ro
+## 12. Quyết định và rủi ro
 
 ### 12.1 Quyết định chính
 
@@ -866,20 +859,22 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `9a599f27c`.
 - MCN thấy tên người Chờ ký; lý do từ chối, chấm dứt, báo rời hiện cho bên kia (Q10, Q13).
 - Đổi TK ngân hàng MCN không cần hai người duyệt ở phase 1; dùng audit và Telegram.
 
-### 12.4 Còn mở
+### 12.4 Cách làm mặc định
 
 OQ-01, 02, 03, 12, 13, 14, 15, 16 đã đóng, nội dung nằm ở §12.3.
 
-| ID | Câu hỏi | Đề xuất | Người chốt | Hạn |
-|---|---|---|---|---|
-| OQ-04 | AT chi theo file xuất hay theo hồ sơ econtract? | Theo file xuất; dòng MCN lấy TK đã chép trên lệnh | AT, vận hành | Trước phase 6 |
-| OQ-05 | Econtract có trả giờ ký phụ lục, có API tra CCCD eKYC, có gửi webhook khi ký không? | Chưa có thì dùng giờ đồng bộ, CCCD tự khai, polling | AT core | Trước phase 5 |
-| OQ-06 | Phí trong phụ lục đã gồm VAT chưa? Có chặn chi khi chưa nhận hóa đơn của MCN công ty? | Đã gồm VAT; không chặn | Kế toán | Trước phase 6 |
-| OQ-07 | Phụ lục ký sau khi lời mời đã đóng thì ai thanh lý? | Không trích phí, báo vận hành | Legal, AT | Trước go-live |
-| OQ-08 | Phụ lục 100% có đủ căn cứ chi thu nhập nội dung cho MCN không? Tài khoản nhà có phải eKYC và ký hợp đồng creator không? | Đủ (họp 10/11 tạm áp dụng, Legal rà thêm); vẫn bắt buộc | Legal, team My | 17/11 |
-| OQ-09 | Giữ dữ liệu đối soát cho MCN xem bao lâu sau khi thành viên rời? | Theo thời hạn lưu chứng từ kế toán | Legal | Trước phase 7 |
-| OQ-10 | Đợt chi đang bỏ qua creator có số dư dưới Max, có cố ý không? | Giữ cho creator; MCN chỉ xét Min, trên Max thì cắt | PO | Trước phase 6 |
-| OQ-11 | Hoa hồng người giới thiệu tính trên G hay trên số sau phí? | G, như hiện nay | PO | Trước phase 5 |
+Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo cột "Cách làm", không cần chờ trả lời.
+
+| ID | Trường hợp | Cách làm |
+|---|---|---|
+| OQ-04 | AT chi tiền theo đâu | Theo file xuất như hiện nay; dòng MCN lấy TK ngân hàng đã chép trên lệnh |
+| OQ-05 | Econtract chưa trả giờ ký phụ lục, chưa có webhook, chưa tra được CCCD eKYC | Dùng giờ đồng bộ, polling, CCCD tự khai. AT có thêm thì dùng sau |
+| OQ-06 | VAT và hóa đơn của MCN công ty | Phí trong phụ lục coi là đã gồm VAT. Hóa đơn xử lý ngoài hệ thống, không chặn chi |
+| OQ-07 | Phụ lục ký sau khi lời mời đã đóng | Không kích hoạt, không trích phí, báo vận hành xử lý |
+| OQ-08 | Tài khoản nhà có phải eKYC, ký hợp đồng creator không | Có, vì phụ lục gắn với hợp đồng creator. Căn cứ chi 100% cho MCN: họp 10/11 tạm áp dụng, Legal rà sau |
+| OQ-09 | MCN xem lại đối soát cũ trong bao lâu | Không xóa, như dữ liệu đối soát hiện nay |
+| OQ-10 | Đợt chi có đặt Max | Creator giữ như hiện nay. MCN chỉ xét Min, vượt Max thì chi tới Max, phần còn lại để đợt sau |
+| OQ-11 | Hoa hồng người giới thiệu | Tính trên G như hiện nay |
 
 ### 12.5 Rủi ro
 
