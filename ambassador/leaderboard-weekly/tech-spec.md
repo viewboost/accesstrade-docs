@@ -2,7 +2,29 @@
 
 **Ngày:** 2026-08-06 · **Branch thực tế:** `feat/leaderboard-weekly` (từ `origin/release`, rebase sang `develop`) · `perf/leaderboard-cache` (từ `origin/develop`)
 **PRD:** `prd-leaderboard-weekly-2026-08-06.md`
-**Trạng thái:** ✅ Đã triển khai FR-001→FR-005. **PR #97** merged 2026-08-05 vào `develop`; cache + sửa kèm → **PR #99** (open). 2 đề xuất §7 PRD chờ duyệt.
+**Trạng thái:** 🗄️ **BẢN GHI LỊCH SỬ CỦA PHA v1 — KHÔNG CÒN MÔ TẢ CODE HIỆN TẠI.** Đọc §0 trước khi dùng bất kỳ đoạn nào bên dưới.
+
+---
+
+## 0. Tài liệu này đã bị thay thế — đọc trước
+
+Spec này viết cho `prd-leaderboard-weekly-2026-08-06.md` **v1.0** (chỉ WEEK, cấu hình phẳng ở cấp event) và mô tả đúng những gì **PR #97** đã ship. PRD có hiệu lực bây giờ là `prd-leaderboard-period-v2-2026-08-06.md` (v2.x), và code đã đi khác spec này ở nhiều điểm cốt lõi.
+
+**Giữ file lại** vì §2 còn giá trị: root cause, bẫy đặt tên `pointTotal`, và cách dựng `user_event_analytic_daily` không đổi. **Không dùng** §2.1, §2.4, §2.5 làm chuẩn implement.
+
+| Điểm | Spec này (v1) | Code hiện tại (v2) | Tra ở |
+|---|---|---|---|
+| Contract cấu hình | `LeaderboardPeriod string` phẳng trên `EventOpts` | struct `Leaderboard{}`: `period` · `rankBy` · `metrics[]` · `valueBasis` · `size` · `graceDays` | PRD v2 FR-001 |
+| Nơi đặt cấu hình | chỉ event | ba tầng: mặc định partner → ghi đè event → mặc định hệ thống | FR-002 |
+| Kỳ | chỉ `WEEK` | `LIFETIME` · `WEEK` · `MONTH` | FR-003 |
+| Kỳ hiển thị | kỳ hiện tại | kỳ hiển thị có **ân hạn** `graceDays` (0–6) + clamp theo vòng đời event + cờ `isSettling` | FR-004 |
+| Khoá cache | xoay theo mốc tuần (thứ Hai) | nhúng **mốc kỳ đang hiển thị** (xoay thứ Tư khi `graceDays=2`) **và** `size` | FR-007 |
+| Ghim creator | không có | model pin + `pinRank` + `reason` + `pinnedBy` + audit | FR-006 |
+| Vòng đời ghim | — | gắn với **KỲ** qua `pin.periodStart` + `IsActiveIn`, không gắn với `expiresAt` | **FR-006a** |
+| Admin | ô chọn kỳ trong modal event | tab BXH riêng, endpoint riêng có audit, tìm creator để ghim | FR-002, FR-006 |
+| Ràng buộc per-platform | không nêu | cảnh báo khi bật WEEK/MONTH cho app landing chưa hỗ trợ | FR-008 |
+
+Chi tiết implement của v2 nằm trong PRD v2 (§4 FR + Appendix Code Impact) và trong chính comment của code — không viết lại ở đây để khỏi có tài liệu thứ ba lệch tiếp.
 
 ---
 

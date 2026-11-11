@@ -3,14 +3,14 @@
 **Project:** Ambassador (Parasola + 16 partner app)
 **Date:** 2026-08-06
 **Author:** Dang Dinh
-**Version:** 2.4 (`frontend` giữ dãy icon, thêm dòng tổng — 2026-08-12)
+**Version:** 2.5 (vòng đời ghim theo kỳ + bảng tra mã test-case — 2026-08-18)
 **Status:** ✅ **Pha 1 code xong toàn bộ FR-001→FR-008**, đã lên `feat/leaderboard-weekly` (PR #127 đã merge vào `develop`, PR #128 chờ merge) và `feat/leaderboard-weekly-release` (PR #122 chờ merge vào `release`). Xem §6.1.
 ⚠️ **Chưa nghiệm thu trên giao diện thật** — chưa ai chạy admin để bấm thử, xem §6.5.
 ⚠️ **1 vấn đề chờ quyết định** (empty state, §6.4b). §6.4a đã bị bác bỏ. 3 đề xuất §7 vẫn chờ duyệt.
 **Kế hoạch đóng phần còn thiếu:** `ambassador/plans/260810-1716-leaderboard-pha1-con-lai/plan.md` — ~5.2 ngày, branch `feat/leaderboard-weekly`
 **Kế thừa:** `prd-leaderboard-weekly-2026-08-06.md` (v1.0 — chỉ Week, cấu hình phẳng ở cấp event). v1 giữ lại làm bản ghi phạm vi đã ship ở PR #97; **tài liệu này là bản có hiệu lực**.
 **Review:** `feedback-review-2026-08-06.md` (Vinh Nguyen) — R1–R6 đã chốt, đã hợp nhất vào tài liệu này
-**Tài liệu kỹ thuật:** `tech-spec.md` (spec implement) — **chưa cập nhật theo v2**, xem §6 pha 1
+**Tài liệu kỹ thuật:** `tech-spec.md` — **bản ghi lịch sử của v1 (PR #97), đã bị thay thế**. §0 của file đó liệt kê từng điểm code v2 đi khác v1; chuẩn implement của v2 là §4 FR + Appendix của chính tài liệu này
 
 ---
 
@@ -169,7 +169,8 @@ Port từ creator-os, merge ở **tầng service** rồi mới trả mảng → 
 | Thuộc tính | Vì sao |
 |---|---|
 | `pinRank` (0 = đầu), upsert theo `(board, subject)` | ghim lại không đẻ bản ghi trùng |
-| `expiresAt` → tự loại khi serve | **quan trọng nhất với kỳ tuần** — ghim cho tuần X phải tự rụng |
+| `periodStart` → ghim thuộc về **một KỲ** | **quan trọng nhất với kỳ tuần** — ghim cấp cho tuần X tự rụng khi bảng sang tuần X+1, xem FR-006a |
+| `expiresAt` → hạn Ops **cố ý** đặt để ghim sống dài hơn kỳ | ô ngày tự do, không bắt buộc; để trống là vòng đời do kỳ quyết định |
 | `reason` + `pinnedBy` + audit | ghim ảnh hưởng thứ hạng và giải thưởng |
 | dedup rồi **mới** cắt `size` | pin không lòi ra lần hai, không ăn mất chỗ |
 | `source: pinned\|ranked` | thêm `omitempty`, FE dùng sau |
@@ -180,6 +181,33 @@ Port từ creator-os, merge ở **tầng service** rồi mới trả mảng → 
 - [ ] Pin lên đầu theo `pinRank`, dedup khỏi ranked, cắt `size` **sau** dedup
 - [ ] **Chỉ cho ghim creator có phát sinh trong kỳ** — chặn ở admin lúc ghim, không chặn lúc serve
 - [ ] Shape `UserEventResponse` không đổi
+
+### FR-006a: Vòng đời ghim gắn với KỲ, không gắn với ngày hết hạn — **Must Have**
+
+> Bổ sung 2026-08-18 sau review vòng 2. Đây là **đổi ngữ nghĩa mặc định** của ghim so với bản v2.0→v2.4 của FR-006, không phải chi tiết implement — nên ghi ở đây thay vì chỉ nằm trong code.
+
+**Vấn đề của bản cũ.** Điều kiện *"chỉ ghim creator có phát sinh trong kỳ"* chỉ được kiểm **một lần**, lúc admin bấm ghim. Lúc serve, bảng không đối chiếu lại kỳ nào — chỉ lọc theo `expiresAt`, mà đó là ô ngày tự do và **không bắt buộc**. Để trống là ghim của tuần X còn nguyên ở tuần X+1 với số liệu tuần mới: creator nằm đầu bảng bằng một điều kiện chưa ai kiểm lại lần nào. Chính là ca **TC-PIN-004**.
+
+**Quy ước mới.** `pin.periodStart` đóng dấu mốc đầu kỳ của **bảng đang hiển thị lúc ghim**; `LeaderBoardPin.IsActiveIn` quyết định ghim còn hiệu lực hay không ở tầng serve:
+
+| Ca | Kết quả |
+|---|---|
+| Bảng đang hiển thị đúng kỳ được ghim | **còn** — kể cả khi `expiresAt` đã qua, để ghim không nhấp nháy giữa kỳ |
+| Bảng sang kỳ khác, `expiresAt` trống | **rụng** ← TC-PIN-004 |
+| Bảng sang kỳ khác, `expiresAt` còn hạn | **còn** — Ops cố ý giữ xuyên kỳ |
+| Kỳ luỹ kế (`LIFETIME`) | không có biên kỳ → chỉ `expiresAt` mới kết thúc ghim |
+| Ghim cũ chưa có `periodStart` | suy kỳ từ `pin.updatedAt` → **không cần migration** |
+
+**Ngày Ops chọn được kéo về cuối kỳ chứa ngày đó** (`pinExpiresAt`), nên bảng chỉ đổi ở biên kỳ chứ không rụng giữa chừng vào một buổi chiều thứ Sáu.
+
+**Không chọn phương án** *"mặc định `expiresAt` = cuối kỳ đang hiển thị"*: ghim tạo trong **ngày ân hạn** sẽ chết ngay lúc tạo, vì kỳ đang hiển thị là kỳ TRƯỚC nên mốc cuối kỳ đã nằm ở quá khứ.
+
+**AC:**
+- [ ] Ghim cấp cho kỳ X **không** còn hiệu lực khi bảng sang kỳ X+1, dù Ops để trống `expiresAt` (TC-PIN-004)
+- [ ] Ghim vẫn còn nguyên trong suốt kỳ được cấp, kể cả khi `expiresAt` rơi vào giữa kỳ
+- [ ] `expiresAt` do Ops đặt vẫn giữ ghim xuyên kỳ — đây là đường thoát cố ý, không phải lỗi
+- [ ] Ghim tạo trước khi có `periodStart` không rụng oan: suy kỳ từ `updatedAt`, không migration
+- [ ] Kỳ `LIFETIME` giữ nguyên hành vi cũ — chỉ `expiresAt` kết thúc ghim
 
 > Khác creator-os: họ trả `value = null` khi pin không có trong ranked. Ambassador FE render thẳng `statistic` → sẽ ra **0 view / 0đ** cạnh tên creator được ghim, rất tệ trên landing.
 
@@ -410,6 +438,21 @@ v1.0 §7 đề xuất **hiện trạng thái rỗng**, chưa tick. v2.0 đóng �
 - [ ] Bảy lỗi §11 đã xử lý
 - [ ] Regression NFR-001→NFR-004 pass
 
+### 10.1 Bảng tra mã test-case — bổ sung 2026-08-18
+
+Mã `TC-*` xuất hiện trong comment và tên test của code. **Nguồn gốc:** sheet *"Ambassador 2.0 — Nội dung kiểm thử"*, tab `gid=15955565` (98 case cho BXH theo kỳ; lần chạy 2026-08-12: 53 Pass · 29 Partial · 15 Blocked · 1 Fail → sau khi sửa 57 Pass · 26 Partial · 15 Blocked · 0 Fail). Bản chụp kết quả nằm trong repo code: `ambassador/plans/reports/dev-verify-260812-2220-bxh-*.tsv`, phân tích ở `ambassador/plans/260812-0942-fix-bxh-theo-ky/plan.md`.
+
+Sheet là tài liệu ngoài repo và có thể đổi; bảng dưới ghim nghĩa của **những mã đang bị code trỏ tới**, để người đọc code không phải đi tìm:
+
+| Mã | Ca kiểm | Bị trỏ tới từ |
+|---|---|---|
+| `TC-PIN-003` | Ghim quá `expiresAt` bị loại lúc serve, không thành pin zombie | FR-006 |
+| `TC-PIN-004` | Ghim cấp cho tuần X **tự rụng** khi bảng sang tuần X+1, dù `expiresAt` để trống | `internal/model/mg/user_event.go`, `internal/model/mg/leaderboard_pin_test.go`, `pkg/admin/service/leaderboard_pin.go`, `pkg/public/service/event.go`, `admin/.../tabs/leaderboard/index.tsx` · FR-006a |
+| `TC-PER-011` | Tuần vắt qua ranh giới tháng: kỳ trả trọn 7 ngày, mốc tháng không cắt ngang, ân hạn lùi đúng tuần trước | `internal/util/leaderboard_period_test.go` |
+| `TC-CACHE-003` | Khoá cache kỳ `MONTH` xoay đúng ngày 3 (ngày 1–2 còn phục vụ kỳ trước theo ân hạn) | `pkg/public/service/leaderboard_period_test.go` |
+
+**Quy ước:** thêm mã `TC-*` mới vào comment code thì thêm một dòng ở đây trong **cùng PR** — mã không tra được là số chết với đội QC bấm tay ở ngoài.
+
 ---
 
 ## 11. Lỗi và nợ phát hiện khi đối chiếu code — gom vào pha 1
@@ -454,3 +497,4 @@ Cả 14 app đều gọi `/events/:id/leaderboards` + `/events/user-newest`; ri�
 |---|---|---|---|
 | 1.0 | 2026-08-06 | Dang Dinh | Bản đầu — chỉ WEEK, cấu hình phẳng ở cấp event |
 | 2.0 | 2026-08-06 | Dang Dinh | Hợp nhất `feedback-review-2026-08-06.md`: thêm MONTH + LIFETIME tường minh; tách `rankBy`/`metrics`/`valueBasis`; cấu hình ba tầng hoà giải với PRD 04-02; quy tắc kỳ-hiển-thị có ân hạn + clamp vòng đời event; port pin từ creator-os; ràng buộc per-platform; lộ trình 3 pha theo chi phí FE; 7 lỗi đối chiếu code. §7 thay bằng 3 đề xuất mới |
+| 2.5 | 2026-08-18 | Dang Dinh | Review vòng 2 (PR #122): thêm **FR-006a** — vòng đời ghim gắn với KỲ qua `pin.periodStart`/`IsActiveIn` thay vì `expiresAt` (đổi ngữ nghĩa mặc định, trước đó chỉ nằm trong code); thêm **§10.1** bảng tra mã `TC-*` được code trỏ tới; `tech-spec.md` đánh dấu là bản ghi lịch sử của v1 kèm bảng delta v1→v2 |
