@@ -367,6 +367,7 @@ Ghi chú:
 | `cash-flows` | `uniq(idemKey)` partial `{idemKey: {$exists: true}}` | Không vướng dữ liệu cũ |
 | `reconciliation-items` | `(mcnSplits.mcn, reconciliation)` | Màn đối soát MCN |
 | `event-rewards`, `event-bonus` | `(mcnMember, status)` | Gom khoản theo dòng quan hệ lúc Lấy danh sách |
+| `event-rewards`, `event-bonus` | `(mcn, status, date)` | Thống kê tạm tính ở màn Đối soát của MCN và chi tiết MCN ở admin |
 | `mcn-members` | Giữ `uniq(user)` partial `{isMember: true}`. Thêm `uniq(user, mcn)` partial `{isPending: true}`; `uniq(user)` partial `{annexInFlight: true}`; `uniq(user, link)` partial `{declinedByCode: true}` | INV-01, 02, 05; bấm Từ chối trên trang mời nhiều lần không tạo nhiều dòng |
 | `mcn-accounts` | `uniq(mcn)` và `uniq(user)` partial `{isCurrent: true}` | INV-04 |
 | `transfers` | `uniq(partner)` partial `{isOpen: true}` (khuyến nghị) | Một đợt mở mỗi partner |
@@ -660,12 +661,15 @@ KOL/KOC:
 |---|---|---|
 | Số dư, Lịch sử dòng tiền (`frontend/src/pages/bank`) | Creator | `cash-flows` của user |
 | Avatar › Đối soát, MCN của tôi | Creator | `reconciliation-items` và `mcn-members` của user |
-| Quản lý MCN › Số dư, Đối soát | MCN | `mcn-cash-flows` |
+| Quản lý MCN › Số dư | MCN | `mcn-cash-flows` |
+| Quản lý MCN › Đối soát; Admin › chi tiết MCN › thống kê | MCN, Admin | Tạm tính: khoản `event-rewards`, `event-bonus` có `mcn` = MCN đó, `status = pending`, phí = Σ làm tròn(`cash × mcnRate`). Đã đối soát: `reconciliation-items.mcnSplits` của kỳ đã xử lý. Gom được theo thành viên (`mcnMember`, kể cả đã rời, D22), chiến dịch (`event`), khoảng ngày phát sinh (`date`) |
 | Quản lý MCN › Thành viên, Lời mời | MCN | `mcn-members`, `mcn-invite-links` |
 | Thông báo MCN | MCN | Gửi tài khoản vận hành hiện hành tại lúc gửi |
 | Đợt chi creator | Creator | Người vận hành được xét như mọi creator |
 
 User vừa vận hành MCN vừa làm creator thấy hai khu riêng: "Số dư của bạn" và "Số dư MCN <tên>". Không màn hình nào cộng hai số.
+
+Màn đối soát và thống kê MCN tách hai cột "Tạm tính" và "Đã đối soát". Số tạm tính còn đổi trước khi đối soát (view tăng, khoản bị từ chối); số đã đối soát không đổi sau khi kỳ `processed`. MCN chỉ đọc khoản có `mcn` lấy từ tài khoản đăng nhập, không nhận `mcn` từ client (INV-18).
 
 ### 9.4 Mã lỗi
 
@@ -909,4 +913,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 1.0 | 2026-11-04 | Vinh Nguyễn | Bản đầu: vai MCN qua `mcn-accounts`, thành viên qua `mcn-members` |
 | 2.0, 2.1 | 2026-11-10, 2026-11-11 | Nguyễn Đăng Định | MCN sở hữu số dư, bảng tiền và lệnh chi riêng; cập nhật theo họp 10/11 |
 | 3.0 | 2026-11-11 | Nguyễn Đăng Định | Gộp các bản thành một, viết gọn; mở đầu bằng phần giới thiệu MCN phase 1 và sơ đồ luồng tiền; thiết kế chính viết dạng hỏi–đáp; thêm bảng vị trí code; cập nhật việc còn lại theo code tại `9a599f27c` |
-| 3.1 | 2026-11-11 | Nguyễn Đăng Định | Gắn MCN, dòng quan hệ, tỷ lệ lên khoản thưởng lúc tạo (`tagMcn`), không gỡ khi rời; đối soát cộng theo dòng quan hệ thay vì xét cửa sổ lúc Lấy danh sách (§7.1, §7.2) |
+| 3.1 | 2026-11-11 | Nguyễn Đăng Định | Gắn MCN, dòng quan hệ, tỷ lệ lên khoản thưởng lúc tạo (`tagMcn`), không gỡ khi rời; đối soát cộng theo dòng quan hệ thay vì xét cửa sổ lúc Lấy danh sách (§7.1, §7.2); màn Đối soát MCN và thống kê chi tiết MCN đọc khoản đã gắn, tách Tạm tính và Đã đối soát (§9.3), index `(mcn, status, date)` (§6.5) |
