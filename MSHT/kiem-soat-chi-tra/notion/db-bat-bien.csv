@@ -1,0 +1,13 @@
+Mã,Nội dung,Nhóm,Story bảo vệ,Có test tự động
+BB-1,Một nghĩa vụ có tối đa một khoản chi đang hoạt động,A,A1-S3,Chưa
+BB-2,txn_id gửi AT-Core bằng mã khoản chi không sinh từ lần gửi không sinh từ đợt,A,A1-S2 A2-S4,Chưa
+BB-3,Một khoản chi có đúng một kết cục tài chính cuối cùng,A,A1-S5,Chưa
+BB-4,Dời khoản chi sang đợt khác không đổi danh tính và không đổi txn_id,A,A2-S3,Chưa
+BB-5,Khoản chi ở trạng thái chưa rõ kết quả không gửi lại được không hoàn tiền được không dời đợt được,B,A1-S5,Chưa
+BB-6,Trạng thái chỉ đi tới và mọi cập nhật đều kèm điều kiện trạng thái hiện tại,A,A2-S5,Chưa
+BB-7,Mọi thao tác khẳng định về tiền đều có bằng chứng và bản ghi audit,F,,Chưa
+BB-8,Đợt không đóng được khi số khoản chưa rõ vượt ngưỡng D4,D,,Chưa
+BB-9,Kênh chi thuộc khoản chi và không đổi sau khi đã thực thi,A,A2-S1,Chưa
+BB-10,Mã khoản chi mang tiền tố định danh sản phẩm,A,A1-S2,Chưa
+BB-11,Không được chi tay cho một nghĩa vụ đang có khoản chi AT-Core ở trạng thái chưa rõ,C,,Chưa
+BB-12,Trạng thái khách nhìn thấy không bao giờ là thất bại khi trạng thái nội bộ là chưa rõ kết quả,B,,Chưa

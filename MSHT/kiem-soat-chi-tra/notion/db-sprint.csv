@@ -1,0 +1,4 @@
+Tên,Mục tiêu sprint,Ngày bắt đầu,Ngày kết thúc,Trạng thái,Điểm cam kết,Cổng
+Sprint 0,Gỡ hết câu hỏi chặn mô hình dữ liệu và chặn máu các đường chi tiền không kiểm soát,2026-09-28,2026-10-02,Đang chạy,27,Chuẩn bị G1
+Sprint A1,Một nghĩa vụ không thể sinh ra khoản chi thứ hai khi khoản thứ nhất chưa kết thúc và mã khoản chi không bao giờ đổi,2026-10-05,2026-10-16,Chưa bắt đầu,39,G1
+Sprint A2,Mọi khoản chi thuộc về đúng một đợt truy ngược được và hệ thống phân biệt rõ tạo khoản mới với gửi lại khoản đã có,2026-10-19,2026-10-30,Chưa bắt đầu,37,G1

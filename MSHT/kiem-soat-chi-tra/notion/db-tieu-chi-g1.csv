@@ -1,0 +1,10 @@
+Mã,Tiêu chí,Cổng,Bất biến,Story liên quan,Đạt,Cách kiểm
+TC-1,Một nghĩa vụ không tạo được hai khoản chi đang hoạt động,G1,BB-1,A1-S3,Chưa,Chạy đồng thời 50 request tạo khoản cho cùng nghĩa vụ
+TC-2,Gửi lại một khoản chi không sinh txn_id mới,G1,BB-2,A1-S2 A2-S4,Chưa,So sánh txn_id trước và sau khi gửi lại
+TC-3,Dời khoản chi sang đợt khác thì txn_id không đổi,G1,BB-4,A2-S3,Chưa,So sánh txn_id trước và sau khi dời đợt
+TC-4,Gặp 400 txn_id trùng thì gọi txn-inquiry lấy kết quả gốc không coi là thất bại rồi hoàn tiền,G1,BB-3 BB-5,A1-S5,Chưa,Giả lập 400 và kiểm tra không có lệnh hoàn tiền nào được phát
+TC-5,Mọi khoản chi thuộc đúng một đợt và truy được đợt N gồm những khoản nào,G1,,A2-S1,Chưa,Truy vấn danh sách khoản theo mã đợt
+TC-6,Truy được khoản X thuộc đợt nào đã gửi mấy lần mỗi lần nhận gì,G1,,A1-S4 A2-S6,Chưa,Mở hồ sơ một khoản chi bất kỳ
+TC-7,Đợt có mã loại phạm vi người tạo thời điểm trạng thái vòng đời,G1,,A2-S1,Chưa,Kiểm tra bản ghi đợt
+TC-8,Mã khoản chi có tiền tố định danh sản phẩm,G1,BB-10,A1-S2,Chưa,Kiểm tra định dạng mã sinh ra
+TC-9,Đợt tự động và đợt bù tay phân biệt được trong dữ liệu,G1,,A2-S2,Chưa,Truy vấn lọc theo loại đợt
