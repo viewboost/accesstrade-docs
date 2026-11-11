@@ -82,7 +82,7 @@ Câu 1–5 là câu hỏi của tech lead. Câu 6–9 là các điểm còn lạ
    Xem §5.3, §8.2.
 
 6. Phí trích trên khoản thưởng nào?
-   Mọi chiến dịch, theo ngày phát sinh của từng khoản thưởng, trong những ngày KOL/KOC là thành viên (từ ngày kích hoạt). Ví dụ K ký ngày 05/12, thưởng view 300.000/ngày từ 01/12 đến 10/12: chỉ 6 ngày 05–10/12 bị trích, phí 270.000. Xem §7.
+   Chỉ chiến dịch bắt đầu từ ngày go-live (dự kiến 01/12/2026), theo ngày phát sinh của từng khoản thưởng, trong những ngày KOL/KOC là thành viên. Ví dụ K ký ngày 05/12, thưởng view 300.000/ngày từ 01/12 đến 10/12: chỉ 6 ngày 05–10/12 bị trích, phí 270.000. Xem §7.
 
 7. Duyệt đối soát lỗi giữa chừng thì sao?
    Mỗi item ghi trong một transaction: dòng tiền creator, dòng tiền MCN và trạng thái item cùng ghi hoặc cùng không ghi. Mỗi dòng tiền có khóa `idemKey` nên chạy lại không cộng trùng. Kỳ lỗi chuyển `run_failed`, gửi Telegram, Admin Duyệt lại. Xem §7.3, §7.4.
@@ -109,6 +109,7 @@ Chỉ còn chờ AT gửi mã mẫu phụ lục (dự kiến ký 17/11).
 | KOL/KOC, creator | User làm nội dung, có thu nhập ghi vào `cash-flows` |
 | Tài khoản nhà | Dòng `mcn-members` có `rate = 100`, `house = true`: user làm nội dung cho chính MCN mình. Không phải loại tài khoản mới |
 | Chiến dịch | Bản ghi `events`. "Campaign" trong biên bản họp 10/11 là chiến dịch, không phải ADV |
+| Mốc áp dụng | ENV `MCN_FEE_EVENT_START_FROM` = ngày go-live. Chỉ chiến dịch có `events.startAt` từ ngày này mới bị trích phí; chiến dịch đã chạy trước go-live thì không |
 | Dòng quan hệ | Một bản ghi `mcn-members`, ở mọi trạng thái |
 | Thành viên | Dòng quan hệ `active` hoặc `leaving` (`isMember = true`). Người Chờ ký (`agreed`) chưa là thành viên |
 | Khoản thưởng (reward) | Một bản ghi `event-rewards` (thưởng view, thưởng mốc) hoặc `event-bonus` (Thưởng thêm) |
@@ -218,7 +219,7 @@ Cách làm:
 - Đối soát tạo phần phí 100%: `cash-flows` của user ghi `+G` và `−G`; `mcn-cash-flows` ghi `+G`. Không thêm loại dòng tiền mới.
 - Hệ thống tự đặt `house = true` khi user là tài khoản vận hành của chính MCN đó, hoặc CCCD của user trùng CCCD của MCN cá nhân.
 - Tài khoản nhà nhận link dưới 100% của chính MCN thì bị từ chối (`MCN_HOUSE_RATE_REQUIRED`). Link của MCN khác vẫn bị chặn như cũ.
-- Thu nhập trước ngày kích hoạt phụ lục 100% vẫn ở số dư creator và chi bằng lệnh creator.
+- Thu nhập trước ngày ký phụ lục 100%, hoặc ở chiến dịch trước mốc áp dụng, vẫn ở số dư creator và chi bằng lệnh creator.
 - Họp 10/11 chốt tài khoản nhà phải đặt 100% cho MCN. Hệ thống không tự đưa người đứng MCN vào MCN: họ vẫn mở link 100% và ký phụ lục như mọi KOL/KOC. Chưa ký thì thu nhập nội dung vẫn chi bằng lệnh creator; báo cáo vận hành liệt kê các trường hợp này để nhắc ký.
 
 Ba trường hợp thường gặp:
@@ -413,6 +414,7 @@ Partial index chỉ dùng điều kiện bằng và `$exists: true`, vì chưa b
 | INV-16 | Kỳ `run_failed` chỉ chuyển sang `running`, không Hủy được |
 | INV-17 | `bank`, `payee`, `tax` của lệnh không đổi sau `draft`; `type`, `identityNumber` của MCN không đổi sau `active` |
 | INV-18 | MCN chỉ đọc được dữ liệu của mình |
+| INV-20 | Chỉ trích phí khoản của chiến dịch có `events.startAt ≥ MCN_FEE_EVENT_START_FROM` |
 
 ### 6.7 Trạng thái
 
@@ -472,7 +474,10 @@ MCN: `pending → active`. Tài khoản vận hành: `invited → active → rev
 
 Phí gắn lên từng khoản thưởng ngay lúc khoản đó được tạo, rồi cộng lại lúc đối soát.
 
-Lúc tạo khoản thưởng (`event-rewards`, `event-bonus`), hàm `tagMcn` ghi `mcn`, `mcnMember`, `mcnRate` lên khoản đó khi ngày phát sinh của khoản nằm trong cửa sổ phí của một dòng quan hệ (§7.2). Áp cho mọi chiến dịch, kể cả chiến dịch bắt đầu trước khi KOL/KOC vào MCN: chỉ phần phát sinh từ ngày kích hoạt bị trích (chốt 11/11: 01/12 chỉ là thời gian dự kiến lên prod, không phải mốc áp dụng).
+Lúc tạo khoản thưởng (`event-rewards`, `event-bonus`), hàm `tagMcn` ghi `mcn`, `mcnMember`, `mcnRate` lên khoản đó khi đủ cả hai điều kiện:
+
+1. Thuộc chiến dịch có `events.startAt` từ ngày go-live (`MCN_FEE_EVENT_START_FROM`). Chiến dịch đã chạy trước go-live không trích phí (quy tắc chốt 11/11; 01/12 chỉ là ngày go-live dự kiến). Chưa đặt thì không gắn gì.
+2. Ngày phát sinh của khoản nằm trong cửa sổ phí của một dòng quan hệ (§7.2).
 
 Không đủ điều kiện thì không ghi gì, khoản đó đi luồng cũ.
 
@@ -537,7 +542,7 @@ Mỗi item một transaction (hàm `postItem`):
 
 Trong transaction dùng hàm mới `CashFlow().AppendStrict`: chỉ insert, trả lỗi thật, từ chối `idemKey` rỗng. Không dùng `AddCashFlow` trong transaction, vì hàm này bỏ qua lỗi và chạy goroutine dùng chung `ctx`.
 
-Partner tắt `LedgerV2` chạy đúng code cũ. Partner có MCN phải bật `LedgerV2` trước kỳ đầu có phí; kỳ có khoản đã gắn MCN mà partner chưa bật cờ thì `applyMcnFees` báo lỗi và kỳ dừng ở `processing`.
+Partner tắt `LedgerV2` chạy đúng code cũ. Partner có MCN phải bật `LedgerV2` trước kỳ đầu có phí; mốc đã đặt mà chưa bật cờ thì `applyMcnFees` báo lỗi và kỳ dừng ở `processing`.
 
 ### 7.4 Kiểm cuối kỳ
 
@@ -754,7 +759,8 @@ Khóa job bằng Redis `SETNX` phải dùng token ngẫu nhiên và chỉ xóa k
 | Cờ, ENV | Mặc định | Ý nghĩa |
 |---|---|---|
 | `PartnerOpts.McnEnabled` | false | Bật onboarding MCN cho partner. Kiểm ở tạo, sửa, kích hoạt, tạo link, xem lời mời, đồng ý, mở ký, gắn tài khoản. Không kiểm ở tính phí và chi trả: tắt cờ không dừng thu phí theo phụ lục đã ký |
-| `PartnerOpts.LedgerV2` | false | Bật đường ghi tiền mới (§11.2). Bật cho Ambassador trước kỳ đối soát đầu tiên có khoản đã gắn MCN |
+| `PartnerOpts.LedgerV2` | false | Bật đường ghi tiền mới (§11.2). Bật cho Ambassador trước khi đặt mốc |
+| `MCN_FEE_EVENT_START_FROM` | trống | Ngày go-live MCN; chỉ chiến dịch bắt đầu từ ngày này bị trích phí. Trống thì không trích phí. Đặt đúng ngày go-live thật khi lên prod (dự kiến 01/12/2026) |
 | `TAX_PIT_RATE`, `TAX_PIT_THRESHOLD` | 10, 5.000.000 | Thuế creator và MCN cá nhân |
 | `MCN_INDIVIDUAL_TAX_POLICY` | `pit_10` | Thuế MCN cá nhân. Đã chốt 10% (họp 10/11); giữ biến để đổi nhanh nếu Legal rà lại |
 | `MCN_JOB_ENABLED` | bật | Các job MCN. Tắt job không làm sai phí |
@@ -786,14 +792,15 @@ Chạy trên dev, QA, prod trong bản go-live:
 
 ### 11.4 Lịch lên prod
 
-Mốc theo họp 10/11: mẫu hợp đồng chốt trong tuần, ký 17/11 (team My); demo tuần 16–20/11; go-live cuối tháng 11, dự kiến có phí từ khoảng 01/12/2026 (thời gian dự kiến, không phải mốc áp dụng); nghiệm thu theo tuần với Hà Lê; màn mới làm mockup duyệt trước rồi mới code.
+Mốc theo họp 10/11: mẫu hợp đồng chốt trong tuần, ký 17/11 (team My); demo tuần 16–20/11; go-live cuối tháng 11; phí áp cho chiến dịch bắt đầu từ ngày go-live (dự kiến 01/12/2026); nghiệm thu theo tuần với Hà Lê; màn mới làm mockup duyệt trước rồi mới code.
 
 1. Trước demo: xong nhóm "Sửa ngay" ở §11.7. Demo hồ sơ, mời, ký, thành viên; chưa có phần tiền.
-2. Cuối tháng 11: lên prod phần onboarding (phase 1–4 của plan code) kèm M1–M3. Trước đó phải vá IDOR eKYC và có `cmd/mcn-rebind`. Bật `McnEnabled` cho Ambassador; `LedgerV2` tắt. Khoản thưởng của thành viên đã được gắn MCN từ ngày kích hoạt.
-3. Phần phí (phase 5) và chi trả (phase 6) lên cùng một bản, **trước kỳ đối soát đầu tiên có khoản đã gắn MCN**. Duyệt kỳ đó bằng code cũ thì khoản đã gắn đi luồng cũ, MCN mất phí. Không kịp thì hoãn kích hoạt thành viên trên prod, hoặc hoãn Duyệt kỳ đó.
+2. Cuối tháng 11: lên prod phần onboarding (phase 1–4 của plan code) kèm M1–M3. Trước đó phải vá IDOR eKYC và có `cmd/mcn-rebind`. Bật `McnEnabled` cho Ambassador; mốc để trống; `LedgerV2` tắt.
+3. Phần phí (phase 5) và chi trả (phase 6) lên cùng một bản, để không có phí mà chưa có đường chi.
 4. Chạy hồi quy trên bản sao dữ liệu: một kỳ và một đợt chi của partner không có MCN (FEC, HDBank hoặc VPBank), bật `LedgerV2`. So dòng tiền và thuế với bản cũ.
 5. Bật `LedgerV2` cho Ambassador, theo dõi một kỳ và một đợt chi.
-6. Màn xem đối soát (phase 7), thông báo (phase 8).
+6. Đặt `MCN_FEE_EVENT_START_FROM` bằng ngày go-live thật, trước khi có chiến dịch mới đầu tiên bắt đầu.
+7. Màn xem đối soát (phase 7), thông báo (phase 8).
 
 Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt có lệnh MCN. Muốn tắt `LedgerV2` thì xử lý hết kỳ `run_failed` trước.
 
@@ -809,7 +816,7 @@ Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt c�
 |---|---|
 | Unit | Cửa sổ phí (kích hoạt 23:59 và 00:00), công thức phí (làm tròn trên tổng, số lẻ, tỷ lệ 0 và 100), thuế (đúng 5.000.000 và 4.999.999), chia thuế nhóm, chuẩn hóa CCCD |
 | Integration, Mongo thật (`-tags integration`, cổng 27099) | Đồng ý đồng thời; gắn tài khoản khi đang Chờ ký MCN khác; tài khoản nhà; mở ký hai MCN; ký trước hạn đồng bộ sau hạn; Duyệt hai lần; Duyệt dừng giữa chừng rồi Duyệt lại; hai đợt chi cùng MCN; loại lệnh sau Chuyển tiền |
-| Tiền và thuế | Mọi dòng bảng §8.2; đổi MCN giữa item; chiến dịch bắt đầu trước ngày vào MCN (chỉ trích từ ngày kích hoạt); rời rồi vào lại; MCN có chiến dịch âm; Max cắt số chi |
+| Tiền và thuế | Mọi dòng bảng §8.2; đổi MCN giữa item; chiến dịch bắt đầu 30/11 và 01/12 với mốc 01/12; mốc trống; MCN có chiến dịch âm; Max cắt số chi |
 | Hồi quy creator | Kỳ và đợt chi không có MCN: dòng tiền và thuế giống bản cũ; partner tắt `LedgerV2` chạy code cũ |
 | IDOR | MCN A đọc dữ liệu MCN B; user `banned` gọi `/mcn/*`; người Chờ ký không lộ email, SĐT; route eKYC với SSO người khác |
 | Rà mã nguồn | Mọi chỗ insert `event-rewards`, `event-bonus` gọi `tagMcn`; chỉ `McnLedger` đọc và ghi `mcn-cash-flows`; `idemKey` có `omitempty`; không gọi `AddCashFlow` trong transaction; route `/mcn/*` không đọc `cash-flows` |
@@ -835,7 +842,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | 11 | Khóa `type`, `identityNumber` sau active; đổi `name` thì xác minh lại TK | Xong (`e3c986866`) |
 | 12 | Mở ký so lại CCCD khi `selfCheck = unresolved` | Xong (`ac756c0fb`) |
 | 13 | Vá IDOR eKYC, ký hợp đồng creator; script `cmd/mcn-rebind` | Trước go-live |
-| 14 | `applyMcnFees`, `postItem`, `AppendStrict`, E1–E4, `run_failed` ở admin, `LedgerV2`, `mcn-cash-flows`, `McnLedger`, tiêu đề dòng tiền `mcn_fee`, `cmd/mcn-adjust` | Phase 5 |
+| 14 | `applyMcnFees`, mốc áp dụng, `postItem`, `AppendStrict`, E1–E4, `run_failed` ở admin, `LedgerV2`, `mcn-cash-flows`, `McnLedger`, tiêu đề dòng tiền `mcn_fee`, `cmd/mcn-adjust` | Phase 5 |
 | 15 | `mcn-payouts`, thuế nhóm, `TaxPolicyFor`, file ngân hàng, khối MCN ở Xử lý rút tiền, Chuyển tiền creator trong transaction | Phase 6 |
 | 16 | Job `ReconRunningWatch`, `LedgerReconcile` | Phase 5–6 |
 | 17 | Màn đối soát, số dư, lệnh chi cho MCN; đối soát cho KOL/KOC; tab Người nhận | Phase 7 |
@@ -860,6 +867,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | ADR-10 | `McnEnabled` chỉ chặn onboarding | Chặn cả tính phí: trái phụ lục đã ký |
 | ADR-11 | Phí trích sai sửa bằng `cmd/mcn-adjust`; số dư âm không tự bù | Hoàn bằng Thưởng thêm: bị trích phí lần nữa |
 | ADR-12 | Tài khoản nhà 100% cho người đứng MCN làm creator | Hai lệnh riêng: hai lần xét ngưỡng. Cộng thẳng vào bảng MCN theo vai đăng nhập: không có văn bản làm căn cứ chi, phải sửa lõi ghi tiền |
+| ADR-13 | Mốc áp dụng theo `events.startAt` | Cờ bật từng chiến dịch: quên bật là mất phí. Theo ngày phát sinh: chiến dịch đang chạy vẫn bị trích |
 | ADR-14 | Lệnh MCN tách theo chiến dịch; lệnh creator giữ như cũ | Tách cả lệnh creator: đổi đường chi của mọi creator, ngoài phase 1 |
 
 ### 12.2 Chỗ khác PRD và bản mẫu BA
@@ -874,9 +882,10 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | 8 | Thu nhập nội dung của người vận hành | D14: như creator bình thường | Tài khoản nhà 100% (họp 10/11) | PO |
 | 9 | Email MCN trùng tài khoản creator | PRD Q12 cho; BA-01 không | Theo PRD Q12 | BA |
 | 10 | Chi trả MCN | FR-019: chi toàn bộ số dư một lần | Theo chiến dịch, thuế theo nhóm (họp 10/11) | PO, Kế toán |
+| 11 | Phạm vi trích phí | Mọi chiến dịch | Chỉ chiến dịch bắt đầu từ ngày go-live (họp 10/11, chốt 11/11) | PO |
 
 ### 12.3 Đã chốt
-- Phí áp cho mọi chiến dịch, tính từ ngày kích hoạt thành viên; không có mốc áp dụng theo ngày bắt đầu chiến dịch. 01/12/2026 chỉ là thời gian dự kiến lên prod (chốt 11/11).
+- Chỉ chiến dịch bắt đầu từ ngày go-live mới bị trích phí; chiến dịch đã chạy trước go-live thì không. Đây là quy tắc, không gắn với ngày cố định: 01/12/2026 chỉ là ngày go-live dự kiến, `MCN_FEE_EVENT_START_FROM` đặt theo ngày go-live thật (chốt 11/11).
 - Phí tính từ **ngày kích hoạt** thành viên (ngày hệ thống ghi nhận phụ lục đã ký), 00:00 giờ Việt Nam, không theo ngày ký trên econtract. PRD 1.2 sửa FR-014, D20 (chốt 11/11).
 - Làm tròn một lần trên tổng phí của mỗi thành viên trong kỳ, không làm tròn từng khoản. PRD 1.2 sửa FR-016 (chốt 11/11).
 
@@ -922,7 +931,7 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | R-03 | Mẫu phụ lục không kịp 17/11 | Lên phần hồ sơ, mời trước; mở ký khi có mẫu |
 | R-04 | Không có webhook, kích hoạt thành viên trễ, MCN mất phí các ngày trước kích hoạt | Đồng bộ khi KOL/KOC quay lại trang; job 15 phút; webhook nếu AT có (OQ-05) |
 | R-05 | Tài khoản admin bị chiếm, đổi TK ngân hàng MCN | Audit, Telegram; duyệt hai người ở phase sau |
-| R-06 | Duyệt kỳ có khoản đã gắn MCN trước khi phase 5–6 lên, hoặc khi chưa bật `LedgerV2` | Phase 5 và 6 lên cùng bản; Lấy danh sách gặp khoản đã gắn MCN mà partner chưa bật `LedgerV2` thì báo lỗi, kỳ dừng ở `processing` |
+| R-06 | Đặt mốc khi chưa có đường chi, hoặc đặt mốc trễ sau kỳ có chiến dịch tháng 12 | Phase 5 và 6 lên cùng bản; thiếu `LedgerV2` thì tính phí báo lỗi; checklist trước mỗi kỳ tháng 12 |
 | R-07 | Tổng phí cả kỳ của MCN lệch `tổng hoa hồng mọi KOL/KOC × tỷ lệ` vài đồng | Làm tròn trên tổng mỗi phần phí nên từng KOL/KOC khớp phép tính tay; màn hình đọc phí đã lưu, không tự nhân |
 | R-08 | Người đứng MCN chưa ký phụ lục 100%, thu nhập nội dung vẫn đi lệnh creator | Báo cáo vận hành nhắc ký; `taxpayerKey` trên file để Kế toán gộp |
 | R-09 | Kênh khác của MCN vào bằng link dưới 100% | Hệ thống không nhận diện được; ghi trong hợp đồng MCN; Kế toán rà theo `taxpayerKey` |
@@ -937,4 +946,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 3.0 | 2026-11-11 | Nguyễn Đăng Định | Gộp các bản thành một, viết gọn; mở đầu bằng phần giới thiệu MCN phase 1 và sơ đồ luồng tiền; thiết kế chính viết dạng hỏi–đáp; thêm bảng vị trí code; cập nhật việc còn lại theo code tại `9a599f27c` |
 | 3.1 | 2026-11-11 | Nguyễn Đăng Định | Gắn MCN, dòng quan hệ, tỷ lệ lên khoản thưởng lúc tạo (`tagMcn`), không gỡ khi rời; đối soát cộng theo dòng quan hệ thay vì xét cửa sổ lúc Lấy danh sách (§7.1, §7.2); màn Đối soát MCN và thống kê chi tiết MCN đọc khoản đã gắn, tách Tạm tính và Đã đối soát (§9.3), index `(mcn, status, date)` (§6.5); thêm `mcns.statistic` giống `users.statistic` (§6.4.1) |
 | 3.2 | 2026-11-11 | Nguyễn Đăng Định | Đề xuất làm tròn một lần trên tổng mỗi phần phí thay vì từng khoản (§7.2, §12.2 điểm 2, chờ PO) |
-| 3.3 | 2026-11-11 | Nguyễn Đăng Định | Bỏ mốc áp dụng `MCN_FEE_EVENT_START_FROM`: phí áp cho mọi chiến dịch từ ngày kích hoạt (§7.1, §11.1, §11.4, R-06) |
+| 3.3 | 2026-11-11 | Nguyễn Đăng Định | Mốc áp dụng là ngày go-live thật, không cố định 01/12; giữ quy tắc chỉ chiến dịch mới bị trích phí (§7.1, §11.1, §11.4, §12.3) |
