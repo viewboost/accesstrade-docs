@@ -778,23 +778,23 @@ Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt c�
 
 ### 11.7 Việc còn lại trên code
 
-Trạng thái đọc trên `feat/mcn-phase1` tại commit `9a599f27c`.
+Trạng thái đọc trên `feat/mcn-phase1` tại commit `762ce73e9` (11/11/2026).
 
-Đã có: hồ sơ, kích hoạt MCN, link mời, lời mời, ký phụ lục, thành viên, báo rời; tài khoản nhà ở trang mời, Đồng ý, gắn tài khoản và nhãn ở màn MCN (`82edb83c7`); tab Thành viên ở admin (`4df06b10e`); ghi `activatedAt`, `feeFrom` khi kích hoạt thành viên (`9a599f27c`).
+Đã có: hồ sơ, kích hoạt MCN, link mời, lời mời, ký phụ lục, thành viên, báo rời; tài khoản nhà ở trang mời, Đồng ý, gắn tài khoản và nhãn ở màn MCN (`82edb83c7`); tab Thành viên ở admin (`4df06b10e`); ghi `activatedAt`, `feeFrom` khi kích hoạt thành viên (`9a599f27c`); hồ sơ MCN ở thư mục `mcn-documents/` (`27841952c`); tra tên TK ngân hàng MCN qua AT core, `user_id = mcn_<id>` (`783ed7143`).
 
 | # | Việc | Khi |
 |---|---|---|
-| 1 | `RunInTransaction` bọc `session.WithTransaction`; `WriteConflict` sau retry trả 409. Mục 3, 4, 6 cần mục này | Sửa ngay |
-| 2 | Bỏ `EnsureUserPartner` cho user vận hành; trước khi bỏ, kiểm các luồng chọn partner theo header Origin | Sửa ngay |
-| 3 | Guard vai trong transaction (§5.4) ở Đồng ý, mở ký, đồng bộ ký, kích hoạt thành viên, Admin kích hoạt, gắn tài khoản; chặn cả dòng Chờ ký với MCN khác | Sửa ngay |
-| 4 | `isPending` và unique index; Từ chối trên trang mời upsert theo (user, link) | Sửa ngay |
+| 1 | `RunInTransaction` bọc `session.WithTransaction`; `WriteConflict` sau retry trả 409. Mục 3, 4, 6 cần mục này | Xong (`54ea55e39`) |
+| 2 | Bỏ `EnsureUserPartner` cho user vận hành; trước khi bỏ, kiểm các luồng chọn partner theo header Origin | Xong (`6c30d7d62`) |
+| 3 | Guard vai trong transaction (§5.4) ở Đồng ý, mở ký, đồng bộ ký, kích hoạt thành viên, Admin kích hoạt, gắn tài khoản; chặn cả dòng Chờ ký với MCN khác | Xong (`747ceeae9`) |
+| 4 | `isPending` và unique index; Từ chối trên trang mời upsert theo (user, link) | Xong (`747ceeae9`) |
 | 5 | `annex.signedAt`, `signedAtSource`, `sync_capped` | Sửa ngay |
 | 6 | Hỏi econtract trước khi đánh hết hạn ký; CAS `annex.state`; `annexInFlight`; job `McnAnnexCleanup` | Sửa ngay |
-| 7 | Kiểm `McnEnabled` ở các bước onboarding (hiện chỉ kiểm lúc tạo hồ sơ) | Sửa ngay |
-| 8 | `mcn-accounts.isCurrent` và hai unique index; middleware kiểm `banned`, bỏ cache ở route tiền | Sửa ngay |
-| 9 | Lịch sử đăng nhập thêm trường `mcn`; `Response409` | Sửa ngay |
-| 10 | Khóa job Redis có token | Sửa ngay |
-| 11 | Khóa `type`, `identityNumber` sau active; đổi `name` thì xác minh lại TK | Sửa ngay |
+| 7 | Kiểm `McnEnabled` ở các bước onboarding (hiện chỉ kiểm lúc tạo hồ sơ) | Xong (`e3c986866`) |
+| 8 | `mcn-accounts.isCurrent` và hai unique index; middleware kiểm `banned`, bỏ cache ở route tiền | Xong (`762ce73e9`) |
+| 9 | Lịch sử đăng nhập thêm trường `mcn` (`Response409` đã xong ở `54ea55e39`) | Sửa ngay |
+| 10 | Khóa job Redis có token | Xong (`8b840eb85`) |
+| 11 | Khóa `type`, `identityNumber` sau active; đổi `name` thì xác minh lại TK | Xong (`e3c986866`) |
 | 12 | Mở ký so lại CCCD khi `selfCheck = unresolved` | Sửa ngay |
 | 13 | Vá IDOR eKYC, ký hợp đồng creator; script `cmd/mcn-rebind` | Trước go-live |
 | 14 | `applyMcnFees`, mốc áp dụng, `postItem`, `AppendStrict`, E1–E4, `run_failed` ở admin, `LedgerV2`, `mcn-cash-flows`, `McnLedger`, tiêu đề dòng tiền `mcn_fee`, `cmd/mcn-adjust` | Phase 5 |
