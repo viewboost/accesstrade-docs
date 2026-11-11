@@ -518,7 +518,7 @@ netCash_i = totalCash_i − mcnFee_i
 
 Kết quả lưu vào `mcnSplits`. Sau `processed` không tính lại; đổi ENV sau đó không ảnh hưởng kỳ đã chốt. Tỷ lệ 0% vẫn lưu phần phí để MCN thấy, nhưng không sinh dòng tiền.
 
-Làm tròn một lần trên tổng của mỗi phần phí (một KOL/KOC, một dòng quan hệ, một kỳ), không làm tròn từng khoản như PRD FR-016 (chờ PO chốt, §12.2):
+Làm tròn một lần trên tổng của mỗi phần phí (một KOL/KOC, một dòng quan hệ, một kỳ), theo PRD 1.2 FR-016 (chốt 11/11):
 
 - Khớp phụ lục "MCN nhận x% thu nhập": ai bấm máy `tổng hoa hồng × tỷ lệ` cũng ra đúng số trên màn hình và trong số dư.
 - Sai số tối đa 0,5đ mỗi phần phí. Làm tròn từng khoản cộng dồn sai số theo số khoản: 30 khoản thưởng view trong kỳ có thể lệch tới khoảng 15đ.
@@ -874,8 +874,6 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 
 | # | Nội dung | PRD, BA | Tài liệu này | Người duyệt |
 |---|---|---|---|---|
-| 1 | Ngày bắt đầu tính phí | Ngày ký (FR-014) | Ngày hệ thống kích hoạt; lệch khi đồng bộ qua nửa đêm hoặc econtract trễ | PO |
-| 2 | Làm tròn | FR-016 từng khoản; BA-03 trên tổng kỳ | Đề xuất làm tròn một lần trên tổng mỗi phần phí (khớp BA-03, khớp phép tính tay); chờ PO chốt, PRD sửa FR-016 | PO |
 | 3 | Tắt cờ MCN | FR-016: chỉ partner bật MCN | Tắt cờ không dừng thu phí theo phụ lục đã ký | PO |
 | 4 | Trạng thái kỳ | D8: giữ trạng thái hiện có | Thêm "Duyệt lỗi" (`run_failed`) | PO, BA |
 | 5 | Đợt chi khi có kỳ đang Duyệt | Không quy định | Chặn | PO, Kế toán |
@@ -887,6 +885,8 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | 11 | Phạm vi trích phí | Mọi chiến dịch | Chỉ chiến dịch từ mốc áp dụng (họp 10/11) | PO |
 
 ### 12.3 Đã chốt
+- Phí tính từ **ngày kích hoạt** thành viên (ngày hệ thống ghi nhận phụ lục đã ký), 00:00 giờ Việt Nam, không theo ngày ký trên econtract. PRD 1.2 sửa FR-014, D20 (chốt 11/11).
+- Làm tròn một lần trên tổng phí của mỗi thành viên trong kỳ, không làm tròn từng khoản. PRD 1.2 sửa FR-016 (chốt 11/11).
 
 - Thuế KOL/KOC 10% trên số chi sau phí, ngưỡng 5.000.000đ mỗi đợt; MCN công ty không khấu trừ (D21, 05/11).
 - Ngày ký có tính phí; từ ngày kết thúc không tính (D20).
