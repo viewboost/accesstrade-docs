@@ -75,7 +75,7 @@ Câu 1–5 là câu hỏi của tech lead. Câu 6–9 là các điểm còn lạ
 
 5. Thuế của MCN khi người đứng MCN cũng làm creator?
    Tài khoản creator của họ tham gia chính MCN với tỷ lệ 100% (gọi là tài khoản nhà). Thu nhập nội dung chuyển hết vào số dư MCN, nên chỉ có một lần chi và một lần xét thuế trên tổng các lệnh của MCN trong đợt.
-   - MCN cá nhân P: phí 3.000.000 + nội dung 2.500.000 = 5.500.000, khấu trừ 10% là 550.000 (chờ Kế toán chốt, OQ-01).
+   - MCN cá nhân P: phí 3.000.000 + nội dung 2.500.000 = 5.500.000, khấu trừ 10% là 550.000.
    - MCN công ty C: phí 8.000.000 + nội dung 6.000.000 = 14.000.000, không khấu trừ.
 
    Xem §5.3, §8.2.
@@ -94,11 +94,14 @@ Câu 1–5 là câu hỏi của tech lead. Câu 6–9 là các điểm còn lạ
 
 ### 1.4 Còn chờ chốt
 
-- OQ-01 (Kế toán): MCN cá nhân có khấu trừ 10% như KOL/KOC không.
-- OQ-13 (PO, Kế toán): chi theo chiến dịch chỉ cho MCN hay cả creator.
-- OQ-14 (PO): KOL/KOC rời MCN giữa chiến dịch thì tính phí thế nào.
-- OQ-15 (PO, Legal): người đứng MCN có bắt buộc ký tỷ lệ 100% không.
-- OQ-16 (AT, team My): phụ lục có tách mẫu cho MCN cá nhân và MCN công ty không.
+Năm câu để mở ở bản trước (OQ-01, 13, 14, 15, 16) đã có câu trả lời ở họp 10/11, ghi ở §12.3. Còn lại các câu cần trả lời trước khi code phần tiền:
+
+- OQ-04 (AT, vận hành): AT chi theo file xuất hay theo hồ sơ econtract.
+- OQ-05 (AT core): econtract có trả giờ ký phụ lục, có webhook không.
+- OQ-06 (Kế toán): phí trong phụ lục đã gồm VAT chưa; có chặn chi khi MCN công ty chưa gửi hóa đơn không.
+- OQ-07 (Legal, AT): phụ lục ký sau khi lời mời đã đóng thì ai thanh lý.
+- OQ-10 (PO): đợt chi bỏ qua creator có số dư dưới Max, có cố ý không.
+- OQ-11 (PO): hoa hồng người giới thiệu tính trên G hay trên số sau phí.
 
 Danh sách đủ ở §12.4.
 
@@ -152,7 +155,7 @@ Thao tác trên admin dùng trong tài liệu:
 - UI điều chỉnh tiền; duyệt hai người khi đổi TK ngân hàng MCN.
 - Luồng riêng cho rời, vào lại, đổi MCN khi chiến dịch đang chạy (họp 10/11 để phase 2).
 - Gộp ngưỡng thuế theo CCCD giữa lệnh MCN và lệnh creator.
-- Chi theo chiến dịch cho lệnh creator (đề xuất, chờ OQ-13).
+- Chi theo chiến dịch cho lệnh creator ngoài MCN.
 - MCN cho partner khác Ambassador.
 
 ### 3.3 Ràng buộc kỹ thuật
@@ -199,7 +202,7 @@ Khoản có phí MCN phải ghi hai bảng cùng lúc, nên không giữ đượ
 ### 5.1 MCN
 
 - Bản ghi `mcns`: `partner`, `type` (company hoặc individual), `name`, `identityNumber` (MST 10 hoặc 13 số, CCCD 12 số; unique), `loginEmail`, `status` (`pending → active` khi đủ 5 hồ sơ).
-- MCN sở hữu số dư, là người nhận tiền và người chịu thuế. Công ty: không khấu trừ. Cá nhân: khấu trừ 10% (chờ OQ-01).
+- MCN sở hữu số dư, là người nhận tiền và người chịu thuế. Công ty: không khấu trừ. Cá nhân: khấu trừ 10% TNCN nếu tổng các lệnh của MCN trong đợt từ 5.000.000đ (họp 10/11).
 - Sau khi `active`, không sửa `type`, `identityNumber`; chỉ đổi bằng script có ticket. Đổi `name` thì TK ngân hàng phải xác minh lại.
 - Hồ sơ pháp lý và TK ngân hàng ở `mcn-documents`, có phiên bản. Lệnh chi chép TK hiện hành lúc tạo lệnh.
 
@@ -223,7 +226,7 @@ Cách làm:
 - Hệ thống tự đặt `house = true` khi user là tài khoản vận hành của chính MCN đó, hoặc CCCD của user trùng CCCD của MCN cá nhân.
 - Tài khoản nhà nhận link dưới 100% của chính MCN thì bị từ chối (`MCN_HOUSE_RATE_REQUIRED`). Link của MCN khác vẫn bị chặn như cũ.
 - Thu nhập trước ngày ký phụ lục 100%, hoặc ở chiến dịch trước mốc áp dụng, vẫn ở số dư creator và chi bằng lệnh creator.
-- Có bắt buộc người đứng MCN ký 100% không: chờ OQ-15. Đề xuất: hệ thống không chặn, báo cáo vận hành liệt kê các trường hợp chưa ký.
+- Họp 10/11 chốt tài khoản nhà phải đặt 100% cho MCN. Hệ thống không tự đưa người đứng MCN vào MCN: họ vẫn mở link 100% và ký phụ lục như mọi KOL/KOC. Chưa ký thì thu nhập nội dung vẫn chi bằng lệnh creator; báo cáo vận hành liệt kê các trường hợp này để nhắc ký.
 
 Ba trường hợp thường gặp:
 
@@ -524,7 +527,7 @@ Mỗi item vào số dư ngay khi transaction của nó commit. Để không chi
 - Ví dụ của BA: G = 3.000.000, cả kỳ trong cửa sổ, 15%. Phí 450.000; K nhận 2.550.000.
 - K ký MCN A (15%) ngày 05/12/2026. Item thuộc chiến dịch bắt đầu 01/12, thưởng view 300.000/ngày từ 01/12 đến 10/12, G = 3.000.000. Chỉ 6 ngày từ 05/12 đến 10/12 nằm trong cửa sổ: phí 6 × 45.000 = 270.000. `cash-flows` của K: `+3.000.000`, `−270.000`. `mcn-cash-flows` của A: `+270.000`.
 - Tài khoản nhà uP của MCN cá nhân P (100%), G = 2.500.000: `cash-flows` của uP ghi `+2.500.000`, `−2.500.000`; `mcn-cash-flows` của P ghi `+2.500.000`.
-- Đổi MCN giữa chiến dịch (phase 1 không có luồng riêng, chờ OQ-14). Cùng item như ví dụ thứ hai: A chấm dứt với K ngày 07/12, K ký B (10%) ngày 08/12. A thu 2 ngày 05–06/12: 600.000 × 15% = 90.000. B thu 3 ngày 08–10/12: 900.000 × 10% = 90.000. Ngày 07/12 không MCN nào thu phí.
+- Đổi MCN giữa chiến dịch (phase 1 không có luồng riêng, để phase 2; nếu vẫn xảy ra thì tính theo những ngày còn là thành viên). Cùng item như ví dụ thứ hai: A chấm dứt với K ngày 07/12, K ký B (10%) ngày 08/12. A thu 2 ngày 05–06/12: 600.000 × 15% = 90.000. B thu 3 ngày 08–10/12: 900.000 × 10% = 90.000. Ngày 07/12 không MCN nào thu phí.
 
 ## 8. Chi trả và thuế
 
@@ -559,7 +562,7 @@ Hàm `TaxPolicyFor(payee)` (file mới `backend/internal/service/tax.go`) thay �
 |---|---|---|
 | KOL/KOC | `creator_reward` | 10% trên số chi nếu lệnh từ 5.000.000đ, xét từng lệnh như hiện nay |
 | MCN công ty | `mcn_income` | Không khấu trừ |
-| MCN cá nhân | `mcn_income` | Theo `MCN_INDIVIDUAL_TAX_POLICY`, mặc định 10% (chờ OQ-01), xét trên `groupBase` |
+| MCN cá nhân | `mcn_income` | 10% nếu `groupBase` từ 5.000.000đ (họp 10/11) |
 
 Thuế nhóm của MCN cá nhân:
 
@@ -721,9 +724,9 @@ Khóa job bằng Redis `SETNX` phải dùng token ngẫu nhiên và chỉ xóa k
 | `PartnerOpts.LedgerV2` | false | Bật đường ghi tiền mới (§11.2). Bật cho Ambassador trước khi đặt mốc |
 | `MCN_FEE_EVENT_START_FROM` | trống | Mốc áp dụng. Trống thì không trích phí. Prod đặt `2026-12-01` khi phần phí và chi trả đã lên |
 | `TAX_PIT_RATE`, `TAX_PIT_THRESHOLD` | 10, 5.000.000 | Thuế creator và MCN cá nhân |
-| `MCN_INDIVIDUAL_TAX_POLICY` | `pit_10` | Thuế MCN cá nhân (OQ-01) |
+| `MCN_INDIVIDUAL_TAX_POLICY` | `pit_10` | Thuế MCN cá nhân. Đã chốt 10% (họp 10/11); giữ biến để đổi nhanh nếu Legal rà lại |
 | `MCN_JOB_ENABLED` | bật | Các job MCN. Tắt job không làm sai phí |
-| `MCN_ANNEX_CONTRACT_TYPE` | trống | Mã mẫu phụ lục trên FPT e-contract. Nếu AT tách mẫu (OQ-16) thì thay bằng hai biến `MCN_ANNEX_CONTRACT_TYPE_COMPANY`, `MCN_ANNEX_CONTRACT_TYPE_INDIVIDUAL` |
+| `MCN_ANNEX_CONTRACT_TYPE_COMPANY`, `MCN_ANNEX_CONTRACT_TYPE_INDIVIDUAL` | trống | Mã mẫu phụ lục trên FPT e-contract theo loại MCN (AT làm bản cho cá nhân và công ty, họp 10/11). Thay biến `MCN_ANNEX_CONTRACT_TYPE` đang có trong code. AT chỉ có một mẫu phụ lục thì hai biến cùng mã |
 
 ### 11.2 Thay đổi trên đường tiền creator
 
@@ -805,7 +808,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `9a599f27c`.
 | 15 | `mcn-payouts`, thuế nhóm, `TaxPolicyFor`, file ngân hàng, khối MCN ở Xử lý rút tiền, Chuyển tiền creator trong transaction | Phase 6 |
 | 16 | Job `ReconRunningWatch`, `LedgerReconcile` | Phase 5–6 |
 | 17 | Màn đối soát, số dư, lệnh chi cho MCN; đối soát cho KOL/KOC; tab Người nhận | Phase 7 |
-| 18 | `CreateAnnex` gửi tên MCN, MST, tỷ lệ, ngày; chọn mẫu theo loại MCN nếu AT tách mẫu | Chờ AT (17/11) |
+| 18 | `CreateAnnex` gửi tên MCN, MST, tỷ lệ, ngày; chọn mẫu theo loại MCN (hai biến ở §11.1) | Chờ AT (17/11) |
 | 19 | Viết lại plan code phase 5, 6 theo tài liệu này (plan cũ còn ghi phí vào số dư người vận hành) | Trước khi code phase 5 |
 
 ## 12. Quyết định, câu hỏi, rủi ro
@@ -827,7 +830,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `9a599f27c`.
 | ADR-11 | Phí trích sai sửa bằng `cmd/mcn-adjust`; số dư âm không tự bù | Hoàn bằng Thưởng thêm: bị trích phí lần nữa |
 | ADR-12 | Tài khoản nhà 100% cho người đứng MCN làm creator | Hai lệnh riêng: hai lần xét ngưỡng. Cộng thẳng vào bảng MCN theo vai đăng nhập: không có văn bản làm căn cứ chi, phải sửa lõi ghi tiền |
 | ADR-13 | Mốc áp dụng theo `events.startAt` | Cờ bật từng chiến dịch: quên bật là mất phí. Theo ngày phát sinh: chiến dịch đang chạy vẫn bị trích |
-| ADR-14 | Lệnh MCN tách theo chiến dịch; lệnh creator giữ như cũ (chờ OQ-13) | Tách cả lệnh creator: đổi đường chi của mọi creator, ngoài phase 1 |
+| ADR-14 | Lệnh MCN tách theo chiến dịch; lệnh creator giữ như cũ | Tách cả lệnh creator: đổi đường chi của mọi creator, ngoài phase 1 |
 
 ### 12.2 Chỗ khác PRD và bản mẫu BA
 
@@ -850,12 +853,13 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `9a599f27c`.
 - Thuế KOL/KOC 10% trên số chi sau phí, ngưỡng 5.000.000đ mỗi đợt; MCN công ty không khấu trừ (D21, 05/11).
 - Ngày ký có tính phí; từ ngày kết thúc không tính (D20).
 - Ngày phát sinh: thưởng view là ngày có view, thưởng mốc là ngày đạt mốc, Thưởng thêm là ngày Admin tạo.
-- Người đứng MCN được làm creator trên cùng portal; tài khoản nhà 100% (họp 10/11).
+- Người đứng MCN được làm creator trên cùng portal. Tài khoản nhà của MCN đặt 100% cho MCN, gộp chi và tính thuế một lần (họp 10/11). Biên bản ghi Legal sẽ rà thêm sau, không chặn phase 1. Đóng OQ-15.
+- MCN cá nhân khấu trừ thuế TNCN 10% như KOL/KOC, ngưỡng 5.000.000đ, xét trên tổng các lệnh của MCN trong đợt. Biên bản nêu rõ mục đích: không để chia nhỏ dưới 5.000.000đ để tránh thuế TNCN (họp 10/11). Đóng OQ-01.
 - Chỉ áp cho chiến dịch mới, từ tháng sau go-live (họp 10/11).
 - "Campaign" là chiến dịch, không phải ADV (chốt 11/11).
-- Kế toán chi theo từng chiến dịch (họp 10/11).
-- Phase 1 không có luồng riêng cho rời, đổi MCN giữa chiến dịch (họp 10/11).
-- Hợp đồng MCN–AT riêng, hợp đồng KOL/KOC–AT riêng, phụ lục ghi tỷ lệ, ký trên FPT e-contract (họp 10/11).
+- Kế toán chi theo từng chiến dịch, không gộp nhiều chiến dịch vào một lần chi (họp 10/11). Phase 1 áp cho lệnh MCN. Biên bản không nói đổi cách chi của creator ngoài MCN, nên lệnh creator giữ như cũ. Đóng OQ-13.
+- Phase 1 không có luồng riêng cho rời, vào lại, đổi MCN giữa chiến dịch; để phase 2 (họp 10/11). Nếu vẫn xảy ra (báo rời, hết 12 tháng, MCN chấm dứt) thì phí tính theo những ngày còn là thành viên (§7.2). Đóng OQ-14.
+- Hợp đồng MCN–AT riêng, hợp đồng KOL/KOC–AT riêng, phụ lục ghi tỷ lệ, ký trên FPT e-contract. Có bản cho đối tác cá nhân và công ty; team My làm, mục tiêu ký 17/11 (họp 10/11). Code chọn mẫu phụ lục theo loại MCN. Đóng OQ-16.
 - Được Chờ ký nhiều MCN; ký một MCN thì lời mời khác hết hiệu lực (D18).
 - Hết 12 tháng tự kết thúc; báo rời trước 15 ngày; MCN chấm dứt có hiệu lực ngay.
 - MCN xem được kỳ cũ sau khi thành viên rời (D22).
@@ -864,23 +868,18 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `9a599f27c`.
 
 ### 12.4 Còn mở
 
-OQ-02, OQ-03, OQ-12 đã đóng, nội dung nằm ở §12.3.
+OQ-01, 02, 03, 12, 13, 14, 15, 16 đã đóng, nội dung nằm ở §12.3.
 
 | ID | Câu hỏi | Đề xuất | Người chốt | Hạn |
 |---|---|---|---|---|
-| OQ-01 | MCN cá nhân có khấu trừ 10% như KOL/KOC không? | Có, trên tổng các lệnh trong đợt | Kế toán | Trước phase 6 |
 | OQ-04 | AT chi theo file xuất hay theo hồ sơ econtract? | Theo file xuất; dòng MCN lấy TK đã chép trên lệnh | AT, vận hành | Trước phase 6 |
 | OQ-05 | Econtract có trả giờ ký phụ lục, có API tra CCCD eKYC, có gửi webhook khi ký không? | Chưa có thì dùng giờ đồng bộ, CCCD tự khai, polling | AT core | Trước phase 5 |
 | OQ-06 | Phí trong phụ lục đã gồm VAT chưa? Có chặn chi khi chưa nhận hóa đơn của MCN công ty? | Đã gồm VAT; không chặn | Kế toán | Trước phase 6 |
 | OQ-07 | Phụ lục ký sau khi lời mời đã đóng thì ai thanh lý? | Không trích phí, báo vận hành | Legal, AT | Trước go-live |
-| OQ-08 | Phụ lục 100% có đủ căn cứ chi thu nhập nội dung cho MCN không? Tài khoản nhà có phải eKYC và ký hợp đồng creator không? | Đủ; vẫn bắt buộc | Legal, team My | 17/11 |
+| OQ-08 | Phụ lục 100% có đủ căn cứ chi thu nhập nội dung cho MCN không? Tài khoản nhà có phải eKYC và ký hợp đồng creator không? | Đủ (họp 10/11 tạm áp dụng, Legal rà thêm); vẫn bắt buộc | Legal, team My | 17/11 |
 | OQ-09 | Giữ dữ liệu đối soát cho MCN xem bao lâu sau khi thành viên rời? | Theo thời hạn lưu chứng từ kế toán | Legal | Trước phase 7 |
 | OQ-10 | Đợt chi đang bỏ qua creator có số dư dưới Max, có cố ý không? | Giữ cho creator; MCN chỉ xét Min, trên Max thì cắt | PO | Trước phase 6 |
 | OQ-11 | Hoa hồng người giới thiệu tính trên G hay trên số sau phí? | G, như hiện nay | PO | Trước phase 5 |
-| OQ-13 | Chi theo chiến dịch chỉ cho MCN hay cả creator? Kế toán có chấp nhận nhiều lệnh nhỏ không? | Chỉ MCN | PO, Kế toán | Trước phase 6 |
-| OQ-14 | KOL/KOC rời hoặc đổi MCN giữa chiến dịch thì tính phí thế nào? | Không chặn; chia theo số ngày là thành viên | PO | Trước phase 5 |
-| OQ-15 | Người đứng MCN có bắt buộc ký 100% trước chiến dịch đầu tiên? | Không chặn; báo cáo vận hành | PO, Legal | Trước go-live |
-| OQ-16 | Phụ lục có tách mẫu cho MCN cá nhân và MCN công ty không? | Một mẫu | AT, team My | 17/11 |
 
 ### 12.5 Rủi ro
 
@@ -893,7 +892,7 @@ OQ-02, OQ-03, OQ-12 đã đóng, nội dung nằm ở §12.3.
 | R-05 | Tài khoản admin bị chiếm, đổi TK ngân hàng MCN | Audit, Telegram; duyệt hai người ở phase sau |
 | R-06 | Đặt mốc khi chưa có đường chi, hoặc đặt mốc trễ sau kỳ có chiến dịch tháng 12 | Phase 5 và 6 lên cùng bản; thiếu `LedgerV2` thì tính phí báo lỗi; checklist trước mỗi kỳ tháng 12 |
 | R-07 | Màn hình hiển thị phí lệch `ΣG × tỷ lệ` vài đồng, gây khiếu nại | Màn hình đọc từ bảng tiền; BA sửa công thức hiển thị |
-| R-08 | Người đứng MCN không ký 100%, vẫn có hai lệnh | OQ-15; báo cáo vận hành; `taxpayerKey` trên file |
+| R-08 | Người đứng MCN chưa ký phụ lục 100%, thu nhập nội dung vẫn đi lệnh creator | Báo cáo vận hành nhắc ký; `taxpayerKey` trên file để Kế toán gộp |
 | R-09 | Kênh khác của MCN vào bằng link dưới 100% | Hệ thống không nhận diện được; ghi trong hợp đồng MCN; Kế toán rà theo `taxpayerKey` |
 | R-10 | Phase 5–6 chưa xong trước kỳ đầu của chiến dịch tháng 12 | Tách go-live onboarding khỏi phần tiền; demo theo tuần |
 
