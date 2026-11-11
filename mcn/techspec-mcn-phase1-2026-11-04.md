@@ -340,7 +340,7 @@ Một lệnh cho mỗi (đợt chi, MCN, chiến dịch).
 
 | Collection | Thêm hoặc đổi |
 |---|---|
-| `mcns` | `ledgerVer` (chỉ `$inc`) |
+| `mcns` | `ledgerVer` (chỉ `$inc`); `statistic` mở rộng giống `users.statistic` (§6.4.1) |
 | `mcn-accounts` | `isCurrent`, status `revoked`, `revokedAt`, `revokedBy`, `history[]` |
 | `mcn-members` | `isPending` (đúng khi `agreed`), `annexInFlight`, `annex.{state, signedAt, signedAtSource}`, `activatedAt`, `feeFrom`, `house`, `selfCheck`, `signedAfterClose`, `declinedByCode` |
 | `users` | `mcnGuardVer` (chỉ `$inc`) |
@@ -357,6 +357,28 @@ Ghi chú:
 - `activatedAt` ghi lúc `agreed → active`; `feeFrom` là 00:00 giờ Việt Nam của ngày đó. Ghi một lần.
 - `house` chỉ đổi từ false sang true.
 - `cash-flows.idemKey` phải có `omitempty`. Thiếu thì mọi dòng không có khóa mang `idemKey: ""` và vi phạm unique index.
+
+#### 6.4.1 mcns.statistic
+
+Số cache để hiện ở màn Đối soát, Số dư của MCN và chi tiết MCN ở admin, giống `users.statistic`. Không dùng để tính tiền; tiền luôn tính từ nguồn ở cột cuối. Tiền là `int64` VND.
+
+| Trường | Ý nghĩa | Nguồn |
+|---|---|---|
+| `totalMember`, `totalLink` | Đang có | `mcn-members`, `mcn-invite-links` |
+| `totalMemberActive` | Thành viên đang hợp tác hoặc đang báo rời | `mcn-members` |
+| `totalMemberCash` | Tổng thu nhập thành viên tạo ra trong thời gian hợp tác | Σ `cash` khoản thưởng có `mcn` = MCN, không tính khoản bị từ chối |
+| `totalFeePending` | Phí tạm tính, chưa đối soát | Khoản `status = pending`: Σ làm tròn(`cash × mcnRate`) |
+| `totalFeeCompleted` | Phí đã đối soát, đã vào số dư | Σ dòng `mcn_fee` của `mcn-cash-flows` |
+| `cashRemaining` | Số dư hiện tại | Σ `value` của `mcn-cash-flows` |
+| `withdrawTotal`, `withdrawPending`, `withdrawSuccess`, `withdrawRejected` | Số lệnh chi | `mcn-payouts` theo trạng thái |
+| `cashWithdrawTotal`, `cashWithdrawPending`, `cashWithdrawSuccess`, `cashWithdrawRejected` | Số tiền theo lệnh chi | `mcn-payouts` |
+| `totalCashTax` | Thuế đã khấu trừ | Σ dòng `tax` của `mcn-cash-flows` |
+
+Cập nhật bằng hàm `Mcn().UpdateStatistic(mcn)`: tính lại toàn bộ từ nguồn rồi `$set`, không `$inc`, nên chạy lại bao nhiêu lần cũng đúng. Gọi ở:
+
+- Cuối `User().UpdateStatistic(user)`: hàm này đã được gọi ở mọi chỗ đổi khoản thưởng (tạo, cập nhật `cash`, từ chối, backfill, Duyệt). Lấy các MCN có khoản của user đó rồi cập nhật từng MCN. Nhờ vậy không phải thêm lời gọi ở từng chỗ đổi khoản thưởng.
+- Sau Duyệt từng item có phí, sau Chuyển tiền và Hoàn tất lệnh MCN, sau đổi trạng thái thành viên.
+- Job hằng đêm tính lại cho mọi MCN đang hoạt động, để bù chỗ sót.
 
 ### 6.5 Index
 
@@ -913,4 +935,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 1.0 | 2026-11-04 | Vinh Nguyễn | Bản đầu: vai MCN qua `mcn-accounts`, thành viên qua `mcn-members` |
 | 2.0, 2.1 | 2026-11-10, 2026-11-11 | Nguyễn Đăng Định | MCN sở hữu số dư, bảng tiền và lệnh chi riêng; cập nhật theo họp 10/11 |
 | 3.0 | 2026-11-11 | Nguyễn Đăng Định | Gộp các bản thành một, viết gọn; mở đầu bằng phần giới thiệu MCN phase 1 và sơ đồ luồng tiền; thiết kế chính viết dạng hỏi–đáp; thêm bảng vị trí code; cập nhật việc còn lại theo code tại `9a599f27c` |
-| 3.1 | 2026-11-11 | Nguyễn Đăng Định | Gắn MCN, dòng quan hệ, tỷ lệ lên khoản thưởng lúc tạo (`tagMcn`), không gỡ khi rời; đối soát cộng theo dòng quan hệ thay vì xét cửa sổ lúc Lấy danh sách (§7.1, §7.2); màn Đối soát MCN và thống kê chi tiết MCN đọc khoản đã gắn, tách Tạm tính và Đã đối soát (§9.3), index `(mcn, status, date)` (§6.5) |
+| 3.1 | 2026-11-11 | Nguyễn Đăng Định | Gắn MCN, dòng quan hệ, tỷ lệ lên khoản thưởng lúc tạo (`tagMcn`), không gỡ khi rời; đối soát cộng theo dòng quan hệ thay vì xét cửa sổ lúc Lấy danh sách (§7.1, §7.2); màn Đối soát MCN và thống kê chi tiết MCN đọc khoản đã gắn, tách Tạm tính và Đã đối soát (§9.3), index `(mcn, status, date)` (§6.5); thêm `mcns.statistic` giống `users.statistic` (§6.4.1) |
