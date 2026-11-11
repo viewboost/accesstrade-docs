@@ -271,7 +271,7 @@ Hệ thống chia ba lớp:
 
 - Đăng nhập (`users`, `mcn-accounts`): ai được thao tác.
 - MCN và thành viên (`mcns`, `mcn-documents`, `mcn-invite-links`, `mcn-members`): MCN nào thu phí của ai, tỷ lệ bao nhiêu, trong khoảng ngày nào.
-- Tiền (đối soát, hai bảng tiền, hai loại lệnh chi): không đọc `mcn-members` lúc ghi tiền. Đối soát chép phần phí vào `mcnSplits` lúc Lấy danh sách; lệnh chi chép TK ngân hàng và thuế lúc tạo lệnh.
+- Tiền (đối soát, hai bảng tiền, hai loại lệnh chi): không đọc `mcn-members` lúc ghi tiền. Khoản thưởng được gắn MCN và tỷ lệ lúc tạo; đối soát cộng theo đó vào `mcnSplits` lúc Lấy danh sách; lệnh chi chép TK ngân hàng và thuế lúc tạo lệnh.
 
 ```mermaid
 erDiagram
@@ -344,6 +344,7 @@ Một lệnh cho mỗi (đợt chi, MCN, chiến dịch).
 | `mcn-accounts` | `isCurrent`, status `revoked`, `revokedAt`, `revokedBy`, `history[]` |
 | `mcn-members` | `isPending` (đúng khi `agreed`), `annexInFlight`, `annex.{state, signedAt, signedAtSource}`, `activatedAt`, `feeFrom`, `house`, `selfCheck`, `signedAfterClose`, `declinedByCode` |
 | `users` | `mcnGuardVer` (chỉ `$inc`) |
+| `event-rewards`, `event-bonus` | `mcn`, `mcnMember`, `mcnRate`: ghi lúc tạo khoản khi ngày phát sinh nằm trong cửa sổ phí; không xóa, không gỡ (§7.1) |
 | `reconciliations` | `completedAt`; `mcnSnapshot{status, items, splits, totalFee, eventStartFrom, at}` |
 | `reconciliation-items` | `mcnSplits[]{member, mcn, rate, baseCash, fee, windowFrom, windowTo, rewardCount}`, `mcnFee`, `netCash`, `mcnEvaluatedAt`, `postedAt`, `referral{state, base, sentAt}` |
 | `cash-flows` | `idemKey` (tag `omitempty`); action `mcn_fee`, `mcn_fee_adjustment`; `options.{mcn, mcnMember, rate}` |
@@ -365,6 +366,7 @@ Ghi chú:
 | `mcn-payouts` | `uniq(transfer, mcn, event)`; `(mcn, -createdAt)`; `(transfer, status)` | Một lệnh mỗi chiến dịch mỗi đợt |
 | `cash-flows` | `uniq(idemKey)` partial `{idemKey: {$exists: true}}` | Không vướng dữ liệu cũ |
 | `reconciliation-items` | `(mcnSplits.mcn, reconciliation)` | Màn đối soát MCN |
+| `event-rewards`, `event-bonus` | `(mcnMember, status)` | Gom khoản theo dòng quan hệ lúc Lấy danh sách |
 | `mcn-members` | Giữ `uniq(user)` partial `{isMember: true}`. Thêm `uniq(user, mcn)` partial `{isPending: true}`; `uniq(user)` partial `{annexInFlight: true}`; `uniq(user, link)` partial `{declinedByCode: true}` | INV-01, 02, 05; bấm Từ chối trên trang mời nhiều lần không tạo nhiều dòng |
 | `mcn-accounts` | `uniq(mcn)` và `uniq(user)` partial `{isCurrent: true}` | INV-04 |
 | `transfers` | `uniq(partner)` partial `{isOpen: true}` (khuyến nghị) | Một đợt mở mỗi partner |
@@ -375,7 +377,7 @@ Partial index chỉ dùng điều kiện bằng và `$exists: true`, vì chưa b
 
 | ID | Quy tắc |
 |---|---|
-| INV-06 | `rate` không đổi; `feeFrom` ghi một lần; cận trên cửa sổ tính từ các mốc đã lưu, không từ trạng thái do job ghi |
+| INV-06 | `rate` không đổi; `feeFrom` ghi một lần; cận trên cửa sổ tính từ các mốc đã lưu, không từ trạng thái do job ghi; `mcn`, `mcnMember`, `mcnRate` trên khoản thưởng ghi một lần, không gỡ |
 | INV-07 | Cửa sổ phí của một user không chồng nhau |
 | INV-08 | Mỗi khoản thưởng: `0 ≤ phí ≤ floor(cash)`. Mỗi item: `totalCash = netCash + mcnFee` |
 | INV-09 | Kỳ chỉ sang `processed` khi phí đã tính xong; `mcnSplits` không đổi sau `processed` |
@@ -446,17 +448,28 @@ MCN: `pending → active`. Tài khoản vận hành: `invited → active → rev
 
 ### 7.1 Khi nào có phí
 
-Một khoản thưởng bị trích phí khi đủ cả ba điều kiện:
+Phí gắn lên từng khoản thưởng ngay lúc khoản đó được tạo, rồi cộng lại lúc đối soát.
 
-1. Thuộc chiến dịch có `events.startAt` từ mốc áp dụng (prod đặt `2026-12-01`). Mốc trống thì không trích gì.
-2. Ngày phát sinh nằm trong cửa sổ phí của một dòng quan hệ.
-3. Khoản thưởng đang pending và được gom vào item của kỳ.
+Lúc tạo khoản thưởng (`event-rewards`, `event-bonus`), hàm `tagMcn` ghi `mcn`, `mcnMember`, `mcnRate` lên khoản đó khi đủ cả hai điều kiện:
 
-Phí tính ở bước Lấy danh sách (hàm `applyMcnFees`), lưu vào `mcnSplits`. Sau `processed` không tính lại. Đổi ENV sau đó không ảnh hưởng kỳ đã chốt.
+1. Thuộc chiến dịch có `events.startAt` từ mốc áp dụng (prod đặt `2026-12-01`). Mốc trống thì không gắn gì.
+2. Ngày phát sinh của khoản nằm trong cửa sổ phí của một dòng quan hệ (§7.2).
+
+Không đủ điều kiện thì không ghi gì, khoản đó đi luồng cũ.
+
+Các trường này ghi một lần, không xóa, không gỡ:
+
+- Thành viên rời, hết 12 tháng hay MCN chấm dứt thì khoản đã gắn vẫn bị chia phí khi đối soát, kể cả khi đối soát sau ngày rời. Chỉ khoản phát sinh sau đó mới không gắn.
+- `cash` của khoản thay đổi sau đó (view tăng, backfill) thì phí tính theo `cash` mới lúc đối soát. Vì vậy chỉ gắn MCN và tỷ lệ, không gắn số tiền phí.
+- Xét theo **ngày phát sinh** của khoản, không theo lúc tạo. Thưởng mốc tạo vào cuối đợt cho hoạt động trong thời gian hợp tác vẫn được gắn, dù lúc tạo người đó đã rời.
+
+Mọi chỗ tạo khoản thưởng phải gọi `tagMcn`: job thưởng view, job thưởng mốc (`pkg/public/service/schedule.go`), Thưởng thêm, các migration và backfill có tạo khoản mới. Sót chỗ nào thì khoản ở đó không bị trích phí. Test rà mã nguồn kiểm điều này (§11.6).
+
+Gắn lại chỉ dùng khi dữ liệu quan hệ sai và phải sửa (ví dụ phụ lục ký sau khi lời mời đã đóng, Admin sửa ngày), bằng script `cmd/mcn-retag` (ticket, dry-run), chỉ cho khoản còn pending.
 
 ### 7.2 Cửa sổ phí và công thức
 
-Cửa sổ phí của dòng quan hệ m, giờ Việt Nam, gồm `feeFrom`, không gồm `effTo`:
+Cửa sổ phí của dòng quan hệ m, giờ Việt Nam, gồm `feeFrom`, không gồm `effTo`. `tagMcn` dùng cửa sổ này:
 
 ```
 feeFrom(m) = 00:00 ngày kích hoạt (activatedAt)          // ghi một lần
@@ -467,22 +480,20 @@ effTo(m)   = 00:00 ngày endedAt                          nếu ended
 // Ngày kết thúc không tính phí.
 ```
 
-`endAt`, `leaveEffectiveAt` và thời điểm chấm dứt được ghi ngay khi sự việc xảy ra, không chờ job. Vì vậy phí không phụ thuộc lúc job chạy.
+`tagMcn` xét theo các mốc ngày đã lưu, không theo trạng thái. Job kết thúc thành viên có chạy trễ thì kết quả vẫn đúng.
 
-Công thức cho item i và phần phí j:
+Lúc Lấy danh sách (hàm `applyMcnFees`), với item i, gom các khoản đã gắn theo `mcnMember`:
 
 ```
-R_i      = các khoản thưởng pending của item i
-D(r)     = ngày phát sinh của khoản r (giờ Việt Nam)
-R_ij     = { r ∈ R_i : feeFrom_j ≤ D(r) < effTo_j }
-fee_r    = min( làm tròn half-up(cash_r × rate_j / 100), floor(cash_r) )
+R_ij     = các khoản pending của item i có mcnMember = j
+fee_r    = min( làm tròn half-up(cash_r × mcnRate_r / 100), floor(cash_r) )   // làm tròn từng khoản (PRD FR-016)
 base_j   = Σ cash_r  với r ∈ R_ij
 fee_j    = Σ fee_r   với r ∈ R_ij
 mcnFee_i = Σ fee_j
 netCash_i = totalCash_i − mcnFee_i
 ```
 
-Làm tròn từng khoản, nên tổng phí cả kỳ có thể lệch `ΣG × tỷ lệ` vài đồng. Tỷ lệ 0% vẫn lưu phần phí để MCN thấy, nhưng không sinh dòng tiền.
+Kết quả lưu vào `mcnSplits`. Sau `processed` không tính lại; đổi ENV sau đó không ảnh hưởng kỳ đã chốt. Làm tròn từng khoản theo PRD FR-016, nên tổng phí có thể lệch `base × tỷ lệ` vài đồng. Tỷ lệ 0% vẫn lưu phần phí để MCN thấy, nhưng không sinh dòng tiền.
 
 `applyMcnFees` lỗi sau 3 lần thử thì kỳ giữ `processing` và gửi Telegram; Admin Hủy kỳ rồi lập lại. Kỳ không sang `processed` khi phí chưa tính xong.
 
@@ -774,7 +785,7 @@ Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt c�
 | Tiền và thuế | Mọi dòng bảng §8.2; đổi MCN giữa item; chiến dịch bắt đầu 30/11 và 01/12 với mốc 01/12; mốc trống; MCN có chiến dịch âm; Max cắt số chi |
 | Hồi quy creator | Kỳ và đợt chi không có MCN: dòng tiền và thuế giống bản cũ; partner tắt `LedgerV2` chạy code cũ |
 | IDOR | MCN A đọc dữ liệu MCN B; user `banned` gọi `/mcn/*`; người Chờ ký không lộ email, SĐT; route eKYC với SSO người khác |
-| Rà mã nguồn | Chỉ `McnLedger` đọc và ghi `mcn-cash-flows`; `idemKey` có `omitempty`; không gọi `AddCashFlow` trong transaction; route `/mcn/*` không đọc `cash-flows` |
+| Rà mã nguồn | Mọi chỗ insert `event-rewards`, `event-bonus` gọi `tagMcn`; chỉ `McnLedger` đọc và ghi `mcn-cash-flows`; `idemKey` có `omitempty`; không gọi `AddCashFlow` trong transaction; route `/mcn/*` không đọc `cash-flows` |
 
 ### 11.7 Việc còn lại trên code
 
@@ -898,3 +909,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 1.0 | 2026-11-04 | Vinh Nguyễn | Bản đầu: vai MCN qua `mcn-accounts`, thành viên qua `mcn-members` |
 | 2.0, 2.1 | 2026-11-10, 2026-11-11 | Nguyễn Đăng Định | MCN sở hữu số dư, bảng tiền và lệnh chi riêng; cập nhật theo họp 10/11 |
 | 3.0 | 2026-11-11 | Nguyễn Đăng Định | Gộp các bản thành một, viết gọn; mở đầu bằng phần giới thiệu MCN phase 1 và sơ đồ luồng tiền; thiết kế chính viết dạng hỏi–đáp; thêm bảng vị trí code; cập nhật việc còn lại theo code tại `9a599f27c` |
+| 3.1 | 2026-11-11 | Nguyễn Đăng Định | Gắn MCN, dòng quan hệ, tỷ lệ lên khoản thưởng lúc tạo (`tagMcn`), không gỡ khi rời; đối soát cộng theo dòng quan hệ thay vì xét cửa sổ lúc Lấy danh sách (§7.1, §7.2) |
