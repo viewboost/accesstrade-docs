@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-04
 **Author:** Vinh Nguyễn
-**Version:** 1.1
+**Version:** 1.2
 **Status:** Draft — cập nhật quyết định 05–09/11/2026
 **Phạm vi:** App Ambassador (`frontend/`) và Admin (`admin/`). Các app partner (parasola, vpbank, …) là bản copy riêng, **không** nằm trong phase 1.
 
@@ -101,7 +101,7 @@ Ví dụ: thành viên vào qua link 15%, G = 3.000.000đ → phí 450.000đ và
 | D17 | MCN có hai loại: Công ty và Cá nhân, cùng một luồng. Loại không đổi sau khi tạo |
 | D18 | Ký xong phụ lục mới là thành viên. Chờ ký chưa phải thành viên: KOL/KOC được Chờ ký nhiều MCN cùng lúc, không có thao tác hủy. Ký xong một MCN thì các lời mời Chờ ký khác chuyển **Hết hiệu lực** |
 | D19 | Hết 12 tháng phụ lục: quan hệ tự kết thúc, ngừng trích phí. Muốn tiếp tục thì ký lại qua link mời mới |
-| D20 | Không trích phí trên khoản phát sinh trước ngày ký phụ lục hoặc từ ngày kết thúc. Xét theo ngày phát sinh của từng khoản, không theo ngày Lấy danh sách (thay đề xuất Q5) |
+| D20 | Không trích phí trên khoản phát sinh trước ngày kích hoạt thành viên (chốt 11/11) hoặc từ ngày kết thúc. Xét theo ngày phát sinh của từng khoản, không theo ngày Lấy danh sách (thay đề xuất Q5) |
 | D21 | Thuế TNCN của KOL/KOC: 10% trên số chi (đã trừ phí MCN) khi số chi trong đợt từ 5.000.000đ. MCN công ty không khấu trừ |
 | D22 | MCN vẫn xem được chi tiết đối soát các kỳ đã hợp tác sau khi thành viên rời; không thấy thu nhập sau khi rời |
 | D23 | KOL/KOC chưa eKYC hoặc chưa ký hợp đồng gốc `B2C_AMBASSADOR` thì làm ở trang Hợp đồng điện tử có sẵn, xong quay lại ký phụ lục |
@@ -239,7 +239,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 
 - Chưa eKYC hoặc chưa ký hợp đồng gốc `B2C_AMBASSADOR`: chặn, dẫn sang trang **Hợp đồng điện tử** có sẵn. Làm xong quay lại ký tiếp (D23).
 - Màn ký hiện **Thông báo xử lý dữ liệu cá nhân** (tải về được, A5). Tick riêng **Đồng ý chia sẻ dữ liệu cho MCN** (bắt buộc, lưu thời điểm).
-- Ký trên hợp đồng điện tử (loại phụ lục mới, Q4). Ký xong: thành viên **Đang hợp tác**, ngày bắt đầu = ngày ký, ngày kết thúc phụ lục = +12 tháng.
+- Ký trên hợp đồng điện tử (loại phụ lục mới, Q4). Ký xong: thành viên **Đang hợp tác**. Ngày bắt đầu tính phí = **ngày kích hoạt** (ngày hệ thống ghi nhận phụ lục đã ký), tính từ 00:00 ngày đó; ngày kết thúc phụ lục = +12 tháng (chốt 11/11).
 - Ký xong một MCN: các lời mời Chờ ký của MCN khác chuyển **Hết hiệu lực**, không ký được nữa, kể cả khi kết quả ký về muộn (D18).
 - Quá 7 ngày chưa ký: **Quá hạn ký**, phải mở lại link để đồng ý lại.
 
@@ -256,10 +256,10 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 
 #### FR-016: Tính phí quản lý trong kỳ đối soát
 
-- Lúc **Lấy danh sách** (kỳ chuyển sang Đã xử lý), hệ thống tính phí cho từng khoản theo **ngày phát sinh** của khoản đó (D20): chỉ trích khi tại ngày phát sinh người đó là thành viên (Đang hợp tác hoặc Đang báo rời chưa tới ngày rời) của một MCN **Hoạt động**. Ghi lại MCN, tỷ lệ, phí của khoản.
+- Lúc **Lấy danh sách** (kỳ chuyển sang Đã xử lý), hệ thống tính phí cho từng khoản theo **ngày phát sinh** của khoản đó (D20): chỉ trích khi tại ngày phát sinh người đó là thành viên (Đang hợp tác hoặc Đang báo rời chưa tới ngày rời) của một MCN **Hoạt động**. Ghi lại MCN, tỷ lệ của khoản.
 - Thưởng view: mỗi ngày có view là một khoản, ngày phát sinh là ngày có view (không phải ngày hệ thống ghi nhận).
 - Một dòng thưởng nội dung gồm nhiều ngày: phần nào phát sinh lúc thuộc MCN nào thì MCN đó được trích (D24).
-- Phí một khoản = làm tròn(số tiền khoản × tỷ lệ / 100) tới đồng.
+- Phí của một thành viên trong kỳ = làm tròn(tổng số tiền các khoản thuộc MCN của thành viên đó × tỷ lệ / 100) tới đồng. Làm tròn một lần trên tổng, không làm tròn từng khoản (chốt 11/11), để KOL/KOC, MCN và Kế toán tự tính tay ra đúng số.
 - Chỉ áp dụng cho partner bật MCN; phase 1 bật cho partner Ambassador (Q6).
 - Người không thuộc MCN: không có phí, như hiện nay.
 
@@ -412,3 +412,4 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 |---|---|---|
 | 1.0 | 2026-11-04 | Bản đầu, theo scope chốt 03/11/2026 và bản mẫu giao diện v47. Vai MCN và thành viên dùng bảng quan hệ, không dùng loại tài khoản |
 | 1.1 | 2026-11-09 | Thêm D17–D24: MCN cá nhân, tỷ lệ 0–100%, Chờ ký chưa phải thành viên và được Chờ ký nhiều MCN, hết 12 tháng tự kết thúc, trích phí theo ngày phát sinh, thuế 5.000.000đ trên số sau phí, MCN xem kỳ cũ sau rời, eKYC/hợp đồng gốc ở trang có sẵn, đổi MCN trong kỳ. Đóng Q1, Q5, Q7; thêm Q9–Q13, đóng Q10, Q12, Q13. Đồng bộ với bản mẫu 09/11: file PDF/JPG/PNG, ô lý do khi Từ chối/Chấm dứt/Báo rời, Thông báo xử lý dữ liệu cá nhân ở màn ký (A5), thông báo khi KOL/KOC từ chối |
+| 1.2 | 2026-11-11 | Chốt 11/11: phí tính từ ngày kích hoạt thành viên (FR-014, D20); làm tròn một lần trên tổng phí của mỗi thành viên trong kỳ thay vì từng khoản (FR-016) |
