@@ -16,15 +16,33 @@ Bản này gộp toàn bộ nội dung các bản trước (1.0, 2.0, 2.1) thàn
 
 ## 1. Tóm tắt
 
-### 1.1 Vấn đề
+### 1.1 MCN phase 1 là gì
 
-Hệ thống hiện tại coi một user là một người: user đó đăng nhập, có số dư, nhận tiền và chịu thuế. MCN thì khác. MCN là công ty hoặc cá nhân ký hợp đồng với AccessTrade; người đăng nhập chỉ vận hành MCN. Nếu cộng phí MCN vào số dư của người vận hành:
+MCN là công ty hoặc cá nhân quản lý một nhóm KOL/KOC. Phase 1 cho MCN đưa KOL/KOC của mình lên KOC Ambassador và nhận phí quản lý ngay trên hệ thống, thay vì tự thu bên ngoài.
+
+```
+AccessTrade tạo hồ sơ MCN, kích hoạt, gắn tài khoản vận hành
+  → MCN tạo link mời kèm tỷ lệ phí (1–99%), gửi cho KOL/KOC
+  → KOL/KOC đồng ý, ký phụ lục 12 tháng → thành viên của MCN
+  → Duyệt đối soát: mỗi khoản thưởng của thành viên trích phí cho MCN
+  → Đợt chi: KOL/KOC nhận như cũ; MCN nhận theo từng chiến dịch
+```
+
+Ví dụ: K thuộc MCN A, tỷ lệ 15%, có thưởng 3.000.000đ. K nhận 2.550.000đ, A nhận 450.000đ.
+
+PRD mô tả yêu cầu nghiệp vụ. Tech spec này mô tả cách làm trên code: dữ liệu, luồng tiền, API, màn hình đọc dữ liệu từ đâu, cách lên prod.
+
+### 1.2 Chỗ khó
+
+Hệ thống hiện tại coi một user là một người: user đó đăng nhập, có số dư, nhận tiền và chịu thuế. MCN thì khác. MCN ký hợp đồng với AccessTrade; người đăng nhập chỉ vận hành MCN. Nếu cộng phí MCN vào số dư của người vận hành:
 
 - Đổi người vận hành thì tiền vẫn nằm ở người cũ.
 - Người vận hành bị khóa vì lỗi creator thì MCN không được chi.
 - Phí MCN và thu nhập creator lẫn vào một số dư, thuế tính sai.
 
-### 1.2 Cách làm
+Ngoài ra, Duyệt đối soát hiện tại không chạy trong transaction. Lỗi giữa chừng thì tiền ghi dở; thêm phần trích phí MCN vào thì càng dễ lệch (§4.2).
+
+### 1.3 Cách làm
 
 1. MCN là bản ghi riêng `mcns`, không phải user. User chỉ được gắn quyền vận hành MCN qua bảng `mcn-accounts`.
 2. Tiền của MCN ghi ở bảng riêng `mcn-cash-flows`, chi bằng lệnh riêng `mcn-payouts`. Tiền creator vẫn ở `cash-flows`, chi bằng `withdraws` như cũ.
@@ -33,9 +51,7 @@ Hệ thống hiện tại coi một user là một người: user đó đăng nh
 5. Duyệt đối soát ghi tiền trong transaction. Chạy lại không cộng trùng; lỗi giữa chừng thì báo để Duyệt lại.
 6. MCN được chi theo từng chiến dịch, mỗi chiến dịch một lệnh. MCN cá nhân: ngưỡng 5.000.000đ và thuế 10% xét trên tổng các lệnh của MCN trong đợt. MCN công ty: không khấu trừ.
 
-Ví dụ: K thuộc MCN A, tỷ lệ 15%, có thưởng 3.000.000đ. K nhận 2.550.000đ, A nhận 450.000đ.
-
-### 1.3 Trả lời câu hỏi của tech lead
+### 1.4 Trả lời câu hỏi của tech lead
 
 1. Tài khoản MCN khác tài khoản creator thế nào?
    MCN là bản ghi `mcns`, có số dư và nhận tiền. Tài khoản đăng nhập chỉ có quyền vận hành, gắn qua `mcn-accounts`. Đổi người vận hành thì tiền của MCN không đổi chủ. Xem §5.
@@ -62,7 +78,7 @@ Ví dụ: K thuộc MCN A, tỷ lệ 15%, có thưởng 3.000.000đ. K nhận 2.
 7. Làm sao không nhầm số của creator và MCN trên màn hình?
    Mỗi màn hình chỉ đọc một bảng. Trang Số dư của creator đọc `cash-flows`; trang Quản lý MCN đọc `mcn-cash-flows`. Không màn hình nào cộng hai số. Xem §9.3.
 
-### 1.4 Còn chờ chốt
+### 1.5 Còn chờ chốt
 
 - OQ-01 (Kế toán): MCN cá nhân có khấu trừ 10% như KOL/KOC không.
 - OQ-13 (PO, Kế toán): chi theo chiến dịch chỉ cho MCN hay cả creator.
