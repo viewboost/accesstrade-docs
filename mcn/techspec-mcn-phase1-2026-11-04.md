@@ -195,7 +195,7 @@ Khoản có phí MCN phải ghi hai bảng cùng lúc, nên không giữ đượ
 
 ### 5.1 MCN
 
-- Bản ghi `mcns`: `partner`, `type` (company hoặc individual), `name`, `identityNumber` (MST 10 hoặc 13 số, CCCD 12 số; unique), `loginEmail`, `status` (`pending → active` khi đủ 5 hồ sơ).
+- Bản ghi `mcns`: `type` (company hoặc individual), `name`, `identityNumber` (MST 10 hoặc 13 số, CCCD 12 số; unique), `loginEmail`, `status` (`pending → active` khi đủ 5 hồ sơ). Hồ sơ MCN không gắn partner/ADV (PRD không có): Admin có quyền xem MCN thì thấy toàn bộ, không lọc theo ADV.
 - MCN sở hữu số dư, là người nhận tiền và người chịu thuế. Công ty: không khấu trừ. Cá nhân: khấu trừ 10% TNCN nếu tổng các lệnh của MCN trong đợt từ 5.000.000đ (họp 10/11).
 - Sau khi `active`, không sửa `type`, `identityNumber`; chỉ đổi bằng script có ticket. Đổi `name` thì TK ngân hàng phải xác minh lại.
 - Hồ sơ pháp lý và TK ngân hàng ở `mcn-documents`, có phiên bản. Lệnh chi chép TK hiện hành lúc tạo lệnh.
@@ -276,7 +276,6 @@ Hệ thống chia ba lớp:
 
 ```mermaid
 erDiagram
-  partners ||--o{ mcns : "mcnEnabled"
   mcns ||--o{ mcn_accounts : "tối đa 1 isCurrent"
   users ||--o{ mcn_accounts : "tối đa 1 isCurrent"
   mcns ||--o{ mcn_documents : "phiên bản"
@@ -305,7 +304,7 @@ Chỉ ghi thêm, không sửa, không xóa. Số dư MCN = tổng `value`.
 | Trường | Kiểu | Ghi chú |
 |---|---|---|
 | `mcn` | ObjectID | MCN sở hữu dòng tiền |
-| `partner` | ObjectID | Chép từ `mcns.partner`, để lọc |
+| `partner` | ObjectID | Chép từ `events.partner` của chiến dịch, để lọc theo đợt chi |
 | `event` | ObjectID | Bắt buộc. Số dư tính theo (MCN, chiến dịch) |
 | `action` | string | `mcn_fee`, `withdraw`, `tax`, `withdraw_fee`, `withdraw_reversal`, `adjustment` |
 | `value` | int64 | Khác 0. Dương là cộng (`mcn_fee`, `withdraw_reversal`), âm là trừ (`withdraw`, `tax`, `withdraw_fee`). `adjustment` theo chiều điều chỉnh |
@@ -571,7 +570,7 @@ Mỗi item vào số dư ngay khi transaction của nó commit. Để không chi
 MCN nhận trong cùng đợt chi (`transfers`) với KOL/KOC, không có đợt riêng. Phần creator giữ nguyên; trong cùng đợt, phần MCN chạy thêm các bước sau.
 
 1. Lấy danh sách: hàm `generateMcnPayouts` chạy trước vòng creator.
-   - Chọn MCN của partner đang `active`, có hợp đồng MCN hiện hành, TK ngân hàng đã khớp tên hoặc có lý do, tổng số dư ≥ Min.
+   - Chọn MCN đang `active` có số dư ở chiến dịch thuộc partner của đợt, có hợp đồng MCN hiện hành, TK ngân hàng đã khớp tên hoặc có lý do, tổng số dư ≥ Min.
    - Không xét SSO, eKYC, hợp đồng creator, `banned` của người vận hành.
    - MCN có chiến dịch nào số dư âm thì không tạo lệnh nào cho MCN đó và gửi Telegram. Nếu vẫn chi các chiến dịch dương thì tổng chi sẽ lớn hơn số dư thật.
    - Mỗi chiến dịch có số dư lớn hơn 0 thành một lệnh `draft`, `cash` bằng số dư của chiến dịch.
@@ -758,7 +757,7 @@ Khóa job bằng Redis `SETNX` phải dùng token ngẫu nhiên và chỉ xóa k
 
 | Cờ, ENV | Mặc định | Ý nghĩa |
 |---|---|---|
-| `PartnerOpts.McnEnabled` | false | Bật onboarding MCN cho partner. Kiểm ở tạo, sửa, kích hoạt, tạo link, xem lời mời, đồng ý, mở ký, gắn tài khoản. Không kiểm ở tính phí và chi trả: tắt cờ không dừng thu phí theo phụ lục đã ký |
+| `PartnerOpts.McnEnabled` | false | Partner bật MCN (FR-016, Q6: phase 1 chỉ Ambassador). Hai tác dụng: (1) có partner bật thì module MCN mở, kiểm ở tạo, sửa, kích hoạt, tạo link, xem lời mời, đồng ý, mở ký, gắn tài khoản; (2) chỉ khoản thưởng của chiến dịch thuộc partner bật MCN mới được gắn MCN và bị trích phí (`tagMcn`). Không kiểm ở tính phí và chi trả: tắt cờ không dừng thu phí theo phụ lục đã ký |
 | `PartnerOpts.LedgerV2` | false | Bật đường ghi tiền mới (§11.2). Bật cho Ambassador trước khi đặt mốc |
 | `MCN_FEE_EVENT_START_FROM` | trống | Ngày go-live MCN; chỉ chiến dịch bắt đầu từ ngày này bị trích phí. Trống thì không trích phí. Đặt đúng ngày go-live thật khi lên prod (dự kiến 01/12/2026) |
 | `TAX_PIT_RATE`, `TAX_PIT_THRESHOLD` | 10, 5.000.000 | Thuế creator và MCN cá nhân |
@@ -885,6 +884,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | 11 | Phạm vi trích phí | Mọi chiến dịch | Chỉ chiến dịch bắt đầu từ ngày go-live (họp 10/11, chốt 11/11) | PO |
 
 ### 12.3 Đã chốt
+- Hồ sơ MCN không gắn partner/ADV: bỏ trường `mcns.partner`, bỏ ô chọn ADV ở form tạo, không lọc MCN theo ADV của nhân sự (PRD không có, chốt 11/11). Phí chỉ trích trên chiến dịch thuộc partner bật MCN (Q6).
 - Chỉ chiến dịch bắt đầu từ ngày go-live mới bị trích phí; chiến dịch đã chạy trước go-live thì không. Đây là quy tắc, không gắn với ngày cố định: 01/12/2026 chỉ là ngày go-live dự kiến, `MCN_FEE_EVENT_START_FROM` đặt theo ngày go-live thật (chốt 11/11).
 - Phí tính từ **ngày kích hoạt** thành viên (ngày hệ thống ghi nhận phụ lục đã ký), 00:00 giờ Việt Nam, không theo ngày ký trên econtract. PRD 1.2 sửa FR-014, D20 (chốt 11/11).
 - Làm tròn một lần trên tổng phí của mỗi thành viên trong kỳ, không làm tròn từng khoản. PRD 1.2 sửa FR-016 (chốt 11/11).
@@ -947,3 +947,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 3.1 | 2026-11-11 | Nguyễn Đăng Định | Gắn MCN, dòng quan hệ, tỷ lệ lên khoản thưởng lúc tạo (`tagMcn`), không gỡ khi rời; đối soát cộng theo dòng quan hệ thay vì xét cửa sổ lúc Lấy danh sách (§7.1, §7.2); màn Đối soát MCN và thống kê chi tiết MCN đọc khoản đã gắn, tách Tạm tính và Đã đối soát (§9.3), index `(mcn, status, date)` (§6.5); thêm `mcns.statistic` giống `users.statistic` (§6.4.1) |
 | 3.2 | 2026-11-11 | Nguyễn Đăng Định | Đề xuất làm tròn một lần trên tổng mỗi phần phí thay vì từng khoản (§7.2, §12.2 điểm 2, chờ PO) |
 | 3.3 | 2026-11-11 | Nguyễn Đăng Định | Mốc áp dụng là ngày go-live thật, không cố định 01/12; giữ quy tắc chỉ chiến dịch mới bị trích phí (§7.1, §11.1, §11.4, §12.3) |
+| 3.4 | 2026-11-11 | Nguyễn Đăng Định | Bỏ `mcns.partner` (PRD không có); `tagMcn` chỉ gắn khoản của chiến dịch thuộc partner bật MCN (Q6); `mcn-cash-flows.partner` lấy từ chiến dịch (§5.1, §6.2, §8.1, §11.1) |
