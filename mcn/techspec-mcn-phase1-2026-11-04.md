@@ -22,10 +22,11 @@ MCN là công ty hoặc cá nhân quản lý một nhóm KOL/KOC. Phase 1 cho MC
 
 ```
 AccessTrade tạo hồ sơ MCN, kích hoạt, gắn tài khoản vận hành
-  → MCN tạo link mời kèm tỷ lệ phí (1–99%), gửi cho KOL/KOC
+  → MCN tạo link mời kèm tỷ lệ phí (0–100%), gửi cho KOL/KOC
   → KOL/KOC đồng ý, ký phụ lục 12 tháng → thành viên của MCN
-  → Duyệt đối soát: mỗi khoản thưởng của thành viên trích phí cho MCN
-  → Đợt chi: KOL/KOC nhận như cũ; MCN nhận theo từng chiến dịch
+  → Khoản thưởng phát sinh trong thời gian hợp tác được gắn MCN và tỷ lệ
+  → Duyệt đối soát: trích phí các khoản đã gắn, cộng vào số dư MCN
+  → Đợt chi: MCN nhận cùng đợt với KOL/KOC; lệnh KOL/KOC như cũ, lệnh MCN tách mỗi chiến dịch một lệnh
 ```
 
 Ví dụ: K thuộc MCN A, tỷ lệ 15%, có thưởng 3.000.000đ. K nhận 2.550.000đ, A nhận 450.000đ.
@@ -87,7 +88,7 @@ Câu 1–5 là câu hỏi của tech lead. Câu 6–9 là các điểm còn lạ
    Mỗi item ghi trong một transaction: dòng tiền creator, dòng tiền MCN và trạng thái item cùng ghi hoặc cùng không ghi. Mỗi dòng tiền có khóa `idemKey` nên chạy lại không cộng trùng. Kỳ lỗi chuyển `run_failed`, gửi Telegram, Admin Duyệt lại. Xem §7.3, §7.4.
 
 8. Chi theo chiến dịch thế nào?
-   Mỗi dòng tiền của MCN ghi kèm chiến dịch. Đợt chi tạo một lệnh cho mỗi chiến dịch còn số dư. P có 3.000.000 ở chiến dịch C1 và 2.500.000 ở C2: hai lệnh; thuế 550.000 tính trên tổng rồi chia 300.000 và 250.000. MCN công ty không khấu trừ. Xem §8.1.
+   MCN nhận trong cùng đợt chi với KOL/KOC, không có đợt riêng. Mỗi dòng tiền của MCN ghi kèm chiến dịch; trong đợt đó, MCN có một lệnh cho mỗi chiến dịch còn số dư. P có 3.000.000 ở chiến dịch C1 và 2.500.000 ở C2: hai lệnh; thuế 550.000 tính trên tổng rồi chia 300.000 và 250.000. MCN công ty không khấu trừ. Xem §8.1.
 
 9. Làm sao không nhầm số của creator và MCN trên màn hình?
    Mỗi màn hình chỉ đọc một bảng. Trang Số dư của creator đọc `cash-flows`; trang Quản lý MCN đọc `mcn-cash-flows`. Không màn hình nào cộng hai số. Xem §9.3.
@@ -560,7 +561,7 @@ Mỗi item vào số dư ngay khi transaction của nó commit. Để không chi
 
 ### 8.1 Lệnh chi MCN
 
-Đợt chi giữ nguyên phần creator. Phần MCN chạy thêm các bước sau.
+MCN nhận trong cùng đợt chi (`transfers`) với KOL/KOC, không có đợt riêng. Phần creator giữ nguyên; trong cùng đợt, phần MCN chạy thêm các bước sau.
 
 1. Lấy danh sách: hàm `generateMcnPayouts` chạy trước vòng creator.
    - Chọn MCN của partner đang `active`, có hợp đồng MCN hiện hành, TK ngân hàng đã khớp tên hoặc có lý do, tổng số dư ≥ Min.
