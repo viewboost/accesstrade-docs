@@ -740,12 +740,12 @@ Frontend phân biệt lỗi theo mã trong body (dải 2400–2599, `backend/int
 | Hai lần Đồng ý cùng (user, MCN) | Unique `isPending` chặn dòng thứ hai |
 | Gắn tài khoản vận hành và mở ký cùng lúc trên một user | `WriteConflict` trên `users.mcnGuardVer`; bên sau đọc lại, trả 409 |
 | Mở ký phụ lục MCN thứ hai khi đang ký MCN thứ nhất | Unique `annexInFlight` chặn, trả `MCN_ANNEX_IN_FLIGHT` |
-| Econtract lỗi khi tạo phụ lục | Dòng giữ `annex.state = creating`. Job `McnAnnexCleanup` (10 phút) tra econtract rồi đặt `created`, hoặc mở lại cho ký |
+| Econtract lỗi khi tạo phụ lục | Nhả ngay: gỡ `annex`, `annexInFlight = false`, người dùng bấm ký lại. Không có job dọn (PRD không có) |
 | Ký trước hạn nhưng đồng bộ sau hạn | Job hết hạn hỏi econtract trước. Đã ký thì kích hoạt, `signedAt = min(giờ đồng bộ, hạn ký)` |
 | Phụ lục ký sau khi lời mời đã Từ chối, Quá hạn, Hết hiệu lực | `signedAfterClose = true`, không kích hoạt, không trích phí, gửi Telegram (OQ-07) |
 | Job kết thúc thành viên chưa chạy | Cửa sổ phí tính từ mốc đã lưu, kết quả như khi job đã chạy |
 | Hai lần Duyệt cùng một item | CAS item; lần sau dừng |
-| Duyệt dừng giữa chừng | Kỳ ở `running`. Job `ReconRunningWatch` báo khi quá 2 giờ; chuyển `run_failed` rồi Duyệt lại an toàn |
+| Duyệt dừng giữa chừng | Kỳ ở `running`; chuyển `run_failed` rồi Duyệt lại an toàn. Không có job canh (PRD không có) |
 | Hai đợt chi mở cùng lúc, hoặc điều chỉnh âm xen giữa | Chuyển tiền kiểm số dư trong transaction; thiếu thì lệnh `insufficient_balance` |
 | Gắn tài khoản gặp hai user cùng email | Không gắn, gửi Telegram |
 
@@ -758,7 +758,6 @@ Khóa job bằng Redis `SETNX` phải dùng token ngẫu nhiên và chỉ xóa k
 | Cờ, ENV | Mặc định | Ý nghĩa |
 |---|---|---|
 | `reconciliations.ledgerV2` | false | Không phải cấu hình: hệ thống tự đặt lúc Lấy danh sách khi kỳ có khoản gắn MCN; Duyệt kỳ đó bằng đường ghi tiền mới (§7.3, §11.2) |
-| `MCN_JOB_ENABLED` | bật | Các job MCN. Tắt job không làm sai phí |
 | `MCN_ANNEX_CONTRACT_TYPE_COMPANY`, `MCN_ANNEX_CONTRACT_TYPE_INDIVIDUAL` | trống | Mã mẫu phụ lục trên FPT e-contract theo loại MCN (AT làm bản cho cá nhân và công ty, họp 10/11). Thay biến `MCN_ANNEX_CONTRACT_TYPE` đang có trong code. AT chỉ có một mẫu phụ lục thì hai biến cùng mã |
 
 ### 11.2 Thay đổi trên đường tiền creator
@@ -799,7 +798,7 @@ Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt c�
 
 ### 11.5 Theo dõi
 
-- Telegram: kỳ `run_failed`; tính phí lỗi; Chuyển tiền MCN lỗi hoặc thiếu số dư; MCN có chiến dịch âm; job đối chiếu lệch; phụ lục ký sau khi lời mời đóng; đổi TK ngân hàng MCN; kỳ `running` quá 2 giờ; gắn tài khoản gặp email trùng.
+- Telegram: kỳ `run_failed`; tính phí lỗi; Chuyển tiền MCN lỗi hoặc thiếu số dư; MCN có chiến dịch âm; job đối chiếu lệch; phụ lục ký sau khi lời mời đóng; đổi TK ngân hàng MCN; gắn tài khoản gặp email trùng.
 - Job `LedgerReconcile` hằng ngày: chạy lại E2–E4 cho các kỳ gần đây; mỗi lệnh MCN đã chuyển có dòng `withdraw`; lệnh bị loại sau khi chuyển có đủ dòng đảo; tổng file ngân hàng bằng tổng dòng `withdraw`; gửi lại hoa hồng còn pending.
 - Truy vết một đồng phí: dòng file ngân hàng (`po:<id>`) → `mcn-payouts` → `mcn-cash-flows` → `reconciliation-items.mcnSplits` → `event-rewards` hoặc `event-bonus`.
 
@@ -827,7 +826,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | 3 | Guard vai trong transaction (§5.4) ở Đồng ý, mở ký, đồng bộ ký, kích hoạt thành viên, Admin kích hoạt, gắn tài khoản; chặn cả dòng Chờ ký với MCN khác | Xong (`747ceeae9`) |
 | 4 | `isPending` và unique index; Từ chối trên trang mời upsert theo (user, link) | Xong (`747ceeae9`) |
 | 5 | `annex.signedAt`, `signedAtSource`, `sync_capped` | Xong (`ac756c0fb`) |
-| 6 | Hỏi econtract trước khi đánh hết hạn ký; CAS `annex.state`; `annexInFlight`; job `McnAnnexCleanup` | Xong (`ac756c0fb`) |
+| 6 | Hỏi econtract trước khi đánh hết hạn ký; CAS `annex.state`; `annexInFlight`; lỗi econtract thì nhả ngay (bỏ job `McnAnnexCleanup`, 12/11) | Xong (`ac756c0fb`) |
 | 7 | Kiểm `McnEnabled` ở các bước onboarding | Bỏ: cờ `McnEnabled` đã gỡ (`7ed9c10b9`), MCN không gắn ADV |
 | 8 | `mcn-accounts.isCurrent` và hai unique index; middleware kiểm `banned`, bỏ cache ở route tiền | Xong (`762ce73e9`) |
 | 9 | Lịch sử đăng nhập thêm trường `mcn` (`Response409` đã xong ở `54ea55e39`) | Xong (`c8deaf1ae`) |
@@ -944,3 +943,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 3.5 | 2026-11-11 | Nguyễn Đăng Định | Bỏ ENV `MCN_FEE_EVENT_START_FROM`: ngày go-live tự đọc từ ngày MCN đầu tiên được kích hoạt (§7.1, §11.1, §11.4, §12.3) |
 | 3.6 | 2026-11-12 | Nguyễn Đăng Định | Bỏ cờ partner `McnEnabled`, `LedgerV2`: MCN không gắn ADV, phí trích mọi khoản của thành viên; đường Duyệt mới chọn theo kỳ (`reconciliations.ledgerV2`, tự đặt lúc Lấy danh sách) (§4.2, §7.1, §7.3, §11.1, §11.2, §11.4, ADR-07, ADR-10, INV-15, INV-20) |
 | 3.7 | 2026-11-12 | Nguyễn Đăng Định | Bỏ ENV `TAX_PIT_RATE`, `TAX_PIT_THRESHOLD`, `MCN_INDIVIDUAL_TAX_POLICY` và `TaxPolicyFor`: thuế KOL/KOC giữ nguyên code cũ; thuế MCN dùng lại `MinTaxableRevenue` và 10% (§8.2, §11.1, §11.2) |
+| 3.8 | 2026-11-12 | Nguyễn Đăng Định | Theo PRD: bỏ ENV `MCN_JOB_ENABLED`, job `McnAnnexCleanup` (lỗi econtract nhả ngay để ký lại) và `ReconRunningWatch` (§10.2, §11.1, §11.5) |
