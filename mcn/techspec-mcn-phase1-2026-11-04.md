@@ -590,7 +590,7 @@ Thống kê đợt (`GetStatistic`) cộng thêm `mcn-payouts`. Màn Xử lý r�
 
 ### 8.2 Thuế
 
-Hàm `TaxPolicyFor(payee)` (file mới `backend/internal/service/tax.go`) thay đoạn tính thuế đang viết thẳng trong `withdraw.go`. Kết quả cho creator giữ y như cũ.
+Thuế KOL/KOC giữ nguyên đoạn đang có trong `withdraw.go`, không sửa. Thuế MCN tính ở `McnGroupTax` (file mới `backend/internal/service/tax.go`), dùng lại ngưỡng `constants.MinTaxableRevenue` và mức 10% như đoạn đó; không thêm ENV.
 
 | Người nhận | Loại thu nhập | Thuế |
 |---|---|---|
@@ -714,7 +714,7 @@ Frontend phân biệt lỗi theo mã trong body (dải 2400–2599, `backend/int
 | API public | `backend/pkg/public/{router,handler,service}/mcn*.go`: lời mời, phụ lục, báo rời, link, thành viên, job | Guard vai; số dư, đối soát, lệnh chi của MCN; đối soát cho creator |
 | Đối soát | `backend/pkg/admin/service/reconciliation_processing.go` (Lấy danh sách), `reconciliation_running.go` (Duyệt) | `applyMcnFees`, `postItem`, E1–E4, `run_failed` |
 | Dòng tiền, transaction | `backend/internal/service/cashflow.go`; `backend/internal/module/database/mongodb/transaction.go` | `AppendStrict`, `McnLedger`, `RunInTransaction` |
-| Đợt chi, thuế | `backend/pkg/admin/service/transfer_processing.go`, `transfer_transferring.go`, `transfer_finish.go`, `export_transfer.go`; `backend/internal/service/withdraw.go` | `generateMcnPayouts`, `TaxPolicyFor` (file mới `backend/internal/service/tax.go`), cột mới của file ngân hàng |
+| Đợt chi, thuế | `backend/pkg/admin/service/transfer_processing.go`, `transfer_transferring.go`, `transfer_finish.go`, `export_transfer.go`; `backend/internal/service/withdraw.go` | `generateMcnPayouts`, `McnGroupTax` (file mới `backend/internal/service/tax.go`), cột mới của file ngân hàng |
 | Web admin | `admin/src/pages/mcn` (danh sách, chi tiết, tab Thành viên) | Khối lệnh MCN ở `admin/src/pages/transfer`; tab Người nhận ở `admin/src/pages/reconciliation`; số dư MCN |
 | Web KOC | `frontend/src/pages/mcn-invite`, `mcn-manage`, `mcn-my`; `frontend/src/components/mcn` | Số dư, đối soát, lệnh chi ở Quản lý MCN; đối soát cho creator |
 
@@ -758,8 +758,6 @@ Khóa job bằng Redis `SETNX` phải dùng token ngẫu nhiên và chỉ xóa k
 | Cờ, ENV | Mặc định | Ý nghĩa |
 |---|---|---|
 | `reconciliations.ledgerV2` | false | Không phải cấu hình: hệ thống tự đặt lúc Lấy danh sách khi kỳ có khoản gắn MCN; Duyệt kỳ đó bằng đường ghi tiền mới (§7.3, §11.2) |
-| `TAX_PIT_RATE`, `TAX_PIT_THRESHOLD` | 10, 5.000.000 | Thuế creator và MCN cá nhân |
-| `MCN_INDIVIDUAL_TAX_POLICY` | `pit_10` | Thuế MCN cá nhân. Đã chốt 10% (họp 10/11); giữ biến để đổi nhanh nếu Legal rà lại |
 | `MCN_JOB_ENABLED` | bật | Các job MCN. Tắt job không làm sai phí |
 | `MCN_ANNEX_CONTRACT_TYPE_COMPANY`, `MCN_ANNEX_CONTRACT_TYPE_INDIVIDUAL` | trống | Mã mẫu phụ lục trên FPT e-contract theo loại MCN (AT làm bản cho cá nhân và công ty, họp 10/11). Thay biến `MCN_ANNEX_CONTRACT_TYPE` đang có trong code. AT chỉ có một mẫu phụ lục thì hai biến cùng mã |
 
@@ -773,7 +771,6 @@ Kết quả tiền và thuế của creator không thuộc MCN giữ nguyên. C�
 | Không Lấy danh sách đợt chi khi còn kỳ `ledgerV2` đang `running`, `run_failed` | ADV có kỳ đó |
 | Chuyển tiền, Hoàn tất creator trong transaction, khóa `wd:<withdrawId>:*` | Chưa làm. Lệnh MCN đã có khoá riêng |
 | Không cho Hủy kỳ `run_failed` | Mọi partner |
-| `TaxPolicyFor` thay đoạn tính thuế cũ | Mọi partner, kết quả giống hệt |
 | Thêm `cash-flows.idemKey` | Mọi partner, dòng cũ không có |
 
 Rollback code an toàn: dòng `mcn_fee` mang giá trị âm, code cũ tính số dư bằng tổng `value` nên vẫn đúng.
@@ -839,7 +836,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | 12 | Mở ký so lại CCCD khi `selfCheck = unresolved` | Xong (`ac756c0fb`) |
 | 13 | Vá IDOR eKYC, ký hợp đồng creator; script `cmd/mcn-rebind` | Trước go-live |
 | 14 | `applyMcnFees`, mốc áp dụng, `postItem`, `AppendStrict`, E1–E4, `run_failed` ở admin, `LedgerV2`, `mcn-cash-flows`, `McnLedger`, tiêu đề dòng tiền `mcn_fee`, `cmd/mcn-adjust` | Phase 5 |
-| 15 | `mcn-payouts`, thuế nhóm, `TaxPolicyFor`, file ngân hàng, khối MCN ở Xử lý rút tiền, Chuyển tiền creator trong transaction | Phase 6 |
+| 15 | `mcn-payouts`, thuế nhóm (`McnGroupTax`), file ngân hàng, khối MCN ở Xử lý rút tiền, Chuyển tiền creator trong transaction | Phase 6 |
 | 16 | Job `ReconRunningWatch`, `LedgerReconcile` | Phase 5–6 |
 | 17 | Màn đối soát, số dư, lệnh chi cho MCN; đối soát cho KOL/KOC; tab Người nhận | Phase 7 |
 | 18 | `CreateAnnex` gửi tên MCN, MST, tỷ lệ, ngày; chọn mẫu theo loại MCN (hai biến ở §11.1) | Chờ AT (17/11) |
@@ -946,3 +943,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 3.4 | 2026-11-11 | Nguyễn Đăng Định | Bỏ `mcns.partner` (PRD không có); `tagMcn` chỉ gắn khoản của chiến dịch thuộc partner bật MCN (Q6); `mcn-cash-flows.partner` lấy từ chiến dịch (§5.1, §6.2, §8.1, §11.1) |
 | 3.5 | 2026-11-11 | Nguyễn Đăng Định | Bỏ ENV `MCN_FEE_EVENT_START_FROM`: ngày go-live tự đọc từ ngày MCN đầu tiên được kích hoạt (§7.1, §11.1, §11.4, §12.3) |
 | 3.6 | 2026-11-12 | Nguyễn Đăng Định | Bỏ cờ partner `McnEnabled`, `LedgerV2`: MCN không gắn ADV, phí trích mọi khoản của thành viên; đường Duyệt mới chọn theo kỳ (`reconciliations.ledgerV2`, tự đặt lúc Lấy danh sách) (§4.2, §7.1, §7.3, §11.1, §11.2, §11.4, ADR-07, ADR-10, INV-15, INV-20) |
+| 3.7 | 2026-11-12 | Nguyễn Đăng Định | Bỏ ENV `TAX_PIT_RATE`, `TAX_PIT_THRESHOLD`, `MCN_INDIVIDUAL_TAX_POLICY` và `TaxPolicyFor`: thuế KOL/KOC giữ nguyên code cũ; thuế MCN dùng lại `MinTaxableRevenue` và 10% (§8.2, §11.1, §11.2) |
