@@ -182,7 +182,7 @@ Duyệt hiện ghi dòng tiền, reward, item bằng các lệnh rời, không c
 | Ghi content-analytic | Đã cộng tiền, item vẫn pending; lần Duyệt sau đánh item rejected |
 | Ghi reward | Đã cộng tiền, reward vẫn pending; kỳ sau gom lại và cộng trùng |
 
-Khoản có phí MCN phải ghi hai bảng cùng lúc, nên không giữ được đường này. Thiết kế mới ghi mỗi item trong một transaction (§7.3), áp cho kỳ có khoản gắn MCN (`reconciliations.ledgerV2`, §7.3).
+Khoản có phí MCN phải ghi hai bảng cùng lúc, nên không giữ được đường này. Thiết kế mới ghi mỗi item trong một transaction, áp cho kỳ có khoản gắn MCN (`reconciliations.ledgerV2`, §7.3).
 
 ### 4.3 Đợt chi hiện tại
 
