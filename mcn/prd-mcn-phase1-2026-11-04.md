@@ -260,7 +260,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 - Thưởng view: mỗi ngày có view là một khoản, ngày phát sinh là ngày có view (không phải ngày hệ thống ghi nhận).
 - Một dòng thưởng nội dung gồm nhiều ngày: phần nào phát sinh lúc thuộc MCN nào thì MCN đó được trích (D24).
 - Phí của một thành viên trong kỳ = làm tròn(tổng số tiền các khoản thuộc MCN của thành viên đó × tỷ lệ / 100) tới đồng. Làm tròn một lần trên tổng, không làm tròn từng khoản (chốt 11/11), để KOL/KOC, MCN và Kế toán tự tính tay ra đúng số.
-- Chỉ áp dụng cho partner bật MCN; phase 1 bật cho partner Ambassador (Q6).
+- Chỉ áp dụng cho kỳ đối soát của partner Ambassador (Q6).
 - Người không thuộc MCN: không có phí, như hiện nay.
 
 #### FR-017: Tab Người nhận
