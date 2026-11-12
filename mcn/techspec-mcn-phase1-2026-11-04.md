@@ -342,7 +342,7 @@ Một lệnh cho mỗi (đợt chi, MCN, chiến dịch).
 |---|---|
 | `mcns` | `ledgerVer` (chỉ `$inc`); `statistic` mở rộng giống `users.statistic` (§6.4.1) |
 | `mcn-accounts` | `isCurrent`, status `revoked`, `revokedAt`, `revokedBy`, `history[]` |
-| `mcn-members` | `isPending` (đúng khi `agreed`), `annexInFlight`, `annex.{state, signedAt, signedAtSource}`, `activatedAt`, `feeFrom`, `house`, `selfCheck`, `signedAfterClose`, `declinedByCode` |
+| `mcn-members` | `isPending` (đúng khi `agreed`), `annexInFlight`, `annex.{state, signedAt, signedAtSource}`, `activatedAt`, `feeFrom`, `house`, `selfCheck`, `declinedByCode` |
 | `users` | `mcnGuardVer` (chỉ `$inc`) |
 | `event-rewards`, `event-bonus` | `mcn`, `mcnMember`, `mcnRate`: ghi lúc tạo khoản khi ngày phát sinh nằm trong cửa sổ phí; không xóa, không gỡ (§7.1) |
 | `reconciliations` | `completedAt`; `mcnSnapshot{status, items, splits, totalFee, eventStartFrom, at}` |
@@ -488,7 +488,7 @@ Các trường này ghi một lần, không xóa, không gỡ:
 
 Mọi chỗ tạo khoản thưởng phải gọi `tagMcn`: job thưởng view, job thưởng mốc (`pkg/public/service/schedule.go`), Thưởng thêm, các migration và backfill có tạo khoản mới. Sót chỗ nào thì khoản ở đó không bị trích phí. Test rà mã nguồn kiểm điều này (§11.6).
 
-Gắn lại chỉ dùng khi dữ liệu quan hệ sai và phải sửa (ví dụ phụ lục ký sau khi lời mời đã đóng, Admin sửa ngày), bằng script `cmd/mcn-retag` (ticket, dry-run), chỉ cho khoản còn pending.
+Gắn lại chỉ dùng khi dữ liệu quan hệ sai và phải sửa (ví dụ Admin sửa ngày), bằng script `cmd/mcn-retag` (ticket, dry-run), chỉ cho khoản còn pending.
 
 ### 7.2 Cửa sổ phí và công thức
 
@@ -742,7 +742,7 @@ Frontend phân biệt lỗi theo mã trong body (dải 2400–2599, `backend/int
 | Mở ký phụ lục MCN thứ hai khi đang ký MCN thứ nhất | Unique `annexInFlight` chặn, trả `MCN_ANNEX_IN_FLIGHT` |
 | Econtract lỗi khi tạo phụ lục | Nhả ngay: gỡ `annex`, `annexInFlight = false`, người dùng bấm ký lại. Không có job dọn (PRD không có) |
 | Ký trước hạn nhưng đồng bộ sau hạn | Job hết hạn hỏi econtract trước. Đã ký thì kích hoạt, `signedAt = min(giờ đồng bộ, hạn ký)` |
-| Phụ lục ký sau khi lời mời đã Từ chối, Quá hạn, Hết hiệu lực | `signedAfterClose = true`, không kích hoạt, không trích phí, gửi Telegram (OQ-07) |
+| Phụ lục ký sau khi lời mời đã Từ chối, Quá hạn, Hết hiệu lực | Không kích hoạt, không trích phí (PRD D18). Job đồng bộ chỉ xét dòng Chờ ký; không đánh dấu, không báo Telegram |
 | Job kết thúc thành viên chưa chạy | Cửa sổ phí tính từ mốc đã lưu, kết quả như khi job đã chạy |
 | Hai lần Duyệt cùng một item | CAS item; lần sau dừng |
 | Duyệt dừng giữa chừng | Kỳ ở `running`; chuyển `run_failed` rồi Duyệt lại an toàn. Không có job canh (PRD không có) |
@@ -798,7 +798,7 @@ Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt c�
 
 ### 11.5 Theo dõi
 
-- Telegram: kỳ `run_failed`; tính phí lỗi; Chuyển tiền MCN lỗi hoặc thiếu số dư; MCN có chiến dịch âm; job đối chiếu lệch; phụ lục ký sau khi lời mời đóng; đổi TK ngân hàng MCN; gắn tài khoản gặp email trùng.
+- Telegram: kỳ `run_failed`; tính phí lỗi; Chuyển tiền MCN lỗi hoặc thiếu số dư; MCN có chiến dịch âm; job đối chiếu lệch; đổi TK ngân hàng MCN; gắn tài khoản gặp email trùng.
 - Job `LedgerReconcile` hằng ngày: chạy lại E2–E4 cho các kỳ gần đây; mỗi lệnh MCN đã chuyển có dòng `withdraw`; lệnh bị loại sau khi chuyển có đủ dòng đảo; tổng file ngân hàng bằng tổng dòng `withdraw`; gửi lại hoa hồng còn pending.
 - Truy vết một đồng phí: dòng file ngân hàng (`po:<id>`) → `mcn-payouts` → `mcn-cash-flows` → `reconciliation-items.mcnSplits` → `event-rewards` hoặc `event-bonus`.
 
@@ -908,7 +908,7 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | OQ-04 | AT chi tiền theo đâu | Theo file xuất như hiện nay; dòng MCN lấy TK ngân hàng đã chép trên lệnh |
 | OQ-05 | Econtract chưa trả giờ ký phụ lục, chưa có webhook, chưa tra được CCCD eKYC | Dùng giờ đồng bộ, polling, CCCD tự khai. AT có thêm thì dùng sau |
 | OQ-06 | VAT và hóa đơn của MCN công ty | Phí trong phụ lục coi là đã gồm VAT. Hóa đơn xử lý ngoài hệ thống, không chặn chi |
-| OQ-07 | Phụ lục ký sau khi lời mời đã đóng | Không kích hoạt, không trích phí, báo vận hành xử lý |
+| OQ-07 | ~~Phụ lục ký sau khi lời mời đã đóng~~ | Đóng theo PRD D18: không kích hoạt, không trích phí; không báo vận hành (12/11) |
 | OQ-08 | Tài khoản nhà có phải eKYC, ký hợp đồng creator không | Có, vì phụ lục gắn với hợp đồng creator. Căn cứ chi 100% cho MCN: họp 10/11 tạm áp dụng, Legal rà sau |
 | OQ-09 | MCN xem lại đối soát cũ trong bao lâu | Không xóa, như dữ liệu đối soát hiện nay |
 | OQ-10 | Đợt chi có đặt Max | Creator giữ như hiện nay. MCN chỉ xét Min, vượt Max thì chi tới Max, phần còn lại để đợt sau |
@@ -944,3 +944,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 3.6 | 2026-11-12 | Nguyễn Đăng Định | Bỏ cờ partner `McnEnabled`, `LedgerV2`: MCN không gắn ADV, phí trích mọi khoản của thành viên; đường Duyệt mới chọn theo kỳ (`reconciliations.ledgerV2`, tự đặt lúc Lấy danh sách) (§4.2, §7.1, §7.3, §11.1, §11.2, §11.4, ADR-07, ADR-10, INV-15, INV-20) |
 | 3.7 | 2026-11-12 | Nguyễn Đăng Định | Bỏ ENV `TAX_PIT_RATE`, `TAX_PIT_THRESHOLD`, `MCN_INDIVIDUAL_TAX_POLICY` và `TaxPolicyFor`: thuế KOL/KOC giữ nguyên code cũ; thuế MCN dùng lại `MinTaxableRevenue` và 10% (§8.2, §11.1, §11.2) |
 | 3.8 | 2026-11-12 | Nguyễn Đăng Định | Theo PRD: bỏ ENV `MCN_JOB_ENABLED`, job `McnAnnexCleanup` (lỗi econtract nhả ngay để ký lại) và `ReconRunningWatch` (§10.2, §11.1, §11.5) |
+| 3.9 | 2026-11-12 | Nguyễn Đăng Định | Theo PRD D18: bỏ `signedAfterClose` và cảnh báo Telegram khi phụ lục ký sau lúc lời mời đóng; đóng OQ-07 (§6, §10.2, §11.5) |
