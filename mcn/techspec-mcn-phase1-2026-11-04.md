@@ -182,7 +182,7 @@ Duyệt hiện ghi dòng tiền, reward, item bằng các lệnh rời, không c
 | Ghi content-analytic | Đã cộng tiền, item vẫn pending; lần Duyệt sau đánh item rejected |
 | Ghi reward | Đã cộng tiền, reward vẫn pending; kỳ sau gom lại và cộng trùng |
 
-Khoản có phí MCN phải ghi hai bảng cùng lúc, nên không giữ được đường này. Thiết kế mới ghi mỗi item trong một transaction (§7.3), bật theo cờ partner `LedgerV2`.
+Khoản có phí MCN phải ghi hai bảng cùng lúc, nên không giữ được đường này. Thiết kế mới ghi mỗi item trong một transaction (§7.3), áp cho kỳ có khoản gắn MCN (`reconciliations.ledgerV2`, §7.3).
 
 ### 4.3 Đợt chi hiện tại
 
@@ -409,11 +409,11 @@ Partial index chỉ dùng điều kiện bằng và `$exists: true`, vì chưa b
 | INV-12 | Mỗi `idemKey` một dòng; không có `idemKey` rỗng; mỗi (đợt, MCN, chiến dịch) một lệnh |
 | INV-13 | `mcn-cash-flows` chỉ ghi thêm, chỉ qua `McnLedger().Post` |
 | INV-14 | Lệnh MCN chỉ trừ tiền khi số dư của chiến dịch ≥ `cash`, đọc trong cùng transaction |
-| INV-15 | Partner bật `LedgerV2` còn kỳ `running` hoặc `run_failed` thì không Lấy danh sách đợt chi |
+| INV-15 | ADV còn kỳ `ledgerV2` đang `running` hoặc `run_failed` thì không Lấy danh sách đợt chi |
 | INV-16 | Kỳ `run_failed` chỉ chuyển sang `running`, không Hủy được |
 | INV-17 | `bank`, `payee`, `tax` của lệnh không đổi sau `draft`; `type`, `identityNumber` của MCN không đổi sau `active` |
 | INV-18 | MCN chỉ đọc được dữ liệu của mình |
-| INV-20 | Chỉ trích phí khoản của chiến dịch có `events.startAt` ≥ ngày go-live và thuộc partner bật MCN |
+| INV-20 | Chỉ trích phí khoản của chiến dịch có `events.startAt` ≥ ngày go-live, không xét chiến dịch thuộc ADV nào |
 
 ### 6.7 Trạng thái
 
@@ -475,7 +475,7 @@ Phí gắn lên từng khoản thưởng ngay lúc khoản đó được tạo, 
 
 Lúc tạo khoản thưởng (`event-rewards`, `event-bonus`), hàm `tagMcn` ghi `mcn`, `mcnMember`, `mcnRate` lên khoản đó khi đủ cả hai điều kiện:
 
-1. Thuộc chiến dịch có `events.startAt` từ ngày go-live (00:00 giờ VN của ngày MCN đầu tiên được kích hoạt, hệ thống tự đọc từ `mcns.activatedAt`, không cấu hình) và thuộc partner bật MCN (Q6). Chiến dịch đã chạy trước go-live không trích phí (quy tắc chốt 11/11). Chưa có MCN nào hoạt động thì không gắn gì.
+1. Thuộc chiến dịch có `events.startAt` từ ngày go-live (00:00 giờ VN của ngày MCN đầu tiên được kích hoạt, hệ thống tự đọc từ `mcns.activatedAt`, không cấu hình). Không xét chiến dịch thuộc ADV nào: MCN không gắn ADV. Chiến dịch đã chạy trước go-live không trích phí (quy tắc chốt 11/11). Chưa có MCN nào hoạt động thì không gắn gì.
 2. Ngày phát sinh của khoản nằm trong cửa sổ phí của một dòng quan hệ (§7.2).
 
 Không đủ điều kiện thì không ghi gì, khoản đó đi luồng cũ.
@@ -541,7 +541,7 @@ Mỗi item một transaction (hàm `postItem`):
 
 Trong transaction dùng hàm mới `CashFlow().AppendStrict`: chỉ insert, trả lỗi thật, từ chối `idemKey` rỗng. Không dùng `AddCashFlow` trong transaction, vì hàm này bỏ qua lỗi và chạy goroutine dùng chung `ctx`.
 
-Partner tắt `LedgerV2` chạy đúng code cũ. Partner có MCN phải bật `LedgerV2` trước kỳ đầu có phí; mốc đã đặt mà chưa bật cờ thì `applyMcnFees` báo lỗi và kỳ dừng ở `processing`.
+Đường này chỉ chạy cho kỳ có khoản gắn MCN. Lúc Lấy danh sách, `applyMcnFees` đặt `reconciliations.ledgerV2 = true` khi kỳ có ít nhất một item có phí; Duyệt đọc cờ của kỳ. Kỳ không có MCN chạy đúng code cũ. Không có cờ trên partner, không có bước bật tay trước go-live.
 
 ### 7.4 Kiểm cuối kỳ
 
@@ -757,8 +757,7 @@ Khóa job bằng Redis `SETNX` phải dùng token ngẫu nhiên và chỉ xóa k
 
 | Cờ, ENV | Mặc định | Ý nghĩa |
 |---|---|---|
-| `PartnerOpts.McnEnabled` | false | Partner bật MCN (FR-016, Q6: phase 1 chỉ Ambassador). Hai tác dụng: (1) có partner bật thì module MCN mở, kiểm ở tạo, sửa, kích hoạt, tạo link, xem lời mời, đồng ý, mở ký, gắn tài khoản; (2) chỉ khoản thưởng của chiến dịch thuộc partner bật MCN mới được gắn MCN và bị trích phí (`tagMcn`). Không kiểm ở tính phí và chi trả: tắt cờ không dừng thu phí theo phụ lục đã ký |
-| `PartnerOpts.LedgerV2` | false | Bật đường ghi tiền mới (§11.2). Bật cho Ambassador trước khi đặt mốc |
+| `reconciliations.ledgerV2` | false | Không phải cấu hình: hệ thống tự đặt lúc Lấy danh sách khi kỳ có khoản gắn MCN; Duyệt kỳ đó bằng đường ghi tiền mới (§7.3, §11.2) |
 | `TAX_PIT_RATE`, `TAX_PIT_THRESHOLD` | 10, 5.000.000 | Thuế creator và MCN cá nhân |
 | `MCN_INDIVIDUAL_TAX_POLICY` | `pit_10` | Thuế MCN cá nhân. Đã chốt 10% (họp 10/11); giữ biến để đổi nhanh nếu Legal rà lại |
 | `MCN_JOB_ENABLED` | bật | Các job MCN. Tắt job không làm sai phí |
@@ -770,9 +769,9 @@ Kết quả tiền và thuế của creator không thuộc MCN giữ nguyên. C�
 
 | Thay đổi | Áp cho |
 |---|---|
-| Duyệt: mỗi item một transaction, `idemKey`, kiểm E1–E4, trạng thái `run_failed`, hoa hồng gửi sau khi kỳ xong | Partner bật `LedgerV2` |
-| Không Lấy danh sách đợt chi khi còn kỳ `running`, `run_failed` | Partner bật `LedgerV2` |
-| Chuyển tiền, Hoàn tất creator trong transaction, khóa `wd:<withdrawId>:*` | Partner bật `LedgerV2` |
+| Duyệt: mỗi item một transaction, `idemKey`, kiểm E1–E4, trạng thái `run_failed`, hoa hồng gửi sau khi kỳ xong | Kỳ `ledgerV2` (có khoản gắn MCN) |
+| Không Lấy danh sách đợt chi khi còn kỳ `ledgerV2` đang `running`, `run_failed` | ADV có kỳ đó |
+| Chuyển tiền, Hoàn tất creator trong transaction, khóa `wd:<withdrawId>:*` | Chưa làm. Lệnh MCN đã có khoá riêng |
 | Không cho Hủy kỳ `run_failed` | Mọi partner |
 | `TaxPolicyFor` thay đoạn tính thuế cũ | Mọi partner, kết quả giống hệt |
 | Thêm `cash-flows.idemKey` | Mọi partner, dòng cũ không có |
@@ -793,13 +792,13 @@ Chạy trên dev, QA, prod trong bản go-live:
 Mốc theo họp 10/11: mẫu hợp đồng chốt trong tuần, ký 17/11 (team My); demo tuần 16–20/11; go-live cuối tháng 11; phí áp cho chiến dịch bắt đầu từ ngày go-live (dự kiến 01/12/2026); nghiệm thu theo tuần với Hà Lê; màn mới làm mockup duyệt trước rồi mới code.
 
 1. Trước demo: xong nhóm "Sửa ngay" ở §11.7. Demo hồ sơ, mời, ký, thành viên; chưa có phần tiền.
-2. Cuối tháng 11: lên prod phần onboarding (phase 1–4 của plan code) kèm M1–M3. Trước đó phải vá IDOR eKYC và có `cmd/mcn-rebind`. Bật `McnEnabled` cho Ambassador; `LedgerV2` tắt. Không kích hoạt MCN thử trên prod: MCN đầu tiên được kích hoạt quyết định ngày go-live.
+2. Cuối tháng 11: lên prod phần onboarding (phase 1–4 của plan code) kèm M1–M3. Trước đó phải vá IDOR eKYC và có `cmd/mcn-rebind`. Không có cờ cần bật: module mở khi có code, ẩn bằng cách chưa gán quyền `mcn.*`. Không kích hoạt MCN thử trên prod: MCN đầu tiên được kích hoạt quyết định ngày go-live.
 3. Phần phí (phase 5) và chi trả (phase 6) lên cùng một bản, trước kỳ đối soát đầu tiên có khoản đã gắn MCN. Khoản được gắn ngay từ khi MCN đầu tiên kích hoạt; Duyệt kỳ đó bằng code cũ thì MCN mất phí. Không kịp thì hoãn Duyệt kỳ đó.
-4. Chạy hồi quy trên bản sao dữ liệu: một kỳ và một đợt chi của partner không có MCN (FEC, HDBank hoặc VPBank), bật `LedgerV2`. So dòng tiền và thuế với bản cũ.
-5. Bật `LedgerV2` cho Ambassador, theo dõi một kỳ và một đợt chi.
+4. Chạy hồi quy trên bản sao dữ liệu: một kỳ có khoản gắn MCN và một kỳ không có, cùng đợt chi. Kỳ không có MCN phải giống bản cũ; kỳ có MCN so dòng tiền, phí và thuế với tính tay.
+5. Theo dõi kỳ đối soát và đợt chi đầu tiên có khoản gắn MCN.
 6. Màn xem đối soát (phase 7), thông báo (phase 8).
 
-Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt có lệnh MCN. Muốn tắt `LedgerV2` thì xử lý hết kỳ `run_failed` trước.
+Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt có lệnh MCN. Không tắt được đường mới bằng cờ; kỳ `run_failed` xử lý bằng Duyệt lại.
 
 ### 11.5 Theo dõi
 
@@ -814,7 +813,7 @@ Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt c�
 | Unit | Cửa sổ phí (kích hoạt 23:59 và 00:00), công thức phí (làm tròn trên tổng, số lẻ, tỷ lệ 0 và 100), thuế (đúng 5.000.000 và 4.999.999), chia thuế nhóm, chuẩn hóa CCCD |
 | Integration, Mongo thật (`-tags integration`, cổng 27099) | Đồng ý đồng thời; gắn tài khoản khi đang Chờ ký MCN khác; tài khoản nhà; mở ký hai MCN; ký trước hạn đồng bộ sau hạn; Duyệt hai lần; Duyệt dừng giữa chừng rồi Duyệt lại; hai đợt chi cùng MCN; loại lệnh sau Chuyển tiền |
 | Tiền và thuế | Mọi dòng bảng §8.2; đổi MCN giữa item; chiến dịch bắt đầu trước và đúng ngày go-live; chưa đặt ngày go-live; MCN có chiến dịch âm; Max cắt số chi |
-| Hồi quy creator | Kỳ và đợt chi không có MCN: dòng tiền và thuế giống bản cũ; partner tắt `LedgerV2` chạy code cũ |
+| Hồi quy creator | Kỳ và đợt chi không có MCN: dòng tiền và thuế giống bản cũ; kỳ không có khoản gắn MCN chạy code cũ |
 | IDOR | MCN A đọc dữ liệu MCN B; user `banned` gọi `/mcn/*`; người Chờ ký không lộ email, SĐT; route eKYC với SSO người khác |
 | Rà mã nguồn | Mọi chỗ insert `event-rewards`, `event-bonus` gọi `tagMcn`; chỉ `McnLedger` đọc và ghi `mcn-cash-flows`; `idemKey` có `omitempty`; không gọi `AddCashFlow` trong transaction; route `/mcn/*` không đọc `cash-flows` |
 
@@ -832,7 +831,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | 4 | `isPending` và unique index; Từ chối trên trang mời upsert theo (user, link) | Xong (`747ceeae9`) |
 | 5 | `annex.signedAt`, `signedAtSource`, `sync_capped` | Xong (`ac756c0fb`) |
 | 6 | Hỏi econtract trước khi đánh hết hạn ký; CAS `annex.state`; `annexInFlight`; job `McnAnnexCleanup` | Xong (`ac756c0fb`) |
-| 7 | Kiểm `McnEnabled` ở các bước onboarding (hiện chỉ kiểm lúc tạo hồ sơ) | Xong (`e3c986866`) |
+| 7 | Kiểm `McnEnabled` ở các bước onboarding | Bỏ: cờ `McnEnabled` đã gỡ (`7ed9c10b9`), MCN không gắn ADV |
 | 8 | `mcn-accounts.isCurrent` và hai unique index; middleware kiểm `banned`, bỏ cache ở route tiền | Xong (`762ce73e9`) |
 | 9 | Lịch sử đăng nhập thêm trường `mcn` (`Response409` đã xong ở `54ea55e39`) | Xong (`c8deaf1ae`) |
 | 10 | Khóa job Redis có token | Xong (`8b840eb85`) |
@@ -858,10 +857,10 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | ADR-04 | Guard vai bằng transaction, `$inc users.mcnGuardVer` và partial unique | Collection guard riêng: mọi đường kết thúc phải nhớ xóa dòng guard, dễ lệch |
 | ADR-05 | Bên creator ghi `+G` và `−fee` | Một dòng đã trừ phí: mất dấu phí, trái FR-018 |
 | ADR-06 | Phí theo ngày phát sinh từng khoản; `feeFrom` từ ngày kích hoạt; làm tròn một lần trên tổng mỗi phần phí; tính phí lỗi thì kỳ dừng | Xét thành viên tại lúc Lấy danh sách: trái D20. Lấy theo giờ ký thật: hồi tố kỳ đã chốt |
-| ADR-07 | Mỗi item ghi trong một transaction, bật theo `LedgerV2` | Giữ đường cũ, chỉ thêm bước kiểm: phát hiện được lỗi nhưng không sửa được, kỳ không hoàn tất được |
+| ADR-07 | Mỗi item ghi trong một transaction, áp cho kỳ có khoản gắn MCN (`reconciliations.ledgerV2`, tự đặt lúc Lấy danh sách) | Giữ đường cũ, chỉ thêm bước kiểm: phát hiện được lỗi nhưng không sửa được, kỳ không hoàn tất được |
 | ADR-08 | Lệnh MCN riêng `mcn-payouts`; trừ tiền lúc Chuyển tiền, kiểm số dư trong transaction | Dùng chung `withdraws` với `payeeType = mcn`: mọi chỗ đọc `withdraws` phải xử lý thêm loại người nhận MCN |
 | ADR-09 | Thuế theo loại người nhận; MCN cá nhân xét ngưỡng trên tổng các lệnh trong đợt | Xét từng lệnh: chia nhỏ để không bị khấu trừ. Gộp theo CCCD với creator: phụ thuộc CCCD tự khai, để phase 2 |
-| ADR-10 | `McnEnabled` chỉ chặn onboarding | Chặn cả tính phí: trái phụ lục đã ký |
+| ADR-10 | Không có cờ MCN trên partner (bỏ `McnEnabled`, `LedgerV2`) | Cờ theo partner: MCN không gắn ADV, quên bật một ADV thì kỳ kẹt, bật hết thì 13 ADV đổi đường Duyệt cùng lúc |
 | ADR-11 | Phí trích sai sửa bằng `cmd/mcn-adjust`; số dư âm không tự bù | Hoàn bằng Thưởng thêm: bị trích phí lần nữa |
 | ADR-12 | Tài khoản nhà 100% cho người đứng MCN làm creator | Hai lệnh riêng: hai lần xét ngưỡng. Cộng thẳng vào bảng MCN theo vai đăng nhập: không có văn bản làm căn cứ chi, phải sửa lõi ghi tiền |
 | ADR-13 | Mốc áp dụng theo `events.startAt` | Cờ bật từng chiến dịch: quên bật là mất phí. Theo ngày phát sinh: chiến dịch đang chạy vẫn bị trích |
@@ -871,7 +870,6 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 
 | # | Nội dung | PRD, BA | Tài liệu này | Người duyệt |
 |---|---|---|---|---|
-| 3 | Tắt cờ MCN | FR-016: chỉ partner bật MCN | Tắt cờ không dừng thu phí theo phụ lục đã ký | PO |
 | 4 | Trạng thái kỳ | D8: giữ trạng thái hiện có | Thêm "Duyệt lỗi" (`run_failed`) | PO, BA |
 | 5 | Đợt chi khi có kỳ đang Duyệt | Không quy định | Chặn | PO, Kế toán |
 | 6 | Mở ký phụ lục | D18: Chờ ký nhiều MCN | Vẫn Chờ ký nhiều MCN, nhưng chỉ mở ký một phụ lục một lúc | PO, BA |
@@ -882,7 +880,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `c8deaf1ae` (11/11/202
 | 11 | Phạm vi trích phí | Mọi chiến dịch | Chỉ chiến dịch bắt đầu từ ngày go-live (họp 10/11, chốt 11/11) | PO |
 
 ### 12.3 Đã chốt
-- Hồ sơ MCN không gắn partner/ADV: bỏ trường `mcns.partner`, bỏ ô chọn ADV ở form tạo, không lọc MCN theo ADV của nhân sự (PRD không có, chốt 11/11). Phí chỉ trích trên chiến dịch thuộc partner bật MCN (Q6).
+- Hồ sơ MCN không gắn partner/ADV: bỏ trường `mcns.partner`, bỏ ô chọn ADV ở form tạo, không lọc MCN theo ADV của nhân sự (PRD không có, chốt 11/11). Phí trích trên mọi khoản của thành viên, không xét ADV; bỏ cờ `McnEnabled`, `LedgerV2` trên partner (chốt 12/11).
 - Chỉ chiến dịch bắt đầu từ ngày go-live mới bị trích phí; chiến dịch đã chạy trước go-live thì không. Ngày go-live do hệ thống tự đọc: 00:00 ngày MCN đầu tiên được kích hoạt, không có biến cấu hình (chốt 11/11).
 - Phí tính từ **ngày kích hoạt** thành viên (ngày hệ thống ghi nhận phụ lục đã ký), 00:00 giờ Việt Nam, không theo ngày ký trên econtract. PRD 1.2 sửa FR-014, D20 (chốt 11/11).
 - Làm tròn một lần trên tổng phí của mỗi thành viên trong kỳ, không làm tròn từng khoản. PRD 1.2 sửa FR-016 (chốt 11/11).
@@ -925,11 +923,11 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | ID | Rủi ro | Giảm thiểu |
 |---|---|---|
 | R-01 | Legal đổi cơ sở thuế sang G (trước phí) | Bảng tiền giữ `+G`, đủ dữ liệu để phân bổ lại; Legal xác nhận D21 trước phase 6 |
-| R-02 | Dữ liệu ghi dở từ đường Duyệt cũ còn lại trước khi bật `LedgerV2` | Script dry-run liệt kê item pending có reward completed và đã có dòng tiền; xử lý tay theo ticket |
+| R-02 | Dữ liệu ghi dở từ đường Duyệt cũ còn lại trước kỳ có MCN đầu tiên | Script dry-run liệt kê item pending có reward completed và đã có dòng tiền; xử lý tay theo ticket |
 | R-03 | Mẫu phụ lục không kịp 17/11 | Lên phần hồ sơ, mời trước; mở ký khi có mẫu |
 | R-04 | Không có webhook, kích hoạt thành viên trễ, MCN mất phí các ngày trước kích hoạt | Đồng bộ khi KOL/KOC quay lại trang; job 15 phút; webhook nếu AT có (OQ-05) |
 | R-05 | Tài khoản admin bị chiếm, đổi TK ngân hàng MCN | Audit, Telegram; duyệt hai người ở phase sau |
-| R-06 | Đặt mốc khi chưa có đường chi, hoặc đặt mốc trễ sau kỳ có chiến dịch tháng 12 | Phase 5 và 6 lên cùng bản; thiếu `LedgerV2` thì tính phí báo lỗi; checklist trước mỗi kỳ tháng 12 |
+| R-06 | Đặt mốc khi chưa có đường chi, hoặc đặt mốc trễ sau kỳ có chiến dịch tháng 12 | Phase 5 và 6 lên cùng bản; checklist trước mỗi kỳ tháng 12 |
 | R-07 | Tổng phí cả kỳ của MCN lệch `tổng hoa hồng mọi KOL/KOC × tỷ lệ` vài đồng | Làm tròn trên tổng mỗi phần phí nên từng KOL/KOC khớp phép tính tay; màn hình đọc phí đã lưu, không tự nhân |
 | R-08 | Người đứng MCN chưa ký phụ lục 100%, thu nhập nội dung vẫn đi lệnh creator | Báo cáo vận hành nhắc ký; `taxpayerKey` trên file để Kế toán gộp |
 | R-09 | Kênh khác của MCN vào bằng link dưới 100% | Hệ thống không nhận diện được; ghi trong hợp đồng MCN; Kế toán rà theo `taxpayerKey` |
@@ -947,3 +945,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 3.3 | 2026-11-11 | Nguyễn Đăng Định | Mốc áp dụng là ngày go-live thật, không cố định 01/12; giữ quy tắc chỉ chiến dịch mới bị trích phí (§7.1, §11.1, §11.4, §12.3) |
 | 3.4 | 2026-11-11 | Nguyễn Đăng Định | Bỏ `mcns.partner` (PRD không có); `tagMcn` chỉ gắn khoản của chiến dịch thuộc partner bật MCN (Q6); `mcn-cash-flows.partner` lấy từ chiến dịch (§5.1, §6.2, §8.1, §11.1) |
 | 3.5 | 2026-11-11 | Nguyễn Đăng Định | Bỏ ENV `MCN_FEE_EVENT_START_FROM`: ngày go-live tự đọc từ ngày MCN đầu tiên được kích hoạt (§7.1, §11.1, §11.4, §12.3) |
+| 3.6 | 2026-11-12 | Nguyễn Đăng Định | Bỏ cờ partner `McnEnabled`, `LedgerV2`: MCN không gắn ADV, phí trích mọi khoản của thành viên; đường Duyệt mới chọn theo kỳ (`reconciliations.ledgerV2`, tự đặt lúc Lấy danh sách) (§4.2, §7.1, §7.3, §11.1, §11.2, §11.4, ADR-07, ADR-10, INV-15, INV-20) |
