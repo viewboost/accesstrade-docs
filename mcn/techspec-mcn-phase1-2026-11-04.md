@@ -6,9 +6,9 @@
 | Ngày | 2026-11-13 |
 | Người viết | Nguyễn Đăng Định |
 | Người review | Thành Trung, Vinh Nguyễn |
-| Version | 4.0 |
+| Version | 4.1 |
 | Trạng thái | Draft, sửa theo review của anh Vĩnh trên PR #42 (12/11), chờ review lại |
-| PRD | [prd-mcn-phase1-2026-11-04.md](./prd-mcn-phase1-2026-11-04.md). Bản 1.3 nằm ở PR #41 (nhánh `docs/mcn-phase1-prd-decisions-261109`), cần merge trước hoặc cùng PR này |
+| PRD | [prd-mcn-phase1-2026-11-04.md](./prd-mcn-phase1-2026-11-04.md). Bản 1.4 nằm ở PR #41 (nhánh `docs/mcn-phase1-prd-decisions-261109`), cần merge trước hoặc cùng PR này |
 | Tài liệu khác | [08-Sequence.md](./08-Sequence.md) (BA, 22/10, mô hình cũ); [meeting-261103.md](./meeting-261103.md); biên bản họp 10/11 (chưa đưa lên repo); bản mẫu BA (artifact `BVwnmqnqNZhjnX6pbXDikV`) |
 | Code | Repo `ambassador`, nhánh `feat/mcn-phase1`, head `8a17323f3` |
 
@@ -569,21 +569,23 @@ to(m)   = 00:00 ngày closedAt                                  nếu closed
 
 Cửa sổ tính từ các mốc đã lưu, không theo trạng thái. Job kết thúc thành viên có chạy trễ thì kết quả vẫn đúng.
 
-Lúc Lấy danh sách, với item i của KOL/KOC u:
+Lúc Lấy danh sách, với KOL/KOC u trong kỳ:
 
 ```
 M_u      = các thời gian thành viên của u (open và closed)
-R_ij     = các khoản pending của item i, chiến dịch từ mốc, ngày phát sinh ∈ cửa sổ của j ∈ M_u
-base_j   = Σ cash_r  với r ∈ R_ij
-fee_j    = min( làm tròn half-up(base_j × rate_j / 100), floor(base_j) )   // làm tròn một lần cho mỗi phần phí
+R_uj     = các khoản pending của mọi item của u trong kỳ, chiến dịch từ mốc, ngày phát sinh ∈ cửa sổ của j ∈ M_u
+base_uj  = Σ cash_r  với r ∈ R_uj
+fee_uj   = min( làm tròn half-up(base_uj × rate_j / 100), floor(base_uj) )   // làm tròn một lần cho (thành viên, thời gian thành viên, kỳ)
 ```
 
-Mỗi (i, j) có `R_ij` khác rỗng ghi một dòng `mcn-fee-splits`. Sau `processed` không tính lại. Tỷ lệ 0% vẫn ghi phần phí để MCN thấy, nhưng không sinh dòng tiền.
+Chia `fee_uj` về từng item i theo tỷ lệ `base_ij / base_uj`: mỗi item lấy phần nguyên, số đồng còn dư cộng cho item có phần lẻ lớn nhất (cùng cách chia thuế ở §8.2). Tổng các phần chia luôn bằng `fee_uj`.
 
-Làm tròn một lần trên tổng của mỗi phần phí (một KOL/KOC, một thời gian thành viên, một item), theo PRD 1.2 FR-016 (chốt 11/11):
+Mỗi (i, j) có `R_ij` khác rỗng ghi một dòng `mcn-fee-splits` với phần phí đã chia. Sau `processed` không tính lại. Tỷ lệ 0% vẫn ghi phần phí để MCN thấy, nhưng không sinh dòng tiền.
+
+Làm tròn một lần trên tổng phí của thành viên trong kỳ (một KOL/KOC, một thời gian thành viên, một kỳ), không làm tròn theo từng item, theo PRD 1.2 FR-016 (chốt 11/11, review PR #42 ngày 12/11 mục 1a):
 
 - Khớp phụ lục "MCN nhận x% thu nhập": ai bấm máy `tổng hoa hồng × tỷ lệ` cũng ra đúng số trên màn hình và trong số dư.
-- Sai số tối đa 0,5đ mỗi phần phí. Làm tròn từng khoản cộng dồn sai số theo số khoản.
+- Sai số tối đa 0,5đ cho mỗi thành viên trong kỳ. Làm tròn từng khoản hoặc từng item cộng dồn sai số theo số khoản, số item.
 
 Ví dụ 3 khoản 10.003đ, 15%: trên tổng 30.009 × 15% = 4.501,35 → 4.501đ; từng khoản 1.500 × 3 = 4.500đ.
 
@@ -932,6 +934,9 @@ Còn giữ được: hồ sơ, kích hoạt MCN, link mời, hồ sơ ở `mcn-d
 | 6 | Email MCN trùng tài khoản creator | PRD Q12 cho; BA-01 không | Theo PRD Q12 | BA |
 | 7 | Chi trả MCN | FR-019: chi toàn bộ số dư một lần | Một lệnh mỗi đợt, mỗi chiến dịch một dòng trong file (họp 10/11) | PO, Kế toán |
 | 8 | Phạm vi trích phí | Mọi chiến dịch | Chỉ chiến dịch bắt đầu từ `McnFeeStartAt` = 01/12/2026 (PRD 1.3 FR-016) | PO |
+| 9 | Ai sở hữu số dư phí | PRD 1.3 FR-018: "Tài khoản MCN: số dư tăng phí", tài khoản MCN là user | Số dư thuộc hồ sơ MCN (`mcn-cash-flows`, ADR-02). User đăng nhập chỉ thao tác; đổi người vận hành thì tiền vẫn ở MCN. PRD 1.4 đã sửa FR-018 và thuật ngữ | PO |
+| 10 | Phạm vi thay đổi đường tiền | Nguyên tắc 1: đối soát và chi trả chạy như hiện nay, chỉ thêm tách phí | Đường ghi tiền lúc Duyệt đổi cho **mọi partner**, không chỉ kỳ có MCN (ADR-07, §11.2). Tách spec và PR riêng, lên trước MCN | PO, Kế toán |
+| 11 | Chặn email MCN | FR-002: chỉ chặn tài khoản **đang là thành viên** của một MCN | Chặn thêm tài khoản đang **Chờ ký** (lời mời `agreed`) với MCN khác (INV-03b). Admin gặp lỗi mà PRD chưa mô tả. Cần PRD bổ sung câu báo lỗi, hoặc spec bỏ chặn ca này | PO, BA |
 
 ### 12.3 Đã chốt
 
@@ -992,3 +997,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 2.0, 2.1 | 2026-11-10, 2026-11-11 | Nguyễn Đăng Định | MCN sở hữu số dư, bảng tiền và lệnh chi riêng; cập nhật theo họp 10/11 |
 | 3.0–3.10 | 2026-11-11, 2026-11-12 | Nguyễn Đăng Định | Gộp thành một bản; làm tròn trên tổng; bỏ `mcns.partner`, `McnEnabled`, ENV thuế, `MCN_JOB_ENABLED`; mốc `McnFeeStartAt` |
 | 4.0 | 2026-11-13 | Nguyễn Đăng Định | Sửa theo review của anh Vĩnh (PR #42, 12/11): thêm §0 nguyên tắc; bỏ cờ kỳ `ledgerV2`, đường ghi tiền mới cho mọi kỳ, tách PR riêng (mục 1); mã phụ lục, link thông báo thành const (mục 1); tách `mcn-members` thành `mcn-invitations`, `mcn-annexes`, `mcn-memberships`, bỏ các cờ song song với `status`, `mcn-accounts` `open`/`revoked`, bỏ `transfers.isOpen` (mục 2, 3); không gắn MCN lên khoản thưởng, tính phí lúc Lấy danh sách từ thời gian thành viên (mục 4); `mcn-user-locks` thay `users.mcnGuardVer`, bỏ `totalCashMcnFee` (mục 5); `mcn-fee-splits` thay `mcnSplits` trên item (mục 6); lệnh MCN một lệnh mỗi (đợt, MCN), dòng con theo chiến dịch, thuế trên cả lệnh (mục 7); sửa 5 lỗi nhỏ (mục 8) |
+| 4.1 | 2026-11-13 | Nguyễn Đăng Định | Theo comment so spec với PRD của anh Vĩnh (PR #42, 12/11): làm tròn phí một lần cho (thành viên, thời gian thành viên, kỳ) rồi chia về item, khớp FR-016 (mục 1a); §12.2 thêm số dư thuộc hồ sơ MCN, phạm vi đổi đường tiền cho mọi partner, chặn email đang Chờ ký (mục 1b, 1c, 1d) |
