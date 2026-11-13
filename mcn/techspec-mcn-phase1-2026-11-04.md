@@ -895,7 +895,7 @@ Còn giữ được: hồ sơ, kích hoạt MCN, link mời, hồ sơ ở `mcn-d
 | 7 | `mcnSplits`, `mcnFee`, `netCash`, `mcnEvaluatedAt` trên item → `mcn-fee-splits`; tab Người nhận, cột Phí MCN, màn đối soát MCN/KOC đọc collection mới | Mục 6 | Phase 5 |
 | 8 | `mcn-payouts` một lệnh mỗi (đợt, MCN), dòng con theo chiến dịch; thuế trên cả lệnh; bỏ `groupBase`, `taxGroupBroken`; `declined` là trạng thái | Mục 7 | Phase 6 |
 | 9 | `mcns.statistic` tính từ thời gian thành viên; job hằng đêm | Mục 4 | Phase 5 |
-| 10 | API admin MCN bỏ trả `ErrOutOfScope` theo ADV (`af9323b19`), tab Thành viên bỏ lọc ADV (`4df06b10e`) | Mục 8 | Trước phase 5 |
+| 10 | Sửa comment "lọc phạm vi ADV" còn sót ở API hồ sơ MCN (code đã không lọc từ `5f4c26aca`). Giữ kiểm phạm vi ADV ở API đợt chi và đối soát (`af9323b19`), vì đợt chi, kỳ đối soát thuộc ADV | Mục 8 | Trước phase 5 |
 | 11 | Vá IDOR eKYC, ký hợp đồng creator; script `cmd/mcn-rebind` | | Trước go-live |
 | 12 | `CreateAnnex` gửi tên MCN, MST, tỷ lệ, ngày | | Chờ AT (17/11) |
 | 13 | `cmd/mcn-adjust`; job `LedgerReconcile` | | Phase 5–6 |
