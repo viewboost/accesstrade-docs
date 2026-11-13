@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-04
 **Author:** Vinh Nguyễn
-**Version:** 1.2
+**Version:** 1.3
 **Status:** Draft — cập nhật quyết định 05–09/11/2026
 **Phạm vi:** App Ambassador (`frontend/`) và Admin (`admin/`). Các app partner (parasola, vpbank, …) là bản copy riêng, **không** nằm trong phase 1.
 
@@ -260,6 +260,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 - Thưởng view: mỗi ngày có view là một khoản, ngày phát sinh là ngày có view (không phải ngày hệ thống ghi nhận).
 - Một dòng thưởng nội dung gồm nhiều ngày: phần nào phát sinh lúc thuộc MCN nào thì MCN đó được trích (D24).
 - Phí của một thành viên trong kỳ = làm tròn(tổng số tiền các khoản thuộc MCN của thành viên đó × tỷ lệ / 100) tới đồng. Làm tròn một lần trên tổng, không làm tròn từng khoản (chốt 11/11), để KOL/KOC, MCN và Kế toán tự tính tay ra đúng số.
+- Chỉ trích khoản thuộc chiến dịch có ngày bắt đầu từ 00:00 ngày 01/12/2026 (giờ Việt Nam). Chiến dịch bắt đầu trước mốc này không bị trích phí, kể cả khi người đó đã là thành viên. Ngày chạy kỳ đối soát không so với mốc, nên kỳ chạy sớm hay muộn thì phí như nhau. Muốn dời mốc thì sửa code rồi deploy (chốt 12/11).
 - Chỉ áp dụng cho kỳ đối soát của partner Ambassador (Q6).
 - Người không thuộc MCN: không có phí, như hiện nay.
 
@@ -413,3 +414,4 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | 1.0 | 2026-11-04 | Bản đầu, theo scope chốt 03/11/2026 và bản mẫu giao diện v47. Vai MCN và thành viên dùng bảng quan hệ, không dùng loại tài khoản |
 | 1.1 | 2026-11-09 | Thêm D17–D24: MCN cá nhân, tỷ lệ 0–100%, Chờ ký chưa phải thành viên và được Chờ ký nhiều MCN, hết 12 tháng tự kết thúc, trích phí theo ngày phát sinh, thuế 5.000.000đ trên số sau phí, MCN xem kỳ cũ sau rời, eKYC/hợp đồng gốc ở trang có sẵn, đổi MCN trong kỳ. Đóng Q1, Q5, Q7; thêm Q9–Q13, đóng Q10, Q12, Q13. Đồng bộ với bản mẫu 09/11: file PDF/JPG/PNG, ô lý do khi Từ chối/Chấm dứt/Báo rời, Thông báo xử lý dữ liệu cá nhân ở màn ký (A5), thông báo khi KOL/KOC từ chối |
 | 1.2 | 2026-11-11 | Chốt 11/11: phí tính từ ngày kích hoạt thành viên (FR-014, D20); làm tròn một lần trên tổng phí của mỗi thành viên trong kỳ thay vì từng khoản (FR-016) |
+| 1.3 | 2026-11-13 | Chốt 12/11: chỉ trích phí khoản thuộc chiến dịch bắt đầu từ 00:00 01/12/2026 giờ Việt Nam (FR-016) |
