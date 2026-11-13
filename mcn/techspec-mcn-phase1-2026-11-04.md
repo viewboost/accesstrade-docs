@@ -318,7 +318,7 @@ Một lần tham gia đi qua ba giai đoạn, mỗi giai đoạn một object c�
 |---|---|
 | `mcn`, `user`, `link` | Link mời đã dùng |
 | `rate` | Chép từ link lúc đồng ý, không đổi |
-| `status` | `agreed` → `declined` / `expired` / `superseded` / `accepted`. Từ chối ngay trên trang mời thì tạo thẳng `declined` |
+| `status` | `agreed` → `declined` / `expired` / `superseded` / `accepted`. Từ chối ngay trên trang mời thì tạo thẳng `declined`. Mỗi (user, link) chỉ một dòng `declined`: từ chối lại sau khi đã đồng ý lại thì dòng `agreed` đóng ở `expired`, lý do mới ghi vào dòng `declined` cũ |
 | `signDeadline`, `remindedAt`, `consentShareAt` | Hạn ký, nhắc ký, đồng ý chia sẻ thông tin |
 | `declineNote`, `history[]` | Lý do từ chối; lịch sử bước chuyển |
 
@@ -331,7 +331,9 @@ Một lần tham gia đi qua ba giai đoạn, mỗi giai đoạn một object c�
 | `status` | `signing` → `signed` / `void`. Econtract lỗi khi tạo thì `void` ngay để bấm ký lại |
 | `signedAt`, `signedAtSource` | Giờ ký; nguồn là econtract hoặc giờ đồng bộ (`sync_capped`) |
 
-Phụ lục ký xong khi lời mời đã đóng (từ chối, quá hạn, hết hiệu lực) chỉ là một `mcn-annexes` `signed` trỏ tới lời mời đã đóng. Không mở thời gian thành viên, không trích phí (PRD D18).
+Lời mời đóng (từ chối, quá hạn, hết hiệu lực) thì phụ lục `signing` của nó sang `void` trong cùng transaction, để user mở ký được lời mời khác. Phụ lục ký xong khi lời mời đã đóng (hai việc chạy chen nhau) là một `mcn-annexes` `signed` trỏ tới lời mời đã đóng. Không mở thời gian thành viên, không trích phí (PRD D18).
+
+API giữ id dòng là id lời mời, nối với phụ lục mới nhất và thời gian thành viên, rồi trả chuỗi trạng thái cũ (`agreed`, `active`, `leaving`, `ended`, `declined`, `sign_expired`, `superseded`) để frontend không đổi.
 
 **`mcn-memberships`**: thời gian là thành viên.
 
@@ -642,12 +644,13 @@ MCN nhận trong cùng đợt chi (`transfers`) với KOL/KOC, không có đợt
    - Có Max: xếp chiến dịch theo ngày bắt đầu, chi đủ từng chiến dịch tới khi chạm Max; phần còn lại chờ đợt sau.
    - Chép `bank`, `payee` lên lệnh. Chạy lại không tạo trùng nhờ unique `(transfer, mcn)`.
 2. Tính thuế trên cả lệnh, xem §8.2.
-3. Admin loại lệnh khi còn `draft`: lệnh sang `declined`; bỏ loại thì về `draft`. Hoàn tất thì lệnh `declined` thành `rejected`.
+3. Admin loại lệnh khi còn `draft`: lệnh sang `declined`; bỏ loại thì về `draft`. Hoàn tất hoặc Hủy đợt thì lệnh `declined` thành `rejected`.
 4. Chuyển tiền: mỗi lệnh một transaction, `$inc mcns.ledgerVer`, đọc số dư của từng chiến dịch.
-   - Mọi dòng con đủ số dư: lệnh và các dòng con sang `transferring`; mỗi dòng con ghi `withdraw −actualCash`, `tax −cashTax` của dòng, khóa `po:<id>:<event>:<action>`; phí ngân hàng ghi `withdraw_fee −bankFee` một lần.
+   - Mọi dòng con đủ số dư: lệnh và các dòng con sang `transferring`; mỗi dòng con ghi `withdraw −actualCash`, `tax −cashTax` của dòng, khóa `po:<id>:<event>:<action>`; phí ngân hàng ghi `withdraw_fee −bankFee` một lần ở chiến dịch của dòng đầu, chỉ hoàn khi cả lệnh bị hủy.
    - Có dòng con thiếu số dư: không ghi gì, lệnh `rejected` (`insufficient_balance`), gửi Telegram.
    - Lỗi khác: lệnh giữ `draft`, gửi Telegram; tới Hoàn tất thì thành `rejected` (`transfer_failed`).
-5. Hoàn tất: dòng con `transferring` thành `completed`. Dòng con ngân hàng trả về thành `rejected` và ghi `withdraw_reversal` dương cho từng dòng đã trừ của dòng con đó, khóa `po:<id>:<event>:reversal:<action>`. Lệnh `completed` nếu còn ít nhất một dòng con `completed`, không thì `rejected`.
+5. Sau Chuyển tiền, Admin đánh dấu dòng con ngân hàng trả về (`PATCH .../mcn-payouts/:id/decline` kèm `event`; bỏ đánh dấu bằng `.../undecline`). Dòng vẫn `transferring`, `rejectReason = bank_returned` tới Hoàn tất.
+6. Hoàn tất: dòng con `transferring` thành `completed`. Dòng con ngân hàng trả về thành `rejected` và ghi `withdraw_reversal` dương cho từng dòng đã trừ của dòng con đó, khóa `po:<id>:<event>:reversal:<action>`. Lệnh `completed` nếu còn ít nhất một dòng con `completed`, không thì `rejected`.
 
 Thống kê đợt (`GetStatistic`) cộng thêm `mcn-payouts`. Màn Xử lý rút tiền có thêm khối lệnh MCN.
 
@@ -824,6 +827,8 @@ Không có cờ trên partner hay trên kỳ. Không có ENV riêng cho MCN.
 | `McnPrivacyNoticeURL` | Link cố định | Link "Thông báo xử lý dữ liệu cá nhân" ở màn Chờ ký |
 | Thuế | `constants.MinTaxableRevenue` có sẵn, 10% | Dùng lại như đoạn thuế creator (§8.2) |
 
+Đổi người vận hành không chạy được bằng `cmd/` trên prod (không có k8s), nên làm theo khuôn các API backfill có sẵn: `POST /api/admin/mcns/:id/rebind` `{email, note, dryRun}`, quyền `mcn.activate`, bắt buộc có `dryRun` và `note` (số ticket). Dòng `mcn-accounts` `open` cũ sang `revoked`, tạo dòng `open` với email mới, đổi `mcns.loginEmail`; user của email mới gắn ở lần đăng nhập kế.
+
 Bỏ khỏi `backend/internal/config/env.go`: `MCN_ANNEX_CONTRACT_TYPE`, `MCN_ANNEX_CONTRACT_TYPE_COMPANY`, `MCN_ANNEX_CONTRACT_TYPE_INDIVIDUAL`, `MCN_PRIVACY_NOTICE_URL`. Đã bỏ: `MCN_JOB_ENABLED`, `TAX_PIT_RATE`, `TAX_PIT_THRESHOLD`, `MCN_INDIVIDUAL_TAX_POLICY`, `PartnerOpts.McnEnabled`, `PartnerOpts.LedgerV2`, `reconciliations.ledgerV2`.
 
 ### 11.2 Thay đổi trên đường tiền creator
@@ -862,7 +867,8 @@ Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt c�
 ### 11.5 Theo dõi
 
 - Telegram: kỳ `run_failed`; tính phí lỗi; Chuyển tiền MCN lỗi hoặc thiếu số dư; MCN có chiến dịch âm; job đối chiếu lệch; đổi TK ngân hàng MCN; gắn tài khoản gặp email trùng.
-- Job `LedgerReconcile` hằng ngày: chạy lại E2–E4 cho các kỳ gần đây; mỗi dòng con đã chuyển có dòng `withdraw`; dòng con bị trả về có đủ dòng đảo; tổng file ngân hàng bằng tổng dòng `withdraw`; gửi lại hoa hồng còn pending.
+- Job `LedgerReconcile` 06:00 hằng ngày (admin), chỉ đọc: chạy lại E2–E4 cho kỳ xong trong 7 ngày; dòng con đã chuyển có đủ dòng `withdraw`, `tax`; dòng con bị trả về có đủ dòng đảo; lệnh chưa chuyển không có dòng trừ tiền. Lệch thì Telegram.
+- Job `McnUpdateStatistics` 01:30 hằng đêm (public): tính lại `mcns.statistic` cho MCN đang hoạt động.
 - Truy vết một đồng phí: dòng file ngân hàng (`po:<id>:<event>`) → `mcn-payouts` → `mcn-cash-flows` → `mcn-fee-splits` → `mcn-memberships` và khoản thưởng của item.
 
 ### 11.6 Test
@@ -883,6 +889,8 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `8a17323f3` (12/11/202
 Đã xong theo review: bỏ `McnEnabled` (`7ed9c10b9`); thuế dùng lại cái có sẵn (`f1d2c7d29`); bỏ `MCN_JOB_ENABLED` (`3d79c0877`); mốc `McnFeeStartAt` (`8a17323f3`).
 
 Còn giữ được: hồ sơ, kích hoạt MCN, link mời, hồ sơ ở `mcn-documents/` (`27841952c`), tra tên TK ngân hàng (`783ed7143`), `RunInTransaction` (`54ea55e39`), bỏ `EnsureUserPartner` (`6c30d7d62`), khóa job Redis (`8b840eb85`), khóa `type`, `identityNumber` (`e3c986866`), lịch sử đăng nhập (`c8deaf1ae`), `AppendStrict`, `McnLedger`, `mcn-cash-flows`, E1–E4, `run_failed`.
+
+Cập nhật 13/11 (head `b8f0b7f5c`): đã code việc 1–10 (`7eb0cfac1`, `defff49b0`, `7be575837`, `cf3505248`, `e735f23e7`, `b8f0b7f5c`), việc 11 (`d77bc211a`, IDOR 6 route), đổi người vận hành (`c470500f4`), `LedgerReconcile` (`5ef3bff52`). Còn: việc 12 (chờ AT), `cmd/mcn-adjust` (ngoài PRD, chờ PO).
 
 | # | Việc | Theo review | Khi |
 |---|---|---|---|
