@@ -109,6 +109,14 @@ Không còn câu hỏi chặn code. Các câu ở bản trước đã đóng the
 
 Chỉ còn chờ AT gửi mã mẫu phụ lục (dự kiến ký 17/11).
 
+Ba câu hỏi sau đã gửi AT core trong email cập nhật MCN ngày 14/11. Không chặn code, nhưng nếu tuần 16–20/11 vẫn chưa có trả lời thì hỏi lại trong buổi trao đổi với AT core:
+
+| # | Câu hỏi | Hiện trạng | Ảnh hưởng nếu có câu trả lời |
+|---|---|---|---|
+| AQ1 | Nhận kết quả ký phụ lục: econtract có webhook báo kết quả ký không? | Ambassador chủ động gọi API econtract tra trạng thái, 15 phút một lần (`McnSyncAnnex`), giống cách đang biết KOC đã ký hợp đồng chính | Có webhook thì KOC được ghi nhận là thành viên ngay sau khi ký, không phải chờ lượt tra kế tiếp |
+| AQ2 | Hủy phụ lục chưa ký: econtract có API hủy phụ lục đang chờ ký không? | Quá hạn ký 7 ngày thì Ambassador đóng lời mời và đưa phụ lục sang `void` ở phía hệ thống (`McnExpireSign`). Phụ lục trên econtract vẫn còn, KOC vẫn ký được qua link cũ; ký lúc này không có hiệu lực vì đồng bộ chỉ xét phụ lục `signing` | Có API thì gọi hủy ngay khi đóng lời mời, để KOC không ký nhầm phụ lục đã hết hiệu lực |
+| AQ3 | Thời gian xử lý hợp đồng chính: hợp đồng `B2C_AMBASSADOR` thường ở trạng thái Đang xử lý (PROCESSING) bao lâu? | KOC chỉ ký được phụ lục khi hợp đồng chính đã `SIGNED`, và phải ký trong 7 ngày kể từ khi đồng ý lời mời (`McnSignDays`). Hạn ký không trừ thời gian hợp đồng chính đang xử lý | Nếu thường kéo dài nhiều ngày thì cân nhắc đổi cách tính hạn ký, để KOC không hết hạn vì lý do không phải của mình |
+
 ## 2. Thuật ngữ
 
 | Thuật ngữ | Nghĩa |
