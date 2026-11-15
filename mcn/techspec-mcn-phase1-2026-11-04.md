@@ -3,14 +3,14 @@
 | Mục | Giá trị |
 |---|---|
 | Dự án | KOC Ambassador, module MCN (Multi-Channel Network) |
-| Ngày | 2026-11-13 |
+| Ngày | 2026-11-15 |
 | Người viết | Nguyễn Đăng Định |
 | Người review | Thành Trung, Vinh Nguyễn |
-| Version | 4.1 |
-| Trạng thái | Draft, sửa theo review của anh Vĩnh trên PR #42 (12/11), chờ review lại |
-| PRD | [prd-mcn-phase1-2026-11-04.md](./prd-mcn-phase1-2026-11-04.md). Bản 1.4 nằm ở PR #41 (nhánh `docs/mcn-phase1-prd-decisions-261109`), cần merge trước hoặc cùng PR này |
+| Version | 4.2 |
+| Trạng thái | Draft, sửa theo review của anh Vĩnh trên PR #42 (14/11) và chat group 14/11, chờ review lại |
+| PRD | [prd-mcn-phase1-2026-11-04.md](./prd-mcn-phase1-2026-11-04.md). Bản 1.6 nằm ở PR #41 (nhánh `docs/mcn-phase1-prd-decisions-261109`), cần merge trước hoặc cùng PR này |
 | Tài liệu khác | [08-Sequence.md](./08-Sequence.md) (BA, 22/10, mô hình cũ); [meeting-261103.md](./meeting-261103.md); biên bản họp 10/11 (chưa đưa lên repo); bản mẫu BA (artifact `BVwnmqnqNZhjnX6pbXDikV`) |
-| Code | Repo `ambassador`, nhánh `feat/mcn-phase1`, head `8a17323f3` |
+| Code | Repo `ambassador`, nhánh `feat/mcn-phase1`, head `b0a9b39b7` (dùng cho cả file) |
 
 Đường dẫn code tính từ gốc repo `ambassador/`.
 
@@ -202,7 +202,7 @@ Duyệt hiện ghi dòng tiền, reward, item bằng các lệnh rời, không c
 | Ghi content-analytic | Hàm `return` sớm: đã cộng tiền, item vẫn pending trong kỳ đã `completed`, thống kê không cập nhật |
 | Ghi reward | Đã cộng tiền, reward vẫn pending; kỳ sau gom lại và cộng trùng |
 
-Khoản có phí MCN phải ghi hai bảng cùng lúc, nên không giữ được đường này. Đường ghi tiền mới (§7.3) thay hẳn đường cũ cho mọi kỳ, mọi partner. Không có cờ chọn đường. Phần này tách thành spec và PR riêng, lên prod trước MCN (§11.4).
+Khoản có phí MCN phải ghi hai bảng cùng lúc, nên không giữ được đường này. Đường ghi tiền mới (§7.3) thay hẳn đường cũ cho mọi kỳ, mọi partner. Không có cờ chọn đường. Phần này lên cùng bản MCN cuối tháng 11, không release riêng; trước đó kiểm hồi quy (§11.4).
 
 ### 4.3 Đợt chi hiện tại
 
@@ -225,7 +225,7 @@ Khoản có phí MCN phải ghi hai bảng cùng lúc, nên không giữ đượ
 - Bảng `mcn-accounts`: `mcn`, `email`, `user` (có khi đã gắn), `boundAt`, `status` (`open → revoked`). Gắn user là một trường, không phải trạng thái riêng, để mỗi dòng chỉ có một trạng thái mở.
 - User đăng nhập Google có email khớp thì được gắn vào dòng `open` của MCN (`BindAccountOnLogin`). Có hơn một user cùng email thì không gắn, gửi Telegram.
 - Mỗi MCN tối đa một dòng `open`; mỗi user vận hành tối đa một MCN (INV-04, index ở §6.5).
-- Tài khoản vận hành chỉ có quyền thao tác. Đổi người vận hành bằng script `cmd/mcn-rebind`: dòng cũ sang `revoked`, tạo dòng `open` với email mới. Tiền không di chuyển.
+- Tài khoản vận hành chỉ có quyền thao tác. Đổi người vận hành bằng API `POST /api/admin/mcns/:id/rebind` (§11.1): dòng cũ sang `revoked`, tạo dòng `open` với email mới. Tiền không di chuyển.
 - Email MCN được trùng email tài khoản creator (PRD Q12, họp 10/11). Người vận hành vẫn đăng bài như creator bình thường.
 - Không gọi `EnsureUserPartner` cho user vận hành, để user đó chỉ được đếm là creator khi tự tham gia partner.
 
@@ -326,7 +326,7 @@ Một lần tham gia đi qua ba giai đoạn, mỗi giai đoạn một object c�
 |---|---|
 | `mcn`, `user`, `link` | Link mời đã dùng |
 | `rate` | Chép từ link lúc đồng ý, không đổi |
-| `status` | `agreed` → `declined` / `expired` / `superseded` / `accepted`. Từ chối ngay trên trang mời thì tạo thẳng `declined`. Mỗi (user, link) chỉ một dòng `declined`: từ chối lại sau khi đã đồng ý lại thì dòng `agreed` đóng ở `expired`, lý do mới ghi vào dòng `declined` cũ |
+| `status` | `agreed` → `declined` / `expired` / `superseded` / `accepted`. Từ chối ngay trên trang mời thì tạo thẳng `declined`. Từ chối sau khi đã đồng ý thì dòng `agreed` chuyển thẳng `declined`. Mỗi lần từ chối là một dòng `declined`; bấm Từ chối lặp (kể cả cùng lúc) chặn bằng khóa vai `mcn-user-locks`: lần gần nhất ở link đó còn là `declined` thì chỉ cập nhật lý do |
 | `signDeadline`, `remindedAt`, `consentShareAt` | Hạn ký, nhắc ký, đồng ý chia sẻ thông tin |
 | `declineNote`, `history[]` | Lý do từ chối; lịch sử bước chuyển |
 
@@ -339,7 +339,7 @@ Một lần tham gia đi qua ba giai đoạn, mỗi giai đoạn một object c�
 | `status` | `signing` → `signed` / `void`. Econtract lỗi khi tạo thì `void` ngay để bấm ký lại |
 | `signedAt`, `signedAtSource` | Giờ ký; nguồn là econtract hoặc giờ đồng bộ (`sync_capped`) |
 
-Lời mời đóng (từ chối, quá hạn, hết hiệu lực) thì phụ lục `signing` của nó sang `void` trong cùng transaction, để user mở ký được lời mời khác. Phụ lục ký xong khi lời mời đã đóng (hai việc chạy chen nhau) là một `mcn-annexes` `signed` trỏ tới lời mời đã đóng. Không mở thời gian thành viên, không trích phí (PRD D18).
+Lời mời đóng (từ chối, quá hạn, hết hiệu lực) thì phụ lục `signing` của nó sang `void` trong cùng transaction, để user mở ký được lời mời khác. Phụ lục ký xong khi lời mời đã đóng (hai việc chạy chen nhau, hoặc KOL/KOC ký qua link cũ trên econtract) là một `mcn-annexes` `signed` trỏ tới lời mời đã đóng. Không mở thời gian thành viên, không trích phí (PRD D18). Job đồng bộ ký (15 phút) hỏi thêm phụ lục `void` trong 30 ngày; econtract báo đã ký thì chuyển `void → signed` (CAS, mỗi phụ lục một lần) và báo Telegram để vận hành liên hệ KOL/KOC.
 
 API giữ id dòng là id lời mời, nối với phụ lục mới nhất và thời gian thành viên, rồi trả chuỗi trạng thái cũ (`agreed`, `active`, `leaving`, `ended`, `declined`, `sign_expired`, `superseded`) để frontend không đổi.
 
@@ -412,7 +412,7 @@ Một lệnh cho mỗi (đợt chi, MCN). Mỗi chiến dịch là một dòng c
 | `tax` | object | `{incomeType, taxpayerType, taxpayerKey, base, rate, threshold, amount, computedAt}` |
 | `history[]` | array | `{status, at, byType, by, note}` |
 
-Trạng thái dòng con: `draft`, `transferring`, `completed`, `rejected`. `bank`, `payee`, `tax` không đổi sau khi lệnh rời `draft`.
+Trạng thái dòng con: `draft`, `transferring`, `returned` (ngân hàng trả về, chờ Hoàn tất), `completed`, `rejected`. `bank`, `payee`, `tax` không đổi sau khi lệnh rời `draft`.
 
 ### 6.6 Collection mcn-user-locks (mới)
 
@@ -456,7 +456,7 @@ Cập nhật bằng hàm `Mcn().UpdateStatistic(mcn)`: tính lại toàn bộ t�
 
 | Collection | Index | Để làm gì |
 |---|---|---|
-| `mcn-invitations` | `uniq(user, mcn)` partial `{status: agreed}`; `uniq(user, link)` partial `{status: declined}`; `(user, status)` | INV-02; bấm Từ chối trên trang mời nhiều lần không tạo nhiều dòng |
+| `mcn-invitations` | `uniq(user, mcn)` partial `{status: agreed}`; `(user, link, createdAt)`; `(user, status)` | INV-02; tìm lần gần nhất của user ở một link. Không unique `(user, link)` khi `declined` (index cũ `user_1_link_1` xóa lúc khởi động) |
 | `mcn-annexes` | `uniq(user)` partial `{status: signing}`; `(status, createdAt)` | INV-05; job đồng bộ ký |
 | `mcn-memberships` | `uniq(user)` partial `{status: open}`; `(mcn, status)`; `(user, startAt)` | INV-01; tìm thời gian thành viên theo user và ngày |
 | `mcn-accounts` | `uniq(mcn)` partial `{status: open}`; `uniq(user)` partial `{status: open, user: {$exists: true}}` | INV-04 |
@@ -616,7 +616,7 @@ Mỗi item một transaction (hàm `postItem`):
 
 Trong transaction dùng hàm mới `CashFlow().AppendStrict`: chỉ insert, trả lỗi thật, từ chối `idemKey` rỗng. Không dùng `AddCashFlow` trong transaction, vì hàm này bỏ qua lỗi và chạy goroutine dùng chung `ctx`.
 
-Đổi đường ghi tiền là thay đổi trên tiền của mọi creator, nên tách thành spec và PR riêng, lên prod trước MCN. Kiểm bằng hồi quy trên bản sao dữ liệu (§11.4 bước 1). Lỗi thì rollback bằng cách deploy lại bản cũ. PR MCN sau đó chỉ thêm bước 5.
+Đổi đường ghi tiền là thay đổi trên tiền của mọi creator. Không release riêng: lên cùng bản MCN cuối tháng 11 (anh Vĩnh, group 14/11). Trước đó kiểm hồi quy (§11.4 bước 2). Lỗi thì rollback bằng cách deploy lại bản cũ.
 
 ### 7.4 Kiểm cuối kỳ
 
@@ -657,8 +657,8 @@ MCN nhận trong cùng đợt chi (`transfers`) với KOL/KOC, không có đợt
    - Mọi dòng con đủ số dư: lệnh và các dòng con sang `transferring`; mỗi dòng con ghi `withdraw −actualCash`, `tax −cashTax` của dòng, khóa `po:<id>:<event>:<action>`; phí ngân hàng ghi `withdraw_fee −bankFee` một lần ở chiến dịch của dòng đầu, chỉ hoàn khi cả lệnh bị hủy.
    - Có dòng con thiếu số dư: không ghi gì, lệnh `rejected` (`insufficient_balance`), gửi Telegram.
    - Lỗi khác: lệnh giữ `draft`, gửi Telegram; tới Hoàn tất thì thành `rejected` (`transfer_failed`).
-5. Sau Chuyển tiền, Admin đánh dấu dòng con ngân hàng trả về (`PATCH .../mcn-payouts/:id/decline` kèm `event`; bỏ đánh dấu bằng `.../undecline`). Dòng vẫn `transferring`, `rejectReason = bank_returned` tới Hoàn tất.
-6. Hoàn tất: dòng con `transferring` thành `completed`. Dòng con ngân hàng trả về thành `rejected` và ghi `withdraw_reversal` dương cho từng dòng đã trừ của dòng con đó, khóa `po:<id>:<event>:reversal:<action>`. Lệnh `completed` nếu còn ít nhất một dòng con `completed`, không thì `rejected`.
+5. Sau Chuyển tiền, Admin đánh dấu dòng con ngân hàng trả về: dòng con `transferring → returned` (`PATCH .../mcn-payouts/:id/decline` kèm `event`); bỏ đánh dấu thì `returned → transferring` (`.../undecline`). Trạng thái nằm ở `status`, không dùng `rejectReason` làm cờ.
+6. Hoàn tất: dòng con `transferring` thành `completed`. Dòng con `returned` thành `rejected` (lý do `bank_returned`) và ghi `withdraw_reversal` dương cho từng dòng đã trừ của dòng con đó, khóa `po:<id>:<event>:reversal:<action>`. Lệnh `completed` nếu còn ít nhất một dòng con `completed`, không thì `rejected`.
 
 Thống kê đợt (`GetStatistic`) cộng thêm `mcn-payouts`. Màn Xử lý rút tiền có thêm khối lệnh MCN.
 
@@ -713,11 +713,11 @@ File bỏ lệnh `declined`, `rejected`, có dòng tổng. Nên xuất sau Chuy�
 | Tình huống | Cách xử lý |
 |---|---|
 | KOL/KOC thiếu thu nhập | Thưởng thêm như hiện nay. Khoản này cũng bị trích phí nếu ngày tạo nằm trong thời gian thành viên |
-| Phí bị trích thừa | Script `cmd/mcn-adjust` (ticket, lý do, người duyệt, dry-run), một transaction: `cash-flows` `+x` (`mcn_fee_adjustment`), `mcn-cash-flows` `−x` (`adjustment`) ở đúng chiến dịch |
-| MCN nhận thiếu, AT bù | Script ghi `mcn-cash-flows` `+x` (`adjustment`) |
-| Số dư một chiến dịch của MCN âm | Không lấy chiến dịch khác bù. MCN đó không có lệnh trong đợt, gửi Telegram, vận hành xử lý bằng `cmd/mcn-adjust` |
+| Phí bị trích thừa | Hoàn bằng Thưởng thêm. Khoản hoàn cũng bị trích phí, nên tạo số đã cộng bù: cần hoàn x với tỷ lệ r thì tạo x / (1 − r). Ví dụ hoàn 450.000 với 15%: tạo 529.412 |
+| MCN nhận thiếu | AT xử lý ngoài hệ thống, ghi ticket |
+| Số dư một chiến dịch của MCN âm | Không xảy ra khi không có điều chỉnh: dòng con chỉ trừ khi đủ số dư (INV-14), hoàn tiền luôn cộng. Nếu gặp, MCN đó không có lệnh trong đợt và có Telegram |
 
-Không dùng Thưởng thêm để hoàn phí, vì khoản hoàn lại bị trích phí lần nữa: hoàn 450.000 với tỷ lệ 15% thì KOL/KOC chỉ nhận 382.500. `cmd/mcn-adjust` là việc ngoài PRD (D7), cần PO đồng ý.
+Phase 1 không có script hay nút điều chỉnh tiền MCN (anh Vĩnh, group 14/11: không để vận hành nhờ người vào server chạy script). Nếu vận hành gặp nhiều, phase sau làm thao tác trên Admin theo khuôn API đổi người vận hành (`dryRun`, `note`). Giữ đúng PRD D7.
 
 ## 9. API, màn hình và code
 
@@ -813,7 +813,7 @@ Frontend phân biệt lỗi theo mã trong body (dải 2400–2599, `backend/int
 | Mở ký phụ lục MCN thứ hai khi đang ký MCN thứ nhất | Unique `(user)` khi `status = signing` chặn, trả `MCN_ANNEX_IN_FLIGHT` |
 | Econtract lỗi khi tạo phụ lục | Phụ lục `void` ngay, người dùng bấm ký lại |
 | Ký trước hạn nhưng đồng bộ sau hạn | Job hết hạn hỏi econtract trước. Đã ký thì kích hoạt, `signedAt = min(giờ đồng bộ, hạn ký)` |
-| Phụ lục ký sau khi lời mời đã đóng | Phụ lục `signed`, không mở thời gian thành viên, không trích phí (PRD D18) |
+| Phụ lục ký sau khi lời mời đã đóng | Phụ lục `signed`, không mở thời gian thành viên, không trích phí (PRD D18). Báo Telegram một lần |
 | Job kết thúc thành viên chưa chạy | Cửa sổ phí tính từ mốc đã lưu, kết quả như khi job đã chạy |
 | Hai lần Duyệt cùng một item | CAS item; lần sau dừng |
 | Duyệt dừng giữa chừng | Kỳ ở `running`; chuyển `run_failed` rồi Duyệt lại an toàn |
@@ -850,7 +850,7 @@ Kết quả tiền và thuế của creator không thuộc MCN giữ nguyên. C�
 | Không cho Hủy kỳ `run_failed` | Mọi kỳ |
 | Thêm `cash-flows.idemKey` | Mọi partner, dòng cũ không có |
 
-Các thay đổi này thuộc spec và PR ghi tiền riêng, lên trước MCN (§7.3).
+Các thay đổi này lên cùng bản MCN cuối tháng 11, không release riêng (§7.3, §11.4).
 
 Rollback code an toàn: dòng `mcn_fee` mang giá trị âm, code cũ tính số dư bằng tổng `value` nên vẫn đúng.
 
@@ -861,20 +861,19 @@ Rollback code an toàn: dòng `mcn_fee` mang giá trị âm, code cũ tính số
 
 ### 11.4 Lịch lên prod
 
-Mốc theo họp 10/11: mẫu hợp đồng chốt trong tuần, ký 17/11 (team My); demo tuần 16–20/11; go-live cuối tháng 11; phí áp cho chiến dịch bắt đầu từ mốc `McnFeeStartAt` (01/12/2026); nghiệm thu theo tuần với Hà Lê; màn mới làm mockup duyệt trước rồi mới code.
+Mốc theo họp 10/11 và chat group 14/11: mẫu hợp đồng chốt trong tuần, ký 17/11 (team My); tuần 16–20/11 chỉ demo và nghiệm thu trên dev, không release; nghiệm thu theo tuần với Hà Lê; màn mới làm mockup duyệt trước rồi mới code.
 
-1. PR ghi tiền (§7.3, §11.2), lên trước MCN. Chạy hồi quy trên bản sao dữ liệu: một kỳ và một đợt chi của partner không có MCN (FEC, HDBank hoặc VPBank), so dòng tiền và thuế với bản cũ.
-2. Trước demo: onboarding theo ba object (lời mời, phụ lục, thời gian thành viên), hằng số thay ENV. Demo hồ sơ, mời, ký, thành viên; chưa có phần tiền.
-3. Cuối tháng 11: lên prod phần onboarding kèm M1. Trước đó phải vá IDOR eKYC và có `cmd/mcn-rebind`. Không có cờ cần bật: module mở khi có code, ẩn bằng cách chưa gán quyền `mcn.*`.
-4. Phần phí (phase 5) và chi trả (phase 6) lên cùng một bản, trước kỳ đối soát đầu tiên có chiến dịch bắt đầu từ `McnFeeStartAt`. Phí tính lúc Lấy danh sách, nên chỉ cần phase 5 có mặt trước lần Lấy danh sách đó.
+1. Tuần 16–20/11: demo và nghiệm thu trên dev. Chưa có mã mẫu phụ lục thì bấm Ký phụ lục là thành viên ngay (chế độ tạm).
+2. Kiểm hồi quy đường ghi tiền (§7.3, §11.2): test tự động so cách ghi cũ và mới trên cùng dữ liệu (nhiều KOL/KOC, đủ loại thưởng), tiền từng người phải khớp; trên dev chạy Duyệt và đợt chi của partner không có MCN, so số dư và thuế; đo thời gian Duyệt.
+3. Cuối tháng 11: release một bản gồm toàn bộ MCN (onboarding, phí, chi trả, màn xem, thông báo) và đường ghi tiền mới, kèm M1. Module ẩn bằng cách chưa gán quyền `mcn.*`.
+4. Từ `McnFeeStartAt` (01/12/2026) bắt đầu trích phí cho chiến dịch mới.
 5. Theo dõi kỳ đối soát và đợt chi đầu tiên có phí MCN.
-6. Màn xem đối soát (phase 7), thông báo (phase 8).
 
 Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt có lệnh MCN. Kỳ `run_failed` xử lý bằng Duyệt lại.
 
 ### 11.5 Theo dõi
 
-- Telegram: kỳ `run_failed`; tính phí lỗi; Chuyển tiền MCN lỗi hoặc thiếu số dư; MCN có chiến dịch âm; job đối chiếu lệch; đổi TK ngân hàng MCN; gắn tài khoản gặp email trùng.
+- Telegram: kỳ `run_failed`; tính phí lỗi; Chuyển tiền MCN lỗi hoặc thiếu số dư; MCN có chiến dịch âm; job đối chiếu lệch; đổi TK ngân hàng MCN; gắn tài khoản gặp email trùng; phụ lục ký sau khi lời mời đã đóng.
 - Job `LedgerReconcile` 06:00 hằng ngày (admin), chỉ đọc: chạy lại E2–E4 cho kỳ xong trong 7 ngày; dòng con đã chuyển có đủ dòng `withdraw`, `tax`; dòng con bị trả về có đủ dòng đảo; lệnh chưa chuyển không có dòng trừ tiền. Lệch thì Telegram.
 - Job `McnUpdateStatistics` 01:30 hằng đêm (public): tính lại `mcns.statistic` cho MCN đang hoạt động.
 - Truy vết một đồng phí: dòng file ngân hàng (`po:<id>:<event>`) → `mcn-payouts` → `mcn-cash-flows` → `mcn-fee-splits` → `mcn-memberships` và khoản thưởng của item.
@@ -892,13 +891,13 @@ Rollback: không rollback giữa Chuyển tiền và Hoàn tất của đợt c�
 
 ### 11.7 Việc còn lại trên code
 
-Trạng thái đọc trên `feat/mcn-phase1` tại commit `8a17323f3` (12/11/2026).
+Trạng thái đọc trên `feat/mcn-phase1` tại commit `b0a9b39b7` (15/11/2026).
 
 Đã xong theo review: bỏ `McnEnabled` (`7ed9c10b9`); thuế dùng lại cái có sẵn (`f1d2c7d29`); bỏ `MCN_JOB_ENABLED` (`3d79c0877`); mốc `McnFeeStartAt` (`8a17323f3`).
 
 Còn giữ được: hồ sơ, kích hoạt MCN, link mời, hồ sơ ở `mcn-documents/` (`27841952c`), tra tên TK ngân hàng (`783ed7143`), `RunInTransaction` (`54ea55e39`), bỏ `EnsureUserPartner` (`6c30d7d62`), khóa job Redis (`8b840eb85`), khóa `type`, `identityNumber` (`e3c986866`), lịch sử đăng nhập (`c8deaf1ae`), `AppendStrict`, `McnLedger`, `mcn-cash-flows`, E1–E4, `run_failed`.
 
-Cập nhật 13/11 (head `b8f0b7f5c`): đã code việc 1–10 (`7eb0cfac1`, `defff49b0`, `7be575837`, `cf3505248`, `e735f23e7`, `b8f0b7f5c`), việc 11 (`d77bc211a`, IDOR 6 route), đổi người vận hành (`c470500f4`), `LedgerReconcile` (`5ef3bff52`). Còn: việc 12 (chờ AT), `cmd/mcn-adjust` (ngoài PRD, chờ PO).
+Cập nhật 13/11 (head `b8f0b7f5c`): đã code việc 1–10 (`7eb0cfac1`, `defff49b0`, `7be575837`, `cf3505248`, `e735f23e7`, `b8f0b7f5c`), việc 11 (`d77bc211a`, IDOR 6 route), đổi người vận hành (`c470500f4`), `LedgerReconcile` (`5ef3bff52`). Còn: việc 12 (chờ AT). Cập nhật 15/11 (head `b0a9b39b7`): sửa 3 điểm review 14/11 (§6.2, §8.1, §10.2); bỏ `cmd/mcn-adjust`.
 
 | # | Việc | Theo review | Khi |
 |---|---|---|---|
@@ -906,15 +905,15 @@ Cập nhật 13/11 (head `b8f0b7f5c`): đã code việc 1–10 (`7eb0cfac1`, `de
 | 2 | Tách `mcn-members` thành `mcn-invitations`, `mcn-annexes`, `mcn-memberships`; bỏ `isPending`, `isMember`, `annexInFlight`, `annex.*`, `house`, `selfCheck`, `declinedByCode`, `activatedAt`, `feeFrom`; bỏ migration M2 | Mục 2, 3 | Trước phase 5 |
 | 3 | `mcn-accounts` `open`/`revoked`, bỏ `isCurrent` và M3 | Mục 2 | Cùng việc 2 |
 | 4 | `users.mcnGuardVer` → `mcn-user-locks` | Mục 5 | Cùng việc 2 |
-| 5 | Bỏ `runCashBack` cũ và `reconciliations.ledgerV2`; INV-15 cho mọi kỳ. Tách PR riêng lên trước MCN | Mục 1 | Trước MCN |
+| 5 | Bỏ `runCashBack` cũ và `reconciliations.ledgerV2`; INV-15 cho mọi kỳ. Lên cùng bản MCN | Mục 1 | Cùng bản MCN |
 | 6 | Bỏ `TagMcn*` ở 8 chỗ tạo khoản thưởng và các trường `mcn`, `mcnMember`, `mcnRate`; `applyMcnFees` tính từ thời gian thành viên | Mục 4 | Phase 5 |
 | 7 | `mcnSplits`, `mcnFee`, `netCash`, `mcnEvaluatedAt` trên item → `mcn-fee-splits`; tab Người nhận, cột Phí MCN, màn đối soát MCN/KOC đọc collection mới | Mục 6 | Phase 5 |
 | 8 | `mcn-payouts` một lệnh mỗi (đợt, MCN), dòng con theo chiến dịch; thuế trên cả lệnh; bỏ `groupBase`, `taxGroupBroken`; `declined` là trạng thái | Mục 7 | Phase 6 |
 | 9 | `mcns.statistic` tính từ thời gian thành viên; job hằng đêm | Mục 4 | Phase 5 |
 | 10 | Sửa comment "lọc phạm vi ADV" còn sót ở API hồ sơ MCN (code đã không lọc từ `5f4c26aca`). Giữ kiểm phạm vi ADV ở API đợt chi và đối soát (`af9323b19`), vì đợt chi, kỳ đối soát thuộc ADV | Mục 8 | Trước phase 5 |
-| 11 | Vá IDOR eKYC, ký hợp đồng creator; script `cmd/mcn-rebind` | | Trước go-live |
+| 11 | Vá IDOR eKYC, ký hợp đồng creator; API đổi người vận hành | | Trước go-live |
 | 12 | `CreateAnnex` gửi tên MCN, MST, tỷ lệ, ngày | | Chờ AT (17/11) |
-| 13 | `cmd/mcn-adjust`; job `LedgerReconcile` | | Phase 5–6 |
+| 13 | Job `LedgerReconcile`. Bỏ `cmd/mcn-adjust` (group 14/11) | | Đã có |
 
 ## 12. Quyết định và rủi ro
 
@@ -927,12 +926,12 @@ Cập nhật 13/11 (head `b8f0b7f5c`): đã code việc 1–10 (`7eb0cfac1`, `de
 | ADR-03 | Email MCN được trùng tài khoản creator; người vận hành vẫn là creator | Bắt email mới: MCN cá nhân phải có hai user cùng CCCD |
 | ADR-04 | Khóa vai bằng transaction trên `mcn-user-locks` (chỉ upsert, tăng số, không xóa) và partial unique theo `status` | `$inc users.mcnGuardVer`: đặt khóa MCN lên object lõi |
 | ADR-05 | Bên creator ghi `+G` và `−fee` | Một dòng đã trừ phí: mất dấu phí, trái FR-018 |
-| ADR-06 | Phí theo ngày phát sinh từng khoản, tính lúc Lấy danh sách từ thời gian thành viên; cửa sổ từ ngày kích hoạt; làm tròn một lần trên tổng mỗi phần phí | Gắn MCN lên khoản thưởng lúc tạo (`tagMcn`): sửa collection lõi, sót chỗ tạo khoản là mất phí, phải có script gắn lại. Lấy theo giờ ký thật: hồi tố kỳ đã chốt |
+| ADR-06 | Phí theo ngày phát sinh từng khoản, tính lúc Lấy danh sách từ thời gian thành viên; cửa sổ từ ngày kích hoạt; làm tròn một lần cho (KOL/KOC, thời gian thành viên, kỳ) rồi chia về item | Gắn MCN lên khoản thưởng lúc tạo (`tagMcn`): sửa collection lõi, sót chỗ tạo khoản là mất phí, phải có script gắn lại. Lấy theo giờ ký thật: hồi tố kỳ đã chốt |
 | ADR-07 | Mỗi item ghi trong một transaction, cho mọi kỳ; đường cũ bỏ hẳn | Giữ hai đường chọn bằng cờ (partner hoặc kỳ): hai đường song song, quên hoặc tắt cờ thì MCN mất phí |
 | ADR-08 | Lệnh MCN riêng `mcn-payouts`; trừ tiền lúc Chuyển tiền, kiểm số dư trong transaction | Dùng chung `withdraws` với `payeeType = mcn`: mọi chỗ đọc `withdraws` phải xử lý thêm loại người nhận MCN |
 | ADR-09 | Thuế theo loại người nhận; MCN cá nhân xét ngưỡng trên cả lệnh | Xét từng chiến dịch: chia nhỏ để không bị khấu trừ. Gộp theo CCCD với creator: phụ thuộc CCCD tự khai, để phase 2 |
 | ADR-10 | Không có cờ MCN trên partner hay trên kỳ; giá trị cố định là const | Cờ, ENV: thêm trạng thái ẩn, nhiều tổ hợp phải test |
-| ADR-11 | Phí trích sai sửa bằng `cmd/mcn-adjust`; số dư âm không tự bù | Hoàn bằng Thưởng thêm: bị trích phí lần nữa |
+| ADR-11 | Phase 1 không có điều chỉnh tiền MCN; phí trích thừa hoàn bằng Thưởng thêm có tính bù | Script `cmd/mcn-adjust`: prod không chạy được `cmd/`, vận hành phải nhờ người vào server (group 14/11) |
 | ADR-12 | Tài khoản nhà 100% cho người đứng MCN làm creator, tính khi cần, không lưu cờ | Lưu cờ `house`: phải cập nhật khi đổi người vận hành |
 | ADR-13 | Mốc áp dụng theo `events.startAt`, mốc là const | Cờ bật từng chiến dịch: quên bật là mất phí. Ngày MCN đầu tiên được kích hoạt: trạng thái chung bị ẩn, kích hoạt nhầm MCN thử là đổi mốc |
 | ADR-14 | Lệnh MCN một lệnh mỗi (đợt, MCN), dòng con theo chiến dịch; lệnh creator giữ như cũ | Một lệnh mỗi chiến dịch: thuế phải tính theo nhóm lệnh, chia lại và xử lý khi một lệnh trong nhóm bị loại |
@@ -945,22 +944,18 @@ Cập nhật 13/11 (head `b8f0b7f5c`): đã code việc 1–10 (`7eb0cfac1`, `de
 | 1 | Trạng thái kỳ | D8: giữ trạng thái hiện có | Thêm "Duyệt lỗi" (`run_failed`) | PO, BA |
 | 2 | Đợt chi khi có kỳ đang Duyệt | Không quy định | Chặn | PO, Kế toán |
 | 3 | Mở ký phụ lục | D18: Chờ ký nhiều MCN | Vẫn Chờ ký nhiều MCN, nhưng chỉ mở ký một phụ lục một lúc | PO, BA |
-| 4 | Điều chỉnh phí | D7: chỉ Thưởng thêm | Thêm `cmd/mcn-adjust` | PO |
-| 5 | Thu nhập nội dung của người vận hành | D14: như creator bình thường | Tài khoản nhà 100% (họp 10/11) | PO |
-| 6 | Email MCN trùng tài khoản creator | PRD Q12 cho; BA-01 không | Theo PRD Q12 | BA |
-| 7 | Chi trả MCN | FR-019: chi toàn bộ số dư một lần | Một lệnh mỗi đợt, mỗi chiến dịch một dòng trong file (họp 10/11) | PO, Kế toán |
-| 8 | Phạm vi trích phí | Mọi chiến dịch | Chỉ chiến dịch bắt đầu từ `McnFeeStartAt` = 01/12/2026 (PRD 1.3 FR-016) | PO |
-| 9 | Ai sở hữu số dư phí | PRD 1.3 FR-018: "Tài khoản MCN: số dư tăng phí", tài khoản MCN là user | Số dư thuộc hồ sơ MCN (`mcn-cash-flows`, ADR-02). User đăng nhập chỉ thao tác; đổi người vận hành thì tiền vẫn ở MCN. PRD 1.4 đã sửa FR-018 và thuật ngữ | PO |
-| 10 | Phạm vi thay đổi đường tiền | Nguyên tắc 1: đối soát và chi trả chạy như hiện nay, chỉ thêm tách phí | Đường ghi tiền lúc Duyệt đổi cho **mọi partner**, không chỉ kỳ có MCN (ADR-07, §11.2). Tách spec và PR riêng, lên trước MCN | PO, Kế toán |
-| 11 | Chặn email MCN | FR-002: chỉ chặn tài khoản **đang là thành viên** của một MCN | Chặn thêm tài khoản đang **Chờ ký** (lời mời `agreed`) với MCN khác (INV-03b). Admin gặp lỗi mà PRD chưa mô tả. Cần PRD bổ sung câu báo lỗi, hoặc spec bỏ chặn ca này | PO, BA |
+| 4 | Email MCN trùng tài khoản creator | PRD Q12 cho; BA-01 không | Theo PRD Q12 | BA |
+| 5 | Phạm vi thay đổi đường tiền | Nguyên tắc 1: đối soát và chi trả chạy như hiện nay, chỉ thêm tách phí | Đường ghi tiền lúc Duyệt đổi cho **mọi partner**, không chỉ kỳ có MCN (ADR-07, §11.2). Lên cùng bản MCN, kiểm hồi quy trước | PO, Kế toán |
 
 ### 12.3 Đã chốt
 
+- PRD 1.4–1.6 đã sửa theo tài liệu này, không còn là chỗ khác PRD: tài khoản nhà 100% (D14); chi MCN một lệnh mỗi đợt, mỗi chiến dịch một dòng (FR-019); chỉ trích phí chiến dịch từ `McnFeeStartAt` (D25, FR-016); số dư thuộc hồ sơ MCN (FR-018, thuật ngữ); chặn email đang Chờ ký với MCN khác kèm câu báo lỗi (FR-002).
+- Điều chỉnh tiền MCN: giữ PRD D7, chỉ Thưởng thêm; phase 1 không có script hay nút (anh Vĩnh, group 14/11).
 - Hồ sơ MCN không gắn partner/ADV: bỏ trường `mcns.partner`, bỏ ô chọn ADV ở form tạo, không lọc MCN theo ADV của nhân sự (chốt 11/11). Phí trích trên mọi khoản của thành viên, không xét ADV. Không có cờ MCN trên partner (12/11).
 - Chỉ chiến dịch có `events.startAt` từ mốc `McnFeeStartAt` mới bị trích phí. Mốc là const 00:00 01/12/2026 giờ VN, không ENV, không suy ra từ `mcns.activatedAt`; dời mốc thì sửa const và deploy (anh Vĩnh chốt 12/11, PR #42).
-- Đường ghi tiền mới thay hẳn đường cũ cho mọi partner, tách spec và PR riêng lên trước MCN (review PR #42, 12/11).
+- Đường ghi tiền mới thay hẳn đường cũ cho mọi partner (review PR #42, 12/11). Không release riêng, lên cùng bản MCN cuối tháng 11 (anh Vĩnh, group 14/11).
 - Phí tính từ **ngày kích hoạt** thành viên (ngày hệ thống ghi nhận phụ lục đã ký), 00:00 giờ Việt Nam, không theo ngày ký trên econtract. PRD 1.2 sửa FR-014, D20 (chốt 11/11).
-- Làm tròn một lần trên tổng phí của mỗi phần phí, không làm tròn từng khoản. PRD 1.2 sửa FR-016 (chốt 11/11).
+- Làm tròn một lần trên tổng phí của (KOL/KOC, thời gian thành viên, kỳ) rồi chia về các item, không làm tròn từng khoản hay từng item. PRD 1.2 sửa FR-016 (chốt 11/11).
 - Thuế KOL/KOC 10% trên số chi sau phí, ngưỡng 5.000.000đ mỗi đợt; MCN công ty không khấu trừ (D21, 05/11).
 - Ngày ký có tính phí; từ ngày kết thúc không tính (D20).
 - Ngày phát sinh: thưởng view là ngày có view, thưởng mốc là ngày đạt mốc, Thưởng thêm là ngày Admin tạo.
@@ -1000,7 +995,7 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | R-04 | Không có webhook, kích hoạt thành viên trễ, MCN mất phí các ngày trước kích hoạt | Đồng bộ khi KOL/KOC quay lại trang; job 15 phút; webhook nếu AT có (OQ-05) |
 | R-05 | Tài khoản admin bị chiếm, đổi TK ngân hàng MCN | Audit, Telegram; duyệt hai người ở phase sau |
 | R-06 | Phase 5 chưa lên trước lần Lấy danh sách đầu tiên có chiến dịch từ mốc | Phase 5 và 6 lên cùng bản; checklist trước mỗi kỳ tháng 12 |
-| R-07 | Tổng phí cả kỳ của MCN lệch `tổng hoa hồng mọi KOL/KOC × tỷ lệ` vài đồng | Làm tròn trên tổng mỗi phần phí nên từng KOL/KOC khớp phép tính tay; màn hình đọc phí đã lưu, không tự nhân |
+| R-07 | Tổng phí cả kỳ của MCN lệch `tổng hoa hồng mọi KOL/KOC × tỷ lệ` vài đồng | Làm tròn một lần cho (KOL/KOC, thời gian thành viên, kỳ) nên từng KOL/KOC khớp phép tính tay; màn hình đọc phí đã lưu, không tự nhân |
 | R-08 | Người đứng MCN chưa ký phụ lục 100%, thu nhập nội dung vẫn đi lệnh creator | Báo cáo vận hành nhắc ký; `taxpayerKey` trên file để Kế toán gộp |
 | R-09 | Kênh khác của MCN vào bằng link dưới 100% | Hệ thống không nhận diện được; ghi trong hợp đồng MCN; Kế toán rà theo `taxpayerKey` |
 | R-10 | Phase 5–6 chưa xong trước kỳ đầu của chiến dịch tháng 12 | Tách go-live onboarding khỏi phần tiền; demo theo tuần |
@@ -1014,3 +1009,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 3.0–3.10 | 2026-11-11, 2026-11-12 | Nguyễn Đăng Định | Gộp thành một bản; làm tròn trên tổng; bỏ `mcns.partner`, `McnEnabled`, ENV thuế, `MCN_JOB_ENABLED`; mốc `McnFeeStartAt` |
 | 4.0 | 2026-11-13 | Nguyễn Đăng Định | Sửa theo review của anh Vĩnh (PR #42, 12/11): thêm §0 nguyên tắc; bỏ cờ kỳ `ledgerV2`, đường ghi tiền mới cho mọi kỳ, tách PR riêng (mục 1); mã phụ lục, link thông báo thành const (mục 1); tách `mcn-members` thành `mcn-invitations`, `mcn-annexes`, `mcn-memberships`, bỏ các cờ song song với `status`, `mcn-accounts` `open`/`revoked`, bỏ `transfers.isOpen` (mục 2, 3); không gắn MCN lên khoản thưởng, tính phí lúc Lấy danh sách từ thời gian thành viên (mục 4); `mcn-user-locks` thay `users.mcnGuardVer`, bỏ `totalCashMcnFee` (mục 5); `mcn-fee-splits` thay `mcnSplits` trên item (mục 6); lệnh MCN một lệnh mỗi (đợt, MCN), dòng con theo chiến dịch, thuế trên cả lệnh (mục 7); sửa 5 lỗi nhỏ (mục 8) |
 | 4.1 | 2026-11-13 | Nguyễn Đăng Định | Theo comment so spec với PRD của anh Vĩnh (PR #42, 12/11): làm tròn phí một lần cho (thành viên, thời gian thành viên, kỳ) rồi chia về item, khớp FR-016 (mục 1a); §12.2 thêm số dư thuộc hồ sơ MCN, phạm vi đổi đường tiền cho mọi partner, chặn email đang Chờ ký (mục 1b, 1c, 1d) |
+| 4.2 | 2026-11-15 | Nguyễn Đăng Định | Theo review của anh Vĩnh (PR #42, 14/11): làm tròn ở ADR-06, §12.3, R-07 ghi giống §7.2; §12.2 chỉ giữ chỗ còn chờ duyệt, phần PRD 1.4–1.6 đã sửa chuyển sang §12.3; đổi `cmd/mcn-rebind` thành API ở §5.2, §11.7; đầu file PRD 1.6 và một head code (`b0a9b39b7`). Thiết kế: từ chối sau khi đồng ý ghi thẳng `declined`, bỏ unique `(user, link)` (§6.2, §6.8); dòng con lệnh MCN có trạng thái `returned` (§6.5, §8.1); báo Telegram khi phụ lục ký sau khi lời mời đóng (§6.2, §10.2, §11.5). Theo chat group 14/11: đường ghi tiền lên cùng bản MCN, không release riêng (§4.2, §7.3, §11.2, §11.4, §11.7, §12.2, §12.3); bỏ `cmd/mcn-adjust`, giữ D7 (§8.4, ADR-11, §11.7) |
