@@ -2,8 +2,8 @@
 
 **Date:** 2026-11-04
 **Author:** Vinh Nguyễn
-**Version:** 1.5
-**Status:** Draft — cập nhật theo review PR #41 và xác nhận phạm vi MCN ngày 13/11/2026
+**Version:** 1.6
+**Status:** Draft — cập nhật theo review PR #41 ngày 14/11/2026
 **Phạm vi nghiệp vụ:** MCN áp dụng cho **tất cả partner/ADV**. Phí quản lý áp dụng cho thu nhập từ các chiến dịch của mọi partner khi đủ điều kiện ở FR-016.
 
 **Phạm vi giao diện phase 1:** App Ambassador (`frontend/`) và Admin (`admin/`). Các app partner (parasola, vpbank, …) là bản copy riêng, chưa bổ sung giao diện MCN trong phase 1; thu nhập từ chiến dịch của các partner này vẫn thuộc phạm vi tính phí MCN.
@@ -108,10 +108,10 @@ Ví dụ: thành viên vào qua link 15%, G = 3.000.000đ → phí 450.000đ và
 | D20 | Không trích phí trên khoản phát sinh trước ngày kích hoạt thành viên (chốt 11/11) hoặc từ ngày kết thúc. Xét theo ngày phát sinh của từng khoản, không theo ngày Lấy danh sách (thay đề xuất Q5) |
 | D21 | Thuế TNCN của KOL/KOC: 10% trên số chi (đã trừ phí MCN) khi số chi trong đợt từ 5.000.000đ. MCN công ty không khấu trừ |
 | D22 | MCN vẫn xem được chi tiết đối soát các kỳ đã hợp tác sau khi thành viên rời; không thấy thu nhập sau khi rời |
-| D23 | KOL/KOC chưa eKYC hoặc chưa ký hợp đồng gốc `B2C_AMBASSADOR` thì làm ở trang Hợp đồng điện tử có sẵn, xong quay lại ký phụ lục |
-| D24 | Một KOL/KOC đổi MCN trong cùng kỳ đối soát: mỗi MCN được trích phí trên phần khoản phát sinh trong thời gian KOL/KOC thuộc MCN đó |
+| D23 | KOL/KOC chưa eKYC hoặc chưa ký hợp đồng gốc `B2C_AMBASSADOR` thì làm ở trang Hợp đồng điện tử có sẵn, xong quay lại ký phụ lục. Phụ lục đi kèm hợp đồng gốc, chỉ ký được khi hợp đồng gốc đã ký (chị Huyền xác nhận 14/11 sau khi trao đổi với anh Vĩnh, tổng hợp luồng ký gửi group dự án) |
+| D24 | Không có luồng đổi MCN. Nếu KOL/KOC rời MCN rồi tham gia MCN khác trong cùng kỳ đối soát, mỗi MCN chỉ được trích phí trên phần khoản phát sinh trong thời gian KOL/KOC là thành viên của MCN đó |
 | D25 | Chỉ trích phí trên khoản thuộc chiến dịch bắt đầu từ 00:00 01/12/2026 giờ Việt Nam. Mốc là một hằng số trong code; dời mốc thì sửa code rồi deploy (chốt 12/11, FR-016) |
-| D26 | MCN áp dụng cho **tất cả partner/ADV**. Khoản thưởng của thành viên từ chiến dịch của mọi partner đều được xét phí theo FR-016; không giới hạn ở partner Ambassador (xác nhận 13/11) |
+| D26 | MCN áp dụng cho **tất cả partner/ADV**. Khoản thưởng của thành viên từ chiến dịch của mọi partner đều được xét phí theo FR-016; không giới hạn ở partner Ambassador (Định xác nhận trong comment PR #41 ngày 13/11) |
 
 ---
 
@@ -406,7 +406,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Q3 | Định dạng, dung lượng file hồ sơ pháp lý | PDF, JPG, PNG, ≤ 20MB (theo bản mẫu 09/11) |
 | Q4 | Loại hợp đồng phụ lục trên econtract: AccessTrade core cấp mã loại và mẫu khi nào? | Phụ thuộc A1, cần trước khi làm FR-014 |
 | Q5 | ~~Thời điểm xét tư cách thành viên~~ | **Đã chốt:** theo ngày phát sinh từng khoản; không trích khoản trước ngày ký (D20) |
-| Q6 | ~~Phạm vi MCN theo partner~~ | **Đã chốt:** MCN áp dụng cho tất cả partner/ADV; thu nhập từ chiến dịch của mọi partner được xét phí khi đủ điều kiện FR-016 (D26, xác nhận 13/11) |
+| Q6 | ~~Phạm vi MCN theo partner~~ | **Đã chốt:** MCN áp dụng cho tất cả partner/ADV; thu nhập từ chiến dịch của mọi partner được xét phí khi đủ điều kiện FR-016 (D26, Định xác nhận trong comment PR #41 ngày 13/11) |
 | Q7 | ~~Hết 12 tháng phụ lục~~ | **Đã chốt:** tự kết thúc (D19) |
 | Q8 | ~~Thu nhập từ nội dung của chính tài khoản MCN công ty: khi chi, cả số dư được miễn khấu trừ TNCN?~~ | **Đã chốt:** thu nhập nội dung của tài khoản nhà vào số dư MCN, chi và tính thuế theo loại MCN: công ty không khấu trừ, cá nhân 10% theo ngưỡng (D14, họp 10/11). Legal rà thêm sau, không chặn phase 1 |
 | Q9 | ~~Thuế TNCN của MCN cá nhân~~ | **Đã chốt:** 10%, ngưỡng 5.000.000đ trên cả lệnh của MCN trong đợt; chứng từ ngoài hệ thống (họp 10/11, D9, FR-019) |
@@ -423,12 +423,13 @@ Các điểm dưới đây được ghi riêng để phân biệt yêu cầu đ�
 
 | Mục | Nội dung cần xác nhận |
 |---|---|
-| D7 — Điều chỉnh phí | Tech spec đề xuất script điều chỉnh phí MCN ngoài luồng Thưởng thêm. Chờ PO xác nhận; không coi là đã được duyệt trong PRD |
 | D8 — Trạng thái kỳ | Tech spec bổ sung trạng thái Duyệt lỗi và Duyệt lại, cùng điều kiện chặn lấy danh sách đợt chi khi còn kỳ lỗi/đang duyệt. Chờ PO, BA/Kế toán xác nhận; cần đồng bộ cả thuật ngữ và nguyên tắc 1 khi được duyệt |
 | D18 — Mở ký phụ lục | Vẫn được Chờ ký nhiều MCN; tech spec giới hạn chỉ mở ký một phụ lục tại một thời điểm. Chờ PO, BA xác nhận |
 | FR-002 — Điều kiện email | Bản này bổ sung chặn tài khoản đang Chờ ký với MCN khác để thống nhất với INV-03b của tech spec và hành vi code. Cần BA/PO review lại điều kiện và câu báo lỗi này |
 
-Đường ghi tiền mới thay đường cũ cho mọi partner, kể cả kỳ không có MCN. Phần code hiện đang làm chung trong branch `feat/mcn-phase1`, sẽ tách thành PR riêng sau theo kế hoạch triển khai đã xác nhận ngày 13/11. Việc tổ chức branch/PR không thay thế kiểm chứng hồi quy số tiền và thuế với bản cũ.
+Đường ghi tiền mới thay đường cũ cho mọi partner, kể cả kỳ không có MCN. Không release riêng: lên cùng bản MCN cuối tháng 11, kích hoạt trích phí từ 01/12 (anh Vĩnh chốt trong group dự án ngày 14/11). Trước khi lên, kiểm hồi quy số tiền và thuế của kỳ không có MCN so với cách ghi cũ.
+
+Điều chỉnh phí giữ đúng D7: chỉ bằng Thưởng thêm. Phase 1 không có script hay nút điều chỉnh tiền MCN (anh Vĩnh, group dự án 14/11).
 
 ## 10. Revision History
 
@@ -440,3 +441,4 @@ Các điểm dưới đây được ghi riêng để phân biệt yêu cầu đ�
 | 1.3 | 2026-11-13 | Chốt 12/11: chỉ trích phí khoản thuộc chiến dịch bắt đầu từ 00:00 01/12/2026 giờ Việt Nam (FR-016) |
 | 1.4 | 2026-11-13 | Theo review của anh Vĩnh (PR #41, 12/11): sửa nguyên tắc 1; D9 và FR-019 thuế MCN cá nhân 10% trên cả lệnh, đóng Q9; D14 tài khoản nhà 100%, đóng Q8; FR-012 tài khoản MCN được nhận link 100% của chính MCN; FR-018 và thuật ngữ: số dư thuộc hồ sơ MCN; FR-019 lệnh MCN chi theo chiến dịch; thêm D25 mốc trích phí; sửa FR-011 theo D20. D7, D8, D18, Q6 chờ PO |
 | 1.5 | 2026-11-13 | Xác nhận MCN áp dụng cho tất cả partner/ADV: cập nhật phạm vi nghiệp vụ, thêm D26, sửa FR-016 và đóng Q6; tách rõ phạm vi giao diện phase 1. FR-002/Q12 đồng bộ điều kiện email Chờ ký với MCN khác theo INV-03b, bổ sung câu báo lỗi và kiểm tra lại khi kích hoạt/đổi người vận hành. Mục 9.1 ghi riêng D7, D8, D18 và điều kiện email cần review; ghi kế hoạch đang làm chung branch, tách PR đường ghi tiền sau |
+| 1.6 | 2026-11-15 | Theo review PR #41 ngày 14/11: viết lại D24 (không có luồng đổi MCN); ghi người và nơi xác nhận cho D23, D26, Q6. Theo chat group 14/11: đường ghi tiền lên cùng bản MCN, không release riêng; bỏ dòng D7 khỏi mục 9.1, điều chỉnh phí chỉ bằng Thưởng thêm |
