@@ -2,8 +2,8 @@
 
 **Date:** 2026-11-04
 **Author:** Vinh Nguyễn
-**Version:** 1.7
-**Status:** Draft — cập nhật theo review PR #41 ngày 14/11/2026 và chốt 16/11/2026 (không đổi người vận hành)
+**Version:** 1.8
+**Status:** Draft — cập nhật theo review PR #41 ngày 14/11/2026 và chốt 16/11/2026 (không đổi người vận hành, không sửa hồ sơ MCN)
 **Phạm vi nghiệp vụ:** MCN áp dụng cho **tất cả partner/ADV**. Phí quản lý áp dụng cho thu nhập từ các chiến dịch của mọi partner khi đủ điều kiện ở FR-016.
 
 **Phạm vi giao diện phase 1:** App Ambassador (`frontend/`) và Admin (`admin/`). Các app partner (parasola, vpbank, …) là bản copy riêng, chưa bổ sung giao diện MCN trong phase 1; thu nhập từ chiến dịch của các partner này vẫn thuộc phạm vi tính phí MCN.
@@ -112,7 +112,7 @@ Ví dụ: thành viên vào qua link 15%, G = 3.000.000đ → phí 450.000đ và
 | D24 | Không có luồng đổi MCN. Nếu KOL/KOC rời MCN rồi tham gia MCN khác trong cùng kỳ đối soát, mỗi MCN chỉ được trích phí trên phần khoản phát sinh trong thời gian KOL/KOC là thành viên của MCN đó |
 | D25 | Chỉ trích phí trên khoản thuộc chiến dịch bắt đầu từ 00:00 01/12/2026 giờ Việt Nam. Mốc là một hằng số trong code; dời mốc thì sửa code rồi deploy (chốt 12/11, FR-016) |
 | D26 | MCN áp dụng cho **tất cả partner/ADV**. Khoản thưởng của thành viên từ chiến dịch của mọi partner đều được xét phí theo FR-016; không giới hạn ở partner Ambassador (Định xác nhận trong comment PR #41 ngày 13/11) |
-| D27 | Phase 1 không cho đổi chủ/người vận hành MCN (tài khoản MCN). Email đăng nhập chỉ sửa được khi MCN còn Chờ kích hoạt; từ lúc kích hoạt, email đăng nhập và tài khoản MCN đã gắn giữ nguyên. Không có màn hình, nút hay API để đổi; cần đổi thì để phase sau (anh Vĩnh chốt 16/11) |
+| D27 | Phase 1 không cho đổi chủ/người vận hành MCN (tài khoản MCN) và không có chức năng sửa thông tin hồ sơ MCN (loại, tên, mã định danh, email đăng nhập, người đại diện, địa chỉ, SĐT) ở bất kỳ trạng thái nào. Nhập sai thì tạo hồ sơ mới (xem Q14). Hồ sơ pháp lý và tài khoản ngân hàng vẫn cập nhật được (FR-003, FR-004). Cần đổi người vận hành thì để phase sau (anh Vĩnh chốt 16/11) |
 
 ---
 
@@ -152,7 +152,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 - Tạo xong: trạng thái **Chờ kích hoạt**, mở trang chi tiết ở tab Điều kiện kích hoạt.
 - Email đã thuộc tài khoản đang là thành viên của MCN khác: báo "Tài khoản này đang là thành viên của một MCN". Email đang Chờ ký phụ lục với MCN khác: báo "Tài khoản này đang chờ ký phụ lục với một MCN khác". Email đã dùng cho MCN khác: báo "Email đã được dùng cho MCN khác".
 - Kiểm tra lại điều kiện email khi kích hoạt MCN, vì quan hệ của tài khoản có thể thay đổi sau khi tạo hồ sơ.
-- Email đăng nhập sửa được khi MCN còn Chờ kích hoạt (kiểm tra như lúc tạo). Sau khi kích hoạt, ô email bị khoá, không sửa được kể cả khi gửi yêu cầu trực tiếp (D27).
+- Không có chức năng sửa hồ sơ sau khi tạo, kể cả khi còn Chờ kích hoạt. Nhập sai thì tạo hồ sơ mới (D27, Q14). Tab Thông tin hồ sơ chỉ để xem.
 - Danh sách trường đang chờ chốt (Q2).
 
 #### FR-003: Hồ sơ pháp lý (5 điều kiện kích hoạt)
@@ -396,7 +396,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Hàng lỗi | Không có |
 | Admin thêm thành viên thay MCN | Admin chỉ xem |
 | Nhiều tài khoản đăng nhập cho một MCN | Mỗi MCN một tài khoản (bảng quan hệ đã cho phép mở rộng) |
-| Đổi chủ/người vận hành MCN | Không làm. Email đăng nhập khoá từ lúc kích hoạt; không có màn hình, nút hay API đổi (D27) |
+| Đổi chủ/người vận hành MCN, sửa thông tin hồ sơ MCN | Không làm. Nhập sai thì tạo hồ sơ mới (D27, Q14) |
 | Giao diện MCN trên các app partner (parasola, …) | Phase 1 triển khai giao diện tại app Ambassador và Admin; phạm vi nghiệp vụ và tính phí MCN vẫn áp dụng cho tất cả partner/ADV (D26) |
 
 ---
@@ -418,6 +418,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Q11 | Thưởng mốc đạt sau ngày ký nhưng nhờ video đăng trước ngày ký; thưởng thêm tạo sau ngày ký để bù khoảng trước ngày ký: có trích phí MCN không? | Đề xuất: có, tính theo ngày khoản được ghi nhận |
 | Q12 | ~~MCN đã có tài khoản creator có dùng chung tài khoản đó không?~~ | **Đã chốt:** dùng chung. MCN cá nhân và creator là một tài khoản, vẫn đăng bài như creator (nguyên tắc 2, D14). Chặn tài khoản đang là thành viên hoặc đang Chờ ký với MCN khác; quan hệ với chính MCN này chỉ được phép ở tỷ lệ 100% (FR-002, xem mục 9.1) |
 | Q13 | ~~Lý do Từ chối, Chấm dứt, Báo rời có hiện cho bên kia không?~~ | **Đã chốt:** có, hiện trong thông báo gửi bên kia; Admin thấy ở tab Thành viên |
+| Q14 | Nhập sai hồ sơ MCN thì tạo hồ sơ mới (D27), nhưng MST/CCCD và email đăng nhập không được trùng MCN khác (FR-002), kể cả hồ sơ Chờ kích hoạt tạo sai. Tạo lại với đúng MST/CCCD hoặc email sẽ bị chặn. Xử lý thế nào? | Đề xuất: cho Admin huỷ hồ sơ Chờ kích hoạt (giữ lịch sử, giải phóng MST/email); hoặc chỉ chặn trùng với MCN không bị huỷ. Chờ anh Vĩnh chốt |
 
 ---
 
@@ -447,3 +448,4 @@ Các điểm dưới đây được ghi riêng để phân biệt yêu cầu đ�
 | 1.5 | 2026-11-13 | Xác nhận MCN áp dụng cho tất cả partner/ADV: cập nhật phạm vi nghiệp vụ, thêm D26, sửa FR-016 và đóng Q6; tách rõ phạm vi giao diện phase 1. FR-002/Q12 đồng bộ điều kiện email Chờ ký với MCN khác theo INV-03b, bổ sung câu báo lỗi và kiểm tra lại khi kích hoạt/đổi người vận hành. Mục 9.1 ghi riêng D7, D8, D18 và điều kiện email cần review; ghi kế hoạch đang làm chung branch, tách PR đường ghi tiền sau |
 | 1.6 | 2026-11-15 | Theo review PR #41 ngày 14/11: viết lại D24 (không có luồng đổi MCN); ghi người và nơi xác nhận cho D23, D26, Q6. Theo chat group 14/11: đường ghi tiền lên cùng bản MCN, không release riêng; bỏ dòng D7 khỏi mục 9.1, điều chỉnh phí chỉ bằng Thưởng thêm |
 | 1.7 | 2026-11-16 | Thêm D27 (anh Vĩnh chốt 16/11): phase 1 không cho đổi chủ/người vận hành MCN. FR-002: email đăng nhập chỉ sửa khi Chờ kích hoạt, bỏ kiểm tra khi đổi tài khoản vận hành; FR-005 ghi không có thao tác đổi; FR-018 và thuật ngữ bỏ câu "đổi người vận hành thì tiền vẫn ở MCN"; mục 8 thêm dòng ngoài phạm vi |
+| 1.8 | 2026-11-16 | Sửa D27, FR-002, mục 8: Admin không có chức năng sửa thông tin hồ sơ MCN ở bất kỳ trạng thái nào (bản 1.7 ghi nhầm là sửa được email khi Chờ kích hoạt); nhập sai thì tạo mới. Thêm Q14: tạo lại bị chặn vì trùng MST/CCCD, email với hồ sơ tạo sai |
