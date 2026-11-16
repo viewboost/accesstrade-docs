@@ -2,8 +2,8 @@
 
 **Date:** 2026-11-04
 **Author:** Vinh Nguyễn
-**Version:** 1.6
-**Status:** Draft — cập nhật theo review PR #41 ngày 14/11/2026
+**Version:** 1.7
+**Status:** Draft — cập nhật theo review PR #41 ngày 14/11/2026 và chốt 16/11/2026 (không đổi người vận hành)
 **Phạm vi nghiệp vụ:** MCN áp dụng cho **tất cả partner/ADV**. Phí quản lý áp dụng cho thu nhập từ các chiến dịch của mọi partner khi đủ điều kiện ở FR-016.
 
 **Phạm vi giao diện phase 1:** App Ambassador (`frontend/`) và Admin (`admin/`). Các app partner (parasola, vpbank, …) là bản copy riêng, chưa bổ sung giao diện MCN trong phase 1; thu nhập từ chiến dịch của các partner này vẫn thuộc phạm vi tính phí MCN.
@@ -36,7 +36,7 @@ PRD cho phase 1 của MCN (công ty quản lý KOL/KOC) trên KOC Ambassador, th
 | Thuật ngữ | Định nghĩa |
 |---|---|
 | **MCN** | Công ty hoặc cá nhân quản lý một nhóm KOL/KOC. Trên hệ thống là một **hồ sơ MCN** do AccessTrade tạo, loại Công ty hoặc Cá nhân |
-| **Tài khoản MCN** | User đăng nhập web Ambassador, được gắn với hồ sơ MCN qua bảng quan hệ. Phase 1: mỗi MCN một tài khoản. Tài khoản chỉ để thao tác; số dư phí thuộc **hồ sơ MCN**, không thuộc user này. Đổi người vận hành thì tiền vẫn ở MCN |
+| **Tài khoản MCN** | User đăng nhập web Ambassador, được gắn với hồ sơ MCN qua bảng quan hệ. Phase 1: mỗi MCN một tài khoản. Tài khoản chỉ để thao tác; số dư phí thuộc **hồ sơ MCN**, không thuộc user này. Phase 1 không đổi được tài khoản này sau khi kích hoạt (D27) |
 | **Số dư MCN** | Số dư của hồ sơ MCN: phí quản lý từ thành viên và thu nhập nội dung của tài khoản nhà (D14). Chi về tài khoản ngân hàng đứng tên MCN (FR-019) |
 | **Tài khoản nhà** | Người đứng MCN tự làm nội dung: tham gia chính MCN của mình bằng link 100% (D14) |
 | **Thành viên** | KOL/KOC đã ký phụ lục và đang thuộc một MCN. Lưu ở bảng quan hệ thành viên |
@@ -112,6 +112,7 @@ Ví dụ: thành viên vào qua link 15%, G = 3.000.000đ → phí 450.000đ và
 | D24 | Không có luồng đổi MCN. Nếu KOL/KOC rời MCN rồi tham gia MCN khác trong cùng kỳ đối soát, mỗi MCN chỉ được trích phí trên phần khoản phát sinh trong thời gian KOL/KOC là thành viên của MCN đó |
 | D25 | Chỉ trích phí trên khoản thuộc chiến dịch bắt đầu từ 00:00 01/12/2026 giờ Việt Nam. Mốc là một hằng số trong code; dời mốc thì sửa code rồi deploy (chốt 12/11, FR-016) |
 | D26 | MCN áp dụng cho **tất cả partner/ADV**. Khoản thưởng của thành viên từ chiến dịch của mọi partner đều được xét phí theo FR-016; không giới hạn ở partner Ambassador (Định xác nhận trong comment PR #41 ngày 13/11) |
+| D27 | Phase 1 không cho đổi chủ/người vận hành MCN (tài khoản MCN). Email đăng nhập chỉ sửa được khi MCN còn Chờ kích hoạt; từ lúc kích hoạt, email đăng nhập và tài khoản MCN đã gắn giữ nguyên. Không có màn hình, nút hay API để đổi; cần đổi thì để phase sau (anh Vĩnh chốt 16/11) |
 
 ---
 
@@ -150,7 +151,8 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 
 - Tạo xong: trạng thái **Chờ kích hoạt**, mở trang chi tiết ở tab Điều kiện kích hoạt.
 - Email đã thuộc tài khoản đang là thành viên của MCN khác: báo "Tài khoản này đang là thành viên của một MCN". Email đang Chờ ký phụ lục với MCN khác: báo "Tài khoản này đang chờ ký phụ lục với một MCN khác". Email đã dùng cho MCN khác: báo "Email đã được dùng cho MCN khác".
-- Kiểm tra lại điều kiện email khi kích hoạt MCN hoặc đổi tài khoản vận hành, vì quan hệ của tài khoản có thể thay đổi sau khi tạo hồ sơ.
+- Kiểm tra lại điều kiện email khi kích hoạt MCN, vì quan hệ của tài khoản có thể thay đổi sau khi tạo hồ sơ.
+- Email đăng nhập sửa được khi MCN còn Chờ kích hoạt (kiểm tra như lúc tạo). Sau khi kích hoạt, ô email bị khoá, không sửa được kể cả khi gửi yêu cầu trực tiếp (D27).
 - Danh sách trường đang chờ chốt (Q2).
 
 #### FR-003: Hồ sơ pháp lý (5 điều kiện kích hoạt)
@@ -184,6 +186,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
   - Gửi email tới email đăng nhập: MCN đã được kích hoạt, hướng dẫn đăng nhập web Ambassador bằng Google với đúng email này.
 - Lần đầu user đăng nhập bằng email đó (email đã xác thực), hệ thống gắn user vào dòng tài khoản MCN. Từ đó user thấy mục **Quản lý MCN**.
 - Không có thao tác Tạm dừng, Chấm dứt MCN (D12).
+- Không có thao tác đổi chủ/người vận hành MCN sau khi kích hoạt (D27).
 
 #### FR-006: Admin xem thành viên
 
@@ -297,7 +300,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
   - MCN: số dư MCN (hồ sơ MCN, không phải user đăng nhập) tăng phí, ghi rõ từ thành viên nào, kỳ nào, chiến dịch nào.
 - Kỳ chạy lại sau lỗi không được cộng hai lần.
 - KOL/KOC và MCN nhận thông báo như thông báo đối soát hiện nay.
-- Phí luôn có nơi nhận vì số dư thuộc hồ sơ MCN. Đổi người vận hành thì số dư vẫn ở MCN.
+- Phí luôn có nơi nhận vì số dư thuộc hồ sơ MCN, không thuộc user đăng nhập.
 
 #### FR-019: Chi trả
 
@@ -393,6 +396,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Hàng lỗi | Không có |
 | Admin thêm thành viên thay MCN | Admin chỉ xem |
 | Nhiều tài khoản đăng nhập cho một MCN | Mỗi MCN một tài khoản (bảng quan hệ đã cho phép mở rộng) |
+| Đổi chủ/người vận hành MCN | Không làm. Email đăng nhập khoá từ lúc kích hoạt; không có màn hình, nút hay API đổi (D27) |
 | Giao diện MCN trên các app partner (parasola, …) | Phase 1 triển khai giao diện tại app Ambassador và Admin; phạm vi nghiệp vụ và tính phí MCN vẫn áp dụng cho tất cả partner/ADV (D26) |
 
 ---
@@ -442,3 +446,4 @@ Các điểm dưới đây được ghi riêng để phân biệt yêu cầu đ�
 | 1.4 | 2026-11-13 | Theo review của anh Vĩnh (PR #41, 12/11): sửa nguyên tắc 1; D9 và FR-019 thuế MCN cá nhân 10% trên cả lệnh, đóng Q9; D14 tài khoản nhà 100%, đóng Q8; FR-012 tài khoản MCN được nhận link 100% của chính MCN; FR-018 và thuật ngữ: số dư thuộc hồ sơ MCN; FR-019 lệnh MCN chi theo chiến dịch; thêm D25 mốc trích phí; sửa FR-011 theo D20. D7, D8, D18, Q6 chờ PO |
 | 1.5 | 2026-11-13 | Xác nhận MCN áp dụng cho tất cả partner/ADV: cập nhật phạm vi nghiệp vụ, thêm D26, sửa FR-016 và đóng Q6; tách rõ phạm vi giao diện phase 1. FR-002/Q12 đồng bộ điều kiện email Chờ ký với MCN khác theo INV-03b, bổ sung câu báo lỗi và kiểm tra lại khi kích hoạt/đổi người vận hành. Mục 9.1 ghi riêng D7, D8, D18 và điều kiện email cần review; ghi kế hoạch đang làm chung branch, tách PR đường ghi tiền sau |
 | 1.6 | 2026-11-15 | Theo review PR #41 ngày 14/11: viết lại D24 (không có luồng đổi MCN); ghi người và nơi xác nhận cho D23, D26, Q6. Theo chat group 14/11: đường ghi tiền lên cùng bản MCN, không release riêng; bỏ dòng D7 khỏi mục 9.1, điều chỉnh phí chỉ bằng Thưởng thêm |
+| 1.7 | 2026-11-16 | Thêm D27 (anh Vĩnh chốt 16/11): phase 1 không cho đổi chủ/người vận hành MCN. FR-002: email đăng nhập chỉ sửa khi Chờ kích hoạt, bỏ kiểm tra khi đổi tài khoản vận hành; FR-005 ghi không có thao tác đổi; FR-018 và thuật ngữ bỏ câu "đổi người vận hành thì tiền vẫn ở MCN"; mục 8 thêm dòng ngoài phạm vi |
