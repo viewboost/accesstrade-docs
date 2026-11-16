@@ -101,6 +101,7 @@ Vì vậy **mức điểm không cố định trong hệ thống**: BTC nhập t
 | Nội dung | Cách xử lý hiện tại |
 |---|---|
 | **Chia nhỏ khoản khi ngân sách chỉ còn một phần** | Làm **theo cách của loại thưởng theo mốc**: không chia nhỏ. Thiếu chỗ ở bất kỳ tầng ngân sách nào thì khoản ghi **0 điểm** kèm cờ vượt ngân sách (xem BR-09). Chỉ thưởng theo lượt xem mới chia nhỏ được |
+| **Giới hạn số bài được tính điểm mỗi người mỗi ngày** | Không làm. Quyết định: không giới hạn. Thể lệ không nêu và hệ thống cũ cũng không có |
 | **Tự tính lại khoản 0 điểm khi ngân sách được bơm thêm** | Hệ thống cũ chưa có (thưởng theo mốc cũng không). Khoản 0 điểm giữ nguyên. Làm chung ở đợt nâng cấp sau |
 | **Thông báo thưởng mới cho người tham gia** | **Không thêm.** Người tham gia đã nhận thông báo "bài được duyệt" khi BTC duyệt. Khi đối soát chi xong họ nhận thông báo thưởng như các khoản theo mốc |
 
@@ -108,7 +109,6 @@ Vì vậy **mức điểm không cố định trong hệ thống**: BTC nhập t
 
 | Nội dung | Câu hỏi |
 |---|---|
-| Giới hạn số bài được tính điểm mỗi người mỗi ngày (thể lệ không nêu, hệ thống cũ không có) | Q8 |
 | Bảng điểm đúng là 25/50 hay 50/100 | Q4 |
 | Nền tảng nào được tính (Instagram ảnh, YouTube Shorts, Threads) | Q14 |
 
@@ -208,7 +208,6 @@ Sau khi tạo, **bật** nhiệm vụ (đổi trạng thái sang hoạt động)
 | # | Câu hỏi | Ảnh hưởng |
 |---|---|---|
 | Q4 | Bảng điểm 25/50 hay 50/100? | Con số BTC nhập ở mục 5. Không ảnh hưởng cách hệ thống chạy |
-| Q8 | Có giới hạn số bài tính điểm mỗi người mỗi ngày không? | Nếu có, cần thêm quy tắc mới (chưa làm) |
 | Q14 | Nền tảng nào được tính (Instagram ảnh, YouTube Shorts, Threads)? | Nguồn nào được nhập mức ở mục 5 |
 | Q17 | Ngày bắt đầu và kết thúc chương trình | Khoảng thời gian hiệu lực của nhiệm vụ (BR-06) |
 
