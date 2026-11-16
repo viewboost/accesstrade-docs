@@ -96,7 +96,7 @@ Vì vậy **mức điểm không cố định trong hệ thống**: BTC nhập t
 - Đối soát: đi cùng luồng thưởng theo mốc (tab Milestone), mỗi bài một dòng.
 - Admin: form nhập điểm theo nguồn; bảng nhiệm vụ hiện điểm theo nguồn.
 
-### 3.2 Ngoài phạm vi (thể lệ không yêu cầu, chưa làm)
+### 3.2 Không bao gồm (thể lệ không yêu cầu, chưa làm)
 
 | Nội dung | Cách xử lý hiện tại |
 |---|---|
@@ -104,7 +104,7 @@ Vì vậy **mức điểm không cố định trong hệ thống**: BTC nhập t
 | **Tự tính lại khoản 0 điểm khi ngân sách được bơm thêm** | Hệ thống cũ chưa có (thưởng theo mốc cũng không). Khoản 0 điểm giữ nguyên. Làm chung ở đợt nâng cấp sau |
 | **Thông báo thưởng mới cho người tham gia** | **Không thêm.** Người tham gia đã nhận thông báo "bài được duyệt" khi BTC duyệt. Khi đối soát chi xong họ nhận thông báo thưởng như các khoản theo mốc |
 
-### 3.3 Chờ quyết định
+### 3.3 Chờ quyết định (chưa làm cho tới khi có câu trả lời)
 
 | Nội dung | Câu hỏi |
 |---|---|
@@ -127,7 +127,7 @@ Vì vậy **mức điểm không cố định trong hệ thống**: BTC nhập t
 | **BR-07** | **Số suất**: nếu nhiệm vụ không để "Không giới hạn số lượng" thì tổng số khoản được trả không vượt số lượng. Hết suất thì bài duyệt sau không được thưởng |
 | **BR-08** | Mọi bài của cùng một người đều được thưởng. Ô "tối đa mỗi người" của nhiệm vụ **không áp dụng** cho loại này |
 | **BR-09** | **Ngân sách ba tầng**: khoản được tính vào ngân sách **chiến dịch**, **creator** và **nội dung** (mỗi bài). Nếu **bất kỳ tầng nào** không đủ chỗ cho cả khoản thì khoản được ghi **0 điểm** và gắn cờ vượt ngân sách (không trả thiếu một phần). Số điểm định thưởng vẫn được lưu để biết đã bỏ lỡ bao nhiêu. Khi thiếu ở tầng chiến dịch, hệ thống còn gửi cảnh báo vượt ngân sách như các loại thưởng khác. Làm theo cách của loại thưởng theo mốc |
-| **BR-10** | Khoản 0 điểm không tự được tính lại khi ngân sách tăng (xem 3.2) |
+| **BR-10** | Khoản 0 điểm không tự được tính lại khi ngân sách tăng (xem 3.2 Không bao gồm) |
 | **BR-11** | Thẻ bài hiện số điểm **chờ đối soát** (và số đã nhận sau đối soát) của bài đó |
 | **BR-12** | **Đối soát, lấy danh sách**: khoản có điểm và bài còn được duyệt thì thành một dòng ở tab **Milestone**, mỗi bài một dòng (một người có hai bài thì có hai dòng), cột ghi chú có link bài. Khoản 0 điểm và khoản của bài không còn được duyệt thì **không** vào danh sách |
 | **BR-13** | **Đối soát, chạy chi**: kiểm lại bài vẫn được duyệt. Bài bị từ chối sau lúc lập bản thì dòng đó bị từ chối ("Thông tin nội dung không chính xác") và không chi. Khoản được chi thì chuyển sang đã hoàn thành |
