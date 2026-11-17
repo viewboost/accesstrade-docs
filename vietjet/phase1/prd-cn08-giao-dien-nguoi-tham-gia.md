@@ -37,7 +37,7 @@ App người tham gia hiện được làm cho chương trình thưởng theo l�
 
 | Mã | Quy tắc |
 |---|---|
-| **CN08-BR01** | Tổng điểm là tổng điểm hợp lệ của người trong cả chương trình (CN06-BR01). Điểm của bài chờ duyệt hiện riêng, không cộng vào tổng điểm hợp lệ |
+| **CN08-BR01** | Tổng điểm hiện trên app là điểm hợp lệ của người trong chương trình đang xem: khoản **Đã hoàn thành** và **Chờ đối soát** (như bảng CN-08.4). Điểm của bài chờ duyệt hiện riêng, không cộng vào tổng điểm hợp lệ. Khác với file kết quả cuối chương trình ([CN06-BR01](./prd-cn06-muc-thuong-cuoi-ky.md)) chỉ tính khoản đã hoàn thành |
 | **CN08-BR02** | Thống kê số bài: đã duyệt, chờ duyệt, từ chối hiện cạnh tổng điểm |
 
 ## CN-08.5 Danh sách bài đăng
@@ -120,6 +120,7 @@ Thể lệ không có màn này; đề xuất thêm để người tham gia bi�
 | CN08-TC02 | Điểm từng bài | Mở Danh sách bài đăng | 3 bài `+50 điểm`; bài chờ có điểm chờ duyệt; bài từ chối không có điểm và có lý do | BR03, 05 |
 | CN08-TC03 | Không còn chỉ số xem | Xem một bài | Không có lượt xem, thích, bình luận làm chỉ số thưởng | BR04 |
 | CN08-TC04 | Mức thưởng | U1 450 điểm xem khối Mức thưởng | Mức 1 và Mức 2 Đã đạt; Mức 3 và 4 Chưa đạt | BR06, 07 |
+| CN08-TC05 | Không hiện điểm cộng dồn qua chương trình | U1 có 300 điểm ở chương trình tháng 11 và 400 điểm ở chương trình tháng 12; mở từng chương trình | Mỗi chương trình chỉ hiện điểm của nó, không có tổng 700 ở bất kỳ màn nào | BR19 |
 | CN08-TC06 | Bảng xếp hạng | Mở bảng xếp hạng tháng 11 | Cột Điểm; TOP 1, 2, 3 có nhãn +500, +200, +100 | BR09, 10 |
 | CN08-TC07 | Tổng quan | Mở trang chủ | Ô hiện số bài được duyệt và tổng điểm, không có "Lượt xem", "Tiền thưởng" | BR12 |
 | CN08-TC08 | Gửi bài | Mở Gửi bài đăng, gửi link | Thấy hashtag bắt buộc, nhắc công khai; sau gửi thấy bài chờ BTC duyệt | BR13 |

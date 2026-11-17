@@ -1,6 +1,6 @@
 # CN-06 · Xuất kết quả xếp hạng cuối chương trình
 
-**Date:** 2026-11-17 · **Author:** Vinh Nguyễn · **Version:** 0.3 · **Status:** Draft
+**Date:** 2026-11-17 · **Author:** Vinh Nguyễn · **Version:** 0.4 · **Status:** Draft
 **Mục lục chung:** [README.md](./README.md)
 
 ## CN-06.1 Mục đích
@@ -63,7 +63,7 @@ Ví dụ: hết chương trình, Admin bấm **Xuất kết quả cuối chươn
 |---|---|
 | **CN06-BR04** | Xếp theo tổng điểm hợp lệ giảm dần. Chỉ người có tổng điểm lớn hơn 0 vào file |
 | **CN06-BR05** | Bằng điểm thì người **đạt tổng điểm đó sớm hơn** xếp trên. Thời điểm đạt = **giờ đăng bài lên mạng xã hội** của khoản thưởng hợp lệ gần nhất làm nên tổng điểm của người đó (khoản gần nhất tính theo giờ đăng bài). Bài không có giờ đăng thì dùng giờ gửi bài vào hệ thống. Khoản thưởng thêm không gắn bài (điểm TOP) tính theo ngày ghi nhận của khoản đó. Vẫn bằng thì xếp theo mã người dùng nhỏ hơn để thứ tự không đổi giữa các lần xuất |
-| **CN06-BR06** | Bài bị từ chối hoặc khoản bị loại không được tính vào tổng điểm và vào thời điểm đạt |
+| **CN06-BR06** | Bài bị từ chối **trước khi đối soát** thì khoản của bài về trạng thái từ chối, không được tính vào tổng điểm và vào thời điểm đạt. Khoản đã **Đã hoàn thành** không đổi khi bài bị từ chối sau đó ([CN-01](./prd-cn01-diem-co-dinh-moi-bai.md) tình huống B1), nên file vẫn tính khoản đó; sai sót phát hiện sau đối soát do Operation xử lý tay bên ngoài (CN-07 không làm) |
 
 **File**
 
@@ -71,10 +71,10 @@ Ví dụ: hết chương trình, Admin bấm **Xuất kết quả cuối chươn
 |---|---|
 | **CN06-BR07** | Tab **Bảng xếp hạng** của sự kiện có nút **Xuất kết quả cuối chương trình**, tách khỏi nút Tải file theo kỳ (CN-05). Admin nhập **số người cần lấy**, mặc định bằng số suất Mức 1 cộng 10% (2.200). Bấm thì hệ thống tạo file Excel và gửi như các file xuất khác |
 | **CN06-BR08** | File lấy đủ số người đã nhập. Người đứng sát ranh giới mà bằng cả điểm lẫn thời điểm đạt với người cuối cùng thì lấy cả nhóm, nên có thể nhiều hơn số đã nhập |
-| **CN06-BR09** | Các cột: Hạng, Mã người dùng, Tên, Mã nhân viên, Email, Tổng điểm, Thời điểm đạt tổng điểm, Số bài hợp lệ, **Mức đạt** (theo mốc điểm, CN06-BR02, BR03), **Mức được suất** (theo hạng so với số suất: Mức 1 là 2.000 người đầu, Mức 2 là 500, Mức 3 là 100, Mức 4 là 10; chỉ tính người đã đạt mức đó). Dòng đầu ghi thời điểm xuất và số người lấy |
+| **CN06-BR09** | Các cột: Hạng, Mã người dùng, Tên, Mã nhân viên, Email, Tổng điểm, Thời điểm đạt tổng điểm, Số bài hợp lệ, **Mức đạt** (theo mốc điểm, CN06-BR02, BR03), **Mức được suất** (theo hạng so với số suất: Mức 1 là 2.000 người đầu, Mức 2 là 500, Mức 3 là 100, Mức 4 là 10; chỉ tính người đã đạt mức đó). Dòng đầu ghi thời điểm xuất và số người lấy Mã nhân viên lấy từ mã đã xác thực của người dùng ở đối tác của sự kiện, trống nếu chưa có. Email che theo quyền của người xuất. Tên, mã nhân viên, email được thoát ký tự công thức Excel. Thời điểm đạt hiện "Không xác định" khi khoản không có giờ hợp lệ (xếp cuối nhóm cùng điểm). So thời gian tới giây. Khoản Thưởng thêm 0 điểm hoặc âm không tính. Cột **Ghi chú** ghi các người bằng cả điểm lẫn giờ ở ranh giới số suất của mức đã đạt (mức cao liệt kê trước) để BTC xét tay |
 | **CN06-BR10** | Trước khi xuất, nếu sự kiện còn khoản thưởng chưa đối soát xong (chờ duyệt, chờ đối soát), hệ thống **cảnh báo số khoản còn lại** nhưng vẫn cho xuất. File ghi rõ chỉ tính khoản đã hoàn thành |
-| **CN06-BR12** | Điểm chỉ tích lũy trong chương trình của nó, kể cả điểm thưởng TOP của chương trình đó. Điểm của chương trình này không cộng vào chương trình khác, và file kết quả chỉ nói về một chương trình |
 | **CN06-BR11** | Chỉ người có quyền xuất dữ liệu của sự kiện mới xuất được. Nhân sự thuộc đối tác khác không xuất được kết quả của sự kiện không thuộc đối tác của họ |
+| **CN06-BR12** | Điểm chỉ tích lũy trong chương trình của nó, kể cả điểm thưởng TOP của chương trình đó. Điểm của chương trình này không cộng vào chương trình khác, và file kết quả chỉ nói về một chương trình |
 
 ## CN-06.6 Kịch bản kiểm thử
 
@@ -89,9 +89,10 @@ Ví dụ: hết chương trình, Admin bấm **Xuất kết quả cuối chươn
 | CN06-TC05 | Thưởng TOP | U1 có khoản thưởng thêm TOP hoàn thành 100 điểm | Tổng điểm U1 = 750 | BR01 |
 | CN06-TC06 | Bằng điểm | U6 và U7 cùng 700 điểm; bài cuối của U7 đăng lúc 09:00 ngày 12/11, của U6 lúc 18:00 ngày 12/11 | U7 xếp trên U6 | BR05 |
 | CN06-TC07 | Theo giờ đăng chứ không theo giờ duyệt | Như TC06 nhưng BTC duyệt bài của U6 trước bài của U7 | U7 vẫn xếp trên U6 | BR05 |
-| CN06-TC08 | Bài bị loại | U7 có bài làm đạt 700 điểm bị từ chối sau đó | Tổng điểm U7 giảm; thời điểm đạt tính lại theo các khoản còn hợp lệ | BR05, 06 |
+| CN06-TC08 | Bài bị từ chối trước đối soát | U7 có bài làm đạt 700 điểm bị từ chối khi khoản còn chờ đối soát | Tổng điểm U7 giảm; thời điểm đạt tính lại theo các khoản còn hợp lệ | BR05, 06 |
 | CN06-TC09 | Vẫn bằng | Hai người cùng điểm và cùng giờ | Người có mã nhỏ hơn xếp trên, lần xuất sau giữ nguyên thứ tự | BR05 |
 | CN06-TC10 | Số người lấy | Nhập 100 khi có 5.000 người | File có 100 người đầu; nếu người thứ 100 và 101 bằng cả điểm lẫn giờ thì lấy cả hai | BR07, 08 |
 | CN06-TC11 | Mức được suất | Có 20 người trên 1.500 điểm | Chỉ 10 người đầu có Mức 4 ở cột Mức được suất; cả 20 người vẫn có Mức đạt = 4 | BR09 |
-| CN06-TC13 | Điểm không cộng qua chương trình | U1 có 300 điểm ở chương trình tháng 11 và 400 điểm ở chương trình tháng 12 | File của mỗi chương trình ghi riêng (300 và 400), không có tổng 700 | BR12 |
 | CN06-TC12 | Quyền | Nhân sự đối tác khác bấm Xuất | Bị từ chối | BR11 |
+| CN06-TC13 | Điểm không cộng qua chương trình | U1 có 300 điểm ở chương trình tháng 11 và 400 điểm ở chương trình tháng 12 | File của mỗi chương trình ghi riêng (300 và 400), không có tổng 700 | BR12 |
+| CN06-TC14 | Bài bị từ chối sau đối soát | Khoản của bài đã Đã hoàn thành; bài bị từ chối sau đó | Khoản vẫn tính trong file; không đổi tổng điểm | BR06 |

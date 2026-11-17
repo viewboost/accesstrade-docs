@@ -89,7 +89,7 @@ Khi BTC từ chối một bài đã có khoản, và khi duyệt lại bài đó
 |---|---|---|
 | Loại | Cố định mỗi bài được duyệt | |
 | Tiêu đề | Tên nhiệm vụ | Thưởng mỗi bài |
-| Thời gian | Khoảng ngày hiệu lực (CN01-BR04) | 16/11 đến 31/12 |
+| Thời gian | Khoảng ngày hiệu lực (CN01-BR04), thường là một tháng của chương trình | 01/11 đến 30/11 |
 | Áp dụng cho các source | Các nguồn được tính | TikTok, Facebook Post, Facebook Reels |
 | Thưởng mỗi bài (từng nguồn) | Mỗi nguồn đã chọn có một ô nhập riêng; để trống hoặc 0 thì nguồn đó không được thưởng | TikTok 50, Facebook Reels 50, Facebook Post 25 |
 | Không giới hạn số lượng / Số lượng | Số suất (CN01-BR08) | Không giới hạn |

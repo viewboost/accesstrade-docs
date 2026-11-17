@@ -88,10 +88,9 @@ Mục tiêu: chặn kẻ xấu dội thư vào hộp thư người khác hoặc 
 | **CN09-BR27** | Mỗi địa chỉ IP gửi tối đa **500 yêu cầu trong 1 giờ**. Mức này rất rộng vì nhân viên Vietjet dùng chung IP văn phòng và ngày mở chương trình có thể có hàng trăm người cùng lúc; chỉ để chặn quét hàng loạt, lớp chính là giới hạn theo email (BR26, BR32). Địa chỉ IP phải lấy đúng từ proxy, việc cấu hình thuộc bên triển khai (ghi ở tài liệu triển khai) |
 | **CN09-BR28** | Mọi yêu cầu được đếm, **kể cả email không có tài khoản hoặc ngoài danh sách tên miền**, để giới hạn không trở thành cách dò email nào có tài khoản (CN09-BR11). Vượt giới hạn thì báo "thử lại sau" giống nhau cho mọi email |
 | **CN09-BR29** | Nhập sai mã quá **5 lần** thì yêu cầu bị hủy kể cả đường dẫn (CN09-BR13, BR21); phải xin thư mới. **Không khóa tài khoản**: tài khoản vẫn đăng nhập được bằng mật khẩu và cách khác trong lúc bị tấn công |
-
-| **CN09-BR32** | Mỗi email tối đa **30 lượt nhập sai mã trong 24 giờ**, cộng dồn qua mọi yêu cầu và mọi luồng (đăng ký, quên mật khẩu, đăng nhập không mật khẩu). Hết lượt thì **đường nhập mã** của email đó đóng đến hết cửa sổ; đường **đường dẫn**, đăng nhập bằng mật khẩu và mạng xã hội vẫn dùng được, nên không khóa tài khoản (BR29). Lý do: bỏ trần gửi theo ngày (BR26) không được làm kẻ xấu có thêm lượt đoán mã trên email của người khác |
 | **CN09-BR30** | Bước 1 của đăng ký trả **cùng một phản hồi** dù email đã có tài khoản hay chưa; email đã có tài khoản không nhận thư và không tạo gì. Thông báo ghi: "Nếu email này chưa đăng ký, chúng tôi đã gửi mã xác thực. Nếu bạn đã có tài khoản, hãy dùng Đăng nhập hoặc Quên mật khẩu." Để không ai dò được email nào đã đăng ký (CN09-BR11) |
 | **CN09-BR31** | Đường dẫn trong thư đặt thông tin xác thực trong **phần sau dấu #** của địa chỉ, để không vào nhật ký truy cập của máy chủ và proxy; trang xác nhận đọc xong thì xóa khỏi thanh địa chỉ. Bấm đường dẫn sai không làm hỏng mã và đường dẫn đúng của người khác: chỉ yêu cầu đúng chủ mới bị tính lần sai |
+| **CN09-BR32** | Mỗi email tối đa **30 lượt nhập sai mã trong 24 giờ**, cộng dồn qua mọi yêu cầu và mọi luồng (đăng ký, quên mật khẩu, đăng nhập không mật khẩu). Hết lượt thì **đường nhập mã** của email đó đóng đến hết cửa sổ; đường **đường dẫn**, đăng nhập bằng mật khẩu và mạng xã hội vẫn dùng được, nên không khóa tài khoản (BR29). Lý do: bỏ trần gửi theo ngày (BR26) không được làm kẻ xấu có thêm lượt đoán mã trên email của người khác |
 
 ## CN-09.8 Kịch bản kiểm thử
 
@@ -128,7 +127,7 @@ Mục tiêu: chặn kẻ xấu dội thư vào hộp thư người khác hoặc 
 | CN09-TC27 | Quên mật khẩu bằng đường dẫn | Bấm Quên mật khẩu, bấm đường dẫn trong thư, bấm xác nhận | Sang màn đặt mật khẩu mới | BR22 |
 | CN09-TC28 | Mã và đường dẫn dùng chung bộ đếm | Nhập sai mã gần đủ số lần cho phép, rồi thử đường dẫn | Vẫn tính chung một yêu cầu; vượt giới hạn thì cả mã và đường dẫn bị hủy | BR21 |
 | CN09-TC29 | Mở đường dẫn trên máy khác | Xin thư trên máy A, bấm đường dẫn rồi xác nhận trên máy B | Máy B báo đã xác nhận; chỉ máy A được cấp phiên đăng nhập | BR25 |
-| CN09-TC30 | Gửi dồn theo email | Xin thư 6 lần cho cùng một email trong 30 phút (mỗi lần cách hơn 1 phút), ở ba luồng trộn lẫn | Lần thứ 6 bị từ chối "thử lại sau"; hết 30 phút xin lại được | BR26 |
+| CN09-TC30 | Gửi dồn theo email | Xin thư quên mật khẩu 6 lần cho cùng một email trong 30 phút (mỗi lần cách hơn 1 phút) | Lần thứ 6 bị từ chối "thử lại sau"; luồng đăng nhập và đăng ký của email đó vẫn xin được; hết 30 phút xin lại được. Trộn ba luồng, tổng 12 yêu cầu thì yêu cầu thứ 13 bị từ chối | BR26 |
 | CN09-TC31 | Không đốt hạn mức cả ngày | Đủ 5 yêu cầu của một email, chờ hết 30 phút | Chủ email xin được thư mới, không bị chặn đến hôm sau | BR26 |
 | CN09-TC32 | Giới hạn theo IP | Một IP xin thư cho 501 email khác nhau trong 1 giờ | Yêu cầu thứ 501 bị từ chối; IP khác vẫn xin được | BR27 |
 | CN09-TC33 | Không lộ email qua giới hạn | Gửi dồn cho email có và không có tài khoản | Hai trường hợp bị từ chối cùng lúc, cùng thông báo | BR28 |
