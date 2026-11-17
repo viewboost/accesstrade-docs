@@ -23,9 +23,9 @@ Kiểm thử cả luồng của chương trình, nối các chức năng CN-01 �
 | 4 | Tạo kỳ đối soát theo bài, Lấy danh sách | Tab **Thưởng theo bài** có 6 dòng của U1 | CN02-TC01, 02, 03 |
 | 5 | Duyệt kỳ đối soát | 6 khoản **Đã hoàn thành**, điểm vào số dư | CN02-TC05 |
 | 6 | Xem bảng xếp hạng tháng và tải file | Có U1 trong bảng; file đủ danh sách | CN05-TC01, 02 |
-| 7 | Tạo kỳ cuối kỳ, Lấy danh sách | U1 một dòng: tổng 250 điểm, đạt Mức 1 | CN06-TC01, 02 |
-| 8 | Duyệt kỳ, xuất danh sách trao quà, đánh dấu Đã trao | Mức 1 của U1 Đã trao | CN06-TC09, 10 |
-| 9 | U1 xem app | Mức 1 hiện Đã nhận; mọi số hiện "điểm" | CN08-TC05, CN03-TC01 |
+| 7 | Hết chương trình, Xuất kết quả cuối chương trình | U1 một dòng: tổng 250 điểm, Mức đạt = 1 | CN06-TC01, 02 |
+| 8 | Kiểm file: bằng điểm thì người đăng bài sớm hơn xếp trên | Thứ tự đúng theo giờ đăng bài | CN06-TC06, 07 |
+| 9 | U1 xem app | Mức 1 hiện Đã đạt; mọi số hiện "điểm" | CN08-TC04, CN03-TC01 |
 
 ## QA.4 Các nhánh phải chạy
 
@@ -36,8 +36,8 @@ Kiểm thử cả luồng của chương trình, nối các chức năng CN-01 �
 | Hết suất của nhiệm vụ | CN01-TC14 |
 | Hết ngân sách | CN01-TC15 đến 19 |
 | Bài nghi trùng | CN04-TC01 đến 04 |
-| Hết suất của mức thưởng | CN06-TC06, 07 |
-| Gian lận phát hiện sau đối soát | CN07-TC08 đến 11 |
-| Sang chu kỳ mới | CN07-TC03 đến 06 |
+| Mức được suất khi nhiều người cùng đạt | CN06-TC11 |
+| Gian lận phát hiện trước đối soát cuối: từ chối bài thì điểm mất | CN01 (tình huống từ chối), CN06-TC04 |
+| Điểm không cộng qua chương trình | CN06-TC13 |
 | Email ngoài tên miền, thiếu mã nhân viên | CN09-TC02, 04 |
 | Màn ẩn không vào được | CN03-TC06, 07; CN08-TC09 |

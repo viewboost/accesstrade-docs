@@ -18,7 +18,7 @@ Hiện trạng: các khoản đi chung tab Milestone. Chức năng này tách ra
 
 **Ngoài phạm vi**
 - Kiểm thưởng cuối kỳ theo tổng điểm: thuộc [CN-06](./prd-cn06-muc-thuong-cuoi-ky.md).
-- Đánh dấu mốc reset điểm sau chi: thuộc [CN-07](./prd-cn07-diem-sau-trao-thuong.md).
+- Xuất kết quả cuối chương trình: thuộc [CN-06](./prd-cn06-muc-thuong-cuoi-ky.md).
 
 ## CN-02.3 Chức năng liên quan
 

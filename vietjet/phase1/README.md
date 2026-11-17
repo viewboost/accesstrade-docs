@@ -19,8 +19,8 @@ Cán bộ nhân viên Vietjet đăng bài lên mạng xã hội và gửi link v
 | CN-03 | Hiển thị điểm thay cho tiền (chữ "điểm", màn Thông tin thanh toán) | [prd-cn03-hien-thi-diem.md](./prd-cn03-hien-thi-diem.md) | Đã viết |
 | CN-04 | Kiểm tra trùng nội dung video | [prd-cn04-kiem-tra-trung-noi-dung.md](./prd-cn04-kiem-tra-trung-noi-dung.md) | Đã viết |
 | CN-05 | Bảng xếp hạng tháng: tải file và thưởng bổ sung TOP | [prd-cn05-bang-xep-hang-thang.md](./prd-cn05-bang-xep-hang-thang.md) | Đã viết |
-| CN-06 | Mức thưởng cuối kỳ và trao quà (tổng điểm, mức 1–4, hết suất) | [prd-cn06-muc-thuong-cuoi-ky.md](./prd-cn06-muc-thuong-cuoi-ky.md) | Đã viết |
-| CN-07 | Điểm sau trao thưởng, chu kỳ và thu hồi điểm | [prd-cn07-diem-sau-trao-thuong.md](./prd-cn07-diem-sau-trao-thuong.md) | Đã viết |
+| CN-06 | Xuất kết quả xếp hạng cuối chương trình (tổng điểm, bằng điểm thì ai đạt trước, mức 1–4) | [prd-cn06-muc-thuong-cuoi-ky.md](./prd-cn06-muc-thuong-cuoi-ky.md) | Đã viết |
+| CN-07 | Điều chỉnh trừ điểm sau đối soát | [prd-cn07-diem-sau-trao-thuong.md](./prd-cn07-diem-sau-trao-thuong.md) | Không làm |
 | CN-08 | Giao diện người tham gia | [prd-cn08-giao-dien-nguoi-tham-gia.md](./prd-cn08-giao-dien-nguoi-tham-gia.md) | Đã viết |
 | CN-09 | Đăng nhập bằng email Vietjet và đăng ký bằng mã nhân viên | [prd-cn09-dang-nhap-email-vietjet.md](./prd-cn09-dang-nhap-email-vietjet.md) | Đã viết |
 

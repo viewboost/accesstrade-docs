@@ -37,7 +37,7 @@ App người tham gia hiện được làm cho chương trình thưởng theo l�
 
 | Mã | Quy tắc |
 |---|---|
-| **CN08-BR01** | Tổng điểm là tổng điểm hợp lệ của người trong chu kỳ hiện tại (CN06-BR01). Điểm của bài chờ duyệt hiện riêng, không cộng vào tổng điểm hợp lệ |
+| **CN08-BR01** | Tổng điểm là tổng điểm hợp lệ của người trong cả chương trình (CN06-BR01). Điểm của bài chờ duyệt hiện riêng, không cộng vào tổng điểm hợp lệ |
 | **CN08-BR02** | Thống kê số bài: đã duyệt, chờ duyệt, từ chối hiện cạnh tổng điểm |
 
 ## CN-08.5 Danh sách bài đăng
@@ -58,7 +58,7 @@ App người tham gia hiện được làm cho chương trình thưởng theo l�
 | Mã | Quy tắc |
 |---|---|
 | **CN08-BR06** | Khối **Mức thưởng** hiện bốn mức theo [CN-06](./prd-cn06-muc-thuong-cuoi-ky.md): mốc điểm (trên 200, 400, 600, 1.500), phần thưởng, số lượng |
-| **CN08-BR07** | Mỗi mức có trạng thái **Đã đạt** hoặc **Chưa đạt** theo tổng điểm của người xem. Mức đã trao quà hiện **Đã nhận** |
+| **CN08-BR07** | Mỗi mức có trạng thái **Đã đạt** hoặc **Chưa đạt** theo tổng điểm của người xem. Hệ thống không theo dõi việc trao quà (Operation trao bên ngoài) nên không có trạng thái Đã nhận |
 | **CN08-BR08** | Khối hiện ở trang chi tiết sự kiện (cho mọi người xem) và ở trang cá nhân (kèm trạng thái của người đó) |
 
 ## CN-08.7 Bảng xếp hạng tháng
@@ -66,7 +66,7 @@ App người tham gia hiện được làm cho chương trình thưởng theo l�
 | Hiện trạng | Thay đổi |
 |---|---|
 | Xếp theo lượt xem hoặc tiền thưởng; cột "Views", "Kiếm được" | Xếp theo **điểm**; một cột **Điểm** |
-| Có nhãn kỳ tuần/tháng | Dùng kỳ **tháng** |
+| Có nhãn kỳ tuần/tháng | Dùng kỳ **cả chương trình** (mỗi tháng là một chương trình riêng) |
 
 | Mã | Quy tắc |
 |---|---|
@@ -85,13 +85,14 @@ App người tham gia hiện được làm cho chương trình thưởng theo l�
 
 ## CN-08.9 Các màn không phù hợp thưởng bằng điểm
 
-Thưởng tiền mặt chuyển thẳng vào lương bên Vietjet, hệ thống này không chi trả và không vận hành thuế. Các màn và lời nhắc sau không còn dành cho người tham gia:
+Thưởng tiền mặt chuyển thẳng vào lương bên Vietjet, hệ thống này không chi trả và không vận hành thuế. **Bên này không ký hợp đồng điện tử.** Các màn và lời nhắc sau không còn dành cho người tham gia:
 
 | Màn / nội dung | Việc làm |
 |---|---|
 | Quản lý hoa hồng affiliate, chương trình affiliate | Ẩn khỏi menu và đường dẫn |
 | Mã số thuế, khai báo thuế | Ẩn |
-| Thông tin định danh, hợp đồng điện tử | Ẩn |
+| Hợp đồng điện tử | Ẩn hoàn toàn, gồm mọi bước của luồng đó (thông tin thanh toán, xác thực danh tính, mã số thuế, ký hợp đồng) |
+| Thông tin định danh | Ẩn |
 | Dải nhắc đầu trang "liên kết hệ thống hợp đồng để nhận tiền thanh toán" | Bỏ |
 | Màn Thông tin thanh toán | Theo [CN-03](./prd-cn03-hien-thi-diem.md) mục CN-03.6 |
 
@@ -107,6 +108,7 @@ Thể lệ không có màn này; đề xuất thêm để người tham gia bi�
 |---|---|
 | **CN08-BR17** | Trang cá nhân hiện mức kế tiếp chưa đạt và số điểm còn thiếu, ví dụ "Bạn có 380 điểm, còn 21 điểm nữa để đạt Mức 2" |
 | **CN08-BR18** | Người đã đạt Mức 4 hiện "Đã đạt mức cao nhất" |
+| **CN08-BR19** | Giao diện **không hiện số điểm cộng dồn qua các chương trình** của một người (tổng cả đời, số dư tích lũy). Mỗi màn chỉ hiện điểm của chương trình đang xem. Dữ liệu cộng dồn vẫn được lưu trong hệ thống, chỉ không hiển thị |
 
 ## CN-08.11 Kịch bản kiểm thử
 
@@ -118,7 +120,6 @@ Thể lệ không có màn này; đề xuất thêm để người tham gia bi�
 | CN08-TC02 | Điểm từng bài | Mở Danh sách bài đăng | 3 bài `+50 điểm`; bài chờ có điểm chờ duyệt; bài từ chối không có điểm và có lý do | BR03, 05 |
 | CN08-TC03 | Không còn chỉ số xem | Xem một bài | Không có lượt xem, thích, bình luận làm chỉ số thưởng | BR04 |
 | CN08-TC04 | Mức thưởng | U1 450 điểm xem khối Mức thưởng | Mức 1 và Mức 2 Đã đạt; Mức 3 và 4 Chưa đạt | BR06, 07 |
-| CN08-TC05 | Mức đã nhận | Mức 1 của U1 đã trao quà | Mức 1 hiện Đã nhận | BR07 |
 | CN08-TC06 | Bảng xếp hạng | Mở bảng xếp hạng tháng 11 | Cột Điểm; TOP 1, 2, 3 có nhãn +500, +200, +100 | BR09, 10 |
 | CN08-TC07 | Tổng quan | Mở trang chủ | Ô hiện số bài được duyệt và tổng điểm, không có "Lượt xem", "Tiền thưởng" | BR12 |
 | CN08-TC08 | Gửi bài | Mở Gửi bài đăng, gửi link | Thấy hashtag bắt buộc, nhắc công khai; sau gửi thấy bài chờ BTC duyệt | BR13 |
