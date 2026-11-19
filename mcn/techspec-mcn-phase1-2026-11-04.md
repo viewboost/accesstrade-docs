@@ -3,12 +3,12 @@
 | Mục | Giá trị |
 |---|---|
 | Dự án | KOC Ambassador, module MCN (Multi-Channel Network) |
-| Ngày | 2026-11-17 |
+| Ngày | 2026-11-19 |
 | Người viết | Nguyễn Đăng Định |
 | Người review | Thành Trung, Vinh Nguyễn |
-| Version | 4.3 |
+| Version | 4.4 |
 | Trạng thái | Draft, sửa theo review của anh Vĩnh trên PR #42 (14/11), chat group 14/11 và PRD 1.9 (chốt 16–17/11), chờ review lại |
-| PRD | [prd-mcn-phase1-2026-11-04.md](./prd-mcn-phase1-2026-11-04.md). Bản 1.9 nằm ở PR #41 (nhánh `docs/mcn-phase1-prd-decisions-261109`), cần merge trước hoặc cùng PR này |
+| PRD | [prd-mcn-phase1-2026-11-04.md](./prd-mcn-phase1-2026-11-04.md), bản 1.9 (đã merge vào `main`, PR #41) |
 | Tài liệu khác | [08-Sequence.md](./08-Sequence.md) (BA, 22/10, mô hình cũ); [meeting-261103.md](./meeting-261103.md); biên bản họp 10/11 (chưa đưa lên repo); bản mẫu BA (artifact `BVwnmqnqNZhjnX6pbXDikV`) |
 | Code | Repo `ambassador`, nhánh `feat/mcn-phase1`, head `01fe2d31c` (dùng cho cả file) |
 
@@ -47,7 +47,7 @@ PRD mô tả yêu cầu nghiệp vụ. Tech spec này mô tả cách làm trên 
 
 Hệ thống hiện tại coi một user là một người: user đó đăng nhập, có số dư, nhận tiền và chịu thuế. MCN thì khác. MCN ký hợp đồng với AccessTrade; người đăng nhập chỉ vận hành MCN. Nếu cộng phí MCN vào số dư của người vận hành:
 
-- Đổi người vận hành thì tiền vẫn nằm ở người cũ.
+- Sau này đổi người vận hành thì tiền vẫn nằm ở người cũ (phase 1 chưa cho đổi, PRD D27).
 - Người vận hành bị khóa vì lỗi creator thì MCN không được chi.
 - Phí MCN và thu nhập creator lẫn vào một số dư, thuế tính sai.
 
@@ -76,7 +76,7 @@ Câu 1–5 là câu hỏi của tech lead. Câu 6–9 là các điểm còn lạ
    Công ty (MST) hoặc cá nhân (CCCD) ký hợp đồng với AccessTrade. Lưu ở bản ghi `mcns`, không phải user. MCN sở hữu số dư, nhận tiền và chịu thuế. Xem §5.1.
 
 2. Tài khoản MCN khác tài khoản creator thế nào?
-   Tài khoản đăng nhập của MCN là một user bình thường, được gắn quyền vận hành qua `mcn-accounts`. User đó không sở hữu tiền của MCN: đổi người vận hành thì tiền vẫn ở MCN. Người vận hành vẫn làm creator được như mọi user. Xem §5.2.
+   Tài khoản đăng nhập của MCN là một user bình thường, được gắn quyền vận hành qua `mcn-accounts`. User đó không sở hữu tiền của MCN, nên phase sau có đổi người vận hành thì tiền vẫn ở MCN (phase 1 không đổi, PRD D27). Người vận hành vẫn làm creator được như mọi user. Xem §5.2.
 
 3. Số dư MCN và số dư creator tách thế nào?
    Hai bảng riêng, như sơ đồ trên: `cash-flows` của K ghi `+3.000.000` và `−450.000`; `mcn-cash-flows` của A ghi `+450.000`. Số dư mỗi bên là tổng bảng của bên đó. Xem §6, §7.
@@ -101,7 +101,7 @@ Câu 1–5 là câu hỏi của tech lead. Câu 6–9 là các điểm còn lạ
    MCN nhận trong cùng đợt chi với KOL/KOC, không có đợt riêng. Mỗi MCN có một lệnh trong đợt; mỗi chiến dịch còn số dư là một dòng con có trạng thái riêng. Thuế tính một lần trên cả lệnh. File ngân hàng ra một dòng cho mỗi chiến dịch. P có 3.000.000 ở chiến dịch C1 và 2.500.000 ở C2: một lệnh 5.500.000, thuế 550.000, file có hai dòng. Xem §8.1.
 
 9. Làm sao không nhầm số của creator và MCN trên màn hình?
-   Mỗi màn hình chỉ đọc một bảng. Trang Số dư của creator đọc `cash-flows`; trang Quản lý MCN đọc `mcn-cash-flows`. Không màn hình nào cộng hai số. Xem §9.3.
+   Mỗi màn hình chỉ đọc một nguồn. Trang Số dư của creator đọc `cash-flows`; Quản lý MCN › Đối soát đọc `mcn-fee-splits` của các kỳ đã duyệt. Phase 1 không có màn Số dư MCN (PRD 1.9, FR-020). Không màn hình nào cộng hai số. Xem §9.3.
 
 ### 1.4 Câu hỏi còn mở
 
@@ -167,6 +167,7 @@ Thao tác trên admin dùng trong tài liệu:
 - Tạm dừng, chấm dứt cả MCN.
 - KOL/KOC xác nhận hoặc báo sai đối soát; Admin thao tác thay MCN.
 - MCN tự rút tiền; bảng kê, hóa đơn trong hệ thống.
+- Màn Số dư MCN (dòng tiền, lịch sử lệnh chi) và số tạm tính chưa đối soát cho MCN, KOL/KOC (PRD 1.9, FR-020, FR-021).
 - UI điều chỉnh tiền.
 - Đổi người vận hành, sửa hồ sơ MCN (PRD D27); đổi TK ngân hàng MCN, tra tên chủ TK (PRD D29).
 - Gộp ngưỡng thuế theo CCCD giữa lệnh MCN và lệnh creator.
@@ -437,7 +438,7 @@ Không thêm trường MCN vào `users`, `event-rewards`, `event-bonus`, `reconc
 
 #### 6.7.1 mcns.statistic
 
-Số cache để hiện ở màn Đối soát, Số dư của MCN và chi tiết MCN ở admin, giống `users.statistic`. Không dùng để tính tiền; tiền luôn tính từ nguồn ở cột cuối. Tiền là `int64` VND.
+Số cache, giống `users.statistic`. Không dùng để tính tiền; tiền luôn tính từ nguồn ở cột cuối. Tiền là `int64` VND. Phase 1 chỉ hiện số thành viên và số link (Quản lý MCN, danh sách MCN ở Admin). Các trường tiền vẫn được job hằng đêm tính lại nhưng chưa màn nào hiện, vì PRD 1.9 bỏ màn Số dư MCN và số tạm tính.
 
 | Trường | Ý nghĩa | Nguồn |
 |---|---|---|
@@ -720,7 +721,7 @@ File bỏ lệnh `declined`, `rejected`, có dòng tổng. Nên xuất sau Chuy�
 | MCN nhận thiếu | AT xử lý ngoài hệ thống, ghi ticket |
 | Số dư một chiến dịch của MCN âm | Không xảy ra khi không có điều chỉnh: dòng con chỉ trừ khi đủ số dư (INV-14), hoàn tiền luôn cộng. Nếu gặp, MCN đó không có lệnh trong đợt và có Telegram |
 
-Phase 1 không có script hay nút điều chỉnh tiền MCN (anh Vĩnh, group 14/11: không để vận hành nhờ người vào server chạy script). Nếu vận hành gặp nhiều, phase sau làm thao tác trên Admin theo khuôn API đổi người vận hành (`dryRun`, `note`). Giữ đúng PRD D7.
+Phase 1 không có script hay nút điều chỉnh tiền MCN (anh Vĩnh, group 14/11: không để vận hành nhờ người vào server chạy script). Nếu vận hành gặp nhiều, phase sau làm thao tác trên Admin (có `dryRun`, `note`). Giữ đúng PRD D7.
 
 ## 9. API, màn hình và code
 
@@ -734,8 +735,10 @@ Router `backend/pkg/admin/router/mcn.go`. MCN không gắn ADV nên không lọc
 | POST | `/mcns`, `/mcns/:id/documents` | `mcn.edit` | Tạo, thêm hồ sơ (TK ngân hàng chỉ một lần). Đã gỡ `PUT /mcns/:id` (D27) và `/mcns/:id/bank/lookup` (D29) | Có |
 | POST | `/mcns/:id/activate` | `mcn.activate` | Kích hoạt | Có |
 | GET | `/mcns/:id/members` | `mcn.view` | Tab Thành viên, chỉ xem | Có; đọc lại từ ba object |
-| GET | `/mcns/:id/ledger` | `mcn.view` | Số dư và dòng tiền MCN | Mới |
-| GET | `/reconciliations/:id/mcn-recipients` | Quyền đối soát | Tab Người nhận (FR-017), đọc `mcn-fee-splits` | Có; đổi nguồn |
+| GET | `/reconciliations` | Quyền đối soát | Danh sách kỳ có thêm `totalKoc`, `totalMcn` (số người nhận; kỳ chờ duyệt hoặc đã từ chối thì không có) và `completedAt` | Có |
+| GET | `/reconciliations/:id/recipients` | Quyền đối soát | Tab Người nhận (FR-017): mỗi KOL/KOC một dòng (`no_mcn`, `has_mcn`), mỗi MCN một dòng (`mcn`, kèm phí từng thành viên); `summary` cho tab Tổng quan và thanh bước. Đọc `reconciliation-items` chưa bị từ chối và `mcn-fee-splits` | Có |
+| GET | `/reconciliations/:id/recipients/:userId/lines` | Quyền đối soát | Xem một dòng KOL/KOC: từng khoản (loại, ngày phát sinh, số tiền, phí) | Có |
+| GET | `/reconciliations/:id/mcn-recipients` | Quyền đối soát | Phí theo MCN, đọc `mcn-fee-splits` (đếm MCN nhận phí ở modal Duyệt tất cả) | Có |
 | GET, PATCH | `/transfers/:id/mcn-payouts`, `.../mcn-payouts/:pid/decline` | Quyền đợt chi | Lệnh MCN của đợt; loại, bỏ loại | Có; đổi theo lệnh một MCN |
 
 ### 9.2 Public
@@ -745,9 +748,10 @@ Tài khoản vận hành (`RequiredLogin` và `RequiredMcnAccount`; `mcnID` lấ
 | Method | Path | Mô tả | Trạng thái |
 |---|---|---|---|
 | GET, POST | `/mcn/me`, `/mcn/links`, `/mcn/links/:id/off`, `/mcn/members`, `/mcn/members/:id/terminate` | Hồ sơ, link mời, thành viên, chấm dứt. Nhóm `agreed` (Người đã đồng ý) chỉ trả `declined`, `sign_expired`, `superseded`, không trả người Chờ ký (PRD D30) | Có |
-| GET | `/mcn/balance`, `/mcn/ledger` | Số dư và dòng tiền MCN | Mới |
-| GET | `/mcn/reconciliations`, `/mcn/reconciliations/:event` | Đối soát của MCN theo chiến dịch | Có; đổi nguồn |
-| GET | `/mcn/payouts` | Lịch sử lệnh chi | Mới |
+| GET | `/mcn/reconciliations` | Đối soát của MCN (FR-020): mỗi kỳ đã duyệt có phí của MCN một dòng (số thành viên có thu nhập, tổng hoa hồng, phí, ngày cộng) | Có |
+| GET | `/mcn/reconciliations/:id` | Xem một kỳ: phí theo từng thành viên, kể cả thành viên đã rời (D22). Kỳ không có phí của MCN thì không trả | Có |
+
+Không có `/mcn/balance`, `/mcn/ledger`, `/mcn/payouts`: PRD 1.9 không có màn Số dư MCN ở phase 1.
 
 KOL/KOC:
 
@@ -755,23 +759,25 @@ KOL/KOC:
 |---|---|---|---|
 | GET | `/mcn-invites/:code`, `/mcn-memberships/me` | Xem lời mời (không cần đăng nhập); lời mời, phụ lục, thời gian thành viên của mình | Có |
 | POST | `/mcn-invites/:code/agree\|decline`, `/mcn-invitations/:id/decline\|sign\|sync-sign`, `/mcn-memberships/me/leave\|cancel-leave` | Đồng ý, từ chối, ký phụ lục, báo rời, rút lại | Có; đổi theo ba object |
-| GET | `/users/reconciliations` | Đối soát của creator: G, phí, số cộng vào số dư (FR-021) | Có; đổi nguồn |
+| GET | `/mcn-memberships/me/settlements` | Đối soát của KOL/KOC (FR-021): mỗi kỳ đã duyệt có khoản của mình một dòng (G, phí hoặc không có MCN, số cộng vào số dư, ngày cộng, tên MCN, tỷ lệ, các khoản); kỳ mới trước, phân trang | Có |
 
 ### 9.3 Màn hình đọc bảng nào
 
 | Màn hình | Vai | Nguồn số |
 |---|---|---|
 | Số dư, Lịch sử dòng tiền (`frontend/src/pages/bank`) | Creator | `cash-flows` của user |
-| Avatar › Đối soát, MCN của tôi | Creator | `reconciliation-items`, `mcn-fee-splits` của user; ba object quan hệ của user |
-| Quản lý MCN › Số dư | MCN | `mcn-cash-flows` |
-| Quản lý MCN › Đối soát; Admin › chi tiết MCN › thống kê | MCN, Admin | Tạm tính: `mcns.statistic`; chi tiết theo thành viên truy vấn khoản thưởng theo user và khoảng ngày của thời gian thành viên. Đã đối soát: `mcn-fee-splits`. Gom theo thành viên (kể cả đã rời, D22), chiến dịch, kỳ |
+| Avatar › Đối soát | Creator | Khoản `completed` trong `reconciliation-items` của user, gom theo kỳ (bỏ kỳ đã từ chối); phí từ `mcn-fee-splits`. Kỳ không có split thì Phí quản lý "—" |
+| MCN của tôi | Creator | Ba object quan hệ của user |
+| Quản lý MCN › Đối soát | MCN | `mcn-fee-splits` của MCN, chỉ split của khoản đã duyệt, gom theo kỳ; Xem một kỳ gom theo thành viên (kể cả đã rời, D22). Ngày cộng: `reconciliations.completedAt` |
+| Admin › Đối soát › chi tiết kỳ: thanh bước, Tổng quan, tab Người nhận | Admin | `reconciliation-items` chưa bị từ chối và `mcn-fee-splits` của kỳ |
+| Admin › Xử lý rút tiền › chi tiết đợt | Admin | Lệnh creator (cột Loại = KOL/KOC) và `mcn-payouts` (Loại = MCN, kèm Loại MCN) |
 | Quản lý MCN › Thành viên, Lời mời | MCN | `mcn-memberships`, `mcn-invitations`, `mcn-invite-links` |
 | Thông báo MCN | MCN | Gửi tài khoản vận hành `open` tại lúc gửi |
 | Đợt chi creator | Creator | Người vận hành được xét như mọi creator |
 
-User vừa vận hành MCN vừa làm creator thấy hai khu riêng: "Số dư của bạn" và "Số dư MCN <tên>". Không màn hình nào cộng hai số.
+User vừa vận hành MCN vừa làm creator thấy số dư của mình ở trang Số dư như mọi creator, và phí MCN ở Quản lý MCN › Đối soát. Không màn hình nào cộng hai số. Số dư MCN chỉ có trong `mcn-cash-flows`, dùng cho lệnh chi; phase 1 không có màn hiện số dư này.
 
-Màn đối soát và thống kê MCN tách hai cột "Tạm tính" và "Đã đối soát". Số tạm tính còn đổi trước khi đối soát (view tăng, khoản bị từ chối); số đã đối soát không đổi sau khi kỳ `processed`. MCN chỉ đọc dữ liệu có `mcn` lấy từ tài khoản đăng nhập, không nhận `mcn` từ client (INV-18).
+Màn Đối soát của MCN và KOL/KOC chỉ hiện kỳ đã duyệt, không có cột "Tạm tính" (PRD 1.9). Số đã đối soát không đổi sau khi kỳ hoàn tất. MCN chỉ đọc dữ liệu có `mcn` lấy từ tài khoản đăng nhập, không nhận `mcn` từ client (INV-18).
 
 ### 9.4 Mã lỗi
 
@@ -784,13 +790,13 @@ Frontend phân biệt lỗi theo mã trong body (dải 2400–2599, `backend/int
 | Model, DAO | `backend/internal/model/mg/mcn.go`, `mcn_member.go`; `backend/internal/module/database/mongodb/dao/mcn.go`, `collection_mcn.go` | Thay `mcn-members` bằng `mcn-invitations`, `mcn-annexes`, `mcn-memberships`; thêm `mcn-user-locks`, `mcn-fee-splits`; `mcn-payouts` theo lệnh một MCN |
 | Gắn tài khoản vận hành | `backend/internal/service/mcn.go` (`BindAccountOnLogin`, `AccountOf`) | `mcn-accounts` `open`/`revoked`; khóa qua `mcn-user-locks` |
 | Hằng số | `backend/internal/constants/mcn.go` (`McnFeeStartAt`) | Mã mẫu phụ lục, link thông báo xử lý dữ liệu cá nhân (§11.1) |
-| API admin | `backend/pkg/admin/{router,handler,service}/mcn*.go` | Tab Thành viên đọc ba object; số dư MCN; tab Người nhận đọc `mcn-fee-splits`; lệnh MCN |
-| API public | `backend/pkg/public/{router,handler,service}/mcn*.go`: lời mời, phụ lục, báo rời, link, thành viên, job | Đổi theo ba object; số dư, lệnh chi của MCN |
+| API admin | `backend/pkg/admin/{router,handler,service}/mcn*.go`; tab Người nhận ở `backend/pkg/admin/service/reconciliation_recipients.go` | Tab Thành viên đọc ba object; lệnh MCN |
+| API public | `backend/pkg/public/{router,handler,service}/mcn*.go`: lời mời, phụ lục, báo rời, link, thành viên, job; đối soát theo kỳ ở `mcn_settlement.go` | Đổi theo ba object |
 | Đối soát | `backend/pkg/admin/service/reconciliation_processing.go`, `reconciliation_running.go`, `reconciliation_ledger_v2.go`, `mcn_fee_snapshot.go` | Bỏ `runCashBack` cũ và cờ kỳ; `applyMcnFees` tính từ thời gian thành viên, ghi `mcn-fee-splits` |
 | Dòng tiền, transaction | `backend/internal/service/cashflow.go`, `mcn_ledger.go`; `backend/internal/module/database/mongodb/transaction.go` | |
 | Đợt chi, thuế | `backend/pkg/admin/service/transfer_processing.go`, `transfer_transferring.go`, `transfer_finish.go`, `export_transfer.go`; `backend/internal/service/tax.go` | Lệnh một MCN có dòng con; thuế trên cả lệnh |
 | Web admin | `admin/src/pages/mcn`, `admin/src/pages/transfer`, `admin/src/pages/reconciliation` | Đổi theo dữ liệu mới |
-| Web KOC | `frontend/src/pages/mcn-invite`, `mcn-manage`, `mcn-my`, `doi-soat`; `frontend/src/components/mcn` | Đổi theo dữ liệu mới |
+| Web KOC | `frontend/src/pages/mcn-invite`, `mcn-manage` (Đối soát của MCN: `components/reconciliation-list.tsx`), `mcn-my`, `mcn-settlements` (route `/doi-soat`); `frontend/src/components/mcn` | Đổi theo dữ liệu mới |
 
 ## 10. Bảo mật và xử lý lỗi
 
@@ -900,7 +906,7 @@ Trạng thái đọc trên `feat/mcn-phase1` tại commit `b0a9b39b7` (15/11/202
 
 Còn giữ được: hồ sơ, kích hoạt MCN, link mời, hồ sơ ở `mcn-documents/` (`27841952c`), `RunInTransaction` (`54ea55e39`), bỏ `EnsureUserPartner` (`6c30d7d62`), khóa job Redis (`8b840eb85`), khóa `type`, `identityNumber` (`e3c986866`), lịch sử đăng nhập (`c8deaf1ae`), `AppendStrict`, `McnLedger`, `mcn-cash-flows`, E1–E4, `run_failed`.
 
-Cập nhật 13/11 (head `b8f0b7f5c`): đã code việc 1–10 (`7eb0cfac1`, `defff49b0`, `7be575837`, `cf3505248`, `e735f23e7`, `b8f0b7f5c`), việc 11 (`d77bc211a`, IDOR 6 route), đổi người vận hành (`c470500f4`, đã gỡ 16/11 theo PRD D27), `LedgerReconcile` (`5ef3bff52`). Còn: việc 12 (chờ AT). Cập nhật 15/11 (head `b0a9b39b7`): sửa 3 điểm review 14/11 (§6.2, §8.1, §10.2); bỏ `cmd/mcn-adjust`. Cập nhật 17/11 (head `01fe2d31c`, PR #344, #345, #346 vào develop): KOL/KOC đang Chờ ký với MCN được ký hợp đồng creator khi chưa đủ 50.000đ (`mcn_sign_pending`, PRD D31); job ký giãn dần và nút Kiểm tra trạng thái ký; gỡ sửa hồ sơ, đổi người vận hành, tra tên TK; TK ngân hàng nhập một lần; file 10MB, CCCD hai tệp; MCN không thấy người Chờ ký; `memberTotal`; từ chối xong ở lại trang. Còn: việc 12 (mẫu phụ lục AT).
+Cập nhật 13/11 (head `b8f0b7f5c`): đã code việc 1–10 (`7eb0cfac1`, `defff49b0`, `7be575837`, `cf3505248`, `e735f23e7`, `b8f0b7f5c`), việc 11 (`d77bc211a`, IDOR 6 route), đổi người vận hành (`c470500f4`, đã gỡ 16/11 theo PRD D27), `LedgerReconcile` (`5ef3bff52`). Còn: việc 12 (chờ AT). Cập nhật 15/11 (head `b0a9b39b7`): sửa 3 điểm review 14/11 (§6.2, §8.1, §10.2); bỏ `cmd/mcn-adjust`. Cập nhật 17/11 (head `01fe2d31c`, PR #344, #345, #346 vào develop): KOL/KOC đang Chờ ký với MCN được ký hợp đồng creator khi chưa đủ 50.000đ (`mcn_sign_pending`, PRD D31); job ký giãn dần và nút Kiểm tra trạng thái ký; gỡ sửa hồ sơ, đổi người vận hành, tra tên TK; TK ngân hàng nhập một lần; file 10MB, CCCD hai tệp; MCN không thấy người Chờ ký; `memberTotal`; từ chối xong ở lại trang. Còn: việc 12 (mẫu phụ lục AT). Cập nhật 18/11 (head `669689ffa`, PR #348 vào develop): màn đối soát theo PRD 1.9 và bản mẫu BA — tab Người nhận, thanh bước, số theo người nhận ở Tổng quan; Đối soát của MCN và KOL/KOC theo kỳ đã duyệt, bỏ số tạm tính; cột Loại ở Xử lý rút tiền.
 
 | # | Việc | Theo review | Khi |
 |---|---|---|---|
@@ -914,7 +920,7 @@ Cập nhật 13/11 (head `b8f0b7f5c`): đã code việc 1–10 (`7eb0cfac1`, `de
 | 8 | `mcn-payouts` một lệnh mỗi (đợt, MCN), dòng con theo chiến dịch; thuế trên cả lệnh; bỏ `groupBase`, `taxGroupBroken`; `declined` là trạng thái | Mục 7 | Phase 6 |
 | 9 | `mcns.statistic` tính từ thời gian thành viên; job hằng đêm | Mục 4 | Phase 5 |
 | 10 | Sửa comment "lọc phạm vi ADV" còn sót ở API hồ sơ MCN (code đã không lọc từ `5f4c26aca`). Giữ kiểm phạm vi ADV ở API đợt chi và đối soát (`af9323b19`), vì đợt chi, kỳ đối soát thuộc ADV | Mục 8 | Trước phase 5 |
-| 11 | Vá IDOR eKYC, ký hợp đồng creator; API đổi người vận hành | | Trước go-live |
+| 11 | Vá IDOR eKYC, ký hợp đồng creator. (API đổi người vận hành đã làm rồi gỡ 16/11 theo PRD D27) | | Trước go-live |
 | 12 | `CreateAnnex` gửi tên MCN, MST, tỷ lệ, ngày | | Chờ AT (17/11) |
 | 13 | Job `LedgerReconcile`. Bỏ `cmd/mcn-adjust` (group 14/11) | | Đã có |
 
@@ -1014,3 +1020,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 4.1 | 2026-11-13 | Nguyễn Đăng Định | Theo comment so spec với PRD của anh Vĩnh (PR #42, 12/11): làm tròn phí một lần cho (thành viên, thời gian thành viên, kỳ) rồi chia về item, khớp FR-016 (mục 1a); §12.2 thêm số dư thuộc hồ sơ MCN, phạm vi đổi đường tiền cho mọi partner, chặn email đang Chờ ký (mục 1b, 1c, 1d) |
 | 4.2 | 2026-11-15 | Nguyễn Đăng Định | Theo review của anh Vĩnh (PR #42, 14/11): làm tròn ở ADR-06, §12.3, R-07 ghi giống §7.2; §12.2 chỉ giữ chỗ còn chờ duyệt, phần PRD 1.4–1.6 đã sửa chuyển sang §12.3; đổi `cmd/mcn-rebind` thành API ở §5.2, §11.7; đầu file PRD 1.6 và một head code (`b0a9b39b7`). Thiết kế: từ chối sau khi đồng ý ghi thẳng `declined`, bỏ unique `(user, link)` (§6.2, §6.8); dòng con lệnh MCN có trạng thái `returned` (§6.5, §8.1); báo Telegram khi phụ lục ký sau khi lời mời đóng (§6.2, §10.2, §11.5). Theo chat group 14/11: đường ghi tiền lên cùng bản MCN, không release riêng (§4.2, §7.3, §11.2, §11.4, §11.7, §12.2, §12.3); bỏ `cmd/mcn-adjust`, giữ D7 (§8.4, ADR-11, §11.7) |
 | 4.3 | 2026-11-17 | Nguyễn Đăng Định | Theo PRD 1.9 (chốt 16–17/11) và code đến `01fe2d31c`: gỡ sửa hồ sơ và đổi người vận hành (§5.1, §5.2, §9.1, §11.1); TK ngân hàng nhập một lần, không tra tên, bỏ điều kiện khớp tên ở lệnh chi (§5.1, §8, §9.1, §10.1, §11.5, R-05); file 10MB, CCCD hai tệp (§5.1); lúc gắn tài khoản vận hành và bỏ dòng Telegram email trùng không có trong code (§5.2, §10.2); MCN không thấy người Chờ ký (§9.2, §10.1, §12.3); job ký giãn dần, nút Kiểm tra trạng thái ký, `no_annex` (AQ1, §11.1, R-03, R-04); §12.1 trạng thái 17/11 |
+| 4.4 | 2026-11-19 | Nguyễn Đăng Định | Khớp PRD 1.9 FR-017, FR-020, FR-021 và code PR #348: bỏ màn Số dư MCN và cột Tạm tính (§1.3 câu 9, §3.2, §6.7.1, §9.3); bỏ API `/mcns/:id/ledger`, `/mcn/balance`, `/mcn/ledger`, `/mcn/payouts` (§9.1, §9.2); thêm API tab Người nhận và số người nhận ở danh sách kỳ (§9.1); đối soát MCN theo kỳ `/mcn/reconciliations/:id`, đối soát KOL/KOC `/mcn-memberships/me/settlements` (§9.2); đường dẫn code (§9.5, §11.7); câu còn sót về đổi người vận hành ghi rõ phase 1 không có (§1.2, §1.3 câu 2, §8.4, §11.7 việc 11, PRD D27) |
