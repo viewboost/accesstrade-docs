@@ -664,7 +664,7 @@ MCN nhận trong cùng đợt chi (`transfers`) với KOL/KOC, không có đợt
 5. Sau Chuyển tiền, Admin đánh dấu dòng con ngân hàng trả về: dòng con `transferring → returned` (`PATCH .../mcn-payouts/:id/decline` kèm `event`); bỏ đánh dấu thì `returned → transferring` (`.../undecline`). Trạng thái nằm ở `status`, không dùng `rejectReason` làm cờ.
 6. Hoàn tất: dòng con `transferring` thành `completed`. Dòng con `returned` thành `rejected` (lý do `bank_returned`) và ghi `withdraw_reversal` dương cho từng dòng đã trừ của dòng con đó, khóa `po:<id>:<event>:reversal:<action>`. Lệnh `completed` nếu còn ít nhất một dòng con `completed`, không thì `rejected`.
 
-Thống kê đợt (`GetStatistic`) cộng thêm `mcn-payouts`. Màn Xử lý rút tiền có thêm khối lệnh MCN.
+Thống kê đợt (`GetStatistic`) cộng lệnh MCN vào các ô đầu trang cùng cơ sở với lệnh creator: đếm theo lệnh, tiền trước thuế; lệnh bị loại (`declined`) không tính. Màn Xử lý rút tiền có thêm khối lệnh MCN.
 
 ### 8.2 Thuế
 
@@ -710,7 +710,7 @@ MCN công ty xuất hóa đơn GTGT ngoài hệ thống (OQ-06).
 | Loại đối tượng, loại thu nhập (mới) | Cá nhân, `creator_reward` | Công ty hoặc Cá nhân, `mcn_income` |
 | `taxpayerKey` (mới) | Theo lệnh | Theo lệnh |
 
-File bỏ lệnh `declined`, `rejected`, có dòng tổng. Nên xuất sau Chuyển tiền; xuất trước thì file có thể gồm lệnh sau đó bị `insufficient_balance`.
+File bỏ lệnh `declined`, `rejected`; không có dòng tổng, giữ định dạng file hiện nay. Nên xuất sau Chuyển tiền; xuất trước thì file có thể gồm lệnh sau đó bị `insufficient_balance`.
 
 ### 8.4 Điều chỉnh
 
@@ -916,7 +916,7 @@ Cập nhật 13/11 (head `b8f0b7f5c`): đã code việc 1–10 (`7eb0cfac1`, `de
 | 4 | `users.mcnGuardVer` → `mcn-user-locks` | Mục 5 | Cùng việc 2 |
 | 5 | Bỏ `runCashBack` cũ và `reconciliations.ledgerV2`; INV-15 cho mọi kỳ. Lên cùng bản MCN | Mục 1 | Cùng bản MCN |
 | 6 | Bỏ `TagMcn*` ở 8 chỗ tạo khoản thưởng và các trường `mcn`, `mcnMember`, `mcnRate`; `applyMcnFees` tính từ thời gian thành viên | Mục 4 | Phase 5 |
-| 7 | `mcnSplits`, `mcnFee`, `netCash`, `mcnEvaluatedAt` trên item → `mcn-fee-splits`; tab Người nhận, cột Phí MCN, màn đối soát MCN/KOC đọc collection mới | Mục 6 | Phase 5 |
+| 7 | `mcnSplits`, `mcnFee`, `netCash`, `mcnEvaluatedAt` trên item → `mcn-fee-splits`; tab Người nhận, màn đối soát MCN/KOC đọc collection mới (cột Phí MCN ở bảng mục đã bỏ 19/11, theo bản mẫu BA) | Mục 6 | Phase 5 |
 | 8 | `mcn-payouts` một lệnh mỗi (đợt, MCN), dòng con theo chiến dịch; thuế trên cả lệnh; bỏ `groupBase`, `taxGroupBroken`; `declined` là trạng thái | Mục 7 | Phase 6 |
 | 9 | `mcns.statistic` tính từ thời gian thành viên; job hằng đêm | Mục 4 | Phase 5 |
 | 10 | Sửa comment "lọc phạm vi ADV" còn sót ở API hồ sơ MCN (code đã không lọc từ `5f4c26aca`). Giữ kiểm phạm vi ADV ở API đợt chi và đối soát (`af9323b19`), vì đợt chi, kỳ đối soát thuộc ADV | Mục 8 | Trước phase 5 |
@@ -1020,4 +1020,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 4.1 | 2026-11-13 | Nguyễn Đăng Định | Theo comment so spec với PRD của anh Vĩnh (PR #42, 12/11): làm tròn phí một lần cho (thành viên, thời gian thành viên, kỳ) rồi chia về item, khớp FR-016 (mục 1a); §12.2 thêm số dư thuộc hồ sơ MCN, phạm vi đổi đường tiền cho mọi partner, chặn email đang Chờ ký (mục 1b, 1c, 1d) |
 | 4.2 | 2026-11-15 | Nguyễn Đăng Định | Theo review của anh Vĩnh (PR #42, 14/11): làm tròn ở ADR-06, §12.3, R-07 ghi giống §7.2; §12.2 chỉ giữ chỗ còn chờ duyệt, phần PRD 1.4–1.6 đã sửa chuyển sang §12.3; đổi `cmd/mcn-rebind` thành API ở §5.2, §11.7; đầu file PRD 1.6 và một head code (`b0a9b39b7`). Thiết kế: từ chối sau khi đồng ý ghi thẳng `declined`, bỏ unique `(user, link)` (§6.2, §6.8); dòng con lệnh MCN có trạng thái `returned` (§6.5, §8.1); báo Telegram khi phụ lục ký sau khi lời mời đóng (§6.2, §10.2, §11.5). Theo chat group 14/11: đường ghi tiền lên cùng bản MCN, không release riêng (§4.2, §7.3, §11.2, §11.4, §11.7, §12.2, §12.3); bỏ `cmd/mcn-adjust`, giữ D7 (§8.4, ADR-11, §11.7) |
 | 4.3 | 2026-11-17 | Nguyễn Đăng Định | Theo PRD 1.9 (chốt 16–17/11) và code đến `01fe2d31c`: gỡ sửa hồ sơ và đổi người vận hành (§5.1, §5.2, §9.1, §11.1); TK ngân hàng nhập một lần, không tra tên, bỏ điều kiện khớp tên ở lệnh chi (§5.1, §8, §9.1, §10.1, §11.5, R-05); file 10MB, CCCD hai tệp (§5.1); lúc gắn tài khoản vận hành và bỏ dòng Telegram email trùng không có trong code (§5.2, §10.2); MCN không thấy người Chờ ký (§9.2, §10.1, §12.3); job ký giãn dần, nút Kiểm tra trạng thái ký, `no_annex` (AQ1, §11.1, R-03, R-04); §12.1 trạng thái 17/11 |
-| 4.4 | 2026-11-19 | Nguyễn Đăng Định | Khớp PRD 1.9 FR-017, FR-020, FR-021 và code PR #348: bỏ màn Số dư MCN và cột Tạm tính (§1.3 câu 9, §3.2, §6.7.1, §9.3); bỏ API `/mcns/:id/ledger`, `/mcn/balance`, `/mcn/ledger`, `/mcn/payouts` (§9.1, §9.2); thêm API tab Người nhận và số người nhận ở danh sách kỳ (§9.1); đối soát MCN theo kỳ `/mcn/reconciliations/:id`, đối soát KOL/KOC `/mcn-memberships/me/settlements` (§9.2); đường dẫn code (§9.5, §11.7); câu còn sót về đổi người vận hành ghi rõ phase 1 không có (§1.2, §1.3 câu 2, §8.4, §11.7 việc 11, PRD D27) |
+| 4.4 | 2026-11-19 | Nguyễn Đăng Định | Khớp PRD 1.9 FR-017, FR-020, FR-021 và code PR #348: bỏ màn Số dư MCN và cột Tạm tính (§1.3 câu 9, §3.2, §6.7.1, §9.3); bỏ API `/mcns/:id/ledger`, `/mcn/balance`, `/mcn/ledger`, `/mcn/payouts` (§9.1, §9.2); thêm API tab Người nhận và số người nhận ở danh sách kỳ (§9.1); đối soát MCN theo kỳ `/mcn/reconciliations/:id`, đối soát KOL/KOC `/mcn-memberships/me/settlements` (§9.2); đường dẫn code (§9.5, §11.7); câu còn sót về đổi người vận hành ghi rõ phase 1 không có (§1.2, §1.3 câu 2, §8.4, §11.7 việc 11, PRD D27); file ngân hàng không có dòng tổng (§8.3, QC MCN-116); thống kê đợt cộng lệnh MCN (§8.1, QC MCN-117); bỏ cột Phí MCN ở bảng mục (§11.7) |
