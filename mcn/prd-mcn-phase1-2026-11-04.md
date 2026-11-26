@@ -172,7 +172,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 | Quy chế chương trình, Quy tắc ứng xử đã ký | Tải lên file đã ký số + ngày ký |
 
 - File: PDF, JPG hoặc PNG, tối đa 10MB mỗi tệp (D28). MCN cá nhân tải mặt trước và mặt sau CCCD ở hai ô riêng; thiếu một mặt thì điều kiện chưa đạt.
-- Số CCCD, số tài khoản, SĐT, email, địa chỉ hiện dạng che theo D32. Chỉ người có quyền xem dữ liệu nhạy cảm (`user.view_sensitive`) mới xem đầy đủ. Mỗi lần xem đầy đủ ghi nhật ký: mở chi tiết MCN, mở lịch sử tài khoản ngân hàng, xem ảnh CCCD (mỗi mặt một dòng). Bấm Kích hoạt không tính là một lượt xem.
+- Số CCCD, số tài khoản, SĐT, email, địa chỉ hiện dạng che theo D32. Chỉ người có quyền xem dữ liệu nhạy cảm (`user.view_sensitive`) mới xem đầy đủ. Mỗi lần xem đầy đủ ghi nhật ký: mở chi tiết MCN, mở lịch sử tài khoản ngân hàng, xem ảnh CCCD (mỗi mặt một dòng), mở lệnh chi MCN ở Xử lý rút tiền. Bấm Kích hoạt không tính là một lượt xem; Danh sách MCN không ghi.
 - Ảnh CCCD của MCN cá nhân có đủ số CCCD nên cũng chỉ người có quyền này mới xem hoặc tải được. Người không có quyền thấy tên tệp và câu "Cần quyền xem CCCD để xem hoặc tải" (QC MCN-19, 17/11). Hồ sơ KYB của MCN công ty và các hồ sơ khác: Xem bằng quyền xem MCN, Tải về bằng quyền tải hồ sơ MCN (D33).
 - Tải tệp hồ sơ lên cần quyền sửa MCN (D33).
 - Mỗi điều kiện đã đạt có nút **Xem**: thông tin đã nhập, file (nút Xem mở tệp ngay trên Admin; nút Tải về theo D33), ngày giờ và người cập nhật, lịch sử thay đổi.
@@ -259,7 +259,7 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 
 #### FR-013: Đồng ý lời mời
 
-- Lời mời ghi: tên MCN, tỷ lệ phí, thời hạn phụ lục 12 tháng, "Rời có hiệu lực từ 00:00 ngày thứ 15 kể từ ngày báo", ví dụ với thu nhập 3.000.000đ (phí, phần còn lại), câu "Thuế TNCN tính khi ACCESSTRADE chi tiền, như hiện nay". Tài khoản nhà của MCN công ty thấy câu "Thu nhập chuyển về MCN. MCN công ty không bị khấu trừ thuế TNCN." (QC MCN-72, 16/11).
+- Lời mời ghi: tên MCN, tỷ lệ phí, thời hạn phụ lục 12 tháng, "Rời có hiệu lực từ 00:00, 15 ngày sau ngày báo", ví dụ với thu nhập 3.000.000đ (phí, phần còn lại), câu "Thuế TNCN tính khi ACCESSTRADE chi tiền, như hiện nay". Tài khoản nhà của MCN công ty thấy câu "Thu nhập chuyển về MCN. MCN công ty không bị khấu trừ thuế TNCN." (QC MCN-72, 16/11).
 - Phải tick **Tôi đã hiểu** mới bấm **Đồng ý** được. Có nút **Từ chối**, kèm ô **Lý do** (không bắt buộc); MCN nhận một thông báo, bấm nhiều lần không tạo thêm. Từ chối xong ở lại trang lời mời, hiện "Bạn đã từ chối lời mời. MCN đã nhận được thông báo.", không chuyển về trang chủ.
 - Ví dụ ghi rõ số KOL/KOC còn nhận, kể cả tỷ lệ 0% và 100%.
 - Đồng ý: tạo dòng quan hệ trạng thái **Chờ ký phụ lục**, hạn ký 7 ngày tính tới đúng giờ đồng ý; màn ký và MCN của tôi ghi "Hạn ký đến hh:mm dd/mm" (giờ Việt Nam). Ghi tỷ lệ của link vào dòng này (tắt link sau đó không đổi tỷ lệ). Chờ ký **chưa phải thành viên** (D18).
