@@ -114,7 +114,7 @@ Ví dụ: thành viên vào qua link 15%, G = 3.000.000đ → phí 450.000đ và
 | D26 | MCN áp dụng cho **tất cả partner/ADV**. Khoản thưởng của thành viên từ chiến dịch của mọi partner đều được xét phí theo FR-016; không giới hạn ở partner Ambassador (Định xác nhận trong comment PR #41 ngày 13/11) |
 | D27 | Phase 1 không cho đổi chủ/người vận hành MCN (tài khoản MCN) và không có chức năng sửa thông tin hồ sơ MCN (loại, tên, mã định danh, email đăng nhập, người đại diện, địa chỉ, SĐT) ở bất kỳ trạng thái nào. Nhập sai thì tạo hồ sơ mới (xem Q14). Hồ sơ pháp lý vẫn cập nhật được (FR-003), kể cả tài khoản ngân hàng (D29, FR-004). Cần đổi người vận hành thì để phase sau (anh Vĩnh chốt 16/11) |
 | D28 | File hồ sơ pháp lý: PDF, JPG hoặc PNG, tối đa **10MB** mỗi tệp. Hồ sơ định danh của MCN cá nhân là hai tệp, mặt trước và mặt sau CCCD; thiếu một mặt thì điều kiện chưa đạt (chị Huyền chốt 17/11 qua Sheet test QC, MCN-12, MCN-19; thay 20MB ở Q3) |
-| D29 | Tài khoản ngân hàng của MCN: Admin chọn ngân hàng, nhập số tài khoản và tên chủ tài khoản theo giấy tờ ngân hàng. **Không** tra, không đối chiếu tên chủ tài khoản với AccessTrade (chị Huyền chốt 16–17/11 qua Sheet test QC, MCN-15, MCN-16). **Sửa được** cả trước và sau kích hoạt: mỗi lần lưu là một bản mới, bản cũ giữ trong lịch sử; lệnh chi đã tạo giữ tài khoản lúc tạo lệnh (chị Huyền chốt 26/11, thay "chỉ nhập một lần" ở MCN-17). Bỏ phụ thuộc A3. Tra thông tin ngân hàng qua AT-Core đang hỏi (Q15) |
+| D29 | Tài khoản ngân hàng của MCN: Admin chọn ngân hàng, nhập số tài khoản và tên chủ tài khoản theo giấy tờ ngân hàng. **Không** tra, không đối chiếu tên chủ tài khoản với AccessTrade (chị Huyền chốt 16–17/11 qua Sheet test QC, MCN-15, MCN-16). **Sửa được** cả trước và sau kích hoạt: mỗi lần lưu là một bản mới, bản cũ giữ trong lịch sử; lệnh chi đã tạo giữ tài khoản lúc tạo lệnh (chị Huyền chốt 26/11, thay "chỉ nhập một lần" ở MCN-17). Bỏ phụ thuộc A3. Tra thông tin ngân hàng qua AT-Core để phase sau (Q15) |
 | D30 | MCN **không thấy** người đang Chờ ký phụ lục, chỉ nhận thông báo khi có người đồng ý. Ký xong thì người đó có trong mục Thành viên (chị Huyền chốt 16/11 qua Sheet test QC, MCN-42, MCN-51; thay chốt ở Q10) |
 | D31 | KOL/KOC đang Chờ ký với một MCN được ký hợp đồng gốc `B2C_AMBASSADOR` và làm các bước đi kèm (thông tin thanh toán, mã số thuế, xác thực danh tính) dù chưa đủ doanh thu 50.000đ, để ký tiếp phụ lục. KOL/KOC không có lời mời giữ điều kiện cũ (anh Vĩnh, group dự án 16/11) |
 | D32 | Nhân sự không có quyền xem dữ liệu nhạy cảm (`user.view_sensitive`) thấy dữ liệu MCN dạng che, ở mọi loại MCN và mọi trạng thái: SĐT giữ 3 số cuối; email (email đăng nhập, email tài khoản vận hành đang dùng và đã thu hồi) thay phần trước @ bằng đúng 3 dấu \*; địa chỉ giữ 3 ký tự đầu và 3 ký tự cuối; CCCD giữ 3 số cuối; số tài khoản giữ 4 số cuối. MST của MCN công ty giữ nguyên. Áp dụng ở Danh sách MCN, chi tiết MCN và lệnh chi MCN ở Xử lý rút tiền; file xuất chi tiền cho ngân hàng giữ đủ số. Email đã che không sao chép được. Tìm kiếm vẫn chạy trên dữ liệu gốc (chị Huyền chốt 25–26/11, file nghiệm thu #1) |
@@ -126,7 +126,7 @@ Ví dụ: thành viên vào qua link 15%, G = 3.000.000đ → phí 450.000đ và
 
 | Persona | Ở đâu | Làm gì |
 |---|---|---|
-| **Admin AccessTrade** (vai `admin`) | Admin › Danh sách MCN, Đối soát, Xử lý rút tiền | Tạo, kích hoạt MCN; quản lý hồ sơ pháp lý; duyệt đối soát; lập đợt chi |
+| **Admin AccessTrade** (nhân sự Admin theo quyền: `mcn.view`, `mcn.edit`, `mcn.activate`, `mcn.export`, quyền đối soát, quyền đợt chi) | Admin › Danh sách MCN, Đối soát, Xử lý rút tiền | Tạo, kích hoạt MCN; quản lý hồ sơ pháp lý; duyệt đối soát; lập đợt chi |
 | **MCN (công ty hoặc cá nhân)** | Web › avatar › Quản lý MCN | Tạo/tắt link mời, theo dõi lời mời và thành viên, chấm dứt thành viên, xem phí theo kỳ |
 | **KOL/KOC** | Web › link mời; avatar › MCN của tôi, Đối soát | Đồng ý lời mời, ký phụ lục, báo rời/rút lại, xem số đối soát |
 
@@ -138,7 +138,7 @@ Ví dụ: thành viên vào qua link 15%, G = 3.000.000đ → phí 450.000đ và
 
 #### FR-001: Danh sách MCN
 
-Menu trái Admin có mục **Danh sách MCN** (vai `admin`), nằm giữa menu Hồ sơ và Thông số.
+Menu trái Admin có mục **Danh sách MCN** cho nhân sự có quyền xem MCN (`mcn.view`), nằm giữa menu Hồ sơ và Thông số.
 
 - Cột: Tên MCN, Loại, Email đăng nhập (che theo D32), Thành viên (số đang hợp tác), Trạng thái, Ngày tạo.
 - Lọc loại: Công ty, Cá nhân. Lọc trạng thái: Chờ kích hoạt, Hoạt động. Tìm theo tên, MST/CCCD, email.
@@ -159,7 +159,6 @@ Bước đầu chọn **Loại MCN**: Công ty hoặc Cá nhân. Không đổi �
 - Email đã thuộc tài khoản đang là thành viên của MCN khác: báo "Tài khoản này đang là thành viên của một MCN". Email đang Chờ ký phụ lục với MCN khác: báo "Tài khoản này đang chờ ký phụ lục với một MCN khác". Email đã dùng cho MCN khác: báo "Email đã được dùng cho MCN khác".
 - Kiểm tra lại điều kiện email khi kích hoạt MCN, vì quan hệ của tài khoản có thể thay đổi sau khi tạo hồ sơ.
 - Không có chức năng sửa hồ sơ sau khi tạo, kể cả khi còn Chờ kích hoạt. Nhập sai thì tạo hồ sơ mới (D27, Q14). Tab Thông tin hồ sơ chỉ để xem.
-- Danh sách trường đang chờ chốt (Q2).
 
 #### FR-003: Hồ sơ pháp lý (5 điều kiện kích hoạt)
 
@@ -399,7 +398,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 
 | # | Phụ thuộc | Bên |
 |---|---|---|
-| A1 | Loại hợp đồng phụ lục chỉ định thanh toán trên dịch vụ econtract (mẫu, trường động: MCN, tỷ lệ, thời hạn) | AccessTrade core |
+| A1 | ~~Loại hợp đồng phụ lục chỉ định thanh toán trên dịch vụ econtract~~ Đã cấp mã `B2C_AMBASSADOR_ADDENDUM` (26/11). Phase 1 không truyền trường động (tên MCN, tỷ lệ, thời hạn) vào phụ lục (Q4) | AccessTrade core |
 | A2 | ~~Mẫu email "MCN được kích hoạt" (template code)~~ Đã cấp (26/11) | AccessTrade |
 | A3 | ~~Tra tên chủ tài khoản ngân hàng cho tài khoản của MCN~~ Không cần: phase 1 không tra tên chủ tài khoản (D29) | — |
 | A4 | Email đăng nhập MCN là tài khoản Google (Google Workspace hoặc Google account tạo bằng email đó) | MCN |
@@ -433,9 +432,9 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | # | Câu hỏi | Đề xuất |
 |---|---|---|
 | Q1 | ~~Ngưỡng thuế TNCN~~ | **Đã chốt:** 5.000.000đ, tính trên số chi sau phí MCN (D21) |
-| Q2 | Các trường form tạo MCN | Theo bảng FR-002 (bản mẫu 09/11), chờ AccessTrade xác nhận lần cuối |
+| Q2 | ~~Các trường form tạo MCN~~ | **Đã chốt:** theo bảng FR-002 (bản mẫu 09/11), đã làm và QC nghiệm thu |
 | Q3 | ~~Định dạng, dung lượng file hồ sơ pháp lý~~ | **Đã chốt:** PDF, JPG, PNG, tối đa 10MB mỗi tệp; CCCD MCN cá nhân hai tệp mặt trước, mặt sau (D28, chị Huyền 17/11) |
-| Q4 | Loại hợp đồng phụ lục trên econtract: AccessTrade core cấp mã loại và mẫu khi nào? | AT đã cấp mã `B2C_AMBASSADOR_ADDENDUM` (chị Huyền báo 26/11). Tạm dùng chung cho MCN công ty và cá nhân tới khi AT tách mẫu. Còn chờ cách truyền tên MCN, tỷ lệ phí vào phụ lục (A1) |
+| Q4 | ~~Loại hợp đồng phụ lục trên econtract: AccessTrade core cấp mã loại và mẫu khi nào?~~ | **Đã chốt:** mã `B2C_AMBASSADOR_ADDENDUM` (chị Huyền báo 26/11), tạm dùng chung cho MCN công ty và cá nhân tới khi AT tách mẫu. Phase 1 không truyền tên MCN, tỷ lệ phí vào phụ lục; tỷ lệ lưu ở hệ thống (A1) |
 | Q5 | ~~Thời điểm xét tư cách thành viên~~ | **Đã chốt:** theo ngày phát sinh từng khoản; không trích khoản trước ngày ký (D20) |
 | Q6 | ~~Phạm vi MCN theo partner~~ | **Đã chốt:** MCN áp dụng cho tất cả partner/ADV; thu nhập từ chiến dịch của mọi partner được xét phí khi đủ điều kiện FR-016 (D26, Định xác nhận trong comment PR #41 ngày 13/11) |
 | Q7 | ~~Hết 12 tháng phụ lục~~ | **Đã chốt:** tự kết thúc (D19) |
@@ -446,7 +445,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 | Q12 | ~~MCN đã có tài khoản creator có dùng chung tài khoản đó không?~~ | **Đã chốt:** dùng chung. MCN cá nhân và creator là một tài khoản, vẫn đăng bài như creator (nguyên tắc 2, D14). Chặn tài khoản đang là thành viên hoặc đang Chờ ký với MCN khác; quan hệ với chính MCN này chỉ được phép ở tỷ lệ 100% (FR-002, xem mục 9.1) |
 | Q13 | ~~Lý do Từ chối, Chấm dứt, Báo rời có hiện cho bên kia không?~~ | **Đã chốt:** có, hiện trong thông báo gửi bên kia; Admin thấy ở tab Thành viên |
 | Q14 | Nhập sai hồ sơ MCN thì tạo hồ sơ mới (D27), nhưng MST/CCCD và email đăng nhập không được trùng MCN khác (FR-002), kể cả hồ sơ Chờ kích hoạt tạo sai. Tạo lại với đúng MST/CCCD hoặc email sẽ bị chặn. Xử lý thế nào? | Đề xuất: cho Admin huỷ hồ sơ Chờ kích hoạt (giữ lịch sử, giải phóng MST/email); hoặc chỉ chặn trùng với MCN không bị huỷ. Chờ anh Vĩnh chốt |
-| Q15 | Lấy thông tin ngân hàng của MCN qua AT-Core (file nghiệm thu #6): AT-Core có API tra tên chủ tài khoản (`/uaa-service/api/v1.1/user/payment-info/account-name`, web Ambassador đang dùng khi thêm ngân hàng), nhưng đang gửi kèm `user_id` của người đăng nhập. Admin gọi cho MCN công ty (không có user) được không? | Chị Huyền hỏi AT-Core. Được thì tra tên tự điền như web Ambassador, lỗi thì cho nhập tay; khi đó sửa D29 |
+| Q15 | ~~Lấy thông tin ngân hàng của MCN qua AT-Core (file nghiệm thu #6): AT-Core có API tra tên chủ tài khoản (`/uaa-service/api/v1.1/user/payment-info/account-name`, web Ambassador đang dùng khi thêm ngân hàng), nhưng đang gửi kèm `user_id` của người đăng nhập. Admin gọi cho MCN công ty (không có user) được không?~~ | **Đã chốt:** phase 1 Admin nhập tay theo giấy tờ (D29, đã làm). Tra qua AT-Core để phase sau |
 
 ---
 
@@ -458,7 +457,7 @@ Các điểm dưới đây được ghi riêng để phân biệt yêu cầu đ�
 |---|---|
 | ~~D8 — Trạng thái kỳ~~ | **Đã chốt:** Duyệt lỗi, Duyệt lại, chặn Lấy danh sách đợt chi khi còn kỳ Đang chạy hoặc Duyệt lỗi (anh Vĩnh, review PR #42 ngày 12/11 và group dự án 14/11). Đã đồng bộ D8, thuật ngữ, nguyên tắc 1, FR-019 ở bản 1.10 |
 | D18 — Mở ký phụ lục | Vẫn được Chờ ký nhiều MCN; tech spec giới hạn chỉ mở ký một phụ lục tại một thời điểm. Chờ PO, BA xác nhận |
-| FR-002 — Điều kiện email | Bản này bổ sung chặn tài khoản đang Chờ ký với MCN khác để thống nhất với INV-03b của tech spec và hành vi code. Cần BA/PO review lại điều kiện và câu báo lỗi này |
+| ~~FR-002 — Điều kiện email~~ | **Đã chốt:** chặn tài khoản đang là thành viên hoặc đang Chờ ký với MCN khác, kèm câu báo lỗi ở FR-002; đã làm và QC nghiệm thu |
 
 Đường ghi tiền mới đã làm, thay đường cũ cho mọi partner, kể cả kỳ không có MCN. Không release riêng: lên cùng bản MCN, kích hoạt trích phí từ 01/12 (anh Vĩnh chốt trong group dự án ngày 14/11). Trước khi lên, kiểm hồi quy số tiền và thuế của kỳ không có MCN so với cách ghi cũ.
 
@@ -478,4 +477,4 @@ Các điểm dưới đây được ghi riêng để phân biệt yêu cầu đ�
 | 1.7 | 2026-11-16 | Thêm D27 (anh Vĩnh chốt 16/11): phase 1 không cho đổi chủ/người vận hành MCN. FR-002: email đăng nhập chỉ sửa khi Chờ kích hoạt, bỏ kiểm tra khi đổi tài khoản vận hành; FR-005 ghi không có thao tác đổi; FR-018 và thuật ngữ bỏ câu "đổi người vận hành thì tiền vẫn ở MCN"; mục 8 thêm dòng ngoài phạm vi |
 | 1.8 | 2026-11-16 | Sửa D27, FR-002, mục 8: Admin không có chức năng sửa thông tin hồ sơ MCN ở bất kỳ trạng thái nào (bản 1.7 ghi nhầm là sửa được email khi Chờ kích hoạt); nhập sai thì tạo mới. Thêm Q14: tạo lại bị chặn vì trùng MST/CCCD, email với hồ sơ tạo sai |
 | 1.9 | 2026-11-17 | Theo chốt 16–17/11 qua Sheet test QC (chị Huyền) và group dự án 16/11 (anh Vĩnh): thêm D28 (file tối đa 10MB, CCCD hai tệp), D29 (tài khoản ngân hàng nhập một lần, không tra tên; bỏ A3), D30 (MCN không thấy người Chờ ký; chốt lại Q10), D31 (đang Chờ ký với MCN được ký hợp đồng gốc khi chưa đủ 50.000đ). Sửa D27, FR-001 (vị trí menu, Số thành viên), FR-002, FR-003 (che số CCCD, số TK; ảnh CCCD chỉ người có quyền xem CCCD tải được), FR-004, FR-005 (lúc gắn tài khoản MCN), FR-006 (ba nhóm, ô Thành viên là tổng), FR-009, FR-013 (màn sau khi từ chối), FR-014 (bỏ nút Từ chối ở màn ký, nút Kiểm tra trạng thái ký), FR-019, mục 8; đóng Q3 |
-| 1.10 | 2026-11-26 | Theo file nghiệm thu và chốt của chị Huyền 23–26/11, đồng bộ với code: D8 Duyệt lỗi/Duyệt lại đã chốt (thuật ngữ, nguyên tắc 1, FR-019, mục 9.1); D29 tài khoản ngân hàng sửa được, giữ lịch sử, quy tắc nhập (FR-003, FR-004, D27, mục 8); thêm D32 che dữ liệu MCN, D33 tách quyền Xem/Tải hồ sơ; G không gồm nhiệm vụ; FR-007 chưa đăng nhập về trang chủ, ACCESSTRADE; FR-009 câu giải thích Người đã đồng ý, chặn từ chối qua link tắt; FR-010 nhóm Đã kết thúc, Ghi chú "-"; FR-011 câu modal; FR-012 người vận hành mở link đã tắt; FR-013 câu thuế tài khoản nhà công ty, hạn ký có giờ; FR-014 kết thúc phụ lục 00:00, quá hạn ký ngay; FR-015 rút lại sau ngày rời; FR-017 nhiều MCN, dòng MCN lên đầu; FR-018 thông báo số sau phí; FR-020, FR-021 chỉ kỳ Đã hoàn thành, chi tiết khoản, Doanh thu của bạn; FR-022 link thông báo, ngoại lệ tài khoản nhà; A2 đã cấp; thêm Q15; mục 0 ngày phát sinh của thưởng mốc theo số bài là ngày nộp bài chạm mốc, đóng Q11; FR-009 câu khi bảng Người đã đồng ý trống; Q4 mã phụ lục `B2C_AMBASSADOR_ADDENDUM`; bổ sung theo code 27/11: Tài khoản nhà gồm CCCD trùng MCN cá nhân, cột Tổng hoa hồng phía MCN, Max ở đợt chi MCN (FR-019), hoa hồng giới thiệu tính trên G (FR-018), NFR-003 cho hiện loại MCN |
+| 1.10 | 2026-11-26 | Theo file nghiệm thu và chốt của chị Huyền 23–26/11, đồng bộ với code: D8 Duyệt lỗi/Duyệt lại đã chốt (thuật ngữ, nguyên tắc 1, FR-019, mục 9.1); D29 tài khoản ngân hàng sửa được, giữ lịch sử, quy tắc nhập (FR-003, FR-004, D27, mục 8); thêm D32 che dữ liệu MCN, D33 tách quyền Xem/Tải hồ sơ; G không gồm nhiệm vụ; FR-007 chưa đăng nhập về trang chủ, ACCESSTRADE; FR-009 câu giải thích Người đã đồng ý, chặn từ chối qua link tắt; FR-010 nhóm Đã kết thúc, Ghi chú "-"; FR-011 câu modal; FR-012 người vận hành mở link đã tắt; FR-013 câu thuế tài khoản nhà công ty, hạn ký có giờ; FR-014 kết thúc phụ lục 00:00, quá hạn ký ngay; FR-015 rút lại sau ngày rời; FR-017 nhiều MCN, dòng MCN lên đầu; FR-018 thông báo số sau phí; FR-020, FR-021 chỉ kỳ Đã hoàn thành, chi tiết khoản, Doanh thu của bạn; FR-022 link thông báo, ngoại lệ tài khoản nhà; A2 đã cấp; thêm Q15; mục 0 ngày phát sinh của thưởng mốc theo số bài là ngày nộp bài chạm mốc, đóng Q11; FR-009 câu khi bảng Người đã đồng ý trống; Q4 mã phụ lục `B2C_AMBASSADOR_ADDENDUM`; bổ sung theo code 27/11: Tài khoản nhà gồm CCCD trùng MCN cá nhân, cột Tổng hoa hồng phía MCN, Max ở đợt chi MCN (FR-019), hoa hồng giới thiệu tính trên G (FR-018), NFR-003 cho hiện loại MCN; đóng Q2, Q4, Q15 và dòng FR-002 ở mục 9.1 (đã làm, QC nghiệm thu); A1 đã cấp mã; FR-001 và Personas ghi theo quyền thay vì vai `admin` |
