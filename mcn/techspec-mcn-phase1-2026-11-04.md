@@ -7,10 +7,10 @@
 | Người viết | Nguyễn Đăng Định |
 | Người review | Thành Trung, Vinh Nguyễn |
 | Version | 4.4 |
-| Trạng thái | Draft, cập nhật theo code và PRD 1.10 (file nghiệm thu, chốt của chị Huyền 23–26/11), chờ review lại |
+| Trạng thái | Bản mới nhất, **đồng bộ với PRD 1.10 và code** đang chạy trên develop ngày 27/11 (`bcab41658`). Không còn câu hỏi mở, không còn chỗ khác PRD (§12.2) |
 | PRD | [prd-mcn-phase1-2026-11-04.md](./prd-mcn-phase1-2026-11-04.md). Bản 1.10 nằm cùng PR #45 với tài liệu này |
 | Tài liệu khác | [08-Sequence.md](./08-Sequence.md) (BA, 22/10, mô hình cũ); [meeting-261103.md](./meeting-261103.md); biên bản họp 10/11 (chưa đưa lên repo); bản mẫu BA (artifact `BVwnmqnqNZhjnX6pbXDikV`) |
-| Code | Repo `ambassador`, nhánh `feat/mcn-phase1`, head `5b6b25496` (dùng cho cả file) |
+| Code | Repo `ambassador`, nhánh `feat/mcn-phase1`, head `5b6b25496`, đã merge vào develop (`bcab41658`) (dùng cho cả file) |
 
 Đường dẫn code tính từ gốc repo `ambassador/`.
 

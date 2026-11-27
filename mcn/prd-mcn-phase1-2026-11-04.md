@@ -2,8 +2,8 @@
 
 **Date:** 2026-11-04
 **Author:** Vinh Nguyễn
-**Version:** 1.10
-**Status:** Draft — cập nhật theo review PR #41 ngày 14/11/2026, chốt 16/11/2026 (không đổi người vận hành, không sửa hồ sơ MCN), chốt 16–17/11/2026 qua Sheet test QC (file 10MB, MCN không thấy người Chờ ký) và file nghiệm thu 23–26/11/2026 (Duyệt lỗi, che dữ liệu MCN, sửa được tài khoản ngân hàng)
+**Version:** 1.10 (cập nhật 2026-11-27)
+**Status:** Bản mới nhất, **đồng bộ với code** đang chạy trên develop ngày 27/11/2026 (`bcab41658`). Gồm các chốt của anh Vĩnh (review PR #41, #42, group dự án 14–16/11), chị Huyền (Sheet test QC 16–17/11, file nghiệm thu 23–26/11) và anh Định (27/11). Không còn câu hỏi mở. Thay đổi so với bản trước xem mục 10
 **Phạm vi nghiệp vụ:** MCN áp dụng cho **tất cả partner/ADV**. Phí quản lý áp dụng cho thu nhập từ các chiến dịch của mọi partner khi đủ điều kiện ở FR-016.
 
 **Phạm vi giao diện phase 1:** App Ambassador (`frontend/`) và Admin (`admin/`). Các app partner (parasola, vpbank, …) là bản copy riêng, chưa bổ sung giao diện MCN trong phase 1; thu nhập từ chiến dịch của các partner này vẫn thuộc phạm vi tính phí MCN.
