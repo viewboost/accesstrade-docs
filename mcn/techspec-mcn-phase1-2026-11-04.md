@@ -105,17 +105,15 @@ Câu 1–5 là câu hỏi của tech lead. Câu 6–9 là các điểm còn lạ
 
 ### 1.4 Câu hỏi còn mở
 
-Không còn câu hỏi chặn code. Các câu ở bản trước đã đóng theo họp 10/11 (§12.3). Với những điểm PRD và biên bản họp chưa nói, tài liệu chọn sẵn cách làm, phần lớn giữ như hệ thống hiện nay (§12.4).
+Không còn câu hỏi mở. Các câu ở bản trước đã đóng (§12.3). Với điểm PRD và biên bản họp chưa nói, tài liệu chọn sẵn cách làm, phần lớn giữ như hệ thống hiện nay (§12.4). AT đã cấp mã mẫu phụ lục ngày 26/11 (§11.1).
 
-Chỉ còn chờ AT gửi mã mẫu phụ lục (dự kiến ký 17/11).
+Cách làm với econtract đã chốt và code xong:
 
-Ba câu hỏi sau đã gửi AT core trong email cập nhật MCN ngày 14/11. Không chặn code, nhưng nếu tuần 16–20/11 vẫn chưa có trả lời thì hỏi lại trong buổi trao đổi với AT core:
-
-| # | Câu hỏi | Hiện trạng | Ảnh hưởng nếu có câu trả lời |
-|---|---|---|---|
-| AQ1 | Nhận kết quả ký phụ lục: econtract có webhook báo kết quả ký không? | Ambassador chủ động gọi API econtract tra trạng thái (`McnSyncAnnex`, job 15 phút, giãn dần theo tuổi phụ lục: dưới 1 giờ mỗi 15 phút, dưới 1 ngày mỗi giờ, dưới 3 ngày mỗi 4 giờ, sau đó mỗi 12 giờ), giống cách đang biết KOC đã ký hợp đồng chính. Màn ký có nút Kiểm tra trạng thái ký (`sync-sign`, khoá 10 giây) để hỏi ngay (anh Vĩnh, group 16/11) | Có webhook thì KOC được ghi nhận là thành viên ngay sau khi ký, không phải chờ lượt tra kế tiếp |
-| AQ2 | Hủy phụ lục chưa ký: econtract có API hủy phụ lục đang chờ ký không? | Quá hạn ký 7 ngày thì Ambassador đóng lời mời và đưa phụ lục sang `void` ở phía hệ thống (`McnExpireSign`). Phụ lục trên econtract vẫn còn, KOC vẫn ký được qua link cũ; ký lúc này không có hiệu lực vì đồng bộ chỉ xét phụ lục `signing` | Có API thì gọi hủy ngay khi đóng lời mời, để KOC không ký nhầm phụ lục đã hết hiệu lực |
-| AQ3 | Thời gian xử lý hợp đồng chính: hợp đồng `B2C_AMBASSADOR` thường ở trạng thái Đang xử lý (PROCESSING) bao lâu? | KOC chỉ ký được phụ lục khi hợp đồng chính đã `SIGNED`, và phải ký trong 7 ngày kể từ khi đồng ý lời mời (`McnSignDays`). Hạn ký không trừ thời gian hợp đồng chính đang xử lý | Nếu thường kéo dài nhiều ngày thì cân nhắc đổi cách tính hạn ký, để KOC không hết hạn vì lý do không phải của mình |
+| Điểm | Cách làm |
+|---|---|
+| Biết KOC đã ký phụ lục | Ambassador tự gọi econtract tra trạng thái, không dùng webhook. Job `McnSyncAnnex` giãn dần theo tuổi phụ lục: dưới 1 giờ mỗi 15 phút, dưới 1 ngày mỗi giờ, dưới 3 ngày mỗi 4 giờ, sau đó mỗi 12 giờ. Thêm nút Kiểm tra trạng thái ký (`sync-sign`, khóa 10 giây) và tra lại khi KOC quay lại trang (anh Vĩnh, group 16/11) |
+| Phụ lục quá hạn ký | Ambassador đóng lời mời và đưa phụ lục sang `void` bên mình (`McnExpireSign`). Không hủy trên econtract. KOC ký qua link cũ thì không có hiệu lực, vì đồng bộ chỉ xét phụ lục `signing` |
+| Hợp đồng gốc đang xử lý | Hạn ký phụ lục 7 ngày tính từ lúc đồng ý (`McnSignDays`), không trừ thời gian hợp đồng gốc đang xử lý |
 
 ## 2. Thuật ngữ
 
@@ -1021,4 +1019,4 @@ Các điểm dưới đây PRD và biên bản họp chưa nói. Code làm theo 
 | 4.1 | 2026-11-13 | Nguyễn Đăng Định | Theo comment so spec với PRD của anh Vĩnh (PR #42, 12/11): làm tròn phí một lần cho (thành viên, thời gian thành viên, kỳ) rồi chia về item, khớp FR-016 (mục 1a); §12.2 thêm số dư thuộc hồ sơ MCN, phạm vi đổi đường tiền cho mọi partner, chặn email đang Chờ ký (mục 1b, 1c, 1d) |
 | 4.2 | 2026-11-15 | Nguyễn Đăng Định | Theo review của anh Vĩnh (PR #42, 14/11): làm tròn ở ADR-06, §12.3, R-07 ghi giống §7.2; §12.2 chỉ giữ chỗ còn chờ duyệt, phần PRD 1.4–1.6 đã sửa chuyển sang §12.3; đổi `cmd/mcn-rebind` thành API ở §5.2, §11.7; đầu file PRD 1.6 và một head code (`b0a9b39b7`). Thiết kế: từ chối sau khi đồng ý ghi thẳng `declined`, bỏ unique `(user, link)` (§6.2, §6.8); dòng con lệnh MCN có trạng thái `returned` (§6.5, §8.1); báo Telegram khi phụ lục ký sau khi lời mời đóng (§6.2, §10.2, §11.5). Theo chat group 14/11: đường ghi tiền lên cùng bản MCN, không release riêng (§4.2, §7.3, §11.2, §11.4, §11.7, §12.2, §12.3); bỏ `cmd/mcn-adjust`, giữ D7 (§8.4, ADR-11, §11.7) |
 | 4.3 | 2026-11-17 | Nguyễn Đăng Định | Theo PRD 1.9 (chốt 16–17/11) và code đến `01fe2d31c`: gỡ sửa hồ sơ và đổi người vận hành (§5.1, §5.2, §9.1, §11.1); TK ngân hàng nhập một lần, không tra tên, bỏ điều kiện khớp tên ở lệnh chi (§5.1, §8, §9.1, §10.1, §11.5, R-05); file 10MB, CCCD hai tệp (§5.1); lúc gắn tài khoản vận hành và bỏ dòng Telegram email trùng không có trong code (§5.2, §10.2); MCN không thấy người Chờ ký (§9.2, §10.1, §12.3); job ký giãn dần, nút Kiểm tra trạng thái ký, `no_annex` (AQ1, §11.1, R-03, R-04); §12.1 trạng thái 17/11 |
-| 4.4 | 2026-11-27 | Nguyễn Đăng Định | Theo PRD 1.10 và code đến `69d5e7abb`: TK ngân hàng sửa được, có lịch sử, quy tắc nhập (§5.1, §9.1, §12.3, R-05); hạn ký và quá hạn ký đọc ngay (§6.2); tách Xem/Tải hồ sơ, che dữ liệu D32, nhật ký xem đủ, nút Xem chỉ gửi GET (§9.1, §10.1); đồng ý lại sau quá hạn, chặn từ chối qua link tắt (§10.2); mã phụ lục `B2C_AMBASSADOR_ADDENDUM` (§11.1, §11.7, R-03); §12.3 thêm các điểm đã chốt 23–26/11 |
+| 4.4 | 2026-11-27 | Nguyễn Đăng Định | Theo PRD 1.10 và code đến `69d5e7abb`: TK ngân hàng sửa được, có lịch sử, quy tắc nhập (§5.1, §9.1, §12.3, R-05); hạn ký và quá hạn ký đọc ngay (§6.2); tách Xem/Tải hồ sơ, che dữ liệu D32, nhật ký xem đủ, nút Xem chỉ gửi GET (§9.1, §10.1); đồng ý lại sau quá hạn, chặn từ chối qua link tắt (§10.2); mã phụ lục `B2C_AMBASSADOR_ADDENDUM` (§11.1, §11.7, R-03); §12.3 thêm các điểm đã chốt 23–26/11; §1.4 bỏ bảng câu hỏi AT, ghi cách làm đã chốt với econtract |
