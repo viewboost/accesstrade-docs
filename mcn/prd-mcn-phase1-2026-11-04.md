@@ -38,7 +38,7 @@ PRD cho phase 1 của MCN (công ty quản lý KOL/KOC) trên KOC Ambassador, th
 | **MCN** | Công ty hoặc cá nhân quản lý một nhóm KOL/KOC. Trên hệ thống là một **hồ sơ MCN** do AccessTrade tạo, loại Công ty hoặc Cá nhân |
 | **Tài khoản MCN** | User đăng nhập web Ambassador, được gắn với hồ sơ MCN qua bảng quan hệ. Phase 1: mỗi MCN một tài khoản. Tài khoản chỉ để thao tác; số dư phí thuộc **hồ sơ MCN**, không thuộc user này. Phase 1 không đổi được tài khoản này sau khi kích hoạt (D27) |
 | **Số dư MCN** | Số dư của hồ sơ MCN: phí quản lý từ thành viên và thu nhập nội dung của tài khoản nhà (D14). Chi về tài khoản ngân hàng đứng tên MCN (FR-019) |
-| **Tài khoản nhà** | Người đứng MCN tự làm nội dung: tham gia chính MCN của mình bằng link 100% (D14) |
+| **Tài khoản nhà** | Người đứng MCN tự làm nội dung: tham gia chính MCN của mình bằng link 100% (D14). Gồm tài khoản vận hành MCN và tài khoản creator có CCCD trên hợp đồng điện tử trùng CCCD của MCN cá nhân đang hoạt động (cùng một người, khác email). Các tài khoản này chỉ được vào chính MCN đó, tỷ lệ 100% |
 | **Thành viên** | KOL/KOC đã ký phụ lục và đang thuộc một MCN. Lưu ở bảng quan hệ thành viên |
 | **Chờ ký** | KOL/KOC đã bấm Đồng ý lời mời nhưng chưa ký phụ lục. **Chưa phải thành viên** |
 | **Link mời** | Link do MCN tạo, gắn một tỷ lệ phí 0–100%. Dùng được cho nhiều người |
@@ -321,12 +321,14 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 - Kỳ chạy lại sau lỗi không được cộng hai lần.
 - KOL/KOC và MCN nhận thông báo như thông báo đối soát hiện nay. Với thành viên MCN, số tiền trong thông báo là số thật cộng vào số dư (sau phí MCN).
 - Phí luôn có nơi nhận vì số dư thuộc hồ sơ MCN, không thuộc user đăng nhập.
+- Hoa hồng giới thiệu tính trên G của người được giới thiệu (trước phí MCN), như trước khi có MCN.
 
 #### FR-019: Chi trả
 
 - Đợt chi ở Xử lý rút tiền giữ nguyên thao tác. ADV còn kỳ đối soát Đang chạy hoặc Duyệt lỗi thì chưa Lấy danh sách đợt chi, áp dụng cho mọi ADV (D8).
 - MCN đủ điều kiện khi: MCN Hoạt động, có tài khoản ngân hàng (D29), số dư MCN từ mức tối thiểu của đợt. **Không** yêu cầu eKYC, hợp đồng điện tử `B2C_AMBASSADOR` hay liên kết AccessTrade.
 - Mỗi MCN một lệnh chi trong đợt, chi theo từng chiến dịch: mỗi chiến dịch có số dư là một dòng trong lệnh và trong file ngân hàng (họp 10/11).
+- Đợt chi có mức tối đa (Max): MCN được chọn khi số dư từ mức tối thiểu. Chi lần lượt các chiến dịch theo ngày bắt đầu tới khi đủ Max; chiến dịch làm vượt Max chỉ chi phần còn thiếu, phần còn lại chờ đợt sau. KOL/KOC giữ cách hiện nay.
 - Lệnh chi của MCN: tài khoản nhận là tài khoản hiện hành ở hồ sơ pháp lý lúc tạo lệnh (FR-004), sửa tài khoản sau đó không đổi lệnh đã tạo; mã định danh (MST hoặc CCCD) lấy từ hồ sơ MCN. Trên màn Xử lý rút tiền, số tài khoản, CCCD, SĐT của MCN che theo D32.
 - Thuế: MCN công ty không khấu trừ thuế TNCN. MCN cá nhân khấu trừ 10% khi tổng lệnh của MCN trong đợt từ 5.000.000đ, xét trên cả lệnh chứ không từng chiến dịch (họp 10/11). Chứng từ khấu trừ cấp ngoài hệ thống.
 - Bảng chi tiết đợt chi và file xuất ngân hàng có thêm cột Loại (KOL/KOC / MCN).
@@ -334,7 +336,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 
 #### FR-020: MCN xem đối soát
 
-- Quản lý MCN › **Đối soát**: các kỳ **Đã hoàn thành** có thành viên của MCN; kỳ Duyệt lỗi chưa hiện, Duyệt lại xong thì hiện (QC 23/11). Cột: Kỳ, Ngày cộng (ngày kỳ hoàn thành), Số thành viên, Tổng hoa hồng, Phí quản lý.
+- Quản lý MCN › **Đối soát**: các kỳ **Đã hoàn thành** có thành viên của MCN; kỳ Duyệt lỗi chưa hiện, Duyệt lại xong thì hiện (QC 23/11). Cột: Kỳ, Ngày cộng (ngày kỳ hoàn thành), Số thành viên, Tổng hoa hồng, Phí quản lý. Tổng hoa hồng ở màn này chỉ gồm các khoản bị trích phí, tức thu nhập trong thời gian hợp tác. Thu nhập ngoài thời gian đó MCN không được thấy (NFR-003).
 - **Xem** một kỳ: từng thành viên với Tỷ lệ, Tổng hoa hồng, Phí quản lý. Thành viên đã rời vẫn hiện trong các kỳ đã hợp tác (D22).
 - Chỉ xem, không có nút xác nhận.
 
@@ -387,7 +389,7 @@ Trang chi tiết kỳ đối soát có thêm tab **Người nhận** (sau khi L�
 
 - **NFR-001 Không đổi hành vi cũ:** người không thuộc MCN, kỳ đối soát không có thành viên MCN, đợt chi không có MCN — kết quả giống hệt hiện nay.
 - **NFR-002 Đúng tiền:** với mỗi khoản, (phần KOL/KOC) + (phí MCN) = số tiền khoản, không lệch đồng nào. Không cộng hai lần khi chạy lại.
-- **NFR-003 Riêng tư:** MCN không tra cứu được user. MCN chỉ thấy dữ liệu thành viên của mình trong thời gian hợp tác; số liệu đối soát các kỳ đã hợp tác vẫn xem được sau khi rời (D22). Link mời không lộ thông tin MCN ngoài tên. Lời mời Hết hiệu lực không cho MCN biết KOL/KOC đã vào MCN nào.
+- **NFR-003 Riêng tư:** MCN không tra cứu được user. MCN chỉ thấy dữ liệu thành viên của mình trong thời gian hợp tác; số liệu đối soát các kỳ đã hợp tác vẫn xem được sau khi rời (D22). Link mời chỉ hiện tên và loại MCN (Công ty / Cá nhân, để câu thuế ở FR-013 đúng), không lộ thông tin khác. Lời mời Hết hiệu lực không cho MCN biết KOL/KOC đã vào MCN nào.
 - **NFR-004 Lưu vết:** mọi thay đổi hồ sơ pháp lý, trạng thái MCN, trạng thái thành viên đều có người, giờ, lý do. Lý do Từ chối, Chấm dứt, Báo rời lưu vào lịch sử quan hệ, hiện trong thông báo gửi bên kia và ở tab Thành viên của Admin.
 - **NFR-005 Ngôn ngữ:** tiếng Việt.
 
@@ -476,4 +478,4 @@ Các điểm dưới đây được ghi riêng để phân biệt yêu cầu đ�
 | 1.7 | 2026-11-16 | Thêm D27 (anh Vĩnh chốt 16/11): phase 1 không cho đổi chủ/người vận hành MCN. FR-002: email đăng nhập chỉ sửa khi Chờ kích hoạt, bỏ kiểm tra khi đổi tài khoản vận hành; FR-005 ghi không có thao tác đổi; FR-018 và thuật ngữ bỏ câu "đổi người vận hành thì tiền vẫn ở MCN"; mục 8 thêm dòng ngoài phạm vi |
 | 1.8 | 2026-11-16 | Sửa D27, FR-002, mục 8: Admin không có chức năng sửa thông tin hồ sơ MCN ở bất kỳ trạng thái nào (bản 1.7 ghi nhầm là sửa được email khi Chờ kích hoạt); nhập sai thì tạo mới. Thêm Q14: tạo lại bị chặn vì trùng MST/CCCD, email với hồ sơ tạo sai |
 | 1.9 | 2026-11-17 | Theo chốt 16–17/11 qua Sheet test QC (chị Huyền) và group dự án 16/11 (anh Vĩnh): thêm D28 (file tối đa 10MB, CCCD hai tệp), D29 (tài khoản ngân hàng nhập một lần, không tra tên; bỏ A3), D30 (MCN không thấy người Chờ ký; chốt lại Q10), D31 (đang Chờ ký với MCN được ký hợp đồng gốc khi chưa đủ 50.000đ). Sửa D27, FR-001 (vị trí menu, Số thành viên), FR-002, FR-003 (che số CCCD, số TK; ảnh CCCD chỉ người có quyền xem CCCD tải được), FR-004, FR-005 (lúc gắn tài khoản MCN), FR-006 (ba nhóm, ô Thành viên là tổng), FR-009, FR-013 (màn sau khi từ chối), FR-014 (bỏ nút Từ chối ở màn ký, nút Kiểm tra trạng thái ký), FR-019, mục 8; đóng Q3 |
-| 1.10 | 2026-11-26 | Theo file nghiệm thu và chốt của chị Huyền 23–26/11, đồng bộ với code: D8 Duyệt lỗi/Duyệt lại đã chốt (thuật ngữ, nguyên tắc 1, FR-019, mục 9.1); D29 tài khoản ngân hàng sửa được, giữ lịch sử, quy tắc nhập (FR-003, FR-004, D27, mục 8); thêm D32 che dữ liệu MCN, D33 tách quyền Xem/Tải hồ sơ; G không gồm nhiệm vụ; FR-007 chưa đăng nhập về trang chủ, ACCESSTRADE; FR-009 câu giải thích Người đã đồng ý, chặn từ chối qua link tắt; FR-010 nhóm Đã kết thúc, Ghi chú "-"; FR-011 câu modal; FR-012 người vận hành mở link đã tắt; FR-013 câu thuế tài khoản nhà công ty, hạn ký có giờ; FR-014 kết thúc phụ lục 00:00, quá hạn ký ngay; FR-015 rút lại sau ngày rời; FR-017 nhiều MCN, dòng MCN lên đầu; FR-018 thông báo số sau phí; FR-020, FR-021 chỉ kỳ Đã hoàn thành, chi tiết khoản, Doanh thu của bạn; FR-022 link thông báo, ngoại lệ tài khoản nhà; A2 đã cấp; thêm Q15; mục 0 ngày phát sinh của thưởng mốc theo số bài là ngày nộp bài chạm mốc, đóng Q11; FR-009 câu khi bảng Người đã đồng ý trống; Q4 mã phụ lục `B2C_AMBASSADOR_ADDENDUM` |
+| 1.10 | 2026-11-26 | Theo file nghiệm thu và chốt của chị Huyền 23–26/11, đồng bộ với code: D8 Duyệt lỗi/Duyệt lại đã chốt (thuật ngữ, nguyên tắc 1, FR-019, mục 9.1); D29 tài khoản ngân hàng sửa được, giữ lịch sử, quy tắc nhập (FR-003, FR-004, D27, mục 8); thêm D32 che dữ liệu MCN, D33 tách quyền Xem/Tải hồ sơ; G không gồm nhiệm vụ; FR-007 chưa đăng nhập về trang chủ, ACCESSTRADE; FR-009 câu giải thích Người đã đồng ý, chặn từ chối qua link tắt; FR-010 nhóm Đã kết thúc, Ghi chú "-"; FR-011 câu modal; FR-012 người vận hành mở link đã tắt; FR-013 câu thuế tài khoản nhà công ty, hạn ký có giờ; FR-014 kết thúc phụ lục 00:00, quá hạn ký ngay; FR-015 rút lại sau ngày rời; FR-017 nhiều MCN, dòng MCN lên đầu; FR-018 thông báo số sau phí; FR-020, FR-021 chỉ kỳ Đã hoàn thành, chi tiết khoản, Doanh thu của bạn; FR-022 link thông báo, ngoại lệ tài khoản nhà; A2 đã cấp; thêm Q15; mục 0 ngày phát sinh của thưởng mốc theo số bài là ngày nộp bài chạm mốc, đóng Q11; FR-009 câu khi bảng Người đã đồng ý trống; Q4 mã phụ lục `B2C_AMBASSADOR_ADDENDUM`; bổ sung theo code 27/11: Tài khoản nhà gồm CCCD trùng MCN cá nhân, cột Tổng hoa hồng phía MCN, Max ở đợt chi MCN (FR-019), hoa hồng giới thiệu tính trên G (FR-018), NFR-003 cho hiện loại MCN |
