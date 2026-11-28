@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>DISO - Kế hoạch Tháng 12/2026</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #202124; line-height: 1.6; max-width: 1280px; margin: 20px auto; padding: 0 16px; }
+  h1 { font-size: 18px; margin-top: 28px; border-bottom: 2px solid #1a73e8; padding-bottom: 6px; }
+  h2 { font-size: 16px; margin-top: 24px; color: #1a73e8; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; table-layout: fixed; }
+  th, td { border: 1px solid #dadce0; padding: 8px 10px; text-align: left; vertical-align: top; word-wrap: break-word; }
+  th { background: #f1f3f4; font-weight: 600; }
+  td.num, th.num { text-align: right; }
+  .status-done { background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-testing { background: #cce5ff; color: #004085; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-progress { background: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-notstarted { background: #e2e3e5; color: #383d41; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .status-pending { background: #f8d7da; color: #721c24; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; }
+  .group-row { background: #fef7e0; font-weight: 600; }
+  .group-total { background: #e8f0fe; font-weight: 700; }
+  .grand-total { background: #d2e3fc; font-weight: 700; }
+  .strategy { background: #e8f0fe; padding: 16px; border-left: 4px solid #1a73e8; margin: 16px 0; }
+  .strategy ul { margin: 6px 0 0 18px; padding: 0; }
+  .strategy li { margin-bottom: 6px; }
+  .plan-link { background: #e6f4ea; padding: 12px 16px; border-left: 4px solid #34a853; margin: 16px 0; text-align: center; font-size: 15px; }
+  .confirm { background: #fef7e0; padding: 16px; border-left: 4px solid #f9ab00; margin: 16px 0; }
+  a { color: #1a73e8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .signature { margin-top: 24px; }
+  .subject-hint { background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: #856404; }
+  .note { font-size: 13px; color: #5f6368; margin: 8px 0 0 0; }
+</style>
+</head>
+<body>
+
+<div class="subject-hint"><strong>Gợi ý Subject:</strong> [DISO] Kế hoạch triển khai Tháng 12/2026 (Dự kiến)</div>
+
+<p>Dear team,</p>
+
+<p>DISO gửi team bản <strong>kế hoạch triển khai Tháng 12/2026 (dự kiến)</strong>, gồm danh sách hạng mục, mô tả, impact, deadline, workload ước tính (BE / FE / QC / PM) và trạng thái hiện tại. Đây là bản kế hoạch lần 1 của tháng 12, sẽ chốt lại sau khi hai bên xác nhận scope.</p>
+
+<div class="strategy">
+  <strong>🎯 Định hướng triển khai Tháng 12/2026</strong>
+  <ul>
+    <li><strong>Trọng tâm: phát hiện và khắc phục sự cố thu thập lượt xem</strong> (100h — 52% khối lượng tháng). Đây là lớp sự cố đã xảy ra trong thực tế, và hiện chưa có cách phát hiện lẫn cách khắc phục: thu thập lỗi thì không có cảnh báo nào, đến lúc biết thì phải nhờ kỹ thuật can thiệp dữ liệu từng lần.
+      <br>— <strong>Phát hiện:</strong> màn theo dõi tình trạng thu thập theo từng chiến dịch và từng nguồn.
+      <br>— <strong>Khắc phục:</strong> danh sách bài chưa lấy được lượt xem kèm lý do và hạn xử lý, đội vận hành tự thu thập lại hoặc nhập thủ công ngay trên đó.</li>
+    <li><strong>Chất lượng, bảo mật và đa ngôn ngữ cho Ambassador</strong> (100h — 50% khối lượng tháng). Ba hạng mục cùng nâng mặt bằng an toàn và mở rộng phạm vi phục vụ của hệ thống:
+      <br>— <strong>Xử lý các vấn đề tồn đọng</strong> (52h): 64 vấn đề đã rà ra trong lõi Ambassador, trong đó có 19 lỗ hổng bảo mật.
+      <br>— <strong>Nâng cấp nền tảng trang quản trị và backend</strong> (26h): để hệ thống nhận lại bản vá bảo mật.
+      <br>— <strong>Hỗ trợ đa ngôn ngữ</strong> (22h): chạy được chiến dịch cho người tham gia nói tiếng Anh, không phải dựng bản riêng.</li>
+  </ul>
+</div>
+
+<h1>Tổng quan kế hoạch Tháng 12/2026 (dự kiến)</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 30px;">STT</th>
+      <th style="width: 150px;">Hạng mục</th>
+      <th style="width: 42%;">Mô tả</th>
+      <th style="width: 23%;">Impact</th>
+      <th style="width: 58px;">Deadline</th>
+      <th class="num" style="width: 32px;">BE</th>
+      <th class="num" style="width: 32px;">FE</th>
+      <th class="num" style="width: 32px;">QC</th>
+      <th class="num" style="width: 32px;">PM</th>
+      <th class="num" style="width: 46px;">Total</th>
+      <th style="width: 76px;">Trạng thái</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- Nhóm 1 -->
+    <tr class="group-row"><td colspan="11">1. Phát hiện và khắc phục sự cố thu thập lượt xem</td></tr>
+    <tr>
+      <td>1</td>
+      <td><strong>Theo dõi việc thu thập lượt xem</strong></td>
+      <td>Hiện nay khi việc thu thập lượt xem gặp lỗi thì không có cảnh báo nào, nên đội vận hành không biết. Đến lúc phát hiện ra cũng không có công cụ để lấy lại số đã mất. Hậu quả: lượt xem bị thiếu hoặc dồn hết vào một ngày; thưởng mốc và ngân sách tính sai; chiến dịch đã kết thúc thì mất hẳn dữ liệu; và mỗi lần khắc phục đều phải nhờ kỹ thuật viết công cụ sửa dữ liệu riêng.<br><br>Hạng mục này bổ sung màn <strong>Theo dõi thu thập</strong> trong trang quản trị:<br>– Hiển thị tình trạng thu thập theo từng chiến dịch và từng nguồn.<br>– Tự gom các bài không lấy được lượt xem vào một danh sách, ghi rõ lý do và hạn xử lý.<br>– Đội vận hành thu thập lại hoặc nhập lượt xem thủ công ngay trên danh sách đó.</td>
+      <td>– Phát hiện sự cố trong vòng 2 giờ, thay vì chỉ biết khi creator hoặc đối tác báo lại<br>– Không mất dữ liệu lượt xem: bài lỗi vào danh sách kèm hạn xử lý nên được xử lý trước khi chiến dịch kết thúc hoặc trước kỳ đối soát<br>– Khắc phục trực tiếp trên trang quản trị, không còn phải nhờ kỹ thuật can thiệp dữ liệu sau mỗi sự cố<br>– Lượt xem được ghi đúng ngày phát sinh, nên biểu đồ theo ngày, thưởng mốc và việc phân bổ ngân sách phản ánh đúng thực tế<br>– Có lịch sử thu thập và lịch sử xử lý của từng bài, dùng để đối chiếu khi có khiếu nại về lượt xem<br>– Mục tiêu đo được: ≥ 98% bài đang chạy được cập nhật lượt xem trong 24 giờ, và không còn bài quá hạn xử lý trong danh sách</td>
+      <td><strong>31/12</strong></td>
+      <td class="num">40</td>
+      <td class="num">24</td>
+      <td class="num">24</td>
+      <td class="num">12</td>
+      <td class="num"><strong>100</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 1 (1 hoạt động)</td>
+      <td class="num">40</td>
+      <td class="num">24</td>
+      <td class="num">24</td>
+      <td class="num">12</td>
+      <td class="num">100</td>
+      <td>(67.1% / 149h)</td>
+    </tr>
+
+    <!-- Nhóm 2 -->
+    <tr class="group-row"><td colspan="11">2. Chất lượng, bảo mật và đa ngôn ngữ cho Ambassador</td></tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Xử lý các vấn đề tồn đọng trong lõi Ambassador</strong></td>
+      <td>DISO đã rà soát toàn bộ mã nguồn lõi Ambassador và ghi nhận <strong>68 vấn đề có sẵn từ trước</strong>. Bốn vấn đề thuộc phần nâng cấp nền tảng được tách sang hạng mục 3; còn lại <strong>64 vấn đề</strong> ở hạng mục này: 42 lỗi, 19 lỗ hổng bảo mật và 3 mục cần chốt nghiệp vụ. Một số ví dụ:<br>– <strong>Bảo mật:</strong> xem và sửa được tài khoản ngân hàng, giấy tờ định danh của người khác; yêu cầu rút số tiền âm được cộng vào ví; chèn được mã độc vào nội dung hiển thị cho người khác.<br>– <strong>Số liệu:</strong> kết quả thu thập về muộn ghi đè số liệu mới hơn; 2 tác vụ quét hoa hồng hết hạn không chạy.<br>– <strong>Ổn định:</strong> một phản hồi lạ từ hệ thống bên ngoài làm trang quản trị không tải được; cập nhật hồ sơ làm mất email và số điện thoại.<br><br>Hạng mục này xử lý 64 vấn đề nêu trên, kèm bộ test chặn lỗi quay lại để các lỗi này không tái diễn. Ba mục nghiệp vụ chờ hai bên chốt hướng xử lý.</td>
+      <td>– Đóng 19 lỗ hổng bảo mật, gồm lỗ lộ thông tin ngân hàng, giấy tờ định danh và cộng sai tiền vào ví<br>– Xử lý hết 42 lỗi đã biết, trong đó có các lỗi làm sai số liệu lượt xem, hoa hồng và đối soát<br>– Mục tiêu: 64/64 mục được xử lý hoặc ghi rõ lý do không áp dụng; bộ kiểm thử các luồng chính của Ambassador đạt 100%</td>
+      <td>15/12</td>
+      <td class="num">24</td>
+      <td class="num">8</td>
+      <td class="num">16</td>
+      <td class="num">4</td>
+      <td class="num"><strong>52</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Nâng cấp nền tảng trang quản trị và backend để đảm bảo bảo mật</strong></td>
+      <td>Nền tảng của trang quản trị và backend Ambassador đã hết vòng đời, không còn nhận bản vá bảo mật:<br>– <strong>Backend:</strong> 34 lỗ hổng nằm ở các thư viện đang được hệ thống gọi tới; bản hệ điều hành nền đã hết hỗ trợ.<br>– <strong>Trang quản trị:</strong> bộ khung và môi trường chạy đã ngừng phát hành bản vá; mỗi môi trường phải đóng gói một bản riêng.<br><br>Hạng mục này nâng cấp theo từng bước, mỗi bước đều có lưới an toàn:<br>1. Dựng bộ test lưới an toàn phủ toàn bộ trang quản trị <em>trước khi</em> nâng.<br>2. Nâng backend và các thư viện chính.<br>3. Nâng bộ khung trang quản trị theo từng bước, gỡ các thành phần không còn dùng.<br>4. Gộp về một bản đóng gói dùng cho mọi môi trường.</td>
+      <td>– Hệ thống nhận lại bản vá bảo mật. Mục tiêu: lỗ hổng backend từ 34 xuống dưới 5, lỗ hổng trang quản trị giảm ít nhất 100 mục<br>– Một bản đóng gói cho mọi môi trường, nên việc phát hành và quay lui đơn giản hơn<br>– Rủi ro thấp: bộ kiểm thử luồng chính được chạy lại sau mỗi bước nâng, và giao diện được so sánh từng trang trước – sau để bảo đảm không lệch<br>– Mục tiêu: bộ kiểm thử luồng chính của trang quản trị Ambassador đạt 100%, giao diện giữ nguyên</td>
+      <td>07/12</td>
+      <td class="num">8</td>
+      <td class="num">8</td>
+      <td class="num">8</td>
+      <td class="num">2</td>
+      <td class="num"><strong>26</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Hỗ trợ đa ngôn ngữ</strong></td>
+      <td>Ambassador hiện chỉ có tiếng Việt. Chữ trên giao diện và câu thông báo lỗi được viết thẳng trong mã nguồn, nên chưa phục vụ được người dùng nói tiếng Anh.<br><br>Hạng mục này dựng nền đa ngôn ngữ cho Ambassador:<br>– Tiếng Việt là mặc định, bổ sung English; thêm ngôn ngữ mới về sau chỉ cần thêm một tệp câu dịch.<br>– Ngôn ngữ chọn theo thiết lập của người dùng, nếu không có thì theo thiết lập máy; câu thông báo lỗi trả về theo đúng ngôn ngữ đang chọn.<br>– Có nút chọn ngôn ngữ trên giao diện, và cơ chế chặn chữ chưa dịch ngay ở bước kiểm tra mã nguồn.<br><br><em>Ngoài phạm vi:</em> trang quản trị, nội dung do ban tổ chức tự nhập, và mẫu thư.</td>
+      <td>– Chạy được chiến dịch cho người tham gia nói tiếng Anh, không cần dựng bản riêng<br>– Phần việc chính là dịch câu cho các màn của Ambassador; nền kỹ thuật dựng một lần nên thêm ngôn ngữ về sau rất nhanh<br>– Tiếng Việt giữ nguyên như hiện nay, có test bảo vệ<br>– Mục tiêu: không còn chữ tiếng Việt khi chọn English, không có lỗi trên giao diện</td>
+      <td>07/12</td>
+      <td class="num">8</td>
+      <td class="num">8</td>
+      <td class="num">4</td>
+      <td class="num">2</td>
+      <td class="num"><strong>22</strong></td>
+      <td><span class="status-notstarted">Not Started</span></td>
+    </tr>
+    <tr class="group-total">
+      <td colspan="5" style="text-align: right;">Tổng nhóm 2 (3 hoạt động)</td>
+      <td class="num">40</td>
+      <td class="num">24</td>
+      <td class="num">28</td>
+      <td class="num">8</td>
+      <td class="num">100</td>
+      <td>(67.1% / 149h)</td>
+    </tr>
+
+  </tbody>
+</table>
+
+<h2>Tổng hợp workload Tháng 12/2026</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nhóm chức năng</th>
+      <th class="num" style="width: 70px;">Số hoạt động</th>
+      <th class="num" style="width: 56px;">BE</th>
+      <th class="num" style="width: 56px;">FE</th>
+      <th class="num" style="width: 56px;">QC</th>
+      <th class="num" style="width: 56px;">PM</th>
+      <th class="num" style="width: 70px;">Total (h)</th>
+      <th class="num" style="width: 110px;">% so với chuẩn 149h</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1. Phát hiện và khắc phục sự cố thu thập lượt xem</td>
+      <td class="num">1</td><td class="num">40</td><td class="num">24</td><td class="num">24</td><td class="num">12</td><td class="num">100</td><td class="num">67.1%</td>
+    </tr>
+    <tr>
+      <td>2. Chất lượng, bảo mật và đa ngôn ngữ cho Ambassador</td>
+      <td class="num">3</td><td class="num">40</td><td class="num">24</td><td class="num">28</td><td class="num">8</td><td class="num">100</td><td class="num">67.1%</td>
+    </tr>
+    <tr class="grand-total">
+      <td><strong>TỔNG THÁNG 12/2026</strong></td>
+      <td class="num"><strong>4</strong></td>
+      <td class="num"><strong>80</strong></td>
+      <td class="num"><strong>48</strong></td>
+      <td class="num"><strong>52</strong></td>
+      <td class="num"><strong>20</strong></td>
+      <td class="num"><strong>200</strong></td>
+      <td class="num"><strong>134.2%</strong></td>
+    </tr>
+    <tr>
+      <td style="color: #5f6368;">Tiêu chuẩn hợp đồng tháng</td>
+      <td class="num" style="color: #5f6368;">–</td>
+      <td class="num" style="color: #5f6368;">53</td>
+      <td class="num" style="color: #5f6368;">38</td>
+      <td class="num" style="color: #5f6368;">38</td>
+      <td class="num" style="color: #5f6368;">20</td>
+      <td class="num" style="color: #5f6368;">149</td>
+      <td class="num" style="color: #5f6368;">100%</td>
+    </tr>
+    <tr>
+      <td>Chênh lệch</td>
+      <td class="num">–</td>
+      <td class="num">+27</td>
+      <td class="num">+10</td>
+      <td class="num">+14</td>
+      <td class="num">0</td>
+      <td class="num">+51</td>
+      <td class="num">+34.2%</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="note">Kế hoạch tháng 12 vượt tiêu chuẩn hợp đồng 51h (134.2%). Phần vượt nằm ở nhóm 2, chủ yếu là hai hạng mục nâng cấp nền tảng (26h) và đa ngôn ngữ (22h). DISO đề xuất đưa cả hai vào tháng 12: nền tảng càng để lâu thì càng khó nâng và rủi ro bảo mật càng tích lại, còn phần đa ngôn ngữ làm cùng đợt này sẽ tránh phải sửa lại hai lần trên cùng những màn hình đó. Nếu team muốn giữ sát tiêu chuẩn, DISO đề nghị cùng trao đổi để chọn hạng mục giãn sang tháng 1.</p>
+
+<div class="plan-link">
+  📄 <strong>Chi tiết Kế hoạch Tháng 12/2026 (full):</strong> <a href="https://docs.google.com/spreadsheets/d/1llWv7MwEkyceEH5f16zujxS_R_t-ZaX7kAVKh2R0Yzg/edit?gid=1533547916#gid=1533547916">XEM TẠI ĐÂY</a>
+</div>
+
+<div class="confirm">
+  <strong>✅ Đề nghị xác nhận kế hoạch</strong>
+  <p style="margin: 8px 0 0 0;">Nhờ team review và <strong>xác nhận lại bản kế hoạch Tháng 12/2026 (dự kiến)</strong> ở trên để DISO làm cơ sở nghiệm thu cuối tháng.</p>
+</div>
+
+<p>Báo cáo tiến độ tuần sẽ gửi riêng vào đầu mỗi tuần. Trong quá trình triển khai, nếu có vướng mắc, thay đổi scope hoặc cần điều chỉnh deadline, DISO sẽ chủ động cập nhật và trao đổi với các bên liên quan kịp thời.</p>
+
+<p>Cảm ơn team đã phối hợp.</p>
+
+<div class="signature">
+  <p>Thanks &amp; Regards,<br>
+  <strong>DISO Team</strong></p>
+</div>
+
+</body>
+</html>
